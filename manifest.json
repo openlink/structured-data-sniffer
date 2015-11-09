@@ -1,0 +1,30 @@
+{
+  "name": "ODE sniffer",
+  "version": "1.1.0",
+  "manifest_version": 2,
+  "minimum_chrome_version": "18",
+  "description": "Detects and shows the data embedded in a given page.",
+  "icons": {
+      "16":  "icon16.png",
+      "48":  "icon48.png",
+      "128": "icon128.png" },
+  "page_action": {
+    "default_icon": "icon128.png",
+    "default_title": "View page data",
+    "default_popup": "background.html"
+  },
+  "background": {
+    "page": "background.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "css": [],
+      "js": ["lib/jquery-1.11.3.min.js", "lib/jquery-migrate-1.2.1.min.js", "lib/jsonld.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "sniffer.js"],
+      "run_at": "document_end"
+    }
+  ],
+"permissions": [
+    "tabs", "http://*/*", "https://*/*"
+  ]
+}

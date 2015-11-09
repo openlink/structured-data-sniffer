@@ -1,0 +1,140 @@
+#metadata_viewer{
+  float:left;
+  clear:both;
+  z-index: 10000;
+}
+
+table.metadata {
+  border: 1px solid #000;
+  width:615px;
+  table-layout: fixed;
+  font-size: 12px;
+  word-wrap:break-word;
+}
+
+table.metadata > tbody {
+  border: none;
+}
+table.metadata td {
+  vertical-align: top;
+  color: #000;
+}
+table.metadata > tbody > tr > td:first-child {
+  min-width: 200px;
+  width: 200px;
+}
+table.metadata > tbody > tr > td:first-child {
+  padding-left: 20px;
+}
+table.metadata > tbody > tr.major > td:first-child {
+  font-weight: bold;
+  padding-left: 10px;
+}
+table.metadata > tbody > tr > td.major {
+  font-weight: bold;
+}
+
+/**
+table.metadata > tbody > tr.data_row > td {
+  border-bottom: silver thin solid;
+}
+
+table.metadata > tbody > tr.data_row:last-child > td {
+  border-bottom: none;
+}
+**/
+
+
+/* ============================== */
+
+.metadata_source_view{
+  float:right;
+  padding-top: 10px;
+  padding-right: 6px;
+  font-size:11px;
+}
+
+.metadata_source_view a {
+  text-decoration:none;
+  color:#fff;
+}
+
+.metadata_source_view a:hover {
+  color:#99bbff;
+}
+
+
+
+/* =================================== */
+body {
+    width: 620px;
+    height: 580px;
+}
+
+
+div.content {
+    overflow: auto;
+    width: 615px;
+    height: 550px;
+    border: 1px solid lightgray; 
+}
+
+
+div#header {
+    height: 15px;
+}
+
+
+
+.copyright_right {
+    position: absolute;
+    right: 5px;
+    bottom: 3px;
+    color: gray;
+    font-size: 10px;
+}
+
+.copyright_left {
+    position: absolute;
+    left: 5px;
+    bottom: 1px;
+    color: gray;
+    font-size: 10px;
+}
+
+
+ul#tabs { 
+    font-size: 12px; 
+    list-style-type: none; 
+    margin: 10px 0 0 0; 
+    padding: 0 0 0.3em 0; 
+}
+
+ul#tabs li { 
+    display: inline; 
+}
+
+ul#tabs li a { 
+    color: #42454a; 
+    background-color: #dedbde; 
+    border: 1px solid #c9c3ba; 
+    border-bottom: none; 
+    padding: 0.5em 0.5em 0 0.5em; 
+    text-decoration: none; 
+}
+
+ul#tabs li a:hover { 
+    background-color: #f1f0ee; 
+}
+
+ul#tabs li a.selected { 
+    color: blue; 
+    background-color: #f1f0ee; 
+    font-weight: bold; 
+    padding: 0.7em 0.5em 0 0.5em; 
+}
+
+/**
+div.tabContent { border: 1px solid #c9c3ba; padding: 0.5em; background-color: #f1f0ee; }
+div.tabContent.hide { display: none; }
+**/
