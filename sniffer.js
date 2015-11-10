@@ -21,7 +21,8 @@ $(window).load(function() {
     if ( all[i].hasAttribute('type') 
            && all[i].getAttribute('type') == "application/ld+json")
        {
-         json_ld_Text = all[i].innerHTML;
+         var htmlText = all[i].innerHTML;
+         json_ld_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
          break;
        }
   }

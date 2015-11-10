@@ -161,7 +161,7 @@ function show_Data()
       jsonld = true;
   }
   else if (gData.jsonld.error) {
-      $('#jsonld_items #metadata_viewer').append("<div id='metadata'><i><p>JSON-LD Parser exception:<p>"+gData.jsonld.error+"</i></div>");
+      $('#jsonld_items #metadata_viewer').append("<div id='metadata'><i><p>JSON-LD discovered, but fails syntax checking by parser:<p>"+gData.jsonld.error+"</i></div>");
       jsonld = true;
   }
   else
@@ -239,17 +239,23 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
       {
         jsonld.expand(jsonld_data, function(err, expanded) 
           {
-            var out = [];
-            for(var i=0; i < expanded.length; i++)
-            {
-               var item = expanded[i];
-               var row = jsonld_expand_item(item);
-               out.push(row);
+            if (err!=null) {
+              gData.jsonld.error = err.toString();
+            } 
+            else {
+            
+              var out = [];
+              for(var i=0; i < expanded.length; i++)
+              {
+                 var item = expanded[i];
+                 var row = jsonld_expand_item(item);
+                 out.push(row);
 
+              }
+              var ex_json = {"items": out};
+              ////ADD Data to View
+              gData.jsonld.expanded = tmpl.converter.load(JSON.stringify(ex_json, undefined, 2));
             }
-            var ex_json = {"items": out};
-            ////ADD Data to View
-            gData.jsonld.expanded = tmpl.converter.load(JSON.stringify(ex_json, undefined, 2));
             show_Data();
           });
       }
