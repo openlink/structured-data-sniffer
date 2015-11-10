@@ -4,8 +4,10 @@ var items = 0;
 var json_ld_Text = null;
 
 var data = {
-             microdata_json:null, 
-             jsonld_text:null
+             micro :{ jsonText:null }, 
+             jsonld :{ text:null },
+             rdfa :{  },
+             ttl :{  }
            };
 
 
@@ -33,8 +35,8 @@ $(window).load(function() {
       {
         var microdata_Text = jQuery.microdata.json(items, function(o) { return JSON.stringify(o, undefined, 2); });
 
-        data.microdata_jsonText = microdata_Text;
-        data.jsonld_text = json_ld_Text;
+        data.micro.jsonText = microdata_Text;
+        data.jsonld.text = json_ld_Text;
 
         chrome.extension.sendMessage(null, 
             { property: 'items.json', 

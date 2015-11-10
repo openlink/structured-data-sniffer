@@ -69,7 +69,12 @@ if (!this.tmpl) {
           $('#metadata').append('<i>No data found.</i>');
         } else {
 ***/
-        if (items.length > 0) {
+
+        if (items.length > 0 && 
+            typeof(items[0].items)!=="undefined" && 
+            typeof(items[0].items.length)!=="undefined" && 
+            items[0].items.length > 0) 
+        {
           var item_id = 0;
           items.each( function() {
 

@@ -8,6 +8,19 @@ var gData_showed = false;
 
 $(document).ready(function() 
 {
+  $('#tabs a[href=#micro]').click(function(){
+      selectTab('#micro');
+      return false;
+  });
+  $('#tabs a[href=#jsonld]').click(function(){
+      selectTab('#jsonld');
+      return false;
+  });
+  $('#tabs a[href=#rdfa]').click(function(){
+      selectTab('#rdfa');
+      return false;
+  });
+
 
   jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
 
@@ -116,6 +129,7 @@ function selectTab(tab)
     tab_data.hide()
     tab_id.removeClass('selected');
   }
+
 }
 
 
@@ -127,55 +141,59 @@ function show_Data()
 
 //  $('.content').prepend("<div id='metadata_viewer' class='alignleft'/>");
 /**/
+  var micro = false;
+  var jsonld = false;
+  var rdfa = false;
 
 
   $('#micro_items').append("<div id='metadata_viewer' class='alignleft'/>");
-
-  if (gData.micro_expanded)
-      $('#micro_items #metadata_viewer').append(gData.micro_expanded);
+  if (gData.micro.expanded) {
+      $('#micro_items #metadata_viewer').append(gData.micro.expanded);
+      micro = true;
+  }
   else
       $('#micro_items #metadata_viewer').append("<div id='metadata'><i>No data found.</i></div>");
 
 
   $('#jsonld_items').append("<div id='metadata_viewer' class='alignleft'/>");
-
-  if (gData.jsonld_expanded)
-      $('#jsonld_items #metadata_viewer').append(gData.jsonld_expanded);
+  if (gData.jsonld.expanded) {
+      $('#jsonld_items #metadata_viewer').append(gData.jsonld.expanded);
+      jsonld = true;
+  }
+  else if (gData.jsonld.error) {
+      $('#jsonld_items #metadata_viewer').append("<div id='metadata'><i><p>JSON-LD Parser exception:<p>"+gData.jsonld.error+"</i></div>");
+      jsonld = true;
+  }
   else
       $('#jsonld_items #metadata_viewer').append("<div id='metadata'><i>No data found.</i></div>");
 
   $('#rdfa_items').append("<div id='metadata_viewer' class='alignleft'/>");
-
-  if (gData.rdfa_expanded)
-      $('#rdfa_items #metadata_viewer').append(gData.rdfa_expanded);
+  if (gData.rdfa.expanded) {
+      $('#rdfa_items #metadata_viewer').append(gData.rdfa.expanded);
+      rdfa = true;
+  }
   else
       $('#rdfa_items #metadata_viewer').append("<div id='metadata'><i>No data found.</i></div>");
 
+  if (micro)
+    selectTab('#micro');
+  else if (jsonld)
+    selectTab('#jsonld');
+  else if (rdfa)
+    selectTab('#rdfa');
 
-  selectTab('#micro');
 
 
-  if (!gData.micro_expanded)
+  if (!micro)
     $('#tabs a[href=#micro]').hide();
-  if (!gData.jsonld_expanded)
+  if (!jsonld)
     $('#tabs a[href=#jsonld]').hide();
-  if (!gData.rdfa_expanded)
+  if (!rdfa)
     $('#tabs a[href=#rdfa]').hide();
 
 
-  $('#tabs a[href=#micro]').click(function(){
-      selectTab('#micro');
-      return false;
-  });
-  $('#tabs a[href=#jsonld]').click(function(){
-      selectTab('#jsonld');
-      return false;
-  });
-  $('#tabs a[href=#rdfa]').click(function(){
-      selectTab('#rdfa');
-      return false;
-  });
 
+  gData_showed = true;
 }
 
 
@@ -198,18 +216,24 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
   else if (request.property == "items.json")
   {
     gData = $.parseJSON(request.data);
-    gData.micro_expanded = null;
-    gData.jsonld_expanded = null;
-    gData.rdfa_expanded = null;
-    gData.ttl_expanded = null;
+    gData.micro.expanded = null;
+    gData.jsonld.expanded = null;
+    gData.jsonld.error = null;
+    gData.rdfa.expanded = null;
+    gData.ttl.expanded = null;
 
     // Load up the template
-    gData.micro_expanded = tmpl.converter.load(gData.microdata_jsonText);
+    gData.micro.expanded = tmpl.converter.load(gData.micro.jsonText);
 
     //// JSONLD
-    if (gData.jsonld_text && gData.jsonld_text.length > 0)
+    if (gData.jsonld.text && gData.jsonld.text.length > 0)
     { 
-      var jsonld_data = $.parseJSON(gData.jsonld_text);
+      var jsonld_data = null;
+      try {
+        jsonld_data = JSON.parse(gData.jsonld.text);
+      } catch(e) {
+        gData.jsonld.error = e; 
+      }
 
       if (jsonld_data != null)
       {
@@ -225,7 +249,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
             }
             var ex_json = {"items": out};
             ////ADD Data to View
-            gData.jsonld_expanded = tmpl.converter.load(JSON.stringify(ex_json, undefined, 2));
+            gData.jsonld.expanded = tmpl.converter.load(JSON.stringify(ex_json, undefined, 2));
             show_Data();
           });
       }
