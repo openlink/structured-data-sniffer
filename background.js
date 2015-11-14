@@ -24,6 +24,7 @@ $(document).ready(function()
 
   jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
 
+//  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
   chrome.tabs.query({active:true}, function(tabs) {
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
@@ -241,6 +242,11 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
   {
 //====================
     var show_action = request.data_exists;
+    if (show_action)
+      chrome.pageAction.show(sender.tab.id);
+    else
+      chrome.pageAction.hide(sender.tab.id);
+/***
     chrome.tabs.query({active:true}, function(tabs) {
        if (tabs.length>0) {
           if (show_action)
@@ -249,6 +255,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
             chrome.pageAction.hide(tabs[0].id);
        }
       });
+***/
 //======================
   } 
   else if (request.property == "items.json")
@@ -514,11 +521,12 @@ MicrodataJSON_Converter.prototype = {
     var out_add = [];
     var retVal = { id:null, data:{}, data_add:[] };
     var i_props = null;
-    var props = null;
+    var props = {};
     var id_ns = null;
 
     retVal.data = out;
     retVal.data_add = out_add;
+    out["props"] = props;
 
     //try get current NS
     if (item.type!==undefined) {
@@ -540,7 +548,8 @@ MicrodataJSON_Converter.prototype = {
        if (key==="properties") {
          i_props = val;
        }
-       else if (key==="id") {
+       else if (key==="id") 
+       {
          if (val.indexOf(':') === -1)
            val = ":"+val;
          out["s"]=val;
@@ -548,10 +557,6 @@ MicrodataJSON_Converter.prototype = {
        } 
        else if (key==="type") 
        {
-         if (!props)
-           out["props"] = {}
-         props = out["props"];
-
          if ($.isArray(val)) {
            for(var i=0; i<val.length; i++) {
              if (val[i].indexOf(':') === -1)
@@ -568,11 +573,8 @@ MicrodataJSON_Converter.prototype = {
          } 
          props[self.RDF_TYPE] = val;
        } 
-       else {
-         if (!props)
-           out["props"] = {}
-         props = out["props"];
-
+       else 
+       {
          if (key.indexOf(':') === -1)
             key = ":"+key;
 
