@@ -2,12 +2,14 @@
 var $ = jQuery;
 var items = 0;
 var json_ld_Text = null;
+var turtle_Text = null;
 
 var data = {
+             docURL: "http://",
              micro :{ jsonText:null }, 
              jsonld :{ text:null },
              rdfa :{  },
-             ttl :{  }
+             turtle :{ text:null }
            };
 
 
@@ -16,6 +18,8 @@ $(window).load(function() {
 
   items = $('[itemscope]').not($('[itemscope] [itemscope]'));
 
+  data.docURL = document.location.href;
+
   var all = document.getElementsByTagName("script");
   for( var i = 0; i < all.length; i++ ) {
     if ( all[i].hasAttribute('type') 
@@ -23,6 +27,16 @@ $(window).load(function() {
        {
          var htmlText = all[i].innerHTML;
          json_ld_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
+         break;
+       }
+  }
+
+  for( var i = 0; i < all.length; i++ ) {
+    if ( all[i].hasAttribute('type') 
+           && all[i].getAttribute('type') == "text/turtle")
+       {
+         var htmlText = all[i].innerHTML;
+         turtle_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
          break;
        }
   }
@@ -38,6 +52,7 @@ $(window).load(function() {
 
         data.micro.jsonText = microdata_Text;
         data.jsonld.text = json_ld_Text;
+        data.turtle.text = turtle_Text;
 
         chrome.extension.sendMessage(null, 
             { property: 'items.json', 
@@ -54,7 +69,10 @@ $(window).load(function() {
 
     // Tell the chrome extension that we're ready to receive messages
     var exists = false;
-    if (items.length > 0 || (json_ld_Text!=null && json_ld_Text.length>0))
+    if (items.length > 0 
+        || (json_ld_Text!=null && json_ld_Text.length>0)
+        || (turtle_Text!=null && turtle_Text.length>0)
+       )
       exists = true;
 
     chrome.extension.sendMessage(null, {

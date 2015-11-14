@@ -25,7 +25,6 @@ function s_startWith(str, val) {
 }
 
 
-
 if (!this.tmpl) {
   tmpl = function() {
     var converter = {
@@ -62,25 +61,35 @@ if (!this.tmpl) {
         ",
       load: function (json_text) {
         var expanded = null;
-        var items = $($.parseJSON(json_text));
-/**
-        if (items.length === 0) {
-          $('#metadata_viewer').append("<div id='metadata' />");
-          $('#metadata').append('<i>No data found.</i>');
-        } else {
-***/
+        var json_data = $.parseJSON(json_text);
 
-        if (items.length > 0 && 
-            typeof(items[0].items)!=="undefined" && 
-            typeof(items[0].items.length)!=="undefined" && 
-            items[0].items.length > 0) 
+        if (json_data!=null &&
+            typeof(json_data.items)!=="undefined" && 
+            typeof(json_data.items.length)!=="undefined" && 
+            json_data.items.length > 0) 
         {
           var item_id = 0;
-          items.each( function() {
+          for(var item_id=0; item_id < json_data.items.length; item_id++)
+            json_data.items[item_id].number = item_id;
 
-            var t = jsontemplate.Template(tmpl.converter.template, {more_formatters: more_formatters, undefined_str: ""});
-            var item_number = 0;
+          var t = jsontemplate.Template(tmpl.converter.template, {more_formatters: more_formatters, undefined_str: ""});
+          expanded = t.expand(json_data);
 
+          var tbl_start = "\
+                <table> \
+                  <tbody> \
+                  ";
+          var tbl_end = "\
+                  </tbody> \
+                </table> \
+                ";
+          if (expanded.length > 0)
+             expanded = tbl_start + expanded + tbl_end;
+
+        }
+        return expanded;
+
+//------internal function ------------        
             function more_formatters(formatter_name) {
               if (formatter_name === 'pairs') {
                 return rowize_pairs;
@@ -148,12 +157,19 @@ if (!this.tmpl) {
             }
 
             function f_type(value) {
-              var str = "";
-              $.each(value, function(key, val){
-                var pref = has_known_prefix(val);
-                var sval = (pref!=null) ? pref_link(val, pref) : check_link1(val);
-                str += "<tr class='major data_row'><td>type:</td><td>" + sval + "</td></tr>";
-              });
+              if ($.isArray(value)) 
+              { 
+                var str = "";
+                $.each(value, function(key, val){
+                  var pref = has_known_prefix(val);
+                  var sval = (pref!=null) ? pref_link(val, pref) : check_link1(val);
+                  str += "<tr class='major data_row'><td>type:</td><td>" + sval + "</td></tr>";
+                });
+              } else {
+                  var pref = has_known_prefix(value);
+                  var sval = (pref!=null) ? pref_link(value, pref) : check_link1(value);
+                  str += "<tr class='major data_row'><td>type:</td><td>" + sval + "</td></tr>";
+              }
 
               return str;
             }
@@ -163,7 +179,6 @@ if (!this.tmpl) {
               var sval = (pref!=null) ? pref_link(value, pref) : check_link1(value);
               return "<tr class='major data_row'><td>id:</td><td>" + sval + "</td></tr>";
             }
-
 
             function rowize_pairs(value) {
               var str = "";
@@ -176,6 +191,7 @@ if (!this.tmpl) {
                 if (String(val).indexOf('[object Object]') === 0) {
                    var v_item_data = null;
                    var v_item_typed_data = null;
+                   var v_item_type_without_data = null;
 
                    if ($.isArray(val) && val.length==1) {
                      var v = val[0];
@@ -193,6 +209,13 @@ if (!this.tmpl) {
                        else
                          v_item_typed_data = check_link1(v_value)+"("+check_link1(v_type)+")";
                      }
+                     else if (!v_id && v_type && !v_value && !v_properties) {
+                       var pref = has_known_prefix(v_type);
+                       if (pref)
+                         v_item_type_without_data = "("+pref_link(v_type,pref)+")";
+                       else
+                         v_item_type_without_data = "("+check_link1(v_type)+")";
+                     }
                    }
 
                    if (v_item_data) {
@@ -201,10 +224,22 @@ if (!this.tmpl) {
                    else if (v_item_typed_data) {
                      str += "<tr class='data_row'><td>" + key_str + "</td><td>"+v_item_typed_data+"</td></tr>";
                    }
+                   else if (v_item_type_without_data) {
+                     str += "<tr class='data_row'><td>" + key_str + "</td><td>"+v_item_type_without_data+"</td></tr>";
+                   }
                    else {
-                     item_id++;
-                     tables.push(t.expand({ items: val, number: ++item_number}));
-                     str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><i>ITEM " + item_id + "</i></td></tr>";
+                     if ($.isArray(val)) {
+                       for(var i=0; i < val.length; i++) {
+                         var cur_id = item_id++;
+                         tables.push(t.expand({ items: [val[i]], number: cur_id}));
+                         str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><i>ITEM " + cur_id + "</i></td></tr>";
+                       }
+                     }
+                     else { 
+                       var cur_id = item_id++;
+                       tables.push(t.expand({ items: val, number: cur_id}));
+                       str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><i>ITEM " + cur_id + "</i></td></tr>";
+                     }
                    }
                 }
                 else {
@@ -219,23 +254,7 @@ if (!this.tmpl) {
               str += tables.join("");
               return str;
             }
-
-            expanded = t.expand($.parseJSON(json_text));
-
-            var tbl_start = "\
-                  <table> \
-                    <tbody> \
-                    ";
-            var tbl_end = "\
-                    </tbody> \
-                  </table> \
-                  ";
-            if (expanded.length > 0)
-               expanded = tbl_start + expanded + tbl_end;
-
-          } );
-        }
-        return expanded;
+//------internal function ------------        
       }
     };
 

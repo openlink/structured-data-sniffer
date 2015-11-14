@@ -16,8 +16,8 @@ $(document).ready(function()
       selectTab('#jsonld');
       return false;
   });
-  $('#tabs a[href=#rdfa]').click(function(){
-      selectTab('#rdfa');
+  $('#tabs a[href=#turtle]').click(function(){
+      selectTab('#turtle');
       return false;
   });
 
@@ -34,6 +34,7 @@ $(document).ready(function()
           });
       }
     });
+
 });
 
 
@@ -119,10 +120,10 @@ function selectTab(tab)
     tab_id.removeClass('selected');
   }
 
-  tab_data = $('#rdfa_items');
-  tab_id = $('#tabs a[href=#rdfa]');
+  tab_data = $('#turtle_items');
+  tab_id = $('#tabs a[href=#turtle]');
 
-  if (tab==='#rdfa') {
+  if (tab==='#turtle') {
     tab_data.show()
     tab_id.addClass('selected');
   } else {
@@ -143,7 +144,7 @@ function show_Data()
 /**/
   var micro = false;
   var jsonld = false;
-  var rdfa = false;
+  var turtle = false;
 
 
   $('#micro_items').append("<div id='metadata_viewer' class='alignleft'/>");
@@ -167,20 +168,24 @@ function show_Data()
   else
       $('#jsonld_items #metadata_viewer').append("<div id='metadata'><i>No data found.</i></div>");
 
-  $('#rdfa_items').append("<div id='metadata_viewer' class='alignleft'/>");
-  if (gData.rdfa.expanded) {
-      $('#rdfa_items #metadata_viewer').append(gData.rdfa.expanded);
-      rdfa = true;
+  $('#turtle_items').append("<div id='metadata_viewer' class='alignleft'/>");
+  if (gData.turtle.expanded) {
+      $('#turtle_items #metadata_viewer').append(gData.turtle.expanded);
+      turtle = true;
+  }
+  else if (gData.turtle.error) {
+      $('#turtle_items #metadata_viewer').append("<div id='metadata'><i><p>Turtle discovered, but fails syntax checking by parser:<p>"+gData.turtle.error+"</i></div>");
+      turtle = true;
   }
   else
-      $('#rdfa_items #metadata_viewer').append("<div id='metadata'><i>No data found.</i></div>");
+      $('#turtle_items #metadata_viewer').append("<div id='metadata'><i>No data found.</i></div>");
 
   if (micro)
     selectTab('#micro');
   else if (jsonld)
     selectTab('#jsonld');
-  else if (rdfa)
-    selectTab('#rdfa');
+  else if (turtle)
+    selectTab('#turtle');
 
 
 
@@ -188,12 +193,167 @@ function show_Data()
     $('#tabs a[href=#micro]').hide();
   if (!jsonld)
     $('#tabs a[href=#jsonld]').hide();
-  if (!rdfa)
-    $('#tabs a[href=#rdfa]').hide();
-
-
+  if (!turtle)
+    $('#tabs a[href=#turtle]').hide();
 
   gData_showed = true;
+}
+
+
+function check_JSON_LD() 
+{
+    //// JSONLD
+  if (gData.jsonld.text && gData.jsonld.text.length > 0)
+  { 
+    var jsonld_data = null;
+    try {
+      jsonld_data = JSON.parse(gData.jsonld.text);
+    } catch(e) {
+      gData.jsonld.error = e; 
+    }
+
+    if (jsonld_data != null)
+    {
+      jsonld.expand(jsonld_data, function(err, expanded) 
+        {
+          if (err!=null) {
+            gData.jsonld.error = err.toString();
+          } 
+          else {
+          
+            var out = [];
+            for(var i=0; i < expanded.length; i++)
+            {
+               var item = expanded[i];
+               var row = jsonld_expand_item(item);
+               out.push(row);
+
+            }
+            var ex_json = {"items": out};
+            ////ADD Data to View
+            gData.jsonld.expanded = tmpl.converter.load(JSON.stringify(ex_json, undefined, 2));
+          }
+          check_Turtle();
+        });
+    }
+    else
+    {
+      check_Turtle();
+    }
+  }
+  else 
+  {
+    check_Turtle();
+  }
+}
+
+
+
+function check_Turtle() 
+{
+  var baseURI = gData.docURL;
+  
+  function fixNode(n) 
+  {
+     if ( n==="")
+         return baseURI;
+     else if (N3.Util.isIRI(n)) {
+       if (n==="")
+         return baseURI;
+       else if (n.substring(0,1)==="#") 
+         return baseURI+n;
+       else if (n.substring(0,1)===":") 
+         return baseURI+n;
+       else
+         return n;
+     } else {
+       return n;
+     }
+  }
+
+  
+  function conv_Turtle_2_NQuads(turtle)
+  {
+    var writer = N3.Writer({format:"application/nquads"});
+    var parser = N3.Parser();
+    parser.parse(turtle,
+       function (error, tr, prefixes) {
+         if (error) {
+           gData.turtle.error = error.toString();
+           show_Data();
+         }
+         else if (tr) {
+           writer.addTriple(fixNode(tr.subject), fixNode(tr.predicate), fixNode(tr.object));
+         }
+         else {
+           writer.end(function(error, result) {
+             if (error) {
+               gData.turtle.error = error.toString();
+               show_Data();
+             } else {
+               conv_NQuads_2_JSONLD(result);
+             }
+           });
+         }
+       });
+  }
+
+
+  function conv_NQuads_2_JSONLD(nquads)
+  {
+     jsonld.fromRDF(nquads, {format: 'application/nquads'}, 
+         function(error, doc) {
+           if (error) {
+             gData.turtle.error = error.toString();
+             show_Data();
+           }
+         else {
+           expand_JSONLD(doc);
+         }
+     });
+  }
+
+  function expand_JSONLD(jsonld_data)
+  {
+     if (jsonld_data != null)
+     {
+       jsonld.expand(jsonld_data, function(err, expanded) 
+         {
+           if (err!=null) {
+             gData.turtle.error = err.toString();
+           } 
+           else 
+           {
+             var out = [];
+             for(var i=0; i < expanded.length; i++)
+             {
+                var item = expanded[i];
+                var row = jsonld_expand_item(item);
+                out.push(row);
+             }
+             var ex_json = {"items": out};
+             ////ADD Data to View
+             gData.turtle.expanded = tmpl.converter.load(JSON.stringify(ex_json, undefined, 2));
+           }
+           show_Data();
+        });
+     }
+     else
+     {
+       show_Data();
+     }
+  }
+  
+
+  if (gData.turtle.text && gData.turtle.text.length > 0)
+  {
+    conv_Turtle_2_NQuads(gData.turtle.text);
+  }
+  else
+  {
+    show_Data();
+  }
+
 }
 
 
@@ -220,55 +380,13 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
     gData.jsonld.expanded = null;
     gData.jsonld.error = null;
     gData.rdfa.expanded = null;
-    gData.ttl.expanded = null;
+    gData.turtle.expanded = null;
+    gData.turtle.error = null;
 
     // Load up the template
     gData.micro.expanded = tmpl.converter.load(gData.micro.jsonText);
 
-    //// JSONLD
-    if (gData.jsonld.text && gData.jsonld.text.length > 0)
-    { 
-      var jsonld_data = null;
-      try {
-        jsonld_data = JSON.parse(gData.jsonld.text);
-      } catch(e) {
-        gData.jsonld.error = e; 
-      }
-
-      if (jsonld_data != null)
-      {
-        jsonld.expand(jsonld_data, function(err, expanded) 
-          {
-            if (err!=null) {
-              gData.jsonld.error = err.toString();
-            } 
-            else {
-            
-              var out = [];
-              for(var i=0; i < expanded.length; i++)
-              {
-                 var item = expanded[i];
-                 var row = jsonld_expand_item(item);
-                 out.push(row);
-
-              }
-              var ex_json = {"items": out};
-              ////ADD Data to View
-              gData.jsonld.expanded = tmpl.converter.load(JSON.stringify(ex_json, undefined, 2));
-            }
-            show_Data();
-          });
-      }
-      else
-      {
-        show_Data();
-      }
-    }
-    else 
-    {
-      show_Data();
-    }
-
+    check_JSON_LD();
 
   }
   else
