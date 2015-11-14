@@ -586,6 +586,21 @@ MicrodataJSON_Converter.prototype = {
      });
 
 
+      function expand_sub_item(parent, val) 
+      {
+         var rc = self.expand_item(val);
+         if (!rc.id) {
+           var bnode = self.new_bnode();
+           rc.id = bnode;
+           rc.data.s = bnode;
+         }
+         parent.push({ "iri" : rc.id });
+         out_add.push(rc.data);
+         for(var i=0; i<rc.data_add.length; i++)
+           out_add.push(rc.data_add[i]);
+      }
+
+    
     if (i_props) {
       $.each(i_props, function(key, val) 
       {
@@ -597,23 +612,15 @@ MicrodataJSON_Converter.prototype = {
         }
 
        var v = [];
-       if (String(val).indexOf('[object Object]') === 0) {
-         for(var i=0; i<val.length; i++) {
-           var rc = self.expand_item(val[0]);
-           if (!rc.id) {
-             var bnode = self.new_bnode();
-             rc.id = bnode;
-             rc.data.s = bnode;
-           }
-           v.push({ "iri" : rc.id });
-           out_add.push(rc.data);
-           for(var i=0; i<rc.data_add.length; i++)
-             out_add.push(rc.data_add[i]);
-         }
+       if (String(val).indexOf('[object Object]') === 0) //isArray lenght=1, el == Object
+       {
+         expand_sub_item(v, val[0]);
        }
        else {
          for(var i=0; i<val.length; i++) {
-           if (val[i].substring(0,7) ==="http://")
+           if (String(val[i]).indexOf('[object Object]') === 0) //isArray lenght=1, el == Object
+             expand_sub_item(v, val[i]); 
+           else if (val[i].substring(0,7) ==="http://")
              v.push({ "iri" : val[i]});
            else if (val[i].substring(0,8) ==="https://")
              v.push({ "iri" : val[i]});
