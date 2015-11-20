@@ -34,15 +34,6 @@ table.metadata > tbody > tr > td.major {
   font-weight: bold;
 }
 
-/**
-table.metadata > tbody > tr.data_row > td {
-  border-bottom: silver thin solid;
-}
-
-table.metadata > tbody > tr.data_row:last-child > td {
-  border-bottom: none;
-}
-**/
 
 
 /* ============================== */

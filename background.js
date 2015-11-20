@@ -24,8 +24,8 @@ $(document).ready(function()
 
   jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
 
-//  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
-  chrome.tabs.query({active:true}, function(tabs) {
+//  chrome.tabs.query({active:true}, function(tabs) {
+  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
         chrome.tabs.sendMessage(tabs[0].id, {
@@ -109,8 +109,8 @@ function show_Data()
       micro = true;
   }
   else if (gData.micro.error) {
-//      $('#micro_items #metadata_viewer').append("<div id='metadata'><i><p>Microdata discovered, but fails syntax checking by parser:<p>"+gData.micro.error+"</i></div>");
-      $('#micro_items #metadata_viewer').append("<div id='metadata'><i><p>Microdata discovered, but fails syntax checking by parser.<p></i></div>");
+      $('#micro_items #metadata_viewer').append("<div id='metadata'><i><p>Microdata discovered, but fails syntax checking by parser.<p><span id='micro_error'/></i></div>");
+      $('#micro_items #micro_error').text(gData.micro.error);
       micro = true;
   }
   else
@@ -123,7 +123,8 @@ function show_Data()
       jsonld = true;
   }
   else if (gData.jsonld.error) {
-      $('#jsonld_items #metadata_viewer').append("<div id='metadata'><i><p>JSON-LD discovered, but fails syntax checking by parser:<p>"+gData.jsonld.error+"</i></div>");
+      $('#jsonld_items #metadata_viewer').append("<div id='metadata'><i><p>JSON-LD discovered, but fails syntax checking by parser:<p><span id='jsonld_error'/></i></div>");
+      $('#jsonld_items #jsonld_error').text(gData.jsonld.error);
       jsonld = true;
   }
   else
@@ -136,18 +137,19 @@ function show_Data()
       turtle = true;
   }
   else if (gData.turtle.error) {
-      $('#turtle_items #metadata_viewer').append("<div id='metadata'><i><p>Turtle discovered, but fails syntax checking by parser:<p>"+gData.turtle.error+"</i></div>");
+      $('#turtle_items #metadata_viewer').append("<div id='metadata'><i><p>Turtle discovered, but fails syntax checking by parser:<p><span id='turtle_error'/></i></div>");
+      $('#turtle_items #turtle_error').text(gData.turtle.error);
       turtle = true;
   }
   else
       $('#turtle_items #metadata_viewer').append("<div id='metadata'><i>No data found.</i></div>");
 
 
-  if (micro)
+  if (micro && !gData.micro.error)
     selectTab('#micro');
-  else if (jsonld)
+  else if (jsonld && !gData.jsonld.error)
     selectTab('#jsonld');
-  else if (turtle)
+  else if (turtle && !gData.turtle.error)
     selectTab('#turtle');
 
 
@@ -197,7 +199,7 @@ function check_JSON_LD()
     handler.parse(gData.jsonld.text, 
       function(error, html_data) {
         if (error)
-          gData.jsonld.error = error.toString();
+          gData.jsonld.error = error;
         else
           gData.jsonld.expanded = html_data;
 
@@ -221,7 +223,7 @@ function check_Turtle()
     handler.parse(gData.turtle.text, gData.docURL, 
       function(error, html_data) {
         if (error)
-          gData.turtle.error = error.toString();
+          gData.turtle.error = error;
         else
           gData.turtle.expanded = html_data;
 
@@ -240,23 +242,16 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
 {
   if (request.property == "status")
   {
-//====================
     var show_action = request.data_exists;
     if (show_action)
       chrome.pageAction.show(sender.tab.id);
     else
       chrome.pageAction.hide(sender.tab.id);
-/***
-    chrome.tabs.query({active:true}, function(tabs) {
-       if (tabs.length>0) {
-          if (show_action)
-            chrome.pageAction.show(tabs[0].id);
-          else
-            chrome.pageAction.hide(tabs[0].id);
-       }
-      });
-***/
-//======================
+
+    chrome.tabs.sendMessage(sender.tab.id, 
+        { property: 'items.json' }, 
+        function(response) {
+        });
   } 
   else if (request.property == "items.json")
   {
@@ -327,8 +322,8 @@ Handle_Turtle.prototype = {
       parser.parse(textData,
         function (error, tr, prefixes) {
           if (error) {
-            self.error = error.toString();
-            self.callback(this.error, null);
+            self.error = ""+error;
+            self.callback(self.error, null);
           }
           else if (tr) {
             store.addTriple(self.fixNode(tr.subject), 
@@ -385,19 +380,19 @@ Handle_JSONLD.prototype = {
         jsonld.expand(jsonld_data, 
           function(err, expanded) {
             if (err) {
-              self.callback(err.toString(), null);
+              self.callback(""+err, null);
             }
             else {
-              jsonld.toRDF(jsonld_data, {format: 'application/nquads'}, 
+              jsonld.toRDF(expanded, {format: 'application/nquads'}, 
                 function(err, nquads) {
                   if (err) {
-                    self.callback(err.toString(), null);
+                    self.callback(""+err, null);
                   }
                   else {
                     var handler = new Handle_Turtle();
                     handler.parse(nquads, gData.docURL, function(error, html_data) {
                       if (error) {
-                        self.callback(err.toString(), null);
+                        self.callback(""+error, null);
                       }
                       else {
                         self.callback(null, html_data);
