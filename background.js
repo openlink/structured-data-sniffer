@@ -20,6 +20,10 @@ $(document).ready(function()
       selectTab('#turtle');
       return false;
   });
+  $('#tabs a[href=#rdfa]').click(function(){
+      selectTab('#rdfa');
+      return false;
+  });
 
 
   jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
@@ -29,7 +33,7 @@ $(document).ready(function()
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
         chrome.tabs.sendMessage(tabs[0].id, {
-            property: 'items.json'
+            property: 'doc_data'
           }, 
           function(response) {
           });
@@ -87,62 +91,83 @@ function selectTab(tab)
     tab_id.removeClass('selected');
   }
 
+  tab_data = $('#rdfa_items');
+  tab_id = $('#tabs a[href=#rdfa]');
+
+  if (tab==='#rdfa') {
+    tab_data.show()
+    tab_id.addClass('selected');
+  } else {
+    tab_data.hide()
+    tab_id.removeClass('selected');
+  }
+
 }
 
 
 
 function show_Data()
 {
-//  $('body').prepend("<div id='metadata_viewer' class='alignleft'/>");
-//  $('#metadata_viewer').append(gData.micro_expanded);
-
-//  $('.content').prepend("<div id='metadata_viewer' class='alignleft'/>");
-/**/
   var micro = false;
   var jsonld = false;
   var turtle = false;
+  var rdfa = false;
 
 
-  $('#micro_items').append("<div id='metadata_viewer' class='alignleft'/>");
+  $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
   if (gData.micro.expanded) {
-      $('#micro_items #metadata_viewer').append(gData.micro.expanded);
+      $('#micro_items #docdata_view').append(gData.micro.expanded);
       micro = true;
   }
   else if (gData.micro.error) {
-      $('#micro_items #metadata_viewer').append("<div id='metadata'><i><p>Microdata discovered, but fails syntax checking by parser.<p><span id='micro_error'/></i></div>");
+      $('#micro_items #docdata_view').append("<div id='docdata'><i><p>Microdata discovered, but fails syntax checking by parser.<p><span id='micro_error'/></i></div>");
       $('#micro_items #micro_error').text(gData.micro.error);
       micro = true;
   }
   else
-      $('#micro_items #metadata_viewer').append("<div id='metadata'><i>No data found.</i></div>");
+      $('#micro_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
 
 
-  $('#jsonld_items').append("<div id='metadata_viewer' class='alignleft'/>");
+  $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
   if (gData.jsonld.expanded) {
-      $('#jsonld_items #metadata_viewer').append(gData.jsonld.expanded);
+      $('#jsonld_items #docdata_view').append(gData.jsonld.expanded);
       jsonld = true;
   }
   else if (gData.jsonld.error) {
-      $('#jsonld_items #metadata_viewer').append("<div id='metadata'><i><p>JSON-LD discovered, but fails syntax checking by parser:<p><span id='jsonld_error'/></i></div>");
+      $('#jsonld_items #docdata_view').append("<div id='docdata'><i><p>JSON-LD discovered, but fails syntax checking by parser:<p><span id='jsonld_error'/></i></div>");
       $('#jsonld_items #jsonld_error').text(gData.jsonld.error);
       jsonld = true;
   }
   else
-      $('#jsonld_items #metadata_viewer').append("<div id='metadata'><i>No data found.</i></div>");
+      $('#jsonld_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
 
 
-  $('#turtle_items').append("<div id='metadata_viewer' class='alignleft'/>");
+  $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
   if (gData.turtle.expanded) {
-      $('#turtle_items #metadata_viewer').append(gData.turtle.expanded);
+      $('#turtle_items #docdata_view').append(gData.turtle.expanded);
       turtle = true;
   }
   else if (gData.turtle.error) {
-      $('#turtle_items #metadata_viewer').append("<div id='metadata'><i><p>Turtle discovered, but fails syntax checking by parser:<p><span id='turtle_error'/></i></div>");
+      $('#turtle_items #docdata_view').append("<div id='docdata'><i><p>Turtle discovered, but fails syntax checking by parser:<p><span id='turtle_error'/></i></div>");
       $('#turtle_items #turtle_error').text(gData.turtle.error);
       turtle = true;
   }
   else
-      $('#turtle_items #metadata_viewer').append("<div id='metadata'><i>No data found.</i></div>");
+      $('#turtle_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
+
+
+  $('#rdfa_items').append("<div id='docdata_view' class='alignleft'/>");
+  if (gData.rdfa.expanded) {
+      $('#rdfa_items #docdata_view').append(gData.rdfa.expanded);
+      rdfa = true;
+  }
+  else if (gData.rdfa.error) {
+      $('#rdfa_items #docdata_view').append("<div id='docdata'><i><p>RDFa discovered, but fails syntax checking by parser:<p><span id='rdfa_error'/></i></div>");
+      $('#rdfa_items #rdfa_error').text(gData.rdfa.error);
+      rdfa = true;
+  }
+  else
+      $('#rdfa_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
 
 
   if (micro && !gData.micro.error)
@@ -151,6 +176,8 @@ function show_Data()
     selectTab('#jsonld');
   else if (turtle && !gData.turtle.error)
     selectTab('#turtle');
+  else if (rdfa && !gData.rdfa.error)
+    selectTab('#rdfa');
 
 
 
@@ -160,6 +187,8 @@ function show_Data()
     $('#tabs a[href=#jsonld]').hide();
   if (!turtle)
     $('#tabs a[href=#turtle]').hide();
+  if (!rdfa)
+    $('#tabs a[href=#rdfa]').hide();
 
   gData_showed = true;
 }
@@ -168,10 +197,10 @@ function show_Data()
 
 function check_Microdata() 
 {
-  if (gData.micro.jsonText && gData.micro.jsonText.length > 0)
+  if (gData.micro.data)
   {
     var handler = new Handle_Microdata();
-    handler.parse(gData.micro.jsonText, gData.docURL,
+    handler.parse(gData.micro.data, gData.docURL,
       function(error, html_data) 
       {
         if (error)
@@ -227,6 +256,29 @@ function check_Turtle()
         else
           gData.turtle.expanded = html_data;
 
+        check_RDFa();
+    });
+  }
+  else
+  {
+    check_RDFa();
+  }
+}
+
+
+
+function check_RDFa() 
+{
+  if (gData.rdfa.data)
+  {
+    var handler = new Handle_RDFa();
+    handler.parse(gData.rdfa.data, 
+      function(error, html_data) {
+        if (error)
+          gData.rdfa.error = error;
+        else
+          gData.rdfa.expanded = html_data;
+
         show_Data();
     });
   }
@@ -249,11 +301,11 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
       chrome.pageAction.hide(sender.tab.id);
 
     chrome.tabs.sendMessage(sender.tab.id, 
-        { property: 'items.json' }, 
+        { property: 'doc_data' }, 
         function(response) {
         });
   } 
-  else if (request.property == "items.json")
+  else if (request.property == "doc_data")
   {
     gData = $.parseJSON(request.data);
     gData.micro.expanded = null;
@@ -263,6 +315,8 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
     gData.rdfa.expanded = null;
     gData.turtle.expanded = null;
     gData.turtle.error = null;
+    gData.rdfa.expanded = null;
+    gData.rdfa.error = null;
 
     check_Microdata();
 
@@ -276,370 +330,6 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
 
 
 
-Handle_Microdata = function () {
-  var callback = null;
-  var error = null;
-};
-
-Handle_Microdata.prototype = {
-  parse : function(textData, docURL, callback) {
-    this.callback = callback;
-    var self = this;
-    try 
-    {
-      var jsonData = $.parseJSON(textData);
-      var conv = new MicrodataJSON_Converter();
-      var out_data = conv.transform(jsonData, docURL);
-
-      var html_data = new Tmpl2().load(out_data);
-      self.callback(null, html_data);
-    } 
-    catch (ex) {
-      self.callback(ex.toString(), null);
-    }
-  }
-
-}
 
 
 
-Handle_Turtle = function () {
-  var callback = null;
-  var error = null;
-  var baseURI = null;
-};
-
-Handle_Turtle.prototype = {
-
-  parse : function(textData, docURL, callback) {
-    this.callback = callback;
-    this.baseURI = docURL;
-
-    var store = new N3DataConverter();
-    var parser = N3.Parser();
-    var self = this;
-    try {
-      parser.parse(textData,
-        function (error, tr, prefixes) {
-          if (error) {
-            self.error = ""+error;
-            self.callback(self.error, null);
-          }
-          else if (tr) {
-            store.addTriple(self.fixNode(tr.subject), 
-                            self.fixNode(tr.predicate), 
-                            self.fixNode(tr.object));
-          }
-          else {
-            var str = new Tmpl2().load(store.output);
-            self.callback(null, str);
-          }
-        });
-    } catch (ex) {
-      self.callback(ex.toString(), null);
-    }
-  },
-
-
-  fixNode : function (n) 
-  {
-     if ( n==="")
-         return this.baseURI;
-     else if (N3.Util.isIRI(n)) {
-       if (n==="")
-         return this.baseURI;
-       else if (n.substring(0,1)==="#") 
-         return this.baseURI+n;
-       else if (n.substring(0,1)===":") 
-         return this.baseURI+n;
-       else
-         return n;
-     } else {
-       return n;
-     }
-  }
-
-}
-
-
-
-
-Handle_JSONLD = function () {
-  var callback = null;
-  var error = null;
-};
-
-Handle_JSONLD.prototype = {
-
-  parse : function(textData, callback) {
-    this.callback = callback;
-    var self = this;
-    try {
-      jsonld_data = JSON.parse(textData);
-      if (jsonld_data != null) {
-        jsonld.expand(jsonld_data, 
-          function(err, expanded) {
-            if (err) {
-              self.callback(""+err, null);
-            }
-            else {
-              jsonld.toRDF(expanded, {format: 'application/nquads'}, 
-                function(err, nquads) {
-                  if (err) {
-                    self.callback(""+err, null);
-                  }
-                  else {
-                    var handler = new Handle_Turtle();
-                    handler.parse(nquads, gData.docURL, function(error, html_data) {
-                      if (error) {
-                        self.callback(""+error, null);
-                      }
-                      else {
-                        self.callback(null, html_data);
-                      }
-                    });
-                  }
-              });
-            }
-          })
-      }
-      else
-        self.callback(null, null);
-    } catch (ex) {
-      self.callback(ex.toString(), null);
-    }
-  }
-
-
-}
-
-
-
-
-
-
-
-
-
-function N3DataConverter(options) {
-  this._LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
-  this.RDF_PREFIX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
-  this.RDF_TYPE   = this.RDF_PREFIX + 'type';
-  this.output = [];
-}
-
-N3DataConverter.prototype = {
-  addTriple: function (subj, pred, obj) 
-  {
-      var s = null;
-
-      for(var i=0; i < this.output.length; i++)
-        if (this.output[i].s === subj) {
-          s = this.output[i];
-          break;
-        }
-
-      if (s == null) {
-        s = {s:subj, n: this.output.length+1};
-        this.output.push(s);
-      }
-
-      if (s.props === undefined) 
-        s.props = new Object();
-      
-      var p = s.props[pred];
-      if  (p === undefined) {
-         s.props[pred] = [];
-      }
-
-      p = s.props[pred];
-
-      if (obj[0] !=='"') {
-        p.push({iri :obj});
-      }
-      else {
-        var match = this._LiteralMatcher.exec(obj);
-        if (!match) throw new Error('Invalid literal: ' + obj);
-        p.push({
-             value:match[1], 
-             type:match[2], 
-             llang:match[3]});
-      }
-  }
-}
-
-
-function MicrodataJSON_Converter(options) {
-  this._LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
-  this.RDF_PREFIX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
-  this.RDF_TYPE   = this.RDF_PREFIX + 'type';
-  this.output = [];
-  this.last_Bnode = 0;
-  this.baseURI;
-}
-
-MicrodataJSON_Converter.prototype = {
-  transform: function (json, baseURI) 
-  {
-      this.baseURI = baseURI;
-      var self = this;
-      var out = [];
-
-      for(var i=0; i < json.items.length; i++)
-      {
-        var item = json.items[i];
-        var rc = this.expand_item(item);
-        out.push(rc.data);
-        out = out.concat(rc.data_add);
-      }
-
-      for(var i=0; i < out.length; i++)
-      {
-        out[i]["n"] = i+1;
-        if (!out[i].s)
-          out[i]["s"] = baseURI;
-      }
-
-      return out;
-  },
-
-  new_bnode : function() 
-  {
-    this.last_Bnode++;
-    return "_:bb"+this.last_Bnode;
-  },
-
-  expand_item : function(item) 
-  {
-    var self =this;
-    var out = { };
-    var out_add = [];
-    var retVal = { id:null, data:{}, data_add:[] };
-    var i_props = null;
-    var props = {};
-    var id_ns = null;
-
-    retVal.data = out;
-    retVal.data_add = out_add;
-    out["props"] = props;
-
-    //try get current NS
-    if (item.type!==undefined) {
-      var ns_list = new Namespace();
-      if ($.isArray(item.type)) {
-        for(var i=0; i<item.type.length; i++) {
-          id_ns = ns_list.has_known_ns(String(item.type[i]));
-          if (id_ns)
-            break;
-        }
-      } else {
-        id_ns = ns_list.has_known_ns(String(item.type));
-      }
-    }
-
-
-    $.each(item, function(key, val) 
-     {
-       if (key==="properties") {
-         i_props = val;
-       }
-       else if (key==="id") 
-       {
-         if (val.indexOf(':') === -1)
-           val = ":"+val;
-         out["s"]=val;
-         retVal.id = val;
-       } 
-       else if (key==="type") 
-       {
-         if ($.isArray(val)) {
-           for(var i=0; i<val.length; i++) {
-             if (val[i].indexOf(':') === -1)
-               val[i] = { "iri" : ":"+val[i]};
-             else
-               val[i] = { "iri" : val[i]};
-           } 
-         } 
-         else {
-           if (val.indexOf(':') === -1)
-               val = [{ "iri" : ":"+val}];
-           else
-               val = [{ "iri" : val}];
-         } 
-         props[self.RDF_TYPE] = val;
-       } 
-       else 
-       {
-         if (key.indexOf(':') === -1)
-            key = ":"+key;
-
-         if ($.isArray(val))
-           props[key]=val;
-         else
-           props[key]=[val];
-       }
-     });
-
-
-      function expand_sub_item(parent, val) 
-      {
-         var rc = self.expand_item(val);
-         if (!rc.id) {
-           var bnode = self.new_bnode();
-           rc.id = bnode;
-           rc.data.s = bnode;
-         }
-         parent.push({ "iri" : rc.id });
-         out_add.push(rc.data);
-         for(var i=0; i<rc.data_add.length; i++)
-           out_add.push(rc.data_add[i]);
-      }
-
-    
-    if (i_props) {
-      $.each(i_props, function(key, val) 
-      {
-        if (key.indexOf(':') === -1) {
-          if (id_ns) 
-            key = id_ns.link+key;
-          else
-            key = ":"+key;
-        }
-
-       var v = [];
-       if (String(val).indexOf('[object Object]') === 0) //isArray lenght=1, el == Object
-       {
-         expand_sub_item(v, val[0]);
-       }
-       else {
-         for(var i=0; i<val.length; i++) {
-           if (String(val[i]).indexOf('[object Object]') === 0) //isArray lenght=1, el == Object
-             expand_sub_item(v, val[i]); 
-           else if (val[i].substring(0,7) ==="http://")
-             v.push({ "iri" : val[i]});
-           else if (val[i].substring(0,8) ==="https://")
-             v.push({ "iri" : val[i]});
-           else
-             v.push({ "value" : val[i]}); //??todo parse literal
-/**
-      else {
-        var match = this._LiteralMatcher.exec(obj);
-        if (!match) throw new Error('Invalid literal: ' + obj);
-        p.push({
-             value:match[1], 
-             type:match[2], 
-             llang:match[3]});
-      }
-****/
-
-         }
-       }
-       props[key] = v;
-        
-      });
-    }
-
-    return retVal;
-  }
-
-}

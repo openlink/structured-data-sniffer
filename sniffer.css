@@ -1,10 +1,12 @@
-#metadata_viewer{
+#docdata_view{
+/**
   float:left;
   clear:both;
   z-index: 10000;
+**/
 }
 
-table.metadata {
+table.docdata {
   border: 1px solid #000;
   width:615px;
   table-layout: fixed;
@@ -12,51 +14,30 @@ table.metadata {
   word-wrap:break-word;
 }
 
-table.metadata > tbody {
+table.docdata > tbody {
   border: none;
 }
-table.metadata td {
+table.docdata td {
   vertical-align: top;
   color: #000;
 }
-table.metadata > tbody > tr > td:first-child {
+table.docdata > tbody > tr > td:first-child {
   min-width: 200px;
   width: 200px;
 }
-table.metadata > tbody > tr > td:first-child {
+table.docdata > tbody > tr > td:first-child {
   padding-left: 20px;
 }
-table.metadata > tbody > tr.major > td:first-child {
+table.docdata > tbody > tr.major > td:first-child {
   font-weight: bold;
   padding-left: 10px;
 }
-table.metadata > tbody > tr > td.major {
+table.docdata > tbody > tr > td.major {
   font-weight: bold;
 }
 
 
 
-/* ============================== */
-
-.metadata_source_view{
-  float:right;
-  padding-top: 10px;
-  padding-right: 6px;
-  font-size:11px;
-}
-
-.metadata_source_view a {
-  text-decoration:none;
-  color:#fff;
-}
-
-.metadata_source_view a:hover {
-  color:#99bbff;
-}
-
-
-
-/* =================================== */
 body {
     width: 620px;
     height: 580px;
@@ -66,8 +47,8 @@ body {
 div.content {
     overflow: auto;
     width: 615px;
-    height: 550px;
-    border: 1px solid lightgray; 
+    height: 530px;
+    border: 1px solid lightgray;
 }
 
 
@@ -75,6 +56,23 @@ div#header {
     height: 15px;
 }
 
+
+
+.import {
+    width: 100%;
+    height: 10px;
+}
+
+.top {
+    width: 100%;
+    height: 5px;
+}
+
+.import_btn {
+    position: absolute;
+    right: 25px;
+    top: 8px;
+}
 
 
 .copyright_right {

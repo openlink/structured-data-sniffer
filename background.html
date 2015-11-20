@@ -7,17 +7,26 @@
         <script type="text/javascript" src="lib/jsonld.js"></script>
         <script type="text/javascript" src="lib/n3-browser.min.js"></script>
         <script type="text/javascript" src="background.js"></script>
-        <script type="text/javascript" src="tmpl.data.js"></script>
+        <script type="text/javascript" src="handlers.js"></script>
+        <script type="text/javascript" src="html_gen.js"></script>
         <link rel="stylesheet" href="sniffer.css" />
 
     </head>
     <body>
+
+      <div class="top"></div>
+<!--
+      <div class="import_btn">
+	 <input value="Import" onclick="Import_Doc();" type="button">
+      </div>
+-->
 
       <div id="header">
         <ul id="tabs">
           <li><a href="#micro">Microdata</a></li>
           <li><a href="#jsonld">JSON-LD</a></li>
           <li><a href="#turtle">Turtle</a></li>
+          <li><a href="#rdfa">RDFa</a></li>
         </ul>
       </div>
 
@@ -26,6 +35,7 @@
         <div id="micro_items"></div>
         <div id="jsonld_items"></div>
         <div id="turtle_items"></div>
+        <div id="rdfa_items"></div>
 
       </div>
 
@@ -44,8 +54,3 @@
       </table>
     </body>
 </html>
-<!--
-1. version and build date
-2. product home page link -- for now http://ode.openlinksw.com 
-3. anchor OpenLink Software with -- http://www.openlinksw.cm
--->

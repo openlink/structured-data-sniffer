@@ -1,14 +1,15 @@
 
 var $ = jQuery;
-var items = 0;
+var micro_items = 0;
 var json_ld_Text = null;
 var turtle_Text = null;
+var rdfa_subjects = null;
 
-var data = {
+var docData = {
              docURL: "http://",
-             micro :{ jsonText:null }, 
+             micro :{ data:null }, 
              jsonld :{ text:null },
-             rdfa :{  },
+             rdfa :{ data:null },
              turtle :{ text:null }
            };
 
@@ -16,9 +17,13 @@ var data = {
 $(window).load(function() {
 
 
-  items = $('[itemscope]').not($('[itemscope] [itemscope]'));
+  micro_items = $('[itemscope]').not($('[itemscope] [itemscope]'));
 
-  data.docURL = document.location.href;
+  docData.docURL = document.location.href;
+
+  GreenTurtle.attach(document);
+  rdfa_subjects = document.data.getSubjects();
+
 
   var all = document.getElementsByTagName("script");
   for( var i = 0; i < all.length; i++ ) {
@@ -46,17 +51,52 @@ $(window).load(function() {
 
     // Add the listener for messages from the chrome extension.
     chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
-      if (request.property == "items.json") 
+      if (request.property == "doc_data") 
       {
-        var microdata_Text = jQuery.microdata.json(items, function(o) { return JSON.stringify(o, undefined, 2); });
+        var microdata = jQuery.microdata.json(micro_items, function(o) { return o; });
+        var rdfa = null;
 
-        data.micro.jsonText = microdata_Text;
-        data.jsonld.text = json_ld_Text;
-        data.turtle.text = turtle_Text;
+        ///Convert RDFa data to internal format
+        if (rdfa_subjects!=null && rdfa_subjects.length>0) {
+           rdfa = [];
+           var _LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
+
+
+           for(var i=0; i<rdfa_subjects.length; i++) {
+             var s = {s:rdfa_subjects[i], n:i+1};
+             rdfa.push(s);
+             var plist = document.data.getProperties(rdfa_subjects[i]);
+             s.props = new Object();
+            
+             for(var j=0; j < plist.length; j++) {
+               var p = s.props[plist[j]];
+               if (p === undefined)
+                 s.props[plist[j]] = [];
+
+               p = s.props[plist[j]];
+
+               var vlist = document.data.getObjects(rdfa_subjects[i], plist[j]);
+               for (var z=0; z<vlist.length; z++) {
+                 var v = vlist[z];
+                 if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#object")
+                   p.push({"iri": v.value});
+                 else if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral")
+                   p.push({value:v.value, type:null, lang:v.language});
+                 else
+                   p.push({value:v.value, type:v.type, lang:v.language});
+               }
+             }
+           } 
+        }
+
+        docData.micro.data = microdata;
+        docData.jsonld.text = json_ld_Text;
+        docData.turtle.text = turtle_Text;
+        docData.rdfa.data = rdfa;
 
         chrome.extension.sendMessage(null, 
-            { property: 'items.json', 
-              data: JSON.stringify(data, undefined, 2)
+            { property: "doc_data", 
+              data: JSON.stringify(docData, undefined, 2)
             }, 
             function(response) {
             });
@@ -69,14 +109,15 @@ $(window).load(function() {
 
     // Tell the chrome extension that we're ready to receive messages
     var exists = false;
-    if (items.length > 0 
+    if (micro_items.length > 0 
         || (json_ld_Text!=null && json_ld_Text.length>0)
         || (turtle_Text!=null && turtle_Text.length>0)
+        || (rdfa_subjects!=null && rdfa_subjects.length>0)
        )
       exists = true;
 
     chrome.extension.sendMessage(null, {
-               property: 'status', 
+               property: "status", 
                status: 'ready',
                data_exists: exists
            }, 
