@@ -80,7 +80,8 @@ Namespace = function() {
 
          "rsa": "http://www.w3.org/ns/auth/rsa#",
         "cert": "http://www.w3.org/ns/auth/cert#",
-     "oplcert": "http://www.openlinksw.com/schemas/cert#"
+     "oplcert": "http://www.openlinksw.com/schemas/cert#",
+     "twitter": "https://dev.twitter.com/cards/markup#>"
   };
 }
 /****/

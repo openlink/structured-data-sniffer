@@ -35,7 +35,7 @@
                 </tr> \
               </thead> \
               <tbody> \
-                <tr class='major'><td>Entity"+item.n+"</td><td></td></tr> \
+                <tr class='major'><td>Statement #"+item.n+"</td><td></td></tr> \
                 ";
           str += this.format_id(item.s, id_list);
           str += this.format_props(item.props, id_list);
@@ -80,7 +80,7 @@
             var iri = obj.iri;
             var entity_id = id_list[iri];
             if (entity_id!==undefined && iri[0]==="_" && iri[1]===":") {
-              str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><i>Entity" + entity_id + "</i></td></tr>";
+              str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><i>Statement #" + entity_id + "</i></td></tr>";
             }
             else {
               var pref = self.ns.has_known_ns(obj.iri);
@@ -111,7 +111,7 @@
       if (str.length > 0)
         return "\
           <tr class='major'> \
-            <td>Properties</td><td></td> \
+            <td>Attributes</td><td></td> \
           </tr> \
            " + str;
       else
@@ -127,7 +127,7 @@
        else {
          var pref = this.ns.has_known_ns(value);
          var sval = (pref!=null) ? this.pref_link(value, pref) : this.check_link(value);
-         return "<tr class='major data_row'><td>ID</td><td>" + sval + "</td></tr>";
+         return "<tr class='major data_row'><td>Entity</td><td>" + sval + "</td></tr>";
        }
     },
 

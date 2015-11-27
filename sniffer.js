@@ -16,38 +16,37 @@ var docData = {
 
 $(window).load(function() {
 
-
-  micro_items = $('[itemscope]').not($('[itemscope] [itemscope]'));
-
-  docData.docURL = document.location.href;
-
-  GreenTurtle.attach(document);
-  rdfa_subjects = document.data.getSubjects();
-
-
-  var all = document.getElementsByTagName("script");
-  for( var i = 0; i < all.length; i++ ) {
-    if ( all[i].hasAttribute('type') 
-           && all[i].getAttribute('type') == "application/ld+json")
-       {
-         var htmlText = all[i].innerHTML;
-         json_ld_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
-         break;
-       }
-  }
-
-  for( var i = 0; i < all.length; i++ ) {
-    if ( all[i].hasAttribute('type') 
-           && all[i].getAttribute('type') == "text/turtle")
-       {
-         var htmlText = all[i].innerHTML;
-         turtle_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
-         break;
-       }
-  }
-
-
   try {
+
+    micro_items = $('[itemscope]').not($('[itemscope] [itemscope]'));
+
+    docData.docURL = document.location.href;
+
+    GreenTurtle.attach(document);
+    rdfa_subjects = document.data.getSubjects();
+
+
+    var all = document.getElementsByTagName("script");
+    for( var i = 0; i < all.length; i++ ) {
+      if ( all[i].hasAttribute('type') 
+           && all[i].getAttribute('type') == "application/ld+json")
+        {
+          var htmlText = all[i].innerHTML;
+          json_ld_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
+          break;
+        }
+    }
+
+    for( var i = 0; i < all.length; i++ ) {
+      if ( all[i].hasAttribute('type') 
+           && all[i].getAttribute('type') == "text/turtle")
+        {
+          var htmlText = all[i].innerHTML;
+          turtle_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
+          break;
+        }
+    }
+
 
     // Add the listener for messages from the chrome extension.
     chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
@@ -79,11 +78,11 @@ $(window).load(function() {
                for (var z=0; z<vlist.length; z++) {
                  var v = vlist[z];
                  if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#object")
-                   p.push({"iri": v.value});
+                   p.push({"iri": String(v.value)});
                  else if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral")
-                   p.push({value:v.value, type:null, lang:v.language});
+                   p.push({value:String(v.value), type:null, lang:String(v.language)});
                  else
-                   p.push({value:v.value, type:v.type, lang:v.language});
+                   p.push({value:String(v.value), type:String(v.type), lang:String(v.language)});
                }
              }
            } 
