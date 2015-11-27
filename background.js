@@ -3,7 +3,6 @@
 var icon_active   = 'icon48.png';
 var items;
 var $ = jQuery;
-var gData = null;
 var gData_showed = false;
 
 $(document).ready(function() 
@@ -28,7 +27,6 @@ $(document).ready(function()
 
   jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
 
-//  chrome.tabs.query({active:true}, function(tabs) {
   chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
@@ -46,12 +44,6 @@ $(document).ready(function()
 // Trap any link clicks and open them in the current tab.
 $('a').live('click', function(e) {
   var href = e.currentTarget.href;
-
-//  chrome.tabs.query({active:true}, function(tabs) {
-//      if (tabs.length > 0)
-//        chrome.tabs.update(tabs[0].id, {url: href});
-//    });
-//  window.close(); /* close popup */
   window.open(href);
 });
 
@@ -106,7 +98,7 @@ function selectTab(tab)
 
 
 
-function show_Data()
+function show_Data(dData)
 {
   var micro = false;
   var jsonld = false;
@@ -115,13 +107,13 @@ function show_Data()
 
 
   $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (gData.micro.expanded) {
-      $('#micro_items #docdata_view').append(gData.micro.expanded);
+  if (dData.micro.expanded) {
+      $('#micro_items #docdata_view').append(dData.micro.expanded);
       micro = true;
   }
-  else if (gData.micro.error) {
+  else if (dData.micro.error) {
       $('#micro_items #docdata_view').append("<div id='docdata'><i><p>Microdata discovered, but fails syntax checking by parser.<p><span id='micro_error'/></i></div>");
-      $('#micro_items #micro_error').text(gData.micro.error);
+      $('#micro_items #micro_error').text(dData.micro.error);
       micro = true;
   }
   else
@@ -129,13 +121,13 @@ function show_Data()
 
 
   $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (gData.jsonld.expanded) {
-      $('#jsonld_items #docdata_view').append(gData.jsonld.expanded);
+  if (dData.jsonld.expanded) {
+      $('#jsonld_items #docdata_view').append(dData.jsonld.expanded);
       jsonld = true;
   }
-  else if (gData.jsonld.error) {
+  else if (dData.jsonld.error) {
       $('#jsonld_items #docdata_view').append("<div id='docdata'><i><p>JSON-LD discovered, but fails syntax checking by parser:<p><span id='jsonld_error'/></i></div>");
-      $('#jsonld_items #jsonld_error').text(gData.jsonld.error);
+      $('#jsonld_items #jsonld_error').text(dData.jsonld.error);
       jsonld = true;
   }
   else
@@ -143,13 +135,13 @@ function show_Data()
 
 
   $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (gData.turtle.expanded) {
-      $('#turtle_items #docdata_view').append(gData.turtle.expanded);
+  if (dData.turtle.expanded) {
+      $('#turtle_items #docdata_view').append(dData.turtle.expanded);
       turtle = true;
   }
-  else if (gData.turtle.error) {
+  else if (dData.turtle.error) {
       $('#turtle_items #docdata_view').append("<div id='docdata'><i><p>Turtle discovered, but fails syntax checking by parser:<p><span id='turtle_error'/></i></div>");
-      $('#turtle_items #turtle_error').text(gData.turtle.error);
+      $('#turtle_items #turtle_error').text(dData.turtle.error);
       turtle = true;
   }
   else
@@ -157,26 +149,26 @@ function show_Data()
 
 
   $('#rdfa_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (gData.rdfa.expanded) {
-      $('#rdfa_items #docdata_view').append(gData.rdfa.expanded);
+  if (dData.rdfa.expanded) {
+      $('#rdfa_items #docdata_view').append(dData.rdfa.expanded);
       rdfa = true;
   }
-  else if (gData.rdfa.error) {
+  else if (dData.rdfa.error) {
       $('#rdfa_items #docdata_view').append("<div id='docdata'><i><p>RDFa discovered, but fails syntax checking by parser:<p><span id='rdfa_error'/></i></div>");
-      $('#rdfa_items #rdfa_error').text(gData.rdfa.error);
+      $('#rdfa_items #rdfa_error').text(dData.rdfa.error);
       rdfa = true;
   }
   else
       $('#rdfa_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
 
 
-  if (micro && !gData.micro.error)
+  if (micro && !dData.micro.error)
     selectTab('#micro');
-  else if (jsonld && !gData.jsonld.error)
+  else if (jsonld && !dData.jsonld.error)
     selectTab('#jsonld');
-  else if (turtle && !gData.turtle.error)
+  else if (turtle && !dData.turtle.error)
     selectTab('#turtle');
-  else if (rdfa && !gData.rdfa.error)
+  else if (rdfa && !dData.rdfa.error)
     selectTab('#rdfa');
 
 
@@ -195,96 +187,98 @@ function show_Data()
 
 
 
-function check_Microdata() 
+function check_Microdata(dData) 
 {
-  if (gData.micro.data)
+  console.log("check micro");
+
+  if (dData.micro.data)
   {
     var handler = new Handle_Microdata();
-    handler.parse(gData.micro.data, gData.docURL,
+    handler.parse(dData.micro.data, dData.docURL,
       function(error, html_data) 
       {
         if (error)
-          gData.micro.error = error.toString();
+          dData.micro.error = error.toString();
         else
-          gData.micro.expanded = html_data;
+          dData.micro.expanded = html_data;
 
-      check_JSON_LD();
+      check_JSON_LD(dData);
     });
   }
   else
   {
-    check_JSON_LD();
+    check_JSON_LD(dData);
   }
 }
 
 
 
 
-function check_JSON_LD() 
+function check_JSON_LD(dData) 
 {
-  if (gData.jsonld.text && gData.jsonld.text.length > 0)
+  if (dData.jsonld.text && dData.jsonld.text.length > 0)
   {
     var handler = new Handle_JSONLD();
-    handler.parse(gData.jsonld.text, 
+    handler.parse(dData.jsonld.text, dData.docURL,
       function(error, html_data) {
         if (error)
-          gData.jsonld.error = error;
+          dData.jsonld.error = error;
         else
-          gData.jsonld.expanded = html_data;
+          dData.jsonld.expanded = html_data;
 
-        check_Turtle();
+        check_Turtle(dData);
     });
   }
   else
   {
-    check_Turtle();
+    check_Turtle(dData);
   }
 }
 
 
 
 
-function check_Turtle() 
+function check_Turtle(dData) 
 {
-  if (gData.turtle.text && gData.turtle.text.length > 0)
+  if (dData.turtle.text && dData.turtle.text.length > 0)
   {
     var handler = new Handle_Turtle();
-    handler.parse(gData.turtle.text, gData.docURL, 
+    handler.parse(dData.turtle.text, dData.docURL, 
       function(error, html_data) {
         if (error)
-          gData.turtle.error = error;
+          dData.turtle.error = error;
         else
-          gData.turtle.expanded = html_data;
+          dData.turtle.expanded = html_data;
 
-        check_RDFa();
+        check_RDFa(dData);
     });
   }
   else
   {
-    check_RDFa();
+    check_RDFa(dData);
   }
 }
 
 
 
-function check_RDFa() 
+function check_RDFa(dData) 
 {
-  if (gData.rdfa.data)
+  if (dData.rdfa.data)
   {
     var handler = new Handle_RDFa();
-    handler.parse(gData.rdfa.data, 
+    handler.parse(dData.rdfa.data, 
       function(error, html_data) {
         if (error)
-          gData.rdfa.error = error;
+          dData.rdfa.error = error;
         else
-          gData.rdfa.expanded = html_data;
+          dData.rdfa.expanded = html_data;
 
-        show_Data();
+        show_Data(dData);
     });
   }
   else
   {
-    show_Data();
+    show_Data(dData);
   }
 }
 
@@ -300,25 +294,21 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse)
     else
       chrome.pageAction.hide(sender.tab.id);
 
-    chrome.tabs.sendMessage(sender.tab.id, 
-        { property: 'doc_data' }, 
-        function(response) {
-        });
   } 
   else if (request.property == "doc_data")
   {
-    gData = $.parseJSON(request.data);
-    gData.micro.expanded = null;
-    gData.micro.error = null;
-    gData.jsonld.expanded = null;
-    gData.jsonld.error = null;
-    gData.rdfa.expanded = null;
-    gData.turtle.expanded = null;
-    gData.turtle.error = null;
-    gData.rdfa.expanded = null;
-    gData.rdfa.error = null;
+    var dData = $.parseJSON(request.data);
+    dData.micro.expanded = null;
+    dData.micro.error = null;
+    dData.jsonld.expanded = null;
+    dData.jsonld.error = null;
+    dData.rdfa.expanded = null;
+    dData.turtle.expanded = null;
+    dData.turtle.error = null;
+    dData.rdfa.expanded = null;
+    dData.rdfa.error = null;
 
-    check_Microdata();
+    check_Microdata(dData);
 
   }
   else

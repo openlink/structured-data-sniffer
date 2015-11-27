@@ -217,7 +217,7 @@ Handle_JSONLD = function () {
 
 Handle_JSONLD.prototype = {
 
-  parse : function(textData, callback) {
+  parse : function(textData, docURL, callback) {
     this.callback = callback;
     var self = this;
     try {
@@ -236,7 +236,7 @@ Handle_JSONLD.prototype = {
                   }
                   else {
                     var handler = new Handle_Turtle();
-                    handler.parse(nquads, gData.docURL, function(error, html_data) {
+                    handler.parse(nquads, docURL, function(error, html_data) {
                       if (error) {
                         self.callback(""+error, null);
                       }

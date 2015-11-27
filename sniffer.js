@@ -5,14 +5,6 @@ var json_ld_Text = null;
 var turtle_Text = null;
 var rdfa_subjects = null;
 
-var docData = {
-             docURL: "http://",
-             micro :{ data:null }, 
-             jsonld :{ text:null },
-             rdfa :{ data:null },
-             turtle :{ text:null }
-           };
-
 
 $(window).load(function() {
 
@@ -20,11 +12,8 @@ $(window).load(function() {
 
     micro_items = $('[itemscope]').not($('[itemscope] [itemscope]'));
 
-    docData.docURL = document.location.href;
-
     GreenTurtle.attach(document);
     rdfa_subjects = document.data.getSubjects();
-
 
     var all = document.getElementsByTagName("script");
     for( var i = 0; i < all.length; i++ ) {
@@ -52,6 +41,14 @@ $(window).load(function() {
     chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
       if (request.property == "doc_data") 
       {
+        var docData = {
+               docURL: document.location.href,
+               micro :{ data:null }, 
+               jsonld :{ text:null },
+               rdfa :{ data:null },
+               turtle :{ text:null }
+             };
+        
         var microdata = jQuery.microdata.json(micro_items, function(o) { return o; });
         var rdfa = null;
 
@@ -99,6 +96,7 @@ $(window).load(function() {
             }, 
             function(response) {
             });
+
       } 
       else
       {
