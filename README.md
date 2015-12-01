@@ -13,7 +13,7 @@ shows structured data embedded in web pages in either of the following formats:
 Copyright 2015 [OpenLink Software](mailto:opensource@openlinksw.com)
 
 This software is licensed under the GNU General Public License (see
-[COPYING](http://github.com/openlink/rdf-editor/blob/develop/COPYING)).
+[COPYING](http://github.com/openlink/structured-data-sniffer/blob/develop/COPYING)).
 
 **Note**: that the only valid version of the GPL license as far as this project is concerned is the
 original GNU General Public License Version 2, dated June 1991.
@@ -23,7 +23,7 @@ original GNU General Public License Version 2, dated June 1991.
 
 First clone the sources from github, or download and extract a .tar.gz or .bzip based distribution.
 
-Then open your Chrome browser, choose **Preferences**, **Extensions**, check the *Developer mode* box and choose the option **Load unpacked extension...**.
+Then open your Chrome browser, choose **Preferences**, **Extensions**, check the **Developer mode** box and choose the option **Load unpacked extension...**.
 
 Navigate to the folder with the source code and press the **Select** button, to install the extension in your browser.
 
