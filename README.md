@@ -23,7 +23,7 @@ original GNU General Public License Version 2, dated June 1991.
 
 First clone the sources from github, or download and extract a .tar.gz or .bzip based distribution.
 
-Then open your Chrome browser, choose **Preferences**, **Extensions** and choose the option **Load unpacked extension...**.
+Then open your Chrome browser, choose **Preferences**, **Extensions**, check the *Developer mode* box and choose the option **Load unpacked extension...**.
 
 Navigate to the folder with the source code and press the **Select** button, to install the extension in your browser.
 
