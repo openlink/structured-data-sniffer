@@ -1,5 +1,0 @@
-https://github.com/RubenVerborgh/N3.js
-https://github.com/digitalbazaar/jsonld.js
-
-RDFa.js - https://code.google.com/p/green-turtle/
-          https://github.com/alexmilowski/green-turtle
