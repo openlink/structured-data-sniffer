@@ -1,0 +1,70 @@
+#
+#  CREDITS
+#
+#  This file is part of the OpenLink Structured Data Sniffer
+#
+#  Copyright (C) 2015 OpenLink Software
+#
+#  This project is free software; you can redistribute it and/or modify it
+#  under the terms of the GNU General Public License as published by the
+#  Free Software Foundation; only version 2 of the License, dated June 1991.
+#
+#  This program is distributed in the hope that it will be useful, but
+#  WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+#  General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License along
+#  with this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+#
+#
+
+The OpenLink Software ODE Sniffer project wishes to acknowledge incorporation of code from the
+following projects:
+
+* jQuery
+    Project	: https://jquery.com/
+    License	: https://github.com/jquery/jquery/blob/master/LICENSE.txt, looks like MIT license
+    Description	:
+	jQuery is a fast, small, and feature-rich JavaScript library.
+	It makes things like HTML document traversal and manipulation,
+	event handling, animation, and Ajax much simpler with an
+	easy-to-use API that works across a multitude of browsers.
+
+* jQuery migrate
+    Project	: https://github.com/jquery/jquery-migrate
+    License	: https://github.com/jquery/jquery-migrate/blob/master/LICENSE.txt, looks like MIT license
+    Description	:
+	Migrate older jQuery code to jQuery 1.9+
+
+
+* jsonld.js
+    Project	: https://github.com/digitalbazaar/jsonld.js
+    License	: New BSD License (3-clause)
+    Description :
+	A JSON-LD Processor and API implementation in JavaScript.
+
+* Microdatajs
+    Project	: https://github.com/foolip/microdatajs
+    License	: MIT license
+    Description :
+	MicrodataJS is a jQuery plugin that provides an API for accessing Microdata inspired by (but
+	by necessity slightly different from) the native DOM API.
+
+* N3.js
+    Project	: https://github.com/RubenVerborgh/N3.js
+    License	: MIT license
+    Description	:
+	Lightning fast, asynchronous, streaming RDF for JavaScript.
+
+
+* RDFa.js
+    Project	: https://github.com/alexmilowski/green-turtle
+    License	: MIT license
+    Description :
+	An RDFa 1.1. implementation for browsers.
+
+
+This list may not complete. If you feel any third party project is missing from this list, please
+email the current maintainer.
