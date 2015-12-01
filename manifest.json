@@ -5,11 +5,11 @@
   "minimum_chrome_version": "18",
   "description": "Detects and shows the data embedded in a given page.",
   "icons": {
-      "16":  "icon16.png",
-      "48":  "icon48.png",
-      "128": "icon128.png" },
+      "16":  "images/icon16.png",
+      "48":  "images/icon48.png",
+      "128": "images/icon128.png" },
   "page_action": {
-    "default_icon": "icon128.png",
+    "default_icon": "images/icon128.png",
     "default_title": "View page data",
     "default_popup": "background.html"
   },
