@@ -26,44 +26,45 @@ following projects:
 * jQuery
     Project	: https://jquery.com/
     License	: https://github.com/jquery/jquery/blob/master/LICENSE.txt, looks like MIT license
-    Description	:
-	jQuery is a fast, small, and feature-rich JavaScript library.
-	It makes things like HTML document traversal and manipulation,
-	event handling, animation, and Ajax much simpler with an
-	easy-to-use API that works across a multitude of browsers.
+    Description	: jQuery is a fast, small, and feature-rich JavaScript library.  It makes things
+		  like HTML document traversal and manipulation, event handling, animation, and Ajax
+		  much simpler with an easy-to-use API that works across a multitude of browsers.
+
 
 * jQuery migrate
     Project	: https://github.com/jquery/jquery-migrate
     License	: https://github.com/jquery/jquery-migrate/blob/master/LICENSE.txt, looks like MIT license
-    Description	:
-	Migrate older jQuery code to jQuery 1.9+
+    Description	: Migrate older jQuery code to jQuery 1.9+
 
 
 * jsonld.js
     Project	: https://github.com/digitalbazaar/jsonld.js
     License	: New BSD License (3-clause)
-    Description :
-	A JSON-LD Processor and API implementation in JavaScript.
+    Description : A JSON-LD Processor and API implementation in JavaScript.
+    NOTE	: This file was slightly adapted by OpenLink to comment out some unused code. 
+		  The original file can be found in lib/original/jsonld.js for comparison.
+
 
 * Microdatajs
     Project	: https://github.com/foolip/microdatajs
     License	: MIT license
-    Description :
-	MicrodataJS is a jQuery plugin that provides an API for accessing Microdata inspired by (but
-	by necessity slightly different from) the native DOM API.
+    Description : MicrodataJS is a jQuery plugin that provides an API for accessing Microdata
+		  inspired by (but by necessity slightly different from) the native DOM API.
+
 
 * N3.js
     Project	: https://github.com/RubenVerborgh/N3.js
     License	: MIT license
-    Description	:
-	Lightning fast, asynchronous, streaming RDF for JavaScript.
+    Description	: Lightning fast, asynchronous, streaming RDF for JavaScript.
 
 
 * RDFa.js
     Project	: https://github.com/alexmilowski/green-turtle
     License	: MIT license
-    Description :
-	An RDFa 1.1. implementation for browsers.
+    Description : An RDFa 1.1. implementation for browsers.
+    NOTE	: This file was slightly adapted by OpenLink to add some extra functionality and to
+		  comment out some unused code. The original file can be found in
+		  lib/original/RDFa.js for comparison.
 
 
 This list may not complete. If you feel any third party project is missing from this list, please
