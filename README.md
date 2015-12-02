@@ -21,15 +21,38 @@ original GNU General Public License Version 2, dated June 1991.
 
 ## Deployment
 
-First clone the sources from github, or download and extract a .tar.gz or .bzip based distribution.
+To deploy this extension on your local machine you can either *clone the git source tree* or *download a source archive* and then *install the extension* into your Chrome browser on the same system.
 
-Then open your Chrome browser, choose **Preferences**, **Extensions**, check the **Developer mode** box and choose the option **Load unpacked extension...**.
+### Clone the git source tree
+Clone the sources from github using the following commands:
+```shell
+$ cd src
+$ git clone https://github.com/openlink/structured-data-sniffer
+```
+which will automatically download the latest develop branch.
 
-Navigate to the folder with the source code and press the **Select** button, to install the extension in your browser.
+### Download a source archive
+Download and extract a .tar.gz or .zip from either one of the [stable releases ](https://github.com/openlink/structured-data-sniffer/releases/latest) or directly from one of the following links:
+
+- [latest stable .tar.gz](https://github.com/openlink/structured-data-sniffer/archive/master.tar.gz)
+- [latest stable .zip](https://github.com/openlink/structured-data-sniffer/archive/master.zip)
+- [latest development .tar.gz](https://github.com/openlink/structured-data-sniffer/archive/develop.tar.gz)
+- [latest development .zip](https://github.com/openlink/structured-data-sniffer/archive/develop.zip)
+
+
+### Install the extension in Chrome
+To install this extension manually use the following steps:
+
+- Open the Chrome browser
+- Select from menu: **Chrome** -> **Preferences** -> **Extensions**
+- Check the [X] **Developer mode** box
+- Choose the option **Load unpacked extension...**
+- Navigate to the folder containing the extracted source code
+- Press the **Select** button
 
 Next navigate to a page containing structured data such as:
 
   - [OpenLink Home Page](http://www.openlinksw.com/)
   - [BBC News](http://www.bbc.com/news)
 
-and click on the little icon that appears in the address bar.
+and click on the little sniffer icon that appears in the address bar.
