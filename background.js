@@ -19,7 +19,7 @@
  */
 
 // React when the browser action's icon is clicked.
-var icon_active   = 'icon48.png';
+var icon_active   = 'images/icon48.png';
 var items;
 var $ = jQuery;
 var gData_showed = false;
@@ -208,8 +208,6 @@ function show_Data(dData)
 
 function check_Microdata(dData) 
 {
-  console.log("check micro");
-
   if (dData.micro.data)
   {
     var handler = new Handle_Microdata();

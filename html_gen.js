@@ -54,7 +54,7 @@
                 </tr> \
               </thead> \
               <tbody> \
-                <tr class='major'><td>Statement #"+item.n+"</td><td></td></tr> \
+                <tr class='major'><td>Statement Collection #"+item.n+"</td><td></td></tr> \
                 ";
           str += this.format_id(item.s, id_list);
           str += this.format_props(item.props, id_list);
@@ -99,7 +99,7 @@
             var iri = obj.iri;
             var entity_id = id_list[iri];
             if (entity_id!==undefined && iri[0]==="_" && iri[1]===":") {
-              str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><i>Statement #" + entity_id + "</i></td></tr>";
+              str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><i>Statement Collection #" + entity_id + "</i></td></tr>";
             }
             else {
               var pref = self.ns.has_known_ns(obj.iri);
@@ -161,6 +161,8 @@
         }
       } else if ( String(val).match(/^mailto:/) ) {
         val = '<a href="' + val + '">' + val + '</a>';
+      } else {
+        val = this.pre(val);
       }
       return val;
     },
@@ -170,6 +172,11 @@
     {
       var data = val.substring(pref.link.length);
       return '<a href="' + val + '" title="' + val + '">' + pref.ns+':'+data + '</a>';
+    },
+
+    pre : function (text) 
+    {
+      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     },
 
   }
