@@ -31,8 +31,12 @@ $(window).load(function() {
 
     micro_items = $('[itemscope]').not($('[itemscope] [itemscope]'));
 
-    GreenTurtle.attach(document);
-    rdfa_subjects = document.data.getSubjects();
+    try {
+      GreenTurtle.attach(document);
+      rdfa_subjects = document.data.getSubjects();
+    } catch(e) {
+      console.log("OSDS:"+e);
+    }
 
     var all = document.getElementsByTagName("script");
     for( var i = 0; i < all.length; i++ ) {
@@ -141,7 +145,7 @@ $(window).load(function() {
            });
 
   } catch (e) {
-
-    alert(e);
+    console.log("OSDS:"+e);
+//    alert(e);
   }
 });

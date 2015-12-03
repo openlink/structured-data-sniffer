@@ -161,6 +161,8 @@
         }
       } else if ( String(val).match(/^mailto:/) ) {
         val = '<a href="' + val + '">' + val + '</a>';
+      } else {
+        val = this.pre(val);
       }
       return val;
     },
@@ -170,6 +172,11 @@
     {
       var data = val.substring(pref.link.length);
       return '<a href="' + val + '" title="' + val + '">' + pref.ns+':'+data + '</a>';
+    },
+
+    pre : function (text) 
+    {
+      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     },
 
   }

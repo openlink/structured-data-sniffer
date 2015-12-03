@@ -18,7 +18,6 @@
  *
  */
 
-/******/
 Namespace = function() {
   this.ns_list = {
        "grddl": "http://www.w3.org/2003/g/data-view#",
@@ -104,25 +103,7 @@ Namespace = function() {
      "twitter": "https://dev.twitter.com/cards/markup#>"
   };
 }
-/****/
 
-/***
-Namespace = function() {
-  this.ns_list = {
-        "rdf" : "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-         "owl": "http://www.w3.org/2002/07/owl#",
-          "dc": "http://purl.org/dc/elements/1.1/",
-      "schema": "http://schema.org/",
-         "rsa": "http://www.w3.org/ns/auth/rsa#",
-        "cert": "http://www.w3.org/ns/auth/cert#",
-     "oplcert": "http://www.openlinksw.com/schemas/cert#",
-         "xsd": "http://www.w3.org/2001/XMLSchema#",
-         "xhv": "http://www.w3.org/1999/xhtml/vocab#",
-        "foaf": "http://xmlns.com/foaf/0.1/"
-  };
-}
-****/
 
 Namespace.prototype = {
   has_known_ns : function (str) 
@@ -482,6 +463,28 @@ MicrodataJSON_Converter.prototype = {
            out_add.push(rc.data_add[i]);
       }
 
+      function handle_val(v_lst, val)
+      {
+         if (String(val).indexOf('[object Object]') === 0)
+           expand_sub_item(v_lst, val); 
+         else if (val.substring(0,7) ==="http://")
+           v_lst.push({ "iri" : val});
+         else if (val.substring(0,8) ==="https://")
+           v_lst.push({ "iri" : val});
+         else
+           v_lst.push({ "value" : val}); //??todo parse literal
+/**
+      else {
+        var match = this._LiteralMatcher.exec(obj);
+        if (!match) throw new Error('Invalid literal: ' + obj);
+        p.push({
+             value:match[1], 
+             type:match[2], 
+             llang:match[3]});
+      }
+****/
+      }
+
     
     if (i_props) {
       $.each(i_props, function(key, val) 
@@ -494,9 +497,10 @@ MicrodataJSON_Converter.prototype = {
         }
 
        var v = [];
-       if (String(val).indexOf('[object Object]') === 0) //isArray lenght=1, el == Object
+/**
+       if (!$.isArray(val) && String(val).indexOf('[object Object]') === 0)
        {
-         expand_sub_item(v, val[0]);
+           expand_sub_item(v, val);
        }
        else {
          for(var i=0; i<val.length; i++) {
@@ -507,20 +511,20 @@ MicrodataJSON_Converter.prototype = {
            else if (val[i].substring(0,8) ==="https://")
              v.push({ "iri" : val[i]});
            else
-             v.push({ "value" : val[i]}); //??todo parse literal
-/**
-      else {
-        var match = this._LiteralMatcher.exec(obj);
-        if (!match) throw new Error('Invalid literal: ' + obj);
-        p.push({
-             value:match[1], 
-             type:match[2], 
-             llang:match[3]});
-      }
-****/
-
+             v.push({ "value" : val[i]}); 
          }
        }
+**/
+       if ($.isArray(val))
+       {
+         for(var i=0; i<val.length; i++)
+           handle_val(v, val[i]);
+       }
+       else 
+       {
+         handle_val(v, val);
+       }
+
        props[key] = v;
         
       });

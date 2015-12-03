@@ -208,8 +208,6 @@ function show_Data(dData)
 
 function check_Microdata(dData) 
 {
-  console.log("check micro");
-
   if (dData.micro.data)
   {
     var handler = new Handle_Microdata();
