@@ -1,13 +1,15 @@
 # OpenLink Structured Data Sniffer
 
 ## Intro
-The OpenLink Structured Data Sniffer (OSDS) is a plugin for the Chrome browser that detects and
-shows structured data embedded in web pages in either of the following formats:
+The OpenLink Structured Data Sniffer (OSDS) is a plugin for the Chrome and Opera browsers that
+detects and shows structured data embedded in web pages in either of the following formats:
 
 - **JSON-LD**
 - **Microdata**
 - **RDFa**
 - **Turtle**
+
+Support for additional browsers like Firefox, Safari, and Microsoft Edge is under construction.
 
 ## License
 Copyright 2015 [OpenLink Software](mailto:opensource@openlinksw.com)
@@ -20,8 +22,9 @@ original GNU General Public License Version 2, dated June 1991.
 
 
 ## Deployment
-
-To deploy this extension on your local machine you can either *clone the git source tree* or *download a source archive* and then *install the extension* into your Chrome browser on the same system.
+To deploy this extension on your local machine you can either *clone the git source tree* or
+*download a source archive* and then *install the extension* into your Chrome or Opera browser on
+the same system.
 
 ### Clone the git source tree
 Clone the sources from github using the following commands:
@@ -32,7 +35,9 @@ $ git clone https://github.com/openlink/structured-data-sniffer
 which will automatically download the latest develop branch.
 
 ### Download a source archive
-Download and extract a .tar.gz or .zip from either one of the [stable releases ](https://github.com/openlink/structured-data-sniffer/releases/latest) or directly from one of the following links:
+Download and extract a .tar.gz or .zip from either one of the
+[stable releases](https://github.com/openlink/structured-data-sniffer/releases/latest)
+or directly from one of the following links:
 
 - [latest stable .tar.gz](https://github.com/openlink/structured-data-sniffer/archive/master.tar.gz)
 - [latest stable .zip](https://github.com/openlink/structured-data-sniffer/archive/master.zip)
@@ -50,9 +55,24 @@ To install this extension manually use the following steps:
 - Navigate to the folder containing the extracted source code
 - Press the **Select** button
 
-Next navigate to a page containing structured data such as:
 
-  - [OpenLink Home Page](http://www.openlinksw.com/)
-  - [BBC News](http://www.bbc.com/news)
+### Install the extension in Opera
+To install this extension manually use the following steps:
 
-and click on the little sniffer icon that appears in the address bar.
+- Open the Opera browser
+- In address bar type in **opera:extensions**
+- Click the **Developer Mode** button
+- Choose the option **Load unpacked extension...**
+- Navigate to the folder containing the extracted source
+- Press the **Select** button
+
+
+### Examples
+Navigate to a page containing structured data such as:
+
+  - [OpenLink Software Homepage](http://www.openlinksw.com/)
+  - [BBC News Homepage](http://www.bbc.com/news)
+  - [Ted.com talk by Susan Etlinger](https://www.ted.com/talks/susan_etlinger_what_do_we_do_with_all_this_big_data)
+  - [DBpedia article on Semantic Web](http://dbpedia.org/page/Semantic_Web)
+
+and click on the sniffer icon that appears in the address bar.
