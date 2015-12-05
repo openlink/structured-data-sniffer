@@ -19,6 +19,8 @@
  */
 
 Namespace = function() {
+  this.RDF_PREFIX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+  this.RDF_TYPE   = this.RDF_PREFIX + 'type';
   this.ns_list = {
        "grddl": "http://www.w3.org/2003/g/data-view#",
           "ma": "http://www.w3.org/ns/ma-ont#",

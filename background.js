@@ -64,6 +64,7 @@ $(document).ready(function()
 $('a').live('click', function(e) {
   var href = e.currentTarget.href;
   window.open(href);
+  return false;
 });
 
 
@@ -301,7 +302,7 @@ function check_RDFa(dData)
 
 
 
-chrome.extension.onMessage.addListener(function(request, sender, sendResponse) 
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) 
 {
   if (request.property == "status")
   {
