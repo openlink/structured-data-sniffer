@@ -61,7 +61,7 @@ $(window).load(function() {
 
 
     // Add the listener for messages from the chrome extension.
-    chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
+    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       if (request.property == "doc_data") 
       {
         var docData = {
@@ -113,7 +113,7 @@ $(window).load(function() {
         docData.turtle.text = turtle_Text;
         docData.rdfa.data = rdfa;
 
-        chrome.extension.sendMessage(null, 
+        chrome.runtime.sendMessage(null, 
             { property: "doc_data", 
               data: JSON.stringify(docData, undefined, 2)
             }, 
@@ -136,7 +136,7 @@ $(window).load(function() {
        )
       exists = true;
 
-    chrome.extension.sendMessage(null, {
+    chrome.runtime.sendMessage(null, {
                property: "status", 
                status: 'ready',
                data_exists: exists

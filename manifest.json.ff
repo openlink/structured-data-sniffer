@@ -2,8 +2,12 @@
   "name": "OpenLink Structured Data Sniffer",
   "version": "2.3.1",
   "manifest_version": 2,
-  "minimum_chrome_version": "18",
   "description": "Detects and shows the data embedded in a given page.",
+  "applications": {
+    "gecko": {
+      "id": "osds@openlinksw.com"
+    }
+  },
   "icons": {
       "16":  "images/icon16.png",
       "48":  "images/icon48.png",

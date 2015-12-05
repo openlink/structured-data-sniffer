@@ -57,7 +57,13 @@
                 <tr class='major'><td>Statement Collection #"+item.n+"</td><td></td></tr> \
                 ";
           str += this.format_id(item.s, id_list);
-          str += this.format_props(item.props, id_list);
+
+          var props = "";
+          props += this.format_props(item.props, id_list, true);
+          props += this.format_props(item.props, id_list, false);
+
+          if (props.length > 0)
+            str += "<tr class='major'> <td>Attributes</td><td></td> </tr>" + props;
 
           str += "\
               </tbody> \
@@ -80,15 +86,18 @@
     },
 
 
-    format_props : function(props, id_list)
+    format_props : function(props, id_list, only_rdf_type)
     {
       if (props=== undefined) 
         return "";
-
         
       var str = "";
       var self = this;
       $.each(props, function(key, val){
+        if ((only_rdf_type && key!==self.ns.RDF_TYPE)
+            || (!only_rdf_type && key===self.ns.RDF_TYPE))
+          return;
+
         var key_str = key;
         var pref = self.ns.has_known_ns(key);
         var key_str = (pref!=null) ? self.pref_link(key, pref) : self.check_link(key, true);
@@ -127,14 +136,7 @@
           }
         } 
       });
-      if (str.length > 0)
-        return "\
-          <tr class='major'> \
-            <td>Attributes</td><td></td> \
-          </tr> \
-           " + str;
-      else
-        return str;
+      return str;
     },
 
     format_id : function (value, id_list) 
