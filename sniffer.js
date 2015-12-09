@@ -25,7 +25,8 @@ var turtle_Text = null;
 var rdfa_subjects = null;
 
 
-$(window).load(function() {
+//$(window).load(function() {
+window.onload = function() {
 
   try {
 
@@ -154,6 +155,7 @@ $(window).load(function() {
 
   } catch (e) {
     console.log("OSDS:"+e);
-//    alert(e);
   }
-});
+//});
+}();
+

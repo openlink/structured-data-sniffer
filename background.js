@@ -305,34 +305,38 @@ function check_RDFa(dData)
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) 
 {
-  if (request.property == "status")
-  {
-    var show_action = request.data_exists;
-    if (show_action)
-      chrome.pageAction.show(sender.tab.id);
+  try {
+    if (request.property == "status")
+    {
+      var show_action = request.data_exists;
+      if (show_action)
+        chrome.pageAction.show(sender.tab.id);
+      else
+        chrome.pageAction.hide(sender.tab.id);
+
+    } 
+    else if (request.property == "doc_data")
+    {
+      var dData = $.parseJSON(request.data);
+      dData.micro.expanded = null;
+      dData.micro.error = null;
+      dData.jsonld.expanded = null;
+      dData.jsonld.error = null;
+      dData.rdfa.expanded = null;
+      dData.turtle.expanded = null;
+      dData.turtle.error = null;
+      dData.rdfa.expanded = null;
+      dData.rdfa.error = null;
+
+      check_Microdata(dData);
+
+    }
     else
-      chrome.pageAction.hide(sender.tab.id);
-
-  } 
-  else if (request.property == "doc_data")
-  {
-    var dData = $.parseJSON(request.data);
-    dData.micro.expanded = null;
-    dData.micro.error = null;
-    dData.jsonld.expanded = null;
-    dData.jsonld.error = null;
-    dData.rdfa.expanded = null;
-    dData.turtle.expanded = null;
-    dData.turtle.error = null;
-    dData.rdfa.expanded = null;
-    dData.rdfa.error = null;
-
-    check_Microdata(dData);
-
-  }
-  else
-  {
-    sendResponse({}); /* stop */
+    {
+      sendResponse({}); /* stop */
+    }
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
   }
 
 });
