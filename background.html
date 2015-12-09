@@ -18,6 +18,7 @@
     51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 -->
     <head>
+	<meta charset="UTF-8">
         <script type="text/javascript" src="lib/jquery-1.11.3.min.js"></script>
         <script type="text/javascript" src="lib/jquery-migrate-1.2.1.min.js"></script>
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.js"></script>
@@ -50,18 +51,49 @@
 
       <div class="content">
 
-        <div id="micro_items"></div>
-        <div id="jsonld_items"></div>
-        <div id="turtle_items"></div>
-        <div id="rdfa_items"></div>
+        <div id="micro_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Waiting data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="jsonld_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Waiting data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="turtle_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Waiting data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="rdfa_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Waiting data...</td>
+              </tr>
+            </table>
+        </div>
 
       </div>
 
       <table class="copyright_left">
         <tr>
-          <td id="ext_ver" style="width:45px">ver:1.0.0</td>
+          <td id="ext_ver" style="width:45px">ver:0.0.0</td>
           <td><a href="http://osds.openlinksw.com">OpenLink Structured Data Sniffer</a></td>
-        <tr>
+        </tr>
       </table>
 
       <table class="copyright_right">

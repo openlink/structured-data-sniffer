@@ -10,7 +10,7 @@
       "128": "images/icon128.png" },
   "page_action": {
     "default_icon": "images/icon128.png",
-    "default_title": "View page data",
+    "default_title": "Show Document Metadata",
     "default_popup": "background.html"
   },
   "background": {

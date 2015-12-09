@@ -19,7 +19,6 @@
  */
 
 // React when the browser action's icon is clicked.
-var icon_active   = 'images/icon48.png';
 var items;
 var $ = jQuery;
 var gData_showed = false;
@@ -43,6 +42,7 @@ $(document).ready(function()
       return false;
   });
 
+  selectTab('#micro');
 
   jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
 
@@ -125,6 +125,7 @@ function show_Data(dData)
   var turtle = false;
   var rdfa = false;
 
+  wait_data = $('table.wait').hide();
 
   $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
   if (dData.micro.expanded) {

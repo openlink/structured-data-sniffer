@@ -126,7 +126,7 @@
               else
                 sval = self.check_link(v)+"("+self.check_link(obj.type)+")";
             }
-            else if (obj.lang!==undefined && obj.lang){
+            else if (obj.lang!==undefined && obj.lang!==null){
               sval = self.check_link(v)+"@"+obj.lang;
             } 
             else {
