@@ -25,6 +25,8 @@ var gData_showed = false;
 
 $(document).ready(function() 
 {
+  $('#import_btn').click(Import_doc);
+
   $('#tabs a[href=#micro]').click(function(){
       selectTab('#micro');
       return false;
@@ -340,3 +342,54 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
   }
 
 });
+
+
+
+function Import_doc() {
+  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
+      if (tabs.length > 0) {
+        var url = createImportUrl(tabs[0].url);
+        window.open(url);
+      }
+    });
+
+  return false;
+}
+
+
+
+function createImportUrl(curUrl) 
+{
+  var handle_url = getItem('ext.osds.import.url','http://linkeddata.uriburner.com/describe/?url=');
+  var srv = getItem('ext.osds.import.srv','describe');
+
+  switch(srv) {
+    case 'describe':
+    case 'describe-ssl':
+      return handle_url + encodeURIComponent(curUrl);
+
+    case 'about':
+    case 'about-ssl':
+      var result = curUrl.match(/^((\w+):\/)?\/?(.*)$/);
+      if (!result) {
+        throw 'Invalid url:\n' + curUrl;
+        return null;
+      }
+//      var protocol = result[2]=="https"?"http":result[2];
+      var protocol = result[2];
+      return handle_url + protocol + '/' + result[3];
+
+    case 'ode':
+    case 'ode-ssl':
+      return handle_url + encodeURIComponent(curUrl);
+
+    default:
+      return handle_url + encodeURIComponent(curUrl);
+  }
+}
+
+function getItem(key, def) 
+{
+    var val = localStorage.getItem(key);
+    return (val != null)?val: def;
+}

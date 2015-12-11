@@ -21,6 +21,10 @@
 
   HTML_Gen = function() {
     this.ns = new Namespace();
+    this.uimode = "";
+    this.SubjName = "Subject";
+    this.PredName = "Predicate";
+    this.ObjName  = "Object";
   };
 
   HTML_Gen.prototype = {
@@ -29,6 +33,18 @@
     {
       var expanded = null;
       var id_list = {};
+
+      this.uimode = localStorage.getItem("ext.osds.uiterm.mode");
+      if (this.uimode===null)
+        this.uimode = "ui-eav";
+
+      if (this.uimode === "ui-eav") 
+      {
+        this.SubjName = "Entity";
+        this.PredName = "Attribute";
+        this.ObjName  = "Value";
+      }
+
 
       if (json_data!=null &&
           json_data.length!==undefined && 
@@ -63,7 +79,7 @@
           props += this.format_props(item.props, id_list, false);
 
           if (props.length > 0)
-            str += "<tr class='major'> <td>Attributes</td><td></td> </tr>" + props;
+            str += "<tr class='major'> <td>"+this.PredName+"s</td><td></td> </tr>" + props;
 
           str += "\
               </tbody> \
@@ -148,7 +164,7 @@
        else {
          var pref = this.ns.has_known_ns(value);
          var sval = (pref!=null) ? this.pref_link(value, pref) : this.check_link(value);
-         return "<tr class='major data_row'><td>Entity</td><td>" + sval + "</td></tr>";
+         return "<tr class='major data_row'><td>"+this.SubjName+"</td><td>" + sval + "</td></tr>";
        }
     },
 
