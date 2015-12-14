@@ -120,10 +120,10 @@ function createImportURL(srv, _url)
 
     switch (srv) {
       case 'describe':
-        h_url = url.setProtocol("http").setPath('/describe/').setQuery('?url=').setAnchor('').toString(); 
+        h_url = url.setProtocol("http").setPath('/describe/').setQuery('?url={url}&sponger:get=add').setAnchor('').toString(); 
         break;
       case 'describe-ssl':
-        h_url = url.setProtocol("https").setPath('/describe/').setQuery('?url=').setAnchor('').toString(); 
+        h_url = url.setProtocol("https").setPath('/describe/').setQuery('?url={url}&sponger:get=add').setAnchor('').toString(); 
         break;
       case 'about':
 	h_url = url.setProtocol("http").setPath('/about/html/').setQuery('').setAnchor('').toString();

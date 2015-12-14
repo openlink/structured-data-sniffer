@@ -360,14 +360,11 @@ function Import_doc() {
 
 function createImportUrl(curUrl) 
 {
-  var handle_url = getItem('ext.osds.import.url','http://linkeddata.uriburner.com/describe/?url=');
+  var handle_url = getItem('ext.osds.import.url','http://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add');
   var srv = getItem('ext.osds.import.srv','describe');
+  var docURL = encodeURIComponent(curUrl);
 
   switch(srv) {
-    case 'describe':
-    case 'describe-ssl':
-      return handle_url + encodeURIComponent(curUrl);
-
     case 'about':
     case 'about-ssl':
       var result = curUrl.match(/^((\w+):\/)?\/?(.*)$/);
@@ -377,15 +374,21 @@ function createImportUrl(curUrl)
       }
 //      var protocol = result[2]=="https"?"http":result[2];
       var protocol = result[2];
-      return handle_url + protocol + '/' + result[3];
+      docURL = protocol + '/' + result[3];
+      break;
 
     case 'ode':
     case 'ode-ssl':
-      return handle_url + encodeURIComponent(curUrl);
-
+    case 'describe':
+    case 'describe-ssl':
     default:
-      return handle_url + encodeURIComponent(curUrl);
+      break;
   }
+
+  if (handle_url.indexOf("{url}")!=-1)
+     return handle_url.replace("{url}",docURL);
+  else
+     return handle_url + docURL;
 }
 
 function getItem(key, def) 
