@@ -75,9 +75,9 @@
            <tr>
                <table>
                 <tr>
-                 <td>Import Service:</td>
+                 <td>LOD Cloud Lookup & Upload Service</td>
                  <td>
-                   <SELECT id="import-srv" style="WIDTH: 202px" >
+                   <SELECT id="import-srv" style="WIDTH: 245px" >
                      <OPTION id="describe" selected>Virtuoso Describe</OPTION>
                      <OPTION id="describe-ssl">Virtuoso Describe SSL</OPTION>
                      <OPTION id="about">Virtuoso About</OPTION>
@@ -108,7 +108,7 @@
            
            <tr>
                <table>
-                <tr>RWW Service</tr>
+                <tr>Annotation (Read-Write) Service</tr>
                 <tr>
                  <td> URL: </td>
                  <td> <input id="rww-url" style="WIDTH: 418px"> </td>
@@ -124,7 +124,7 @@
            <tr> </p> </tr>
            
            <tr>
-               SPARQL Service
+               SPARQL Query Service
            </tr>
            <tr>
                <table>
@@ -147,8 +147,6 @@
            </tr>
            <tr>
                <textarea id="sparql-query" style="width: 450px; height: 77px">
-               SELECT * 
-               WHERE {  {<{url}> ?p ?o} union {?s ?p <{url}>} }
                </textarea>
            </tr>
            <tr>

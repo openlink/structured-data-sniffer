@@ -21,14 +21,25 @@
 Settings = function() {
   this.def_import_url = "http://linkeddata.uriburner.com/describe?url={url}&sponger:get=add";
   this.def_import_srv = "describe";
-  this.def_rww_url = "http://ods-qa.openlinksw.com/rdf-editor/#/editor?uri={url}&newDocument=true";
+//  this.def_rww_url = "http://ods-qa.openlinksw.com/rdf-editor/#/editor?uri={url}&newDocument=true";
+  this.def_rww_url = "https://ods-qa.openlinksw.com/rdf-editor/#/editor?newDocument=true";
   this.def_sparql_url = "http://linkeddata.uriburner.com/sparql/?query={query}";
   this.def_sparql_cmd = "select";
-  this.def_sparql_qry = "SELECT * \nWHERE {  {<{url}> ?p ?o} union {?s ?p <{url}> } filter (! isblank(?s)) }";
+  this.def_sparql_qry_spo = "SELECT ?s as ?subject, ?p as ?predicate, ?o as ?object \nWHERE {  {<{url}> ?p ?o}\n union {?s ?p <{url}> } filter (! isblank(?s)) } LIMIT 100";
+  this.def_sparql_qry_eav = "SELECT ?s as ?entity, ?p as ?attribute, ?o as ?value \nWHERE {  {<{url}> ?p ?o}\n union {?s ?p <{url}> } filter (! isblank(?s)) } LIMIT 100";
 }
 
 
 Settings.prototype = {
+  getSparqlQueryDefault : function()
+  {
+    var ui = this.getValue("ext.osds.uiterm.mode");
+    if (ui === "ui-eav")
+      return this.def_sparql_qry_eav;
+    else
+      return this.def_sparql_qry_spo;
+  },
+  
   getValue : function(id)
   {
     var val = localStorage.getItem(id);
@@ -55,7 +66,7 @@ Settings.prototype = {
           val = this.def_sparql_cmd;
           break;
       case "ext.osds.sparql.query":
-          val = this.def_sparql_qry;
+          val = this.getSparqlQueryDefault();
           break;
     }
     return val;

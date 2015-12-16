@@ -183,15 +183,15 @@ function createSparqlQuery(cmd)
 
     switch (cmd) {
       case 'select':
-        query = setting.def_sparql_qry;
+        query = setting.getSparqlQueryDefault();;
         break;
       case 'describe':
-        query = "DESCRIBE <{url}> ";
+        query = "DESCRIBE <{url}> LIMIT 100";
 
         break;
       case 'construct':
         query = "CONSTRUCT  {<{url}> ?p ?o.   ?s ?p <{url}> .} \n"+
-                "WHERE {  {<{url}> ?p ?o} union {?s ?p <{url}> } }";
+                "WHERE {  {<{url}> ?p ?o} union {?s ?p <{url}> } } LIMIT 100";
         break;
     }
     return query;
