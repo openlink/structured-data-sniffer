@@ -1,7 +1,7 @@
 {
   "name": "OpenLink Structured Data Sniffer",
   "short_name": "OSD Sniffer",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
   "description": "Detects and displays the Metadata embedded in a given Web page.",
