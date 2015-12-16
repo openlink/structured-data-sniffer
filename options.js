@@ -18,6 +18,7 @@
  *
  */
 
+
 $(function(){
 	// Tabs
 	$('#tabs').tabs();
@@ -28,10 +29,18 @@ $(function(){
             setTimeout(enableCtrls,200);
         });
 
+        $('#sparql-cmd').change(function() {
+          var cmd = $('#sparql-cmd option:selected').attr('id');
+          $('#sparql-query').val(createSparqlQuery(cmd));
+        });
+
         $('#OK_btn').click(savePref);
         $('#Cancel_btn').click(function() { window.close(); });
 
         $('#import-set-def').click(setImportDefaults);
+        $('#rww-set-def').click(setRWWDefaults);
+        $('#sparql-set-def').click(setSparqlDefaults);
+
 
         $('#osds-site').click(function() { window.open('http://osds.openlinksw.com'); });
 
@@ -44,46 +53,79 @@ $(function(){
 
 function setImportDefaults() 
 {
-    $('#describe','#import-srv').attr('selected','selected');
-    var url = new Uri($('#import-url').val().trim());
-    var h_url = url.setProtocol('http').setHost('linkeddata.uriburner.com').toString(); 
-    if (h_url)
-      $('#import-url').val(h_url);
+    setting = new Settings();
+    $('#'+setting.def_import_srv,'#import-srv').attr('selected','selected');
+    var h_url = createImportURL(setting.def_import_srv, setting.def_import_url.trim());
+    $('#import-url').val(h_url);
     enableCtrls();
+};
+
+function setRWWDefaults() 
+{
+    setting = new Settings();
+    $('#rww-url').val(setting.def_rww_url);
+};
+
+function setSparqlDefaults() 
+{
+    setting = new Settings();
+    $('#'+setting.def_sparql_cmd,'#sparql-cmd').attr('selected','selected');
+    $('#sparql-url').val(setting.def_sparql_url);
+    $('#sparql-query').val(createSparqlQuery(setting.def_sparql_cmd));
 };
 
 
 
 function loadPref() 
 {
-    var import_url = getItem("ext.osds.import.url");
-    var import_srv = getItem("ext.osds.import.srv"); 
+    setting = new Settings();
+    var uiterm_mode = setting.getValue("ext.osds.uiterm.mode"); 
+    $('#'+uiterm_mode,'#uiterm-mode').attr('selected','selected');
 
-    if (import_srv)
-        $('#'+import_srv,'#import-srv').attr('selected','selected');
 
-    if (import_url)
-        $('#import-url').val(import_url);
+    var import_url = setting.getValue("ext.osds.import.url");
+    var import_srv = setting.getValue("ext.osds.import.srv"); 
 
-    var uiterm_mode = getItem("ext.osds.uiterm.mode"); 
+    $('#'+import_srv,'#import-srv').attr('selected','selected');
+    $('#import-url').val(import_url);
 
-    if (uiterm_mode)
-        $('#'+uiterm_mode,'#uiterm-mode').attr('selected','selected');
+
+    var rww_url = setting.getValue("ext.osds.rww.url");
+    if (rww_url)
+        $('#rww-url').val(rww_url);
+
+
+    var sparql_url = setting.getValue("ext.osds.sparql.url");
+    $('#sparql-url').val(sparql_url);
+
+    var sparql_cmd = setting.getValue("ext.osds.sparql.cmd"); 
+    $('#'+sparql_cmd,'#sparql-cmd').attr('selected','selected');
+
+    var sparql_query = setting.getValue("ext.osds.sparql.query");
+    $('#sparql-query').val(sparql_query);
 }  
 
 
 
 function savePref() 
 {
-   var import_srv = $('#import-srv option:selected').attr('id');
-   setItem ("ext.osds.import.srv", import_srv);
-
-   var h_url = createImportURL(import_srv, $('#import-url').val().trim());
-
-   setItem ("ext.osds.import.url", h_url);
-
+   setting = new Settings();
    var uiterm_mode = $('#uiterm-mode option:selected').attr('id');
-   setItem ("ext.osds.uiterm.mode", uiterm_mode);
+   setting.setValue("ext.osds.uiterm.mode", uiterm_mode);
+
+
+   var import_srv = $('#import-srv option:selected').attr('id');
+   setting.setValue("ext.osds.import.srv", import_srv);
+   setting.setValue("ext.osds.import.url", $('#import-url').val().trim());
+
+
+   setting.setValue("ext.osds.rww.url", $('#rww-url').val().trim());
+
+
+   var sparql_cmd = $('#sparql-cmd option:selected').attr('id');
+   setting.setValue("ext.osds.sparql.cmd", sparql_cmd);
+   setting.setValue("ext.osds.sparql.url", $('#sparql-url').val().trim());
+   setting.setValue("ext.osds.sparql.query", $('#sparql-query').val().trim());
 
 //   chrome.runtime.sendMessage({osds_settings: "changed"});
 
@@ -91,17 +133,6 @@ function savePref()
 }
 
 
-
-function getItem(key) 
-{
-    return localStorage.getItem(key);
-}
-
-function setItem(key, value) 
-{
-    localStorage.removeItem(key);
-    localStorage.setItem(key, value);
-}
 
 function enableCtrls() 
 {
@@ -138,9 +169,31 @@ function createImportURL(srv, _url)
 	h_url = url.setProtocol("https").setPath('/ode/').setQuery('?uri=').setAnchor('').toString();
         break;
       case 'custom':
+        h_url = _url;
         break;
     }
     return h_url;
 };
 
+
+function createSparqlQuery(cmd) 
+{
+    setting = new Settings();
+    var query = "";
+
+    switch (cmd) {
+      case 'select':
+        query = setting.def_sparql_qry;
+        break;
+      case 'describe':
+        query = "DESCRIBE <{url}> ";
+
+        break;
+      case 'construct':
+        query = "CONSTRUCT  {<{url}> ?p ?o.   ?s ?p <{url}> .} \n"+
+                "WHERE {  {<{url}> ?p ?o} union {?s ?p <{url}> } }";
+        break;
+    }
+    return query;
+};
 

@@ -25,6 +25,7 @@
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.json.js"></script>
         <script type="text/javascript" src="lib/jsonld.js"></script>
         <script type="text/javascript" src="lib/n3-browser.min.js"></script>
+        <script type="text/javascript" src="settings.js"></script>
         <script type="text/javascript" src="background.js"></script>
         <script type="text/javascript" src="handlers.js"></script>
         <script type="text/javascript" src="html_gen.js"></script>
@@ -35,9 +36,13 @@
 
       <div class="top"></div>
 
-      <div class="import_btn">
-	 <input id="import_btn" value="Import" type="button">
-      </div>
+      <table class="btn_block">
+       <tr>
+        <td><input id="sparql_btn" value="SPARQL" type="button"></td>
+        <td><input id="rww_btn" value="RWW" type="button"></td>
+        <td><input id="import_btn" value="Import" type="button"></td>
+       </tr>
+      </table>
 
       <div id="header">
         <ul id="tabs">
@@ -54,7 +59,7 @@
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Waiting data...</td>
+                <td>Processing data...</td>
               </tr>
             </table>
         </div>
@@ -63,7 +68,7 @@
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Waiting data...</td>
+                <td>Processing data...</td>
               </tr>
             </table>
         </div>
@@ -72,7 +77,7 @@
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Waiting data...</td>
+                <td>Processing data...</td>
               </tr>
             </table>
         </div>
@@ -81,7 +86,7 @@
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Waiting data...</td>
+                <td>Processing data...</td>
               </tr>
             </table>
         </div>

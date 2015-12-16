@@ -27,6 +27,7 @@
     <script type="text/javascript" src="lib/jquery-migrate-1.2.1.min.js"></script>
     <script type="text/javascript" src="lib/jquery-ui-1.8.6.custom.min.js"></script>
     <script type="text/javascript" src="lib/jsuri.js"></script>
+    <script type="text/javascript" src="settings.js"></script>
     <script type="text/javascript" src="options.js"></script>
 
     <style type="text/css">
@@ -52,42 +53,7 @@
 	
         <div id="tabs-1">
           <table>
-           <tr>
-             <table>
-              <tr>
-               <td>Service:</td>
-               <td>
-                 <SELECT id="import-srv" style="WIDTH: 405px" >
-                   <OPTION id="describe" selected>Virtuoso Describe</OPTION>
-                   <OPTION id="describe-ssl">Virtuoso Describe SSL</OPTION>
-                   <OPTION id="about">Virtuoso About</OPTION>
-                   <OPTION id="about-ssl">Virtuoso About SSL</OPTION>
-<!--                   <OPTION id="ode">Virtuoso ODE</OPTION>  -->
-<!--                   <OPTION id="ode-ssl">Virtuoso ODE SSL</OPTION> -->
-                   <OPTION id="custom">Custom</OPTION>
-                 </SELECT>
-               </td>
-              </tr>
-             </table>
-           </tr>
 
-           <tr>
-                <table>
-                 <tr id="import-url-bcast">
-                  <td> URL: </td>
-                  <td> <input id="import-url" style="WIDTH: 418px" value="http://linkeddata.uriburner.com/describe?url="> </td>
-                 </tr>
-                </table>
-           </tr>
-
-           <tr>
-             <input id="import-set-def" value="Set Default" type="button">
-           </tr>
-
-           <tr> </p> </tr>
-           <tr> <hr> </tr>
-           <tr> </p> </tr>
-           
            <tr>
              <table>
               <tr>
@@ -102,8 +68,95 @@
              </table>
            </tr>
 
-          </table>
+           <tr> </p> </tr>
+           <tr> <hr> </tr>
+           <tr> </p> </tr>
+           
+           <tr>
+               <table>
+                <tr>
+                 <td>Import Service:</td>
+                 <td>
+                   <SELECT id="import-srv" style="WIDTH: 202px" >
+                     <OPTION id="describe" selected>Virtuoso Describe</OPTION>
+                     <OPTION id="describe-ssl">Virtuoso Describe SSL</OPTION>
+                     <OPTION id="about">Virtuoso About</OPTION>
+                     <OPTION id="about-ssl">Virtuoso About SSL</OPTION>
+                     <OPTION id="custom">Custom</OPTION>
+                   </SELECT>
+                 </td>
+                </tr>
+               </table>
+           </tr>
 
+           <tr>
+               <table>
+                <tr id="import-url-bcast">
+                 <td> URL: </td>
+                 <td> <input id="import-url" style="WIDTH: 418px"> </td>
+                </tr>
+               </table>
+           </tr>
+
+           <tr>
+               <input id="import-set-def" value="Set Default" type="button">
+           </tr>
+
+           <tr> </p> </tr>
+           <tr> <hr> </tr>
+           <tr> </p> </tr>
+           
+           <tr>
+               <table>
+                <tr>RWW Service</tr>
+                <tr>
+                 <td> URL: </td>
+                 <td> <input id="rww-url" style="WIDTH: 418px"> </td>
+                </tr>
+               </table>
+           </tr>
+           <tr>
+               <input id="rww-set-def" value="Set Default" type="button">
+           </tr>
+           
+           <tr> </p> </tr>
+           <tr> <hr> </tr>
+           <tr> </p> </tr>
+           
+           <tr>
+               SPARQL Service
+           </tr>
+           <tr>
+               <table>
+                <tr>
+                 <td> URL: </td>
+                 <td> <input id="sparql-url" style="WIDTH: 405px"> </td>
+                </tr>
+
+                <tr>
+                 <td>Query:</td>
+                 <td>
+                   <SELECT id="sparql-cmd" style="WIDTH: 255px" >
+                     <OPTION id="select" selected>SELECT ...</OPTION>
+                     <OPTION id="describe">DESCRIBE ...</OPTION>
+                     <OPTION id="construct">CONSTRUCT ...</OPTION>
+                   </SELECT>
+                 </td>
+                </tr>
+               </table>
+           </tr>
+           <tr>
+               <textarea id="sparql-query" style="width: 450px; height: 77px">
+               SELECT * 
+               WHERE {  {<{url}> ?p ?o} union {?s ?p <{url}>} }
+               </textarea>
+           </tr>
+           <tr>
+               <input id="sparql-set-def" value="Set Default" type="button">
+           </tr>
+
+
+          </table>
         </div>
 
 	

@@ -27,6 +27,10 @@ $(document).ready(function()
 {
   $('#import_btn').click(Import_doc);
 
+  $('#rww_btn').click(Rww_exec);
+
+  $('#sparql_btn').click(Sparql_exec);
+
   $('#tabs a[href=#micro]').click(function(){
       selectTab('#micro');
       return false;
@@ -356,12 +360,35 @@ function Import_doc() {
   return false;
 }
 
+function Rww_exec() {
+  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
+      if (tabs.length > 0) {
+        var url = createRwwUrl(tabs[0].url);
+        window.open(url);
+      }
+    });
+
+  return false;
+}
+
+function Sparql_exec() {
+  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
+      if (tabs.length > 0) {
+        var url = createSparqlUrl(tabs[0].url);
+        window.open(url);
+      }
+    });
+
+  return false;
+}
+
 
 
 function createImportUrl(curUrl) 
 {
-  var handle_url = getItem('ext.osds.import.url','http://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add');
-  var srv = getItem('ext.osds.import.srv','describe');
+  var setting = new Settings();
+  var handle_url = setting.getValue('ext.osds.import.url');
+  var srv = setting.getValue('ext.osds.import.srv');
   var docURL = encodeURIComponent(curUrl);
 
   switch(srv) {
@@ -391,8 +418,22 @@ function createImportUrl(curUrl)
      return handle_url + docURL;
 }
 
-function getItem(key, def) 
+
+function createRwwUrl(curUrl) 
 {
-    var val = localStorage.getItem(key);
-    return (val != null)?val: def;
+  var setting = new Settings();
+  var handle_url = setting.getValue('ext.osds.rww.url');
+  var docURL = encodeURIComponent(curUrl);
+
+  return handle_url.replace(/{url}/g, docURL);
+}
+
+function createSparqlUrl(curUrl) 
+{
+  var setting = new Settings();
+  var sparql_url = setting.getValue('ext.osds.sparql.url');
+  var query = setting.getValue('ext.osds.sparql.query');
+
+  var query = encodeURIComponent(query.replace(/{url}/g, curUrl));
+  return sparql_url.replace(/{query}/g, query);
 }

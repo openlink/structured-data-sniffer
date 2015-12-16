@@ -19,11 +19,6 @@
  */
 
 #docdata_view{
-/**
-  float:left;
-  clear:both;
-  z-index: 10000;
-**/
 }
 
 table.wait {
@@ -81,22 +76,18 @@ div#header {
 }
 
 
-
-.import {
-    width: 100%;
-    height: 10px;
-}
-
 .top {
     width: 100%;
     height: 5px;
 }
 
-.import_btn {
+
+.btn_block {
     position: absolute;
-    right: 25px;
+    right: 15px;
     top: 8px;
 }
+
 
 
 .copyright_right {
