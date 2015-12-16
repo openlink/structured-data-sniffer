@@ -25,6 +25,11 @@ $(function(){
 
         loadPref();
 
+        $('#uiterm-mode').change(function() {
+          var cmd = $('#sparql-cmd option:selected').attr('id');
+          $('#sparql-query').val(createSparqlQuery(cmd));
+        });
+
         $('#import-srv').change(function() {
             setTimeout(enableCtrls,200);
         });
@@ -40,9 +45,6 @@ $(function(){
         $('#import-set-def').click(setImportDefaults);
         $('#rww-set-def').click(setRWWDefaults);
         $('#sparql-set-def').click(setSparqlDefaults);
-
-
-        $('#osds-site').click(function() { window.open('http://osds.openlinksw.com'); });
 
         enableCtrls();
       
@@ -63,7 +65,7 @@ function setImportDefaults()
 function setRWWDefaults() 
 {
     setting = new Settings();
-    $('#rww-url').val(setting.def_rww_url);
+    $('#rww-edit-url').val(setting.def_rww_edit_url);
 };
 
 function setSparqlDefaults() 
@@ -90,9 +92,13 @@ function loadPref()
     $('#import-url').val(import_url);
 
 
-    var rww_url = setting.getValue("ext.osds.rww.url");
-    if (rww_url)
-        $('#rww-url').val(rww_url);
+    var rww_edit_url = setting.getValue("ext.osds.rww.edit.url");
+    if (rww_edit_url)
+        $('#rww-edit-url').val(rww_edit_url);
+
+    var rww_store_url = setting.getValue("ext.osds.rww.store.url");
+    if (rww_store_url)
+        $('#rww-store-url').val(rww_store_url);
 
 
     var sparql_url = setting.getValue("ext.osds.sparql.url");
@@ -119,7 +125,8 @@ function savePref()
    setting.setValue("ext.osds.import.url", $('#import-url').val().trim());
 
 
-   setting.setValue("ext.osds.rww.url", $('#rww-url').val().trim());
+   setting.setValue("ext.osds.rww.edit.url", $('#rww-edit-url').val().trim());
+   setting.setValue("ext.osds.rww.store.url", $('#rww-store-url').val().trim());
 
 
    var sparql_cmd = $('#sparql-cmd option:selected').attr('id');
@@ -180,10 +187,11 @@ function createSparqlQuery(cmd)
 {
     setting = new Settings();
     var query = "";
+    var uiterm_mode = $('#uiterm-mode option:selected').attr('id');
 
     switch (cmd) {
       case 'select':
-        query = setting.getSparqlQueryDefault();;
+        query = setting.getSparqlQueryDefault(uiterm_mode);;
         break;
       case 'describe':
         query = "DESCRIBE <{url}> LIMIT 100";

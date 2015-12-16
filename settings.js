@@ -19,22 +19,25 @@
  */
 
 Settings = function() {
-  this.def_import_url = "http://linkeddata.uriburner.com/describe?url={url}&sponger:get=add";
+  this.def_import_url = "http://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
   this.def_import_srv = "describe";
 //  this.def_rww_url = "http://ods-qa.openlinksw.com/rdf-editor/#/editor?uri={url}&newDocument=true";
-  this.def_rww_url = "https://ods-qa.openlinksw.com/rdf-editor/#/editor?newDocument=true";
+  this.def_rww_edit_url = "http://ods-qa.openlinksw.com/rdf-editor/#/editor?newDocument=true";
   this.def_sparql_url = "http://linkeddata.uriburner.com/sparql/?query={query}";
   this.def_sparql_cmd = "select";
-  this.def_sparql_qry_spo = "SELECT ?s as ?subject, ?p as ?predicate, ?o as ?object \nWHERE {  {<{url}> ?p ?o}\n union {?s ?p <{url}> } filter (! isblank(?s)) } LIMIT 100";
-  this.def_sparql_qry_eav = "SELECT ?s as ?entity, ?p as ?attribute, ?o as ?value \nWHERE {  {<{url}> ?p ?o}\n union {?s ?p <{url}> } filter (! isblank(?s)) } LIMIT 100";
+
+  this.def_sparql_qry_spo = "SELECT <{url}> as ?subject, ?p as ?predicate, ?o as ?object\nWHERE {  <{url}> ?p ?o FILTER (! isblank(?o)) } LIMIT 100";
+  this.def_sparql_qry_eav = "SELECT <{url}> as ?entity, ?p as ?attribute, ?o as ?value\nWHERE {  <{url}> ?p ?o FILTER (! isblank(?o)) } LIMIT 100";
 }
 
 
 Settings.prototype = {
-  getSparqlQueryDefault : function()
+  getSparqlQueryDefault : function(mode)
   {
-    var ui = this.getValue("ext.osds.uiterm.mode");
-    if (ui === "ui-eav")
+    if (mode===null)
+      mode = this.getValue("ext.osds.uiterm.mode");
+
+    if (mode === "ui-eav")
       return this.def_sparql_qry_eav;
     else
       return this.def_sparql_qry_spo;
@@ -56,8 +59,8 @@ Settings.prototype = {
       case "ext.osds.import.srv":
           val = this.def_import_srv; 
           break;
-      case "ext.osds.rww.url":
-          val = this.def_rww_url;
+      case "ext.osds.rww.edit.url":
+          val = this.def_rww_edit_url;
           break;
       case "ext.osds.sparql.url":
           val = this.def_sparql_url;
@@ -66,7 +69,7 @@ Settings.prototype = {
           val = this.def_sparql_cmd;
           break;
       case "ext.osds.sparql.query":
-          val = this.getSparqlQueryDefault();
+          val = this.getSparqlQueryDefault(null);
           break;
     }
     return val;

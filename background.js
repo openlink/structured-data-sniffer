@@ -422,11 +422,19 @@ function createImportUrl(curUrl)
 function createRwwUrl(curUrl) 
 {
   var setting = new Settings();
-  var handle_url = setting.getValue('ext.osds.rww.url');
-  var docURL = encodeURIComponent(curUrl);
+  var edit_url = setting.getValue('ext.osds.rww.edit.url');
+  var store_url = setting.getValue('ext.osds.rww.store.url');
 
-  return handle_url.replace(/{url}/g, docURL);
+  if (store_url!==null && store_url.length>0) {
+    if (edit_url.indexOf("?")!=-1)
+      edit_url += "&uri="+encodeURIComponent(store_url);
+    else
+      edit_url += "?uri="+encodeURIComponent(store_url);
+  }
+
+  return edit_url;
 }
+
 
 function createSparqlUrl(curUrl) 
 {
