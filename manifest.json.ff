@@ -1,6 +1,6 @@
 {
   "name": "OpenLink Structured Data Sniffer",
-  "version": "2.3.1",
+  "version": "2.4.1",
   "manifest_version": 2,
   "description": "Detects and displays the Metadata embedded in a given Web page.",
   "applications": {
