@@ -19,13 +19,18 @@
  */
 
 // React when the browser action's icon is clicked.
-var icon_active   = 'images/icon48.png';
 var items;
 var $ = jQuery;
 var gData_showed = false;
 
 $(document).ready(function() 
 {
+  $('#import_btn').click(Import_doc);
+
+  $('#rww_btn').click(Rww_exec);
+
+  $('#sparql_btn').click(Sparql_exec);
+
   $('#tabs a[href=#micro]').click(function(){
       selectTab('#micro');
       return false;
@@ -43,6 +48,7 @@ $(document).ready(function()
       return false;
   });
 
+  selectTab('#micro');
 
   jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
 
@@ -125,6 +131,7 @@ function show_Data(dData)
   var turtle = false;
   var rdfa = false;
 
+  wait_data = $('table.wait').hide();
 
   $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
   if (dData.micro.expanded) {
@@ -304,34 +311,137 @@ function check_RDFa(dData)
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) 
 {
-  if (request.property == "status")
-  {
-    var show_action = request.data_exists;
-    if (show_action)
-      chrome.pageAction.show(sender.tab.id);
+  try {
+    if (request.property == "status")
+    {
+      var show_action = request.data_exists;
+      if (show_action)
+        chrome.pageAction.show(sender.tab.id);
+      else
+        chrome.pageAction.hide(sender.tab.id);
+
+    } 
+    else if (request.property == "doc_data")
+    {
+      var dData = $.parseJSON(request.data);
+      dData.micro.expanded = null;
+      dData.micro.error = null;
+      dData.jsonld.expanded = null;
+      dData.jsonld.error = null;
+      dData.rdfa.expanded = null;
+      dData.turtle.expanded = null;
+      dData.turtle.error = null;
+      dData.rdfa.expanded = null;
+      dData.rdfa.error = null;
+
+      check_Microdata(dData);
+
+    }
     else
-      chrome.pageAction.hide(sender.tab.id);
-
-  } 
-  else if (request.property == "doc_data")
-  {
-    var dData = $.parseJSON(request.data);
-    dData.micro.expanded = null;
-    dData.micro.error = null;
-    dData.jsonld.expanded = null;
-    dData.jsonld.error = null;
-    dData.rdfa.expanded = null;
-    dData.turtle.expanded = null;
-    dData.turtle.error = null;
-    dData.rdfa.expanded = null;
-    dData.rdfa.error = null;
-
-    check_Microdata(dData);
-
-  }
-  else
-  {
-    sendResponse({}); /* stop */
+    {
+      sendResponse({}); /* stop */
+    }
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
   }
 
 });
+
+
+
+function Import_doc() {
+  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
+      if (tabs.length > 0) {
+        var url = createImportUrl(tabs[0].url);
+        window.open(url);
+      }
+    });
+
+  return false;
+}
+
+function Rww_exec() {
+  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
+      if (tabs.length > 0) {
+        var url = createRwwUrl(tabs[0].url);
+        window.open(url);
+      }
+    });
+
+  return false;
+}
+
+function Sparql_exec() {
+  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
+      if (tabs.length > 0) {
+        var url = createSparqlUrl(tabs[0].url);
+        window.open(url);
+      }
+    });
+
+  return false;
+}
+
+
+
+function createImportUrl(curUrl) 
+{
+  var setting = new Settings();
+  var handle_url = setting.getValue('ext.osds.import.url');
+  var srv = setting.getValue('ext.osds.import.srv');
+  var docURL = encodeURIComponent(curUrl);
+
+  switch(srv) {
+    case 'about':
+    case 'about-ssl':
+      var result = curUrl.match(/^((\w+):\/)?\/?(.*)$/);
+      if (!result) {
+        throw 'Invalid url:\n' + curUrl;
+        return null;
+      }
+//      var protocol = result[2]=="https"?"http":result[2];
+      var protocol = result[2];
+      docURL = protocol + '/' + result[3];
+      break;
+
+    case 'ode':
+    case 'ode-ssl':
+    case 'describe':
+    case 'describe-ssl':
+    default:
+      break;
+  }
+
+  if (handle_url.indexOf("{url}")!=-1)
+     return handle_url.replace("{url}",docURL);
+  else
+     return handle_url + docURL;
+}
+
+
+function createRwwUrl(curUrl) 
+{
+  var setting = new Settings();
+  var edit_url = setting.getValue('ext.osds.rww.edit.url');
+  var store_url = setting.getValue('ext.osds.rww.store.url');
+
+  if (store_url!==null && store_url.length>0) {
+    if (edit_url.indexOf("?")!=-1)
+      edit_url += "&uri="+encodeURIComponent(store_url);
+    else
+      edit_url += "?uri="+encodeURIComponent(store_url);
+  }
+
+  return edit_url;
+}
+
+
+function createSparqlUrl(curUrl) 
+{
+  var setting = new Settings();
+  var sparql_url = setting.getValue('ext.osds.sparql.url');
+  var query = setting.getValue('ext.osds.sparql.query');
+
+  var query = encodeURIComponent(query.replace(/{url}/g, curUrl));
+  return sparql_url.replace(/{query}/g, query);
+}

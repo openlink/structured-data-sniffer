@@ -1,21 +1,23 @@
 {
   "name": "OpenLink Structured Data Sniffer",
-  "version": "2.3.1",
+  "short_name": "OSD Sniffer",
+  "version": "2.4.2",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
-  "description": "Detects and shows the data embedded in a given page.",
+  "description": "Detects and displays the Metadata embedded in a given Web page.",
   "icons": {
       "16":  "images/icon16.png",
       "48":  "images/icon48.png",
       "128": "images/icon128.png" },
   "page_action": {
     "default_icon": "images/icon128.png",
-    "default_title": "View page data",
+    "default_title": "Show Document Metadata",
     "default_popup": "background.html"
   },
   "background": {
     "page": "background.html"
   },
+  "options_page": "options.html",
   "content_scripts": [
     {
       "matches": ["*://*/*"],

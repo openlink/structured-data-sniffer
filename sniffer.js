@@ -25,7 +25,8 @@ var turtle_Text = null;
 var rdfa_subjects = null;
 
 
-$(window).load(function() {
+//$(window).load(function() {
+window.onload = function() {
 
   try {
 
@@ -97,12 +98,20 @@ $(window).load(function() {
                var vlist = document.data.getObjects(rdfa_subjects[i], plist[j]);
                for (var z=0; z<vlist.length; z++) {
                  var v = vlist[z];
-                 if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#object")
+                 if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#object") {
                    p.push({"iri": String(v.value)});
-                 else if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral")
-                   p.push({value:String(v.value), type:null, lang:String(v.language)});
-                 else
-                   p.push({value:String(v.value), type:String(v.type), lang:String(v.language)});
+                 }
+                 else if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral") {
+                   var v_val = v.value!=null?String(v.value):null;
+                   var v_lang = v.language!=null?String(v.language):null;
+                   p.push({value:v_val, type:null, lang:v_lang});
+                 }
+                 else {
+                   var v_val = v.value!=null?String(v.value):null;
+                   var v_lang = v.language!=null?String(v.language):null;
+                   var v_type = v.type!=null?String(v.type):null;
+                   p.push({value:v_val, type:v_type, lang:v_lang});
+                 }
                }
              }
            } 
@@ -146,6 +155,7 @@ $(window).load(function() {
 
   } catch (e) {
     console.log("OSDS:"+e);
-//    alert(e);
   }
-});
+//});
+}();
+

@@ -1,9 +1,9 @@
 # OpenLink Structured Data Sniffer
 
 ## Intro
-The OpenLink Structured Data Sniffer (OSDS) is a plugin for the Chrome, Opera and select versions of
-the Firefox browser, that detects and shows structured data embedded in web pages in either of the
-following formats:
+The OpenLink Structured Data Sniffer (OSDS) is a plugin for the Chrome, Opera and the Firefox
+browser, that detects and shows structured data embedded in web pages in either of the following
+formats:
 
 - **JSON-LD**
 - **Microdata**
@@ -68,16 +68,11 @@ To install this extension manually use the following steps:
 - Press the **Select** button
 
 ### Install the extension in Firefox
-At this time Mozilla is deprecating their *XCOM*, *XUL* etc. API in favor of using the WebExtension
-API which is scheduled to be releases in FireFox versions around Q2 2016. For now this extension
-will only work with **Firefox Developer Edition** or **Firefox Nightly** and not with the regular
-FireFox version 42.0 or below.
-
-Download the [Firefox OSDS .zip](https://github.com/openlink/structured-data-sniffer/releases/download/v2.3.0/OSDS_FF.zip)
+Download the [Firefox OSDS .zip](https://github.com/openlink/structured-data-sniffer/releases/download/v2.4.2/OSDS_FF.zip)
 file and extract the .xpi file.
 
-To install this extension manually, use the following steps:
-- Open the **Firefox Developer Edition** browser
+To install this extension manually in Firefox v28+, use the following steps:
+- Open the **Firefox** browser
 - In address bar type: **about:config**
 - Press the **I'll be careful, i promise** button
 - Search for **xpinstall.signatures.required**

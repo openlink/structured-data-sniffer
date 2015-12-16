@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<!--
+    This file is part of the OpenLink Structured Data Sniffer
+
+    Copyright (C) 2015 OpenLink Software
+
+    This project is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; only version 2 of the License, dated June 1991.
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+-->
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>OpenLink Structured Data Sniffer</title>
+    <link type="text/css" href="lib/css/smoothness/jquery-ui-1.8.6.custom.css" rel="stylesheet" />	
+
+    <script type="text/javascript" src="lib/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="lib/jquery-migrate-1.2.1.min.js"></script>
+    <script type="text/javascript" src="lib/jquery-ui-1.8.6.custom.min.js"></script>
+    <script type="text/javascript" src="lib/jsuri.js"></script>
+    <script type="text/javascript" src="settings.js"></script>
+    <script type="text/javascript" src="options.js"></script>
+
+    <style type="text/css">
+	/*demo page css*/
+	body{ font: 62.5% "Trebuchet MS", sans-serif; margin: 50px;}
+	#dialog_link {padding: .4em 1em .4em 20px;text-decoration: none;position: relative;}
+	#dialog_link span.ui-icon {margin: 0 5px 0 0;position: absolute;left: .2em;top: 50%;margin-top: -8px;}
+	ul#icons {margin: 0; padding: 0;}
+	ul#icons li {margin: 2px; position: relative; padding: 4px 0; cursor: pointer; float: left;  list-style: none;}
+	ul#icons span.ui-icon {float: left; margin: 0 4px;}
+    </style>	
+
+  </head>
+
+  <body>
+
+    <!-- Tabs -->
+    <div id="tabs" style="WIDTH: 500px">
+      <ul>
+	<li><a href="#tabs-1">Settings</a></li>
+	<li><a href="#tabs-2">About</a></li>
+      </ul>
+	
+        <div id="tabs-1">
+          <table>
+
+           <tr>
+             <table>
+              <tr>
+               <td>UI Terminology:</td>
+               <td>
+                 <SELECT id="uiterm-mode" style="WIDTH: 200px" >
+                   <OPTION id="ui-eav" selected>Entity, Attribute, Value</OPTION>
+                   <OPTION id="ui-spo">Subject, Predicate, Object</OPTION>
+                 </SELECT>
+               </td>
+              </tr>
+             </table>
+           </tr>
+
+           <tr> </p> </tr>
+           <tr> <hr> </tr>
+           <tr> </p> </tr>
+           
+           <tr>
+               <table>
+                <tr>
+                 <td>LOD Cloud Lookup & Upload Service</td>
+                 <td>
+                   <SELECT id="import-srv" style="WIDTH: 245px" >
+                     <OPTION id="describe" selected>Virtuoso Describe</OPTION>
+                     <OPTION id="describe-ssl">Virtuoso Describe SSL</OPTION>
+                     <OPTION id="about">Virtuoso About</OPTION>
+                     <OPTION id="about-ssl">Virtuoso About SSL</OPTION>
+                     <OPTION id="custom">Custom</OPTION>
+                   </SELECT>
+                 </td>
+                </tr>
+               </table>
+           </tr>
+
+           <tr>
+               <table>
+                <tr id="import-url-bcast">
+                 <td> URL: </td>
+                 <td> <input id="import-url" style="WIDTH: 418px"> </td>
+                </tr>
+               </table>
+           </tr>
+
+           <tr>
+               <input id="import-set-def" value="Set Default" type="button">
+           </tr>
+
+           <tr> </p> </tr>
+           <tr> <hr> </tr>
+           <tr> </p> </tr>
+           
+
+           <tr>Annotation (Read-Write) Service</tr>
+           <tr>
+               <table>
+                <tr>
+<!--                 <td style="text-align: right; overflow: hidden;"> Editor Service URL: </td> -->
+                 <td > Editor Service URL: </td>
+                 <td> <input id="rww-edit-url" style="WIDTH: 265px"> </td>
+                </tr>
+                <tr>
+                 <td > Default Storage Document URL: </td>
+                 <td> <input id="rww-store-url" style="WIDTH: 265px"> </td>
+                </tr>
+               </table>
+           </tr>
+           <tr>
+               <input id="rww-set-def" value="Set Default" type="button">
+           </tr>
+           
+           <tr> </p> </tr>
+           <tr> <hr> </tr>
+           <tr> </p> </tr>
+           
+           <tr>
+               SPARQL Query Service
+           </tr>
+           <tr>
+               <table>
+                <tr>
+                 <td> URL: </td>
+                 <td> <input id="sparql-url" style="WIDTH: 405px"> </td>
+                </tr>
+
+                <tr>
+                 <td>Query:</td>
+                 <td>
+                   <SELECT id="sparql-cmd" style="WIDTH: 255px" >
+                     <OPTION id="select" selected>SELECT ...</OPTION>
+                     <OPTION id="describe">DESCRIBE ...</OPTION>
+                     <OPTION id="construct">CONSTRUCT ...</OPTION>
+                   </SELECT>
+                 </td>
+                </tr>
+               </table>
+           </tr>
+           <tr>
+               <textarea id="sparql-query" style="width: 450px; height: 77px">
+               </textarea>
+           </tr>
+           <tr>
+               <input id="sparql-set-def" value="Set Default" type="button">
+           </tr>
+
+
+          </table>
+        </div>
+
+	
+	<div id="tabs-2">
+            <IMG alt="" src="images/icon48.png">
+            <h3>OpenLink Structured Data Sniffer</h3>
+            <p id="ext_ver">Version 0.0.0</p>
+            <p>
+              Browser extension that reveals metadata oriented structured 
+              data embedded within HTML documents. In addition, this extension 
+              also includes loosely-coupled bindings to a variety of data 
+              access and lookup services across HTTP based networks such 
+              as the World Wide Web and Linked Open Data Cloud.
+            </p>
+            <p>Visit OpenLink Structured Data Sniffer <a href="http://osds.openlinksw.com" target="_blank">homepage</a> for additional product information.</p>
+            <p>Copyright 2015 <a href="http://www.openlinksw.com" target="_blank">OpenLink Software</a></p>
+        </div>
+    </div>
+    </p>
+
+    <input id="OK_btn" value=" OK " type="button">
+    <input id="Cancel_btn" value=" Cancel " type="button">
+			
+			
+  </body>
+</html>
+
+
