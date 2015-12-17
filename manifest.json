@@ -4,7 +4,7 @@
   "version": "2.4.2",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
-  "description": "Detects and displays the Metadata embedded in a given Web page.",
+  "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
   "icons": {
       "16":  "images/icon16.png",
       "48":  "images/icon48.png",
