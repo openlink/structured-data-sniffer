@@ -27,8 +27,8 @@ Settings = function() {
   this.def_sparql_cmd = "select";
 
 //  this.def_sparql_qry_spo = "SELECT <{url}> as ?subject, ?p as ?predicate, ?o as ?object\n              WHERE { <{url}> ?p ?o FILTER (! isblank(?o)) } LIMIT 100";
-  this.def_sparql_qry_spo = 'DEFINE get:soft "add"\nSELECT <{url}> as ?subject, ?p as ?predicate, ?o as ?object\nFROM <{url}>\nWHERE { <{url}> ?p ?o } LIMIT 100'
-  this.def_sparql_qry_eav = 'DEFINE get:soft "add"\nSELECT <{url}> as ?entity, ?p as ?attribute, ?o as ?value\nFROM <{url}>\nWHERE { <{url}> ?p ?o } LIMIT 100'
+  this.def_sparql_qry_spo = 'DEFINE get:soft "add"\nSELECT <{url}> as ?subject, ?p as ?predicate, ?o as ?object\nFROM <{url}>\nWHERE { <{url}> ?p ?o } LIMIT 100';
+  this.def_sparql_qry_eav = 'DEFINE get:soft "add"\nSELECT <{url}> as ?entity, ?p as ?attribute, ?o as ?value\nFROM <{url}>\nWHERE { <{url}> ?p ?o } LIMIT 100';
 }
 
 
