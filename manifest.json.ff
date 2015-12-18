@@ -25,7 +25,7 @@
       "matches": ["*://*/*"],
       "css": [],
       "js": ["lib/jquery-1.11.3.min.js", "lib/jquery-migrate-1.2.1.min.js", "lib/jsonld.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "sniffer.js"],
-      "run_at": "document_end"
+      "run_at": "document_idle"
     }
   ],
 "permissions": [
