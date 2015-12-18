@@ -65,6 +65,31 @@ window.onload = function() {
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       if (request.property == "doc_data") 
       {
+
+        //check again ld+json and turtle for any case
+        micro_items = $('[itemscope]').not($('[itemscope] [itemscope]'));
+    
+        var all = document.getElementsByTagName("script");
+        for( var i = 0; i < all.length; i++ ) {
+          if ( all[i].hasAttribute('type') 
+               && all[i].getAttribute('type') == "application/ld+json")
+            {
+              var htmlText = all[i].innerHTML;
+              json_ld_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
+              break;
+            }
+        }
+
+        for( var i = 0; i < all.length; i++ ) {
+          if ( all[i].hasAttribute('type') 
+               && all[i].getAttribute('type') == "text/turtle")
+            {
+              var htmlText = all[i].innerHTML;
+              turtle_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
+              break;
+            }
+        }
+        
         var docData = {
                docURL: document.location.href,
                micro :{ data:null }, 
