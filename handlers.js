@@ -130,7 +130,7 @@ Namespace.prototype = {
   
 
 Handle_Microdata = function () {
-  var callback = null;
+  this.callback = null;
 };
 
 Handle_Microdata.prototype = {
@@ -154,9 +154,14 @@ Handle_Microdata.prototype = {
 
 
 
-Handle_Turtle = function () {
-  var callback = null;
-  var baseURI = null;
+Handle_Turtle = function (start_id) {
+  this.callback = null;
+  this.baseURI = null;
+  this._pos = 0;
+  this._output = null;
+  this.start_id = 0;
+  if (start_id!==undefined)
+    this.start_id = start_id;
 };
 
 Handle_Turtle.prototype = {
@@ -164,30 +169,48 @@ Handle_Turtle.prototype = {
   parse : function(textData, docURL, callback) {
     this.callback = callback;
     this.baseURI = docURL;
-
-    var store = new N3DataConverter();
-    var parser = N3.Parser();
     var self = this;
-    try {
-      parser.parse(textData,
-        function (error, tr, prefixes) {
-          if (error) {
-            self.error = ""+error;
-            self.callback(self.error, null);
-          }
-          else if (tr) {
-            store.addTriple(self.fixNode(tr.subject), 
-                            self.fixNode(tr.predicate), 
-                            self.fixNode(tr.object));
-          }
-          else {
-            var str = new HTML_Gen().load(store.output);
-            self.callback(null, str);
-          }
-        });
-    } catch (ex) {
-      self.callback(ex.toString(), null);
+
+    if (this._pos < textData.length) {
+      var store = new N3DataConverter();
+      var parser = N3.Parser();
+      try {
+        parser.parse(textData[self._pos],
+          function (error, tr, prefixes) {
+            if (error) {
+              self.error = ""+error;
+              self.callback(self.error, null);
+            }
+            else if (tr) {
+              store.addTriple(self.fixNode(tr.subject), 
+                              self.fixNode(tr.predicate), 
+                              self.fixNode(tr.object));
+            }
+            else {
+              if (self._output===null)
+                self._output = "";
+              
+              var triples = store.output;
+
+              self._output += new HTML_Gen().load(triples, self.start_id);
+              self._pos++;
+
+              if (triples!==null && triples.length!==undefined)
+                self.start_id+= triples.length;
+
+              if (self._pos < textData.length)
+                self.parse(textData, docURL, self.callback);
+              else
+                self.callback(null, self._output);
+            }
+          });
+      } catch (ex) {
+        self.callback(ex.toString(), null);
+      }
+    } else {
+        self.callback(null, this._output);
     }
+
   },
 
 
@@ -215,7 +238,10 @@ Handle_Turtle.prototype = {
 
 
 Handle_JSONLD = function () {
-  var callback = null;
+  this.callback = null;
+  this._pos = 0;
+  this._output = null;
+  this.start_id = 0;
 };
 
 Handle_JSONLD.prototype = {
@@ -223,40 +249,58 @@ Handle_JSONLD.prototype = {
   parse : function(textData, docURL, callback) {
     this.callback = callback;
     var self = this;
-    try {
-      jsonld_data = JSON.parse(textData);
-      if (jsonld_data != null) {
-        jsonld.expand(jsonld_data, 
-          function(err, expanded) {
-            if (err) {
-              self.callback(""+err, null);
-            }
-            else {
-              jsonld.toRDF(expanded, {format: 'application/nquads'}, 
-                function(err, nquads) {
-                  if (err) {
-                    self.callback(""+err, null);
-                  }
-                  else {
-                    var handler = new Handle_Turtle();
-                    handler.parse(nquads, docURL, function(error, html_data) {
-                      if (error) {
-                        self.callback(""+error, null);
-                      }
-                      else {
-                        self.callback(null, html_data);
-                      }
-                    });
-                  }
-              });
-            }
-          })
+
+    if (this._pos < textData.length) 
+    {
+      try {
+        jsonld_data = JSON.parse(textData[this._pos]);
+        if (jsonld_data != null) {
+          jsonld.expand(jsonld_data, 
+            function(err, expanded) {
+              if (err) {
+                self.callback(""+err, null);
+              }
+              else {
+                jsonld.toRDF(expanded, {format: 'application/nquads'}, 
+                  function(err, nquads) {
+                    if (err) {
+                      self.callback(""+err, null);
+                    }
+                    else {
+                      var handler = new Handle_Turtle(self.start_id);
+                      handler.parse([nquads], docURL, function(error, html_data) {
+                        if (error) {
+                          self.callback(""+error, null);
+                        }
+                        else {
+                          if (self._output===null)
+                            self._output = "";
+
+                          self._output += html_data;
+                          self._pos++;
+                          self.start_id += handler.start_id;
+ 
+                          if (self._pos < textData.length)
+                            self.parse(textData, docURL, self.callback);
+                          else
+                            self.callback(null, self._output);
+                        }
+                      });
+                    }
+                });
+              }
+            })
+        }
+        else
+          self.callback(null, null);
+      } catch (ex) {
+        self.callback(ex.toString(), null);
       }
-      else
-        self.callback(null, null);
-    } catch (ex) {
-      self.callback(ex.toString(), null);
+
+    } else {
+       self.callback(null, this._output);
     }
+
   }
 
 
@@ -265,7 +309,7 @@ Handle_JSONLD.prototype = {
 
 
 Handle_RDFa = function () {
-  var callback = null;
+  this.callback = null;
 };
 
 Handle_RDFa.prototype = {

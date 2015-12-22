@@ -18,7 +18,7 @@
  *
  */
 
-Settings = function() {
+Settings = function(data) {
   this.def_import_url = "http://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
   this.def_import_srv = "describe";
 //  this.def_rww_url = "http://ods-qa.openlinksw.com/rdf-editor/#/editor?uri={url}&newDocument=true";
@@ -26,8 +26,9 @@ Settings = function() {
   this.def_sparql_url = "http://linkeddata.uriburner.com/sparql/?query={query}";
   this.def_sparql_cmd = "select";
 
-  this.def_sparql_qry_spo = "SELECT <{url}> as ?subject, ?p as ?predicate, ?o as ?object\nWHERE {  <{url}> ?p ?o FILTER (! isblank(?o)) } LIMIT 100";
-  this.def_sparql_qry_eav = "SELECT <{url}> as ?entity, ?p as ?attribute, ?o as ?value\nWHERE {  <{url}> ?p ?o FILTER (! isblank(?o)) } LIMIT 100";
+  this.def_sparql_qry_spo = 'DEFINE get:soft "add"\nSELECT <{url}> as ?subject, ?p as ?predicate, ?o as ?object\nFROM <{url}>\nWHERE { <{url}> ?p ?o } LIMIT 100';
+  this.def_sparql_qry_eav = 'DEFINE get:soft "add"\nSELECT <{url}> as ?entity, ?p as ?attribute, ?o as ?value\nFROM <{url}>\nWHERE { <{url}> ?p ?o } LIMIT 100';
+  this._data = (data!== undefined && data!==null) ? data:null;
 }
 
 
@@ -45,7 +46,22 @@ Settings.prototype = {
   
   getValue : function(id)
   {
-    var val = localStorage.getItem(id);
+    var val = null;
+
+    try {
+/**
+      if (Browser.isFirefox)
+        val = this._data[id];
+      else
+**/
+      val = localStorage.getItem(id);
+
+      if (val===undefined)
+        val = null;
+    } catch(e) {
+      console.log(e);
+    }
+
     if (val!==null)
       return val;
 
@@ -77,9 +93,18 @@ Settings.prototype = {
 
   setValue : function(id, val)
   {
-    localStorage.removeItem(id);
-    localStorage.setItem(id, val);
+    try {
+/**
+      if (Browser.isFirefox) {
+        this._data[id] = val;
+      } else {
+**/
+        localStorage.removeItem(id);
+        localStorage.setItem(id, val);
+//      }
+    } catch(e) {
+      console.log(e);
+    }
   }
 }
-  
   

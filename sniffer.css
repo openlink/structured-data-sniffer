@@ -57,7 +57,7 @@ table.docdata > tbody > tr > td.major {
 
 
 
-body {
+body.sniffer {
     width: 620px;
     height: 580px;
 }

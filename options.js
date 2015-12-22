@@ -18,9 +18,14 @@
  *
  */
 
+var gPref = null;
 
 $(function(){
 	// Tabs
+
+	gPref = new Settings();
+
+
 	$('#tabs').tabs();
 
         loadPref();
@@ -40,74 +45,78 @@ $(function(){
         });
 
         $('#OK_btn').click(savePref);
-        $('#Cancel_btn').click(function() { window.close(); });
+        $('#Cancel_btn').click(function() { 
+            if (Browser.isFirefoxSDK)
+              self.port.emit("close", "");
+            window.close(); 
+         });
 
         $('#import-set-def').click(setImportDefaults);
         $('#rww-set-def').click(setRWWDefaults);
         $('#sparql-set-def').click(setSparqlDefaults);
 
         enableCtrls();
-      
-        $('#ext_ver').text('Version: '+ chrome.runtime.getManifest().version);
+
+	if (Browser.isFirefoxSDK)
+          jQuery('#ext_ver').text('Version: '+ self.options.ver);
+        else
+          $('#ext_ver').text('Version: '+ chrome.runtime.getManifest().version);
+
 });
 
 
 
 function setImportDefaults() 
 {
-    setting = new Settings();
-    $('#'+setting.def_import_srv,'#import-srv').attr('selected','selected');
-    var h_url = createImportURL(setting.def_import_srv, setting.def_import_url.trim());
+    $('#'+gPref.def_import_srv,'#import-srv').attr('selected','selected');
+    var h_url = createImportURL(gPref.def_import_srv, gPref.def_import_url.trim());
     $('#import-url').val(h_url);
     enableCtrls();
 };
 
 function setRWWDefaults() 
 {
-    setting = new Settings();
-    $('#rww-edit-url').val(setting.def_rww_edit_url);
+    $('#rww-edit-url').val(gPref.def_rww_edit_url);
 };
 
 function setSparqlDefaults() 
 {
-    setting = new Settings();
-    $('#'+setting.def_sparql_cmd,'#sparql-cmd').attr('selected','selected');
-    $('#sparql-url').val(setting.def_sparql_url);
-    $('#sparql-query').val(createSparqlQuery(setting.def_sparql_cmd));
+    $('#'+gPref.def_sparql_cmd,'#sparql-cmd').attr('selected','selected');
+    $('#sparql-url').val(gPref.def_sparql_url);
+    $('#sparql-query').val(createSparqlQuery(gPref.def_sparql_cmd));
 };
 
 
 
 function loadPref() 
 {
-    setting = new Settings();
-    var uiterm_mode = setting.getValue("ext.osds.uiterm.mode"); 
+    var uiterm_mode = gPref.getValue("ext.osds.uiterm.mode"); 
     $('#'+uiterm_mode,'#uiterm-mode').attr('selected','selected');
 
 
-    var import_url = setting.getValue("ext.osds.import.url");
-    var import_srv = setting.getValue("ext.osds.import.srv"); 
+    var import_url = gPref.getValue("ext.osds.import.url");
+    var import_srv = gPref.getValue("ext.osds.import.srv"); 
 
     $('#'+import_srv,'#import-srv').attr('selected','selected');
     $('#import-url').val(import_url);
 
 
-    var rww_edit_url = setting.getValue("ext.osds.rww.edit.url");
+    var rww_edit_url = gPref.getValue("ext.osds.rww.edit.url");
     if (rww_edit_url)
         $('#rww-edit-url').val(rww_edit_url);
 
-    var rww_store_url = setting.getValue("ext.osds.rww.store.url");
+    var rww_store_url = gPref.getValue("ext.osds.rww.store.url");
     if (rww_store_url)
         $('#rww-store-url').val(rww_store_url);
 
 
-    var sparql_url = setting.getValue("ext.osds.sparql.url");
+    var sparql_url = gPref.getValue("ext.osds.sparql.url");
     $('#sparql-url').val(sparql_url);
 
-    var sparql_cmd = setting.getValue("ext.osds.sparql.cmd"); 
+    var sparql_cmd = gPref.getValue("ext.osds.sparql.cmd"); 
     $('#'+sparql_cmd,'#sparql-cmd').attr('selected','selected');
 
-    var sparql_query = setting.getValue("ext.osds.sparql.query");
+    var sparql_query = gPref.getValue("ext.osds.sparql.query");
     $('#sparql-query').val(sparql_query);
 }  
 
@@ -115,28 +124,28 @@ function loadPref()
 
 function savePref() 
 {
-   setting = new Settings();
    var uiterm_mode = $('#uiterm-mode option:selected').attr('id');
-   setting.setValue("ext.osds.uiterm.mode", uiterm_mode);
+   gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
 
 
    var import_srv = $('#import-srv option:selected').attr('id');
-   setting.setValue("ext.osds.import.srv", import_srv);
-   setting.setValue("ext.osds.import.url", $('#import-url').val().trim());
+   gPref.setValue("ext.osds.import.srv", import_srv);
+   gPref.setValue("ext.osds.import.url", $('#import-url').val().trim());
 
 
-   setting.setValue("ext.osds.rww.edit.url", $('#rww-edit-url').val().trim());
-   setting.setValue("ext.osds.rww.store.url", $('#rww-store-url').val().trim());
+   gPref.setValue("ext.osds.rww.edit.url", $('#rww-edit-url').val().trim());
+   gPref.setValue("ext.osds.rww.store.url", $('#rww-store-url').val().trim());
 
 
    var sparql_cmd = $('#sparql-cmd option:selected').attr('id');
-   setting.setValue("ext.osds.sparql.cmd", sparql_cmd);
-   setting.setValue("ext.osds.sparql.url", $('#sparql-url').val().trim());
-   setting.setValue("ext.osds.sparql.query", $('#sparql-query').val().trim());
+   gPref.setValue("ext.osds.sparql.cmd", sparql_cmd);
+   gPref.setValue("ext.osds.sparql.url", $('#sparql-url').val().trim());
+   gPref.setValue("ext.osds.sparql.query", $('#sparql-query').val().trim());
 
-//   chrome.runtime.sendMessage({osds_settings: "changed"});
+   if (Browser.isFirefoxSDK)
+     self.port.emit("close", "");
 
-   close();
+   window.close();
 }
 
 
@@ -185,13 +194,12 @@ function createImportURL(srv, _url)
 
 function createSparqlQuery(cmd) 
 {
-    setting = new Settings();
     var query = "";
     var uiterm_mode = $('#uiterm-mode option:selected').attr('id');
 
     switch (cmd) {
       case 'select':
-        query = setting.getSparqlQueryDefault(uiterm_mode);;
+        query = gPref.getSparqlQueryDefault(uiterm_mode);;
         break;
       case 'describe':
         query = "DESCRIBE <{url}> LIMIT 100";

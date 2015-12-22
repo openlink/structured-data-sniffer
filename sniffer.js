@@ -23,11 +23,57 @@ var micro_items = 0;
 var json_ld_Text = null;
 var turtle_Text = null;
 var rdfa_subjects = null;
+var data_found = false;
 
 
-//$(window).load(function() {
-window.onload = function() {
+function is_data_exist() {
+  try {
 
+    data_found = true;
+
+    var items = $('[itemscope]').not($('[itemscope] [itemscope]'));
+    if (items && items.length > 0) {
+      data_found = true;
+      return;
+    }
+
+    var all = document.getElementsByTagName("script");
+    for( var i = 0; i < all.length; i++ ) {
+      if ( all[i].hasAttribute('type') 
+           && all[i].getAttribute('type') == "application/ld+json")
+        {
+          data_found = true;
+          return;
+        }
+    }
+
+    for( var i = 0; i < all.length; i++ ) {
+      if ( all[i].hasAttribute('type') 
+           && all[i].getAttribute('type') == "text/turtle")
+        {
+          data_found = true;
+          return;
+        }
+    }
+
+    try {
+      GreenTurtle.attach(document);
+      rdfa_subjects = document.data.getSubjects();
+    } catch(e) {
+      console.log("OSDS:"+e);
+    }
+
+    if (rdfa_subjects && rdfa_subjects.length>0)
+      data_found = true;
+
+  } catch (e) {
+    console.log("OSDS:"+e);
+  }
+
+}
+
+
+function sniff_Data() {
   try {
 
     micro_items = $('[itemscope]').not($('[itemscope] [itemscope]'));
@@ -39,32 +85,55 @@ window.onload = function() {
       console.log("OSDS:"+e);
     }
 
+    json_ld_Text = null;
     var all = document.getElementsByTagName("script");
     for( var i = 0; i < all.length; i++ ) {
       if ( all[i].hasAttribute('type') 
            && all[i].getAttribute('type') == "application/ld+json")
         {
           var htmlText = all[i].innerHTML;
-          json_ld_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
-          break;
+          if (json_ld_Text == null)
+            json_ld_Text = [];
+          json_ld_Text.push(htmlText.replace("<![CDATA[", "").replace("]]>", ""));
         }
     }
 
+    turtle_Text = null;
     for( var i = 0; i < all.length; i++ ) {
       if ( all[i].hasAttribute('type') 
            && all[i].getAttribute('type') == "text/turtle")
         {
           var htmlText = all[i].innerHTML;
-          turtle_Text = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
-          break;
+          if (turtle_Text == null)
+            turtle_Text = [];
+          turtle_Text.push(htmlText.replace("<![CDATA[", "").replace("]]>", "")); 
         }
     }
 
+  } catch (e) {
+    console.log("OSDS:"+e);
+  }
 
-    // Add the listener for messages from the chrome extension.
-    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-      if (request.property == "doc_data") 
-      {
+}
+
+
+
+
+
+window.onload = function() {
+
+  try {
+
+    is_data_exist();
+    if (!data_found) {
+       setTimeout(is_data_exist, 3000);
+    }
+
+    function send_doc_data() 
+    {
+        //check again ld+json and turtle for any case
+        sniff_Data();
+
         var docData = {
                docURL: document.location.href,
                micro :{ data:null }, 
@@ -77,10 +146,10 @@ window.onload = function() {
         var rdfa = null;
 
         ///Convert RDFa data to internal format
-        if (rdfa_subjects!=null && rdfa_subjects.length>0) {
+        if (rdfa_subjects!=null && rdfa_subjects.length>0) 
+        {
            rdfa = [];
            var _LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
-
 
            for(var i=0; i<rdfa_subjects.length; i++) {
              var s = {s:rdfa_subjects[i], n:i+1};
@@ -122,40 +191,63 @@ window.onload = function() {
         docData.turtle.text = turtle_Text;
         docData.rdfa.data = rdfa;
 
-        chrome.runtime.sendMessage(null, 
-            { property: "doc_data", 
-              data: JSON.stringify(docData, undefined, 2)
-            }, 
-            function(response) {
+        //send data to extension
+        if (Browser.isFirefoxSDK) 
+        {
+            self.port.emit("doc_data", {data:JSON.stringify(docData, undefined, 2)});
+        }
+        else
+        {
+            chrome.runtime.sendMessage(null, 
+                { property: "doc_data", 
+                  data: JSON.stringify(docData, undefined, 2)
+                }, 
+                function(response) {
             });
+        }
+    }
 
-      } 
-      else
-      {
-        sendResponse({});  /* stop */
-      }
-    });
+
+
+    // wait data req from extension 
+    if (Browser.isFirefoxSDK) 
+    {
+        self.port.on("doc_data", function(msg) {
+          send_doc_data();
+        });
+    }
+    else 
+    {
+        chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+          if (request.property == "doc_data") 
+            send_doc_data();
+          else
+            sendResponse({});  /* stop */
+        });
+    }
+
+
 
     // Tell the chrome extension that we're ready to receive messages
-    var exists = false;
-    if (micro_items.length > 0 
-        || (json_ld_Text!=null && json_ld_Text.length>0)
-        || (turtle_Text!=null && turtle_Text.length>0)
-        || (rdfa_subjects!=null && rdfa_subjects.length>0)
-       )
-      exists = true;
-
-    chrome.runtime.sendMessage(null, {
+    //send data_exists flag to extension
+    if (Browser.isFirefoxSDK) 
+    {
+        self.port.emit("content_status", {data_exists:data_found});
+    }
+    else
+    {
+        chrome.runtime.sendMessage(null, {
                property: "status", 
                status: 'ready',
-               data_exists: exists
+               data_exists: data_found
            }, 
            function(response) {
-           });
+        });
+     }
 
   } catch (e) {
     console.log("OSDS:"+e);
   }
-//});
+
 }();
 
