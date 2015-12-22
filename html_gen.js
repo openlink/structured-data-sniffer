@@ -29,10 +29,13 @@
 
   HTML_Gen.prototype = {
 
-    load: function (json_data) 
+    load: function (n_data, start_id) 
     {
       var expanded = null;
       var id_list = {};
+
+      if (start_id===undefined)
+        start_id = 0;
 
       this.uimode = localStorage.getItem("ext.osds.uiterm.mode");
       if (this.uimode===null)
@@ -46,21 +49,22 @@
       }
 
 
-      if (json_data!=null &&
-          json_data.length!==undefined && 
-          json_data.length > 0) 
+      if (n_data!=null &&
+          n_data.length!==undefined && 
+          n_data.length > 0) 
       {
         var str = "";
         //fill id_list
-        for(var i=0; i < json_data.length; i++) 
+        for(var i=0; i < n_data.length; i++) 
         {
-          id_list[json_data[i].s] = i+1;
+          id_list[n_data[i].s] = start_id+i+1;
         }
 
 
-        for(var i=0; i < json_data.length; i++) 
+        for(var i=0; i < n_data.length; i++) 
         {
-          var item = json_data[i];
+          var item = n_data[i];
+          var item_num = start_id + item.n;
           str += "\
             <table class='docdata table'> \
               <thead> \
@@ -70,7 +74,7 @@
                 </tr> \
               </thead> \
               <tbody> \
-                <tr class='major'><td>Statement Collection #"+item.n+"</td><td></td></tr> \
+                <tr class='major'><td>Statement Collection #"+item_num+"</td><td></td></tr> \
                 ";
           str += this.format_id(item.s, id_list);
 
@@ -120,7 +124,7 @@
 
         for(var i=0; i<val.length; i++) {
           var obj = val[i];
-          if (obj.iri!=undefined) {
+          if (obj.iri!==undefined) {
             var iri = obj.iri;
             var entity_id = id_list[iri];
             if (entity_id!==undefined && iri[0]==="_" && iri[1]===":") {

@@ -22,6 +22,7 @@
 var items;
 var $ = jQuery;
 var gData_showed = false;
+var doc_URL = null;
 
 $(document).ready(function() 
 {
@@ -30,6 +31,10 @@ $(document).ready(function()
   $('#rww_btn').click(Rww_exec);
 
   $('#sparql_btn').click(Sparql_exec);
+
+  if (Browser.isFirefoxSDK) {
+    $('#prefs_btn').click(Prefs_exec);
+  }
 
   $('#tabs a[href=#micro]').click(function(){
       selectTab('#micro');
@@ -50,9 +55,19 @@ $(document).ready(function()
 
   selectTab('#micro');
 
-  jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
 
-  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
+  if (Browser.isFirefoxSDK) 
+  {
+    jQuery('#ext_ver').text('ver: '+ self.options.ver);
+
+    //req data from extension
+    self.port.emit("doc_data", "");
+  }
+  else 
+  {
+    jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
+
+    chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
         chrome.tabs.sendMessage(tabs[0].id, {
@@ -62,6 +77,8 @@ $(document).ready(function()
           });
       }
     });
+  }
+
 
 });
 
@@ -237,11 +254,9 @@ function check_Microdata(dData)
 }
 
 
-
-
 function check_JSON_LD(dData) 
 {
-  if (dData.jsonld.text && dData.jsonld.text.length > 0)
+  if (dData.jsonld.text!==null && dData.jsonld.text.length > 0)
   {
     var handler = new Handle_JSONLD();
     handler.parse(dData.jsonld.text, dData.docURL,
@@ -265,7 +280,7 @@ function check_JSON_LD(dData)
 
 function check_Turtle(dData) 
 {
-  if (dData.turtle.text && dData.turtle.text.length > 0)
+  if (dData.turtle.text!==null && dData.turtle.text.length > 0)
   {
     var handler = new Handle_Turtle();
     handler.parse(dData.turtle.text, dData.docURL, 
@@ -308,22 +323,13 @@ function check_RDFa(dData)
 }
 
 
-
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) 
+if (Browser.isFirefoxSDK) 
 {
-  try {
-    if (request.property == "status")
-    {
-      var show_action = request.data_exists;
-      if (show_action)
-        chrome.pageAction.show(sender.tab.id);
-      else
-        chrome.pageAction.hide(sender.tab.id);
+  //Firefox SDK
+  //wait data from extension
+  self.port.on("doc_data", function(msg) {
 
-    } 
-    else if (request.property == "doc_data")
-    {
-      var dData = $.parseJSON(request.data);
+      var dData = $.parseJSON(msg.data);
       dData.micro.expanded = null;
       dData.micro.error = null;
       dData.jsonld.expanded = null;
@@ -333,51 +339,96 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
       dData.turtle.error = null;
       dData.rdfa.expanded = null;
       dData.rdfa.error = null;
+      doc_URL = dData.docURL;
 
       check_Microdata(dData);
+  });
+}
+else 
+{
+  //Chrome API
+  //wait data from extension
+  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) 
+  {
+    try {
+      if (request.property == "status")
+      {
+        var show_action = request.data_exists;
+        if (show_action)
+          chrome.pageAction.show(sender.tab.id);
+        else
+          chrome.pageAction.hide(sender.tab.id);
 
+      } 
+      else if (request.property == "doc_data")
+      {
+        var dData = $.parseJSON(request.data);
+        dData.micro.expanded = null;
+        dData.micro.error = null;
+        dData.jsonld.expanded = null;
+        dData.jsonld.error = null;
+        dData.rdfa.expanded = null;
+        dData.turtle.expanded = null;
+        dData.turtle.error = null;
+        dData.rdfa.expanded = null;
+        dData.rdfa.error = null;
+        doc_URL = dData.docURL;
+
+        check_Microdata(dData);
+
+      }
+      else
+      {
+        sendResponse({}); /* stop */
+      }
+    } catch(e) {
+      console.log("OSDS: onMsg="+e);
     }
-    else
-    {
-      sendResponse({}); /* stop */
-    }
-  } catch(e) {
-    console.log("OSDS: onMsg="+e);
+
+  });
+}
+
+
+
+
+function Import_doc() 
+{
+  if (doc_URL!==null) {
+     var url = createImportUrl(doc_URL);
+     window.open(url);
   }
 
-});
+  return false;
+}
 
 
-
-function Import_doc() {
-  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
-      if (tabs.length > 0) {
-        var url = createImportUrl(tabs[0].url);
-        window.open(url);
-      }
-    });
+function Rww_exec() 
+{
+  if (doc_URL!==null) {
+     var url = createRwwUrl(doc_URL);
+     window.open(url);
+  }
 
   return false;
 }
 
-function Rww_exec() {
-  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
-      if (tabs.length > 0) {
-        var url = createRwwUrl(tabs[0].url);
-        window.open(url);
-      }
-    });
+
+function Sparql_exec() 
+{
+  if (doc_URL!==null) {
+     var url = createSparqlUrl(doc_URL);
+     window.open(url);
+  }
 
   return false;
 }
 
-function Sparql_exec() {
-  chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
-      if (tabs.length > 0) {
-        var url = createSparqlUrl(tabs[0].url);
-        window.open(url);
-      }
-    });
+
+function Prefs_exec() 
+{
+  //snow preferenses
+  if (Browser.isFirefoxSDK) 
+     self.port.emit("prefs", "");
 
   return false;
 }

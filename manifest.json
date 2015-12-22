@@ -12,17 +12,17 @@
   "page_action": {
     "default_icon": "images/icon128.png",
     "default_title": "Show Document Metadata",
-    "default_popup": "background.html"
+    "default_popup": "panel.html"
   },
   "background": {
-    "page": "background.html"
+    "page": "panel.html"
   },
   "options_page": "options.html",
   "content_scripts": [
     {
       "matches": ["*://*/*"],
       "css": [],
-      "js": ["lib/jquery-1.11.3.min.js", "lib/jquery-migrate-1.2.1.min.js", "lib/jsonld.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "sniffer.js"],
+      "js": ["lib/jquery-1.11.3.min.js", "lib/jquery-migrate-1.2.1.min.js", "lib/jsonld.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "browser.js", "sniffer.js"],
       "run_at": "document_idle"
     }
   ],
