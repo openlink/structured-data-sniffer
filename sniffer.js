@@ -29,7 +29,7 @@ var data_found = false;
 function is_data_exist() {
   try {
 
-    data_found = true;
+    data_found = false;
 
     var items = $('[itemscope]').not($('[itemscope] [itemscope]'));
     if (items && items.length > 0) {

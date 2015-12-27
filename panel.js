@@ -475,6 +475,7 @@ function createRwwUrl(curUrl)
   var setting = new Settings();
   var edit_url = setting.getValue('ext.osds.rww.edit.url');
   var store_url = setting.getValue('ext.osds.rww.store.url');
+  var docURL = encodeURIComponent(curUrl);
 
   if (store_url!==null && store_url.length>0) {
     if (edit_url.indexOf("?")!=-1)
@@ -483,7 +484,10 @@ function createRwwUrl(curUrl)
       edit_url += "?uri="+encodeURIComponent(store_url);
   }
 
-  return edit_url;
+  if (edit_url.indexOf("{url}")!=-1)
+     return edit_url.replace("{url}",docURL);
+  else
+     return edit_url;
 }
 
 
