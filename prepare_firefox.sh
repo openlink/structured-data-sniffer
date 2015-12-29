@@ -2,7 +2,7 @@
 EXT_DIRNAME=./OSDS_Firefox
 EXT_SRC=./src
 
-rm -rf $EXT_DIR_NAME
+rm -rf $EXT_DIRNAME
 
 mkdir -pv $EXT_DIRNAME/data
 

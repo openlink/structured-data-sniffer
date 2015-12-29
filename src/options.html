@@ -22,6 +22,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>OpenLink Structured Data Sniffer</title>
     <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />	
+    <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />	
 
     <script type="text/javascript" src="lib/jquery-1.11.3.min.js"></script>
     <script type="text/javascript" src="lib/jquery-migrate-1.2.1.min.js"></script>
@@ -111,13 +112,19 @@
            <tr>
                <table>
                 <tr>
-<!--                 <td style="text-align: right; overflow: hidden;"> Editor Service URL: </td> -->
-                 <td > Editor Service URL: </td>
-                 <td> <input id="rww-edit-url" style="WIDTH: 265px"> </td>
-                </tr>
-                <tr>
                  <td > Default Storage Document URL: </td>
                  <td> <input id="rww-store-url" style="WIDTH: 265px"> </td>
+                </tr>
+                <tr>
+                  <table>
+                    <tr><td>
+                      Editor Service URL:
+                    </td></tr>
+                    <tr><td>
+                      <textarea id="rww-edit-url" style="width: 450px; height: 47px">
+                      </textarea>
+                    </td></tr>
+                  </table>
                 </tr>
                </table>
            </tr>
