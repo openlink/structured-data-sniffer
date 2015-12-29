@@ -1,0 +1,100 @@
+<html>
+<!--
+    This file is part of the OpenLink Structured Data Sniffer
+
+    Copyright (C) 2015 OpenLink Software
+
+    This project is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; only version 2 of the License, dated June 1991.
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+-->
+    <head>
+	<meta charset="UTF-8">
+        <link rel="stylesheet" href="sniffer.css" />
+
+    </head>
+    <body class="sniffer">
+
+      <div class="top"></div>
+
+      <table class="btn_block">
+       <tr>
+        <td><input id="sparql_btn" value="Query" type="button" title="LOD Cloud Lookup Query using SPARQL Query Language"></td>
+        <td><input id="rww_btn" value="Annotate" type="button" title="Create Annotations and store to a Document Location of your choice, using WebDAV, LDP, or SPARQL protocols"></td>
+        <td><input id="import_btn" value="Upload" type="button" title="Upload a Description of this Web Resource to the Linked Open Data Cloud"></td>
+        <td><input id="prefs_btn" value="Settings" type="button" title="Extension Settings" style="font-weight: bold; color: green;"></td>
+       </tr>
+      </table>
+
+      <div id="header">
+        <ul id="tabs">
+          <li><a href="#micro">Microdata</a></li>
+          <li><a href="#jsonld">JSON-LD</a></li>
+          <li><a href="#turtle">Turtle</a></li>
+          <li><a href="#rdfa">RDFa</a></li>
+        </ul>
+      </div>
+
+      <div class="content">
+
+        <div id="micro_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="jsonld_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="turtle_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="rdfa_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+      </div>
+
+      <table class="copyright_left">
+        <tr>
+          <td id="ext_ver" style="width:45px">ver:0.0.0</td>
+          <td><a href="http://osds.openlinksw.com">OpenLink Structured Data Sniffer</a></td>
+        </tr>
+      </table>
+
+      <table class="copyright_right">
+        <tr>
+          <td>Copyright &copy; 2015 <a href="http://www.openlinksw.com"> OpenLink Software </a></td>
+        </tr>
+      </table>
+    </body>
+</html>

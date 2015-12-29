@@ -150,6 +150,7 @@ function show_Data(dData)
 
   wait_data = $('table.wait').hide();
 
+  $('#micro_items #docdata_view').remove();
   $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
   if (dData.micro.expanded) {
       $('#micro_items #docdata_view').append(dData.micro.expanded);
@@ -164,6 +165,7 @@ function show_Data(dData)
       $('#micro_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
 
 
+  $('#jsonld_items #docdata_view').remove();
   $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
   if (dData.jsonld.expanded) {
       $('#jsonld_items #docdata_view').append(dData.jsonld.expanded);
@@ -178,6 +180,7 @@ function show_Data(dData)
       $('#jsonld_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
 
 
+  $('#turtle_items #docdata_view').remove();
   $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
   if (dData.turtle.expanded) {
       $('#turtle_items #docdata_view').append(dData.turtle.expanded);
@@ -192,6 +195,7 @@ function show_Data(dData)
       $('#turtle_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
 
 
+  $('#rdfa_items #docdata_view').remove();
   $('#rdfa_items').append("<div id='docdata_view' class='alignleft'/>");
   if (dData.rdfa.expanded) {
       $('#rdfa_items #docdata_view').append(dData.rdfa.expanded);
