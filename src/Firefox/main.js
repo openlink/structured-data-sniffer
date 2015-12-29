@@ -175,8 +175,8 @@ tabs.on('close', function(tab) {
 function createPrefPanel()
 {
   var pref_panel = panels.Panel({
-    width: 530,
-    height: 630,
+    width: 550,
+    height: 690,
     contentURL: "./options_ff.html",
     contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
    		      "./lib/jquery-migrate-1.2.1.min.js",
