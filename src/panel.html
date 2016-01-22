@@ -26,6 +26,8 @@
         <script type="text/javascript" src="lib/jsonld.js"></script>
         <script type="text/javascript" src="lib/n3-browser.js"></script>
         <script type="text/javascript" src="lib/jsuri.js"></script>
+        <script type="text/javascript" src="lib/FileSaver.js"></script>
+
         <script type="text/javascript" src="browser.js"></script>
         <script type="text/javascript" src="settings.js"></script>
         <script type="text/javascript" src="panel.js"></script>
@@ -42,7 +44,8 @@
        <tr>
         <td><input id="sparql_btn" value="Query" type="button" title="LOD Cloud Lookup Query using SPARQL Query Language"></td>
         <td><input id="rww_btn" value="Annotate" type="button" title="Create Annotations and store to a Document Location of your choice, using WebDAV, LDP, or SPARQL protocols"></td>
-        <td><input id="import_btn" value="Upload" type="button" title="Upload a Description of this Web Resource to the Linked Open Data Cloud"></td>
+        <td><input id="import_btn" value="Describe" type="button" title="Obtain a description of this Web Document i.e., the document identified by the hyperlink in the address bar"></td>
+        <td><input id="download_btn" value="Download" type="button" title="Download current data"></td>
        </tr>
       </table>
 
@@ -104,7 +107,7 @@
 
       <table class="copyright_right">
         <tr>
-          <td>Copyright &copy; 2015 <a href="http://www.openlinksw.com"> OpenLink Software </a></td>
+          <td>Copyright &copy; 2015-2016 <a href="http://www.openlinksw.com"> OpenLink Software </a></td>
         </tr>
       </table>
     </body>

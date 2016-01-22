@@ -23,6 +23,15 @@ var items;
 var $ = jQuery;
 var gData_showed = false;
 var doc_URL = null;
+var selectedTab = null;
+var gData = {
+        micro:{ text:null }, 
+        jsonld:{ text:null },
+        rdfa:{ text:null },
+        turtle:{ text:null },
+        nano :{ text:null }
+      };
+
 
 $(document).ready(function() 
 {
@@ -31,6 +40,8 @@ $(document).ready(function()
   $('#rww_btn').click(Rww_exec);
 
   $('#sparql_btn').click(Sparql_exec);
+
+  $('#download_btn').click(Download_exec);
 
   if (Browser.isFirefoxSDK) {
     $('#prefs_btn').click(Prefs_exec);
@@ -93,6 +104,7 @@ $('a').live('click', function(e) {
 
 function selectTab(tab)
 {
+  selectedTab = tab;
   var tab_data = $('#micro_items');
   var tab_id = $('#tabs a[href=#micro]');
 
@@ -147,8 +159,22 @@ function show_Data(dData)
   var jsonld = false;
   var turtle = false;
   var rdfa = false;
+  var nano = false;
 
   wait_data = $('table.wait').hide();
+
+  if (dData.nano.expanded && !dData.nano.error) {
+    if (dData.turtle.expanded == null)
+      dData.turtle.expanded = dData.nano.expanded;
+    else
+      dData.turtle.expanded += dData.nano.expanded;
+
+    if (dData.turtle.text===null)
+      dData.turtle.text = [];
+
+    dData.turtle.text.push(dData.nano.text);
+  }
+
 
   $('#micro_items #docdata_view').remove();
   $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
@@ -170,6 +196,11 @@ function show_Data(dData)
   if (dData.jsonld.expanded) {
       $('#jsonld_items #docdata_view').append(dData.jsonld.expanded);
       jsonld = true;
+      var text = ""
+      for(var i=0; i < dData.jsonld.text.length; i++) {
+         text += dData.jsonld.text[0]+"\n";
+      }
+      gData.jsonld.text = text;
   }
   else if (dData.jsonld.error) {
       $('#jsonld_items #docdata_view').append("<div id='docdata'><i><p>JSON-LD discovered, but fails syntax checking by parser:<p><span id='jsonld_error'/></i></div>");
@@ -185,6 +216,11 @@ function show_Data(dData)
   if (dData.turtle.expanded) {
       $('#turtle_items #docdata_view').append(dData.turtle.expanded);
       turtle = true;
+      var text = ""
+      for(var i=0; i < dData.turtle.text.length; i++) {
+         text += dData.turtle.text[0]+"\n";
+      }
+      gData.turtle.text = text;
   }
   else if (dData.turtle.error) {
       $('#turtle_items #docdata_view').append("<div id='docdata'><i><p>Turtle discovered, but fails syntax checking by parser:<p><span id='turtle_error'/></i></div>");
@@ -317,6 +353,29 @@ function check_RDFa(dData)
         else
           dData.rdfa.expanded = html_data;
 
+        check_Nano(dData);
+    });
+  }
+  else
+  {
+    check_Nano(dData);
+  }
+}
+
+
+function check_Nano(dData) 
+{
+  if (dData.nano.text!==null && dData.nano.text.length > 0)
+  {
+    var handler = new Handle_Turtle();
+    handler.ns_pref = new Namespace().get_ns_desc();
+    handler.parse(dData.nano.text, dData.docURL, 
+      function(error, html_data) {
+        if (error)
+          dData.nano.error = error;
+        else
+          dData.nano.expanded = html_data;
+
         show_Data(dData);
     });
   }
@@ -325,6 +384,8 @@ function check_RDFa(dData)
     show_Data(dData);
   }
 }
+
+
 
 
 if (Browser.isFirefoxSDK) 
@@ -343,6 +404,8 @@ if (Browser.isFirefoxSDK)
       dData.turtle.error = null;
       dData.rdfa.expanded = null;
       dData.rdfa.error = null;
+      dData.nano.expanded = null;
+      dData.nano.error = null;
       doc_URL = dData.docURL;
 
       check_Microdata(dData);
@@ -376,6 +439,8 @@ else
         dData.turtle.error = null;
         dData.rdfa.expanded = null;
         dData.rdfa.error = null;
+        dData.nano.expanded = null;
+        dData.nano.error = null;
         doc_URL = dData.docURL;
 
         check_Microdata(dData);
@@ -436,6 +501,33 @@ function Prefs_exec()
 
   return false;
 }
+
+
+function Download_exec() 
+{
+  var isFileSaverSupported = false;
+
+  try {
+    isFileSaverSupported = !!new Blob;
+  } catch (e) {}
+
+  if (!isFileSaverSupported) {
+    alert("FileSaver isn't supported");
+    return false;
+  }
+
+  if (selectedTab==="#jsonld" && gData.jsonld.text!=null) {
+    var blob = new Blob([gData.jsonld.text], {type: "application/ld+json;charset=utf-8"});
+    saveAs(blob, "jsonld_data.jsonld");    
+  }
+  else if (selectedTab==="#turtle" && gData.turtle.text!=null) {
+    var blob = new Blob([gData.turtle.text], {type: "text/turtle;charset=utf-8"});
+    saveAs(blob, "turtle_data.ttl");    
+  }
+
+  return false;
+}
+
 
 
 

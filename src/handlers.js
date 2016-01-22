@@ -102,12 +102,27 @@ Namespace = function() {
          "rsa": "http://www.w3.org/ns/auth/rsa#",
         "cert": "http://www.w3.org/ns/auth/cert#",
      "oplcert": "http://www.openlinksw.com/schemas/cert#",
-     "twitter": "https://dev.twitter.com/cards/markup#>"
+     "twitter": "https://dev.twitter.com/cards/markup#",
+        "doap": "http://usefulinc.com/doap/ns/doap#"
   };
+/**
+ bif	 bif:
+ sql	 sql:
+**/
 }
 
 
 Namespace.prototype = {
+  get_ns_desc : function()
+  {
+    var s = "";
+    $.each(this.ns_list, function(pref, link_url) {
+      s += "@prefix "+pref+": <"+link_url+"> .\n";
+      return true;
+    });
+    return s;
+  },
+  
   has_known_ns : function (str) 
   {
     function s_startWith(str, val) {
@@ -162,6 +177,8 @@ Handle_Turtle = function (start_id) {
   this.start_id = 0;
   if (start_id!==undefined)
     this.start_id = start_id;
+  this.ns_pref = null;
+  this.skip_error = false;
 };
 
 Handle_Turtle.prototype = {
@@ -175,11 +192,24 @@ Handle_Turtle.prototype = {
       var store = new N3DataConverter();
       var parser = N3.Parser();
       try {
-        parser.parse(textData[self._pos],
+        var ttl_data = textData[self._pos];
+        if (this.ns_pref!==null)
+          ttl_data = this.ns_pref + ttl_data;
+
+        parser.parse(ttl_data,
           function (error, tr, prefixes) {
             if (error) {
-              self.error = ""+error;
-              self.callback(self.error, null);
+              if (self.skip_error) {
+                if (self._pos < textData.length)
+                  self.parse(textData, docURL, self.callback);
+                else
+                  self.callback(null, self._output);
+              } 
+              else 
+              {
+                self.error = ""+error;
+                self.callback(self.error, null);
+              }
             }
             else if (tr) {
               store.addTriple(self.fixNode(tr.subject), 

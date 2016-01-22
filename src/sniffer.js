@@ -23,7 +23,53 @@ var micro_items = 0;
 var json_ld_Text = null;
 var turtle_Text = null;
 var rdfa_subjects = null;
+var nano_Text = null;
 var data_found = false;
+
+var nano_pattern =/(\{|(## (Nanotation|Turtle) Start ##))((.|\n|\r|\s)*?)((## (Nanotation|Turtle) (End|Stop) ##)|\})(.*)/gmi;
+
+
+function sniff_nanotation() {
+  var ret = [];
+  var doc_Text = document.body.innerText;
+  if (doc_Text!==null) {
+    //drop commetns
+    var s_split = doc_Text.split(/[\r\n]/);
+    var s_doc = "";
+    var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
+    var p2 = /^ *#/;
+    s_split.forEach(function(item, i, arr){
+      if (item.length>0 && (!p2.test(item) || p1.test(item)))
+        s_doc += item +"\n";
+    });
+
+    while(true) {
+      var ndata = nano_pattern.exec(s_doc);
+      if (ndata==null)
+        break;
+
+      var str = ndata[4]+ndata[5];
+      str = str.replace(/\xe2\x80\x9c/g, '"')       //replace smart quotes with sensible ones (opening)
+         .replace(/\xe2\x80\x9d/g, '"')       //replace smart quotes with sensible ones (closing)
+         .replace(/\xc3\xa2\xc2\x80\xc2\x9c/g, '"')  //smart->sensible quote replacement, wider encoding
+         .replace(/\xc3\xa2\xc2\x80\xc2\x9d/g, '"')  //smart->sensible quote replacement, wider encoding
+         .replace(/\u00a0/g," ")   //&nbsp
+         .replace(/\u201A/g,"'")
+         .replace(/\u2018/g,"'")
+         .replace(/\u2019/g,"'")
+         .replace(/\u2039/g,"'")
+         .replace(/\u203A/g,"'")
+         .replace(/\u201C/g,'"')
+         .replace(/\u201D/g,'"')
+         .replace(/\u201E/g,'"')
+         .replace(/\u00BB/g,'"')
+         .replace(/\u00AB/g,'"');
+
+      ret.push(str);
+    }
+  }
+  return (ret.length > 0)? ret : null;
+}
 
 
 function is_data_exist() {
@@ -32,39 +78,68 @@ function is_data_exist() {
     data_found = false;
 
     var items = $('[itemscope]').not($('[itemscope] [itemscope]'));
-    if (items && items.length > 0) {
+    if (items && items.length > 0)
       data_found = true;
-      return;
+
+    if (!data_found) {
+      var all = document.getElementsByTagName("script");
+      for( var i = 0; i < all.length; i++ ) {
+        if ( all[i].hasAttribute('type') 
+             && all[i].getAttribute('type') == "application/ld+json")
+          {
+            data_found = true;
+          }
+      }
     }
 
-    var all = document.getElementsByTagName("script");
-    for( var i = 0; i < all.length; i++ ) {
-      if ( all[i].hasAttribute('type') 
-           && all[i].getAttribute('type') == "application/ld+json")
-        {
-          data_found = true;
-          return;
-        }
+    if (!data_found) {
+      for( var i = 0; i < all.length; i++ ) {
+        if ( all[i].hasAttribute('type') 
+             && all[i].getAttribute('type') == "text/turtle")
+          {
+            data_found = true;
+          }
+      }
     }
 
-    for( var i = 0; i < all.length; i++ ) {
-      if ( all[i].hasAttribute('type') 
-           && all[i].getAttribute('type') == "text/turtle")
-        {
-          data_found = true;
-          return;
-        }
+    if (!data_found) {
+      try {
+        GreenTurtle.attach(document);
+        rdfa_subjects = document.data.getSubjects();
+      } catch(e) {
+        console.log("OSDS:"+e);
+      }
+
+      if (rdfa_subjects && rdfa_subjects.length>0)
+        data_found = true;
     }
 
-    try {
-      GreenTurtle.attach(document);
-      rdfa_subjects = document.data.getSubjects();
-    } catch(e) {
-      console.log("OSDS:"+e);
+
+    if (!data_found) {
+      nano_Text = sniff_nanotation();
+      if (nano_Text!==null)
+        data_found = true;
     }
 
-    if (rdfa_subjects && rdfa_subjects.length>0)
-      data_found = true;
+
+    if (data_found) {
+      // Tell the chrome extension that we're ready to receive messages
+      //send data_exists flag to extension
+      if (Browser.isFirefoxSDK) 
+      {
+        self.port.emit("content_status", {data_exists:data_found});
+      }
+      else
+      {
+        chrome.runtime.sendMessage(null, {
+               property: "status", 
+               status: 'ready',
+               data_exists: data_found
+           }, 
+           function(response) {
+        });
+      }
+    }
 
   } catch (e) {
     console.log("OSDS:"+e);
@@ -73,8 +148,13 @@ function is_data_exist() {
 }
 
 
+
 function sniff_Data() {
   try {
+
+    if (nano_Text===null) {
+      nano_Text = sniff_nanotation();
+    }
 
     micro_items = $('[itemscope]').not($('[itemscope] [itemscope]'));
 
@@ -139,7 +219,8 @@ window.onload = function() {
                micro :{ data:null }, 
                jsonld :{ text:null },
                rdfa :{ data:null },
-               turtle :{ text:null }
+               turtle :{ text:null },
+               nano :{ text:null }
              };
         
         var microdata = jQuery.microdata.json(micro_items, function(o) { return o; });
@@ -190,6 +271,7 @@ window.onload = function() {
         docData.jsonld.text = json_ld_Text;
         docData.turtle.text = turtle_Text;
         docData.rdfa.data = rdfa;
+        docData.nano.text = nano_Text;
 
         //send data to extension
         if (Browser.isFirefoxSDK) 
@@ -228,22 +310,6 @@ window.onload = function() {
 
 
 
-    // Tell the chrome extension that we're ready to receive messages
-    //send data_exists flag to extension
-    if (Browser.isFirefoxSDK) 
-    {
-        self.port.emit("content_status", {data_exists:data_found});
-    }
-    else
-    {
-        chrome.runtime.sendMessage(null, {
-               property: "status", 
-               status: 'ready',
-               data_exists: data_found
-           }, 
-           function(response) {
-        });
-     }
 
   } catch (e) {
     console.log("OSDS:"+e);
