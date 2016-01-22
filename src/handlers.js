@@ -222,7 +222,8 @@ Handle_Turtle.prototype = {
               
               var triples = store.output;
 
-              self._output += new HTML_Gen().load(triples, self.start_id);
+              var html_str =  new HTML_Gen().load(triples, self.start_id);
+              self._output += (html_str==null?"":html_str);
               self._pos++;
 
               if (triples!==null && triples.length!==undefined)

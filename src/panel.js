@@ -178,7 +178,7 @@ function show_Data(dData)
 
   $('#micro_items #docdata_view').remove();
   $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (dData.micro.expanded) {
+  if (dData.micro.expanded!==null && dData.micro.expanded.length > 0) {
       $('#micro_items #docdata_view').append(dData.micro.expanded);
       micro = true;
   }
@@ -193,7 +193,7 @@ function show_Data(dData)
 
   $('#jsonld_items #docdata_view').remove();
   $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (dData.jsonld.expanded) {
+  if (dData.jsonld.expanded!==null && dData.jsonld.expanded.length > 0) {
       $('#jsonld_items #docdata_view').append(dData.jsonld.expanded);
       jsonld = true;
       var text = ""
@@ -213,7 +213,7 @@ function show_Data(dData)
 
   $('#turtle_items #docdata_view').remove();
   $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (dData.turtle.expanded) {
+  if (dData.turtle.expanded!==null && dData.turtle.expanded.length > 0) {
       $('#turtle_items #docdata_view').append(dData.turtle.expanded);
       turtle = true;
       var text = ""
@@ -233,7 +233,7 @@ function show_Data(dData)
 
   $('#rdfa_items #docdata_view').remove();
   $('#rdfa_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (dData.rdfa.expanded) {
+  if (dData.rdfa.expanded!==null && dData.rdfa.expanded.length > 0) {
       $('#rdfa_items #docdata_view').append(dData.rdfa.expanded);
       rdfa = true;
   }
