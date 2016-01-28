@@ -31,7 +31,7 @@ done
 
 #copy resources and libs
 for I_DIR in images lib; do
-  mkdir $DST_DIR/$I_DIR
+  mkdir -pv $DST_DIR/$I_DIR
   tar --exclude 'original' -cf - -C $SRC_DIR/$I_DIR .|tar -xf - -C $DST_DIR/$I_DIR
 done
 
@@ -47,7 +47,7 @@ done
 
 #copy Firefox ext dir
 for I_DIR in data; do
-  mkdir $DST_DIR/$I_DIR
+  mkdir -pv $DST_DIR/$I_DIR
   tar --exclude 'original' -cf - -C $SRC_DIR/$I_DIR .|tar -xf - -C $DST_DIR/$I_DIR
 done
 
