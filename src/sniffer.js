@@ -64,6 +64,8 @@ function sniff_nanotation() {
          .replace(/\u201E/g,'"')
          .replace(/\u00BB/g,'"')
          .replace(/\u00AB/g,'"');
+//         .replace(/\u8629/g,' ')
+//         .replace(/\u2026/g,'...');
 
       ret.push(str);
     }
@@ -209,6 +211,14 @@ window.onload = function() {
        setTimeout(is_data_exist, 3000);
     }
 
+    function isBlank(n) {
+      return n && n.substr(0, 2) === '_:';
+    }
+
+    function iri2str(n) {
+      return (n && n.substr(0, 2) === '_:')? n : "<"+n+">";
+    }
+
     function send_doc_data() 
     {
         //check again ld+json and turtle for any case
@@ -218,21 +228,26 @@ window.onload = function() {
                docURL: document.location.href,
                micro :{ data:null }, 
                jsonld :{ text:null },
-               rdfa :{ data:null },
+               rdfa :{ data:null , ttl:null},
                turtle :{ text:null },
                nano :{ text:null }
              };
         
         var microdata = jQuery.microdata.json(micro_items, function(o) { return o; });
         var rdfa = null;
+        var rdfa_ttl = null;
 
         ///Convert RDFa data to internal format
         if (rdfa_subjects!=null && rdfa_subjects.length>0) 
         {
            rdfa = [];
+           rdfa_ttl = "";
            var _LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
 
            for(var i=0; i<rdfa_subjects.length; i++) {
+             var s_triple = " "+iri2str(rdfa_subjects[i]);
+             var p_triple ;
+             var o_triple ;
              var s = {s:rdfa_subjects[i], n:i+1};
              rdfa.push(s);
              var plist = document.data.getProperties(rdfa_subjects[i]);
@@ -244,24 +259,35 @@ window.onload = function() {
                  s.props[plist[j]] = [];
 
                p = s.props[plist[j]];
+               p_triple = " "+iri2str(plist[j]);
 
                var vlist = document.data.getObjects(rdfa_subjects[i], plist[j]);
                for (var z=0; z<vlist.length; z++) {
                  var v = vlist[z];
                  if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#object") {
                    p.push({"iri": String(v.value)});
+                   o_triple = " "+iri2str(v.value);
                  }
                  else if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral") {
                    var v_val = v.value!=null?String(v.value):null;
                    var v_lang = v.language!=null?String(v.language):null;
                    p.push({value:v_val, type:null, lang:v_lang});
+                   o_triple = ' "'+v_val+'"';
+                   if (v_lang!=null)
+                     o_triple += '@'+v_lang;
                  }
                  else {
                    var v_val = v.value!=null?String(v.value):null;
                    var v_lang = v.language!=null?String(v.language):null;
                    var v_type = v.type!=null?String(v.type):null;
                    p.push({value:v_val, type:v_type, lang:v_lang});
+                   o_triple = ' "'+v_val+'"';
+                   if (v_lang!=null)
+                     o_triple += '@'+v_lang;
+                   else if (v_type!=null) 
+                     o_triple += '^^<'+v_type+">";
                  }
+                 rdfa_ttl += s_triple+p_triple+o_triple+" .\n";
                }
              }
            } 
@@ -271,6 +297,7 @@ window.onload = function() {
         docData.jsonld.text = json_ld_Text;
         docData.turtle.text = turtle_Text;
         docData.rdfa.data = rdfa;
+        docData.rdfa.ttl = rdfa_ttl;
         docData.nano.text = nano_Text;
 
         //send data to extension

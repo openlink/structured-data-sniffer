@@ -25,16 +25,19 @@ var gData_showed = false;
 var doc_URL = null;
 var selectedTab = null;
 var gData = {
-        micro:{ text:null }, 
-        jsonld:{ text:null },
+        micro:{ json_text:null }, 
+        jsonld:{ json_text:null },
         rdfa:{ text:null },
-        turtle:{ text:null },
-        nano :{ text:null }
+        turtle:{ ttl_text:null },
+        nano :{ ttl_text:null }
       };
 
 
 $(document).ready(function() 
 {
+  $("#save-confirm").hide();
+  $("#alert-dlg").hide();
+
   $('#import_btn').click(Import_doc);
 
   $('#rww_btn').click(Rww_exec);
@@ -89,7 +92,6 @@ $(document).ready(function()
       }
     });
   }
-
 
 });
 
@@ -160,6 +162,7 @@ function show_Data(dData)
   var turtle = false;
   var rdfa = false;
   var nano = false;
+  var nano_error = "";
 
   wait_data = $('table.wait').hide();
 
@@ -168,11 +171,20 @@ function show_Data(dData)
       dData.turtle.expanded = dData.nano.expanded;
     else
       dData.turtle.expanded += dData.nano.expanded;
+  }
 
-    if (dData.turtle.text===null)
-      dData.turtle.text = [];
+  if (dData.nano.error!==null)
+    nano_error = "<tr><td>"+dData.nano.error+"</tr></td>"
 
-    dData.turtle.text.push(dData.nano.text);
+  if (dData.nano.skipped_error!==undefined && dData.nano.skipped_error.length>0) {
+    for(var i=0; i < dData.nano.skipped_error.length; i++) {
+      nano_error += "<tr><td>"+dData.nano.skipped_error[i]+"</tr></td>";
+    }
+  }
+
+  if (nano_error.length > 0) {
+    nano_error = "<table class='docdata table'><tr><td>Nanotation discovered, but fails syntax checking by parser:</td></tr>"
+                +nano_error+"</table>";
   }
 
 
@@ -196,11 +208,6 @@ function show_Data(dData)
   if (dData.jsonld.expanded!==null && dData.jsonld.expanded.length > 0) {
       $('#jsonld_items #docdata_view').append(dData.jsonld.expanded);
       jsonld = true;
-      var text = ""
-      for(var i=0; i < dData.jsonld.text.length; i++) {
-         text += dData.jsonld.text[0]+"\n";
-      }
-      gData.jsonld.text = text;
   }
   else if (dData.jsonld.error) {
       $('#jsonld_items #docdata_view').append("<div id='docdata'><i><p>JSON-LD discovered, but fails syntax checking by parser:<p><span id='jsonld_error'/></i></div>");
@@ -213,22 +220,24 @@ function show_Data(dData)
 
   $('#turtle_items #docdata_view').remove();
   $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (dData.turtle.expanded!==null && dData.turtle.expanded.length > 0) {
-      $('#turtle_items #docdata_view').append(dData.turtle.expanded);
+  if ((dData.turtle.expanded!==null && dData.turtle.expanded.length > 0) || nano_error.length>0) {
+      var html = "";
+      if (dData.turtle.expanded!==null)
+        html += dData.turtle.expanded;
+      html += (nano_error!==null)?nano_error:"";
+      $('#turtle_items #docdata_view').append(html);
       turtle = true;
-      var text = ""
-      for(var i=0; i < dData.turtle.text.length; i++) {
-         text += dData.turtle.text[0]+"\n";
-      }
-      gData.turtle.text = text;
   }
   else if (dData.turtle.error) {
       $('#turtle_items #docdata_view').append("<div id='docdata'><i><p>Turtle discovered, but fails syntax checking by parser:<p><span id='turtle_error'/></i></div>");
       $('#turtle_items #turtle_error').text(dData.turtle.error);
       turtle = true;
   }
-  else
-      $('#turtle_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
+  else {
+      var html = "<div id='docdata'><i>No data found.</i></div>";
+      html += (nano_error!==null)?nano_error:"";
+      $('#turtle_items #docdata_view').append(html);
+  }
 
 
   $('#rdfa_items #docdata_view').remove();
@@ -281,8 +290,10 @@ function check_Microdata(dData)
       {
         if (error)
           dData.micro.error = error.toString();
-        else
+        else {
           dData.micro.expanded = html_data;
+          gData.micro.json_text = [JSON.stringify(dData.micro.data, undefined, 2)];
+        }
 
       check_JSON_LD(dData);
     });
@@ -303,8 +314,10 @@ function check_JSON_LD(dData)
       function(error, html_data) {
         if (error)
           dData.jsonld.error = error;
-        else
+        else {
           dData.jsonld.expanded = html_data;
+          gData.jsonld.json_text = dData.jsonld.text;
+        }
 
         check_Turtle(dData);
     });
@@ -327,8 +340,10 @@ function check_Turtle(dData)
       function(error, html_data) {
         if (error)
           dData.turtle.error = error;
-        else
+        else {
           dData.turtle.expanded = html_data;
+          gData.turtle.ttl_text = dData.turtle.text;
+        }
 
         check_RDFa(dData);
     });
@@ -350,8 +365,10 @@ function check_RDFa(dData)
       function(error, html_data) {
         if (error)
           dData.rdfa.error = error;
-        else
+        else {
           dData.rdfa.expanded = html_data;
+          gData.rdfa.ttl_text = [dData.rdfa.ttl];
+        }
 
         check_Nano(dData);
     });
@@ -368,13 +385,19 @@ function check_Nano(dData)
   if (dData.nano.text!==null && dData.nano.text.length > 0)
   {
     var handler = new Handle_Turtle();
-    handler.ns_pref = new Namespace().get_ns_desc();
+    var ns = new Namespace();
+    handler.ns_pref = ns.get_ns_desc();
+    handler.ns_pref_size = Object.keys(ns.ns_list).length;
     handler.parse(dData.nano.text, dData.docURL, 
       function(error, html_data) {
         if (error)
           dData.nano.error = error;
-        else
+        else {
           dData.nano.expanded = html_data;
+          if (handler.skipped_error.length>0)
+            dData.nano.skipped_error = handler.skipped_error;
+          gData.nano.ttl_text = dData.nano.text;
+        }
 
         show_Data(dData);
     });
@@ -512,23 +535,109 @@ function Download_exec()
   } catch (e) {}
 
   if (!isFileSaverSupported) {
-    alert("FileSaver isn't supported");
+    showInfo("FileSaver isn't supported");
     return false;
   }
 
-  if (selectedTab==="#jsonld" && gData.jsonld.text!=null) {
-    var blob = new Blob([gData.jsonld.text], {type: "application/ld+json;charset=utf-8"});
-    saveAs(blob, "jsonld_data.jsonld");    
+  var filename = null;
+  var fmt = "json";
+
+  if (selectedTab==="#jsonld" && gData.jsonld.json_text!==null) {
+    filename = "jsonld_data.jsonld";
+    fmt = "json";
   }
-  else if (selectedTab==="#turtle" && gData.turtle.text!=null) {
-    var blob = new Blob([gData.turtle.text], {type: "text/turtle;charset=utf-8"});
-    saveAs(blob, "turtle_data.ttl");    
+  else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.nano.ttl_text!==null)) {
+    filename = "turtle_data.ttl";
+    fmt = "ttl";
+  }
+  else if (selectedTab==="#micro" && gData.micro.json_text!==null) {
+    filename = "microdata_data.jsonld";
+    fmt = "json";
+  }
+  else if (selectedTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
+    filename = "rdfa_data.ttl";
+    fmt = "ttl";
+  }
+
+
+  if (filename!==null) {
+    $('#save-file').val(filename); 
+    $('#'+fmt,'#save-fmt').attr('selected','selected');
+    $('#save-fmt').prop('disabled', true);
+
+    $( "#save-confirm" ).dialog({
+      resizable: false,
+      height:180,
+      modal: true,
+      buttons: {
+        "OK": function() {
+          var fname = $('#save-file').val().trim();
+          save_data(fname, fmt);
+          $(this).dialog( "close" );
+        },
+        Cancel: function() {
+          $(this).dialog( "close" );
+        }
+      }
+    });
+  } else {
+    showInfo("No data for saving");
+    return false;
   }
 
   return false;
 }
 
 
+function save_data(fname, fmt) 
+{
+  var blob = null;
+
+  if (selectedTab==="#jsonld" && gData.jsonld.json_text!==null) {
+    fmt = "json";
+    blob_data = gData.jsonld.json_text;
+  }
+  else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.nano.ttl_text!==null)) {
+    fmt = "ttl";
+    blob_data = gData.turtle.ttl_text;
+    if (gData.nano.ttl_text!==null) {
+      blob_data = blob_data==null?[]:blob_data;
+      blob_data.push(gData.nano.ttl_text);
+    }
+  }
+  else if (selectedTab==="#micro" && gData.micro.json_text!==null) {
+    fmt = "json";
+    blob_data = gData.micro.json_text;
+  }
+  else if (selectedTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
+    fmt = "ttl";
+    blob_data = gData.rdfa.ttl_text;
+  }
+
+  if (fmt === "ttl")
+    blob = new Blob(blob_data, {type: "text/turtle;charset=utf-8"});
+  else
+    blob = new Blob(blob_data, {type: "application/ld+json;charset=utf-8"});
+
+  saveAs(blob, fname);    
+
+}
+
+
+function showInfo(msg)
+{
+  $('#alert-msg').prop('textContent',msg); 
+  $( "#alert-dlg" ).dialog({
+    resizable: false,
+    height:180,
+    modal: true,
+    buttons: {
+      Cancel: function() {
+        $(this).dialog( "close" );
+      }
+    }
+  });
+}
 
 
 function createImportUrl(curUrl) 

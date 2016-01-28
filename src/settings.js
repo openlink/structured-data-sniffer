@@ -26,8 +26,20 @@ Settings = function(data) {
   this.def_sparql_url = "http://linkeddata.uriburner.com/sparql/?query={query}";
   this.def_sparql_cmd = "select";
 
-  this.def_sparql_qry_spo = 'DEFINE get:soft "add"\nSELECT <{url}> as ?subject, ?p as ?predicate, ?o as ?object\nFROM <{url}>\nWHERE { <{url}> ?p ?o } LIMIT 100';
-  this.def_sparql_qry_eav = 'DEFINE get:soft "add"\nSELECT <{url}> as ?entity, ?p as ?attribute, ?o as ?value\nFROM <{url}>\nWHERE { <{url}> ?p ?o } LIMIT 100';
+  this.def_sparql_qry_spo = "DEFINE get:soft \"soft\" \n"+ 
+                            "SELECT DISTINCT ?s AS ?subject  ?p AS ?predicate ?o AS ?object \n"+
+                            "FROM <{url}> \n"+
+                            "WHERE { ?s ?p ?o \n"+
+                            "  FILTER (CONTAINS(str(?p),'mainEntity') OR CONTAINS(str(?p),'primaryTopic'))\n"+
+                            "} LIMIT 100";
+
+  this.def_sparql_qry_eav = "DEFINE get:soft \"soft\" \n"+ 
+                            "SELECT DISTINCT ?s AS ?entity  ?p AS ?attribute ?o AS ?value \n"+
+                            "FROM <{url}> \n"+
+                            "WHERE { ?s ?p ?o \n"+
+                            "  FILTER (CONTAINS(str(?p),'mainEntity') OR CONTAINS(str(?p),'primaryTopic'))\n"+
+                            "} LIMIT 100";
+
   this._data = (data!== undefined && data!==null) ? data:null;
 }
 

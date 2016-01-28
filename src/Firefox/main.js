@@ -100,6 +100,7 @@ function createSniffPanel()
     contentURL: "./panel_ff.html", // the same : self.data.url("panel.html"),
     contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
    		      "./lib/jquery-migrate-1.2.1.min.js",
+   		      "./lib/jquery-ui.min.js",
 		      "./lib/microdatajs/jquery.microdata.js",
 		      "./lib/microdatajs/jquery.microdata.json.js",
 		      "./lib/jsonld.js",

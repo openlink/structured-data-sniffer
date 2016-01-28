@@ -19,8 +19,12 @@
 -->
     <head>
 	<meta charset="UTF-8">
+        <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />	
+        <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />	
+
         <script type="text/javascript" src="lib/jquery-1.11.3.min.js"></script>
         <script type="text/javascript" src="lib/jquery-migrate-1.2.1.min.js"></script>
+        <script type="text/javascript" src="lib/jquery-ui.min.js"></script>
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.js"></script>
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.json.js"></script>
         <script type="text/javascript" src="lib/jsonld.js"></script>
@@ -37,6 +41,31 @@
 
     </head>
     <body class="sniffer">
+      <div id="alert-dlg" title="Info">
+        <p id="alert-msg">
+        </p>
+      </div>
+
+      <div id="save-confirm" title="Save data">
+        <p/>
+        <table style="font-size: 14px;">
+         <tr>
+          <td> Save&nbsp;As: </td>
+          <td> <input id="save-file" style="WIDTH: 200px"> </td>
+         </tr>
+
+         <tr>
+          <td>Format:</td>
+          <td>
+            <SELECT id="save-fmt" style="WIDTH: 100px" >
+              <OPTION id="ttl" selected>Turtle</OPTION>
+              <OPTION id="json">JSON-LD</OPTION>
+            </SELECT>
+          </td>
+         </tr>
+        </table>
+      </div>
+
 
       <div class="top"></div>
 
