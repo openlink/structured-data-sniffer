@@ -95,7 +95,7 @@ function createSniffPanel()
 {
   destroySniffPanel();
   sniff_panel = panels.Panel({
-    width: 630,
+    width: 680,
     height: 600,
     contentURL: "./panel_ff.html", // the same : self.data.url("panel.html"),
     contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
