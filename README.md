@@ -10,7 +10,7 @@ formats:
 - **RDFa**
 - **Turtle**
 
-Support for additional browsers like Firefox, Safari, and Microsoft Edge is under construction.
+Support for additional browsers like Safari, and Microsoft Edge is under construction.
 
 ## License
 Copyright 2016 [OpenLink Software](mailto:opensource@openlinksw.com)
