@@ -27,7 +27,7 @@ table.wait {
 
 table.docdata {
   border: 1px solid #000;
-  width:615px;
+  width:665px;
   table-layout: fixed;
   font-size: 12px;
   word-wrap:break-word;
@@ -58,14 +58,14 @@ table.docdata > tbody > tr > td.major {
 
 
 body.sniffer {
-    width: 620px;
+    width: 670px;
     height: 580px;
 }
 
 
 div.content {
     overflow: auto;
-    width: 615px;
+    width: 665px;
     height: 530px;
     border: 1px solid lightgray;
 }
