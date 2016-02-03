@@ -1,7 +1,10 @@
 # OpenLink Structured Data Sniffer
 
 ## Intro
-The OpenLink Structured Data Sniffer (OSDS) is a plugin for the Chrome, Opera and the Firefox
+The OpenLink Structured Data Sniffer (OSDS) is a plugin for the
+[Google Chrome](http://www.google.com/chrome/browser/),
+[Mozilla Firefox](http://www.mozilla.org/firefox/) and the
+[Opera](http://www.opera.com/)
 browser, that detects and shows structured data embedded in web pages in either of the following
 formats:
 
@@ -10,7 +13,10 @@ formats:
 - **RDFa**
 - **Turtle**
 
-Support for additional browsers like Firefox, Safari, and Microsoft Edge is under construction.
+Support for additional browsers like
+[Apple Safari](http://www.apple.com/safari/) and
+[Microsoft Edge](https://www.microsoft.com/microsoft-edge)
+is under construction.
 
 ## License
 Copyright 2016 [OpenLink Software](mailto:opensource@openlinksw.com)
@@ -68,7 +74,7 @@ To install this extension manually use the following steps:
 - Press the **Select** button
 
 ### Install the extension in Firefox
-Download the [Firefox OSDS .zip](https://github.com/openlink/structured-data-sniffer/releases/download/v2.6.0/OSDS_FF.zip)
+Download the [Firefox OSDS .zip](https://github.com/openlink/structured-data-sniffer/releases/download/v2.6.1/OSDS_FF.zip)
 file and extract the .xpi file.
 
 To install this extension manually in Firefox v28+, use the following steps:
