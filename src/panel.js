@@ -388,6 +388,7 @@ function check_Nano(dData)
     var ns = new Namespace();
     handler.ns_pref = ns.get_ns_desc();
     handler.ns_pref_size = Object.keys(ns.ns_list).length;
+    handler.skip_error = true;
     handler.parse(dData.nano.text, dData.docURL, 
       function(error, html_data) {
         if (error)

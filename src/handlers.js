@@ -1868,6 +1868,7 @@ Handle_Turtle.prototype = {
 
               if (self.skip_error) {
                 self.skipped_error.push(error);
+                self._pos++;
 
                 if (self._pos < textData.length)
                   self.parse(textData, docURL, self.callback);

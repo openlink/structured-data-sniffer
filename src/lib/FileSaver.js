@@ -253,8 +253,7 @@ var saveAs = saveAs || (function(view) {
 
 	return saveAs;
 }(
-	   typeof self !== "undefined" && self
-	|| typeof window !== "undefined" && window
+	typeof window !== "undefined" && window
 	|| this.content
 ));
 // `self` is undefined in Firefox for Android content script context

@@ -120,6 +120,9 @@ function createSniffPanel()
   });
 
 
+  let { getActiveView }=require("sdk/view/core");
+  getActiveView(sniff_panel).setAttribute("tooltip", "aHTMLTooltip");
+
   // received request from panel, when it has been loaded
   sniff_panel.port.on("doc_data", function(msg)
   {
