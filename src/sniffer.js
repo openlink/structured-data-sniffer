@@ -26,13 +26,41 @@ var rdfa_subjects = null;
 var nano_Text = null;
 var data_found = false;
 
-var nano_pattern =/(\{|(## (Nanotation|Turtle) Start ##))((.|\n|\r|\s)*?)((## (Nanotation|Turtle) (End|Stop) ##)|\})(.*)/gmi;
+var nano_pattern =/(\{|(## (Nanotation|Turtle) Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) (End|Stop) ##)|\})(.*)/gmi;
+
+function getSelectionString(el, win) {
+    win = win || window;
+    var doc = win.document, sel, range, prevRange, selString;
+    if (win.getSelection && doc.createRange) {
+        sel = win.getSelection();
+        if (sel.rangeCount) {
+          prevRange = sel.getRangeAt(0);
+        }
+        range = doc.createRange();
+        range.selectNodeContents(el);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        selString = sel.toString();
+        sel.removeAllRanges();
+        prevRange && sel.addRange(prevRange);
+    } 
+    else if (doc.body.createTextRange) {
+        range = doc.body.createTextRange();
+        range.moveToElementText(el);
+        range.select();
+    }
+    return selString;
+}
 
 
 function sniff_nanotation() {
   var ret = [];
   var doc_Text = document.body.innerText;
-  if (doc_Text!==null) {
+
+  if (doc_Text === undefined)
+    doc_Text = getSelectionString(document.body);
+
+  if (doc_Text) {
     //drop commetns
     var s_split = doc_Text.split(/[\r\n]/);
     var s_doc = "";

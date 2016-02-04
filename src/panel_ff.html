@@ -56,13 +56,24 @@
 
       <table class="btn_block">
        <tr>
-        <td><input id="sparql_btn" value="Query" type="button" title="LOD Cloud Lookup Query using SPARQL Query Language"></td>
-        <td><input id="rww_btn" value="Annotate" type="button" title="Create Annotations and store to a Document Location of your choice, using WebDAV, LDP, or SPARQL protocols"></td>
-        <td><input id="import_btn" value="Describe" type="button" title="Obtain a description of this Web Document i.e., the document identified by the hyperlink in the address bar"></td>
-        <td><input id="download_btn" value="Download" type="button" title="Download current data"></td>
-        <td><input id="prefs_btn" value="Settings" type="button" title="Extension Settings" style="font-weight: bold; color: green;"></td>
+        <td class="action_btn">
+         <input type="image" id="sparql_btn" src="images/osds-icon-query-24.png" width="24" height="24" title="LOD Cloud Lookup Query using SPARQL Query Language">
+        </td>
+        <td class="action_btn">
+         <input type="image" id="rww_btn" src="images/osds-icon-annotate-24.png" width="24" height="24" title="Create Annotations and store to a Document Location of your choice, using WebDAV, LDP, or SPARQL protocols">
+        </td>
+        <td class="action_btn">
+          <input type="image" id="import_btn" src="images/osds-icon-describe-24.png" width="24" height="24" title="Obtain a description of this Web Document i.e., the document identified by the hyperlink in the address bar">
+        </td>
+        <td class="action_btn">
+          <input type="image" id="download_btn" src="images/osds-icon-download-24.png" width="24" height="24" title="Download current data">
+        </td>
+        <td class="action_btn">
+          <input type="image" id="prefs_btn" src="images/osds-icon-settings-24.png" width="24" height="24" title="Extension Settings">
+        </td>
        </tr>
       </table>
+
 
       <div id="header">
         <ul id="tabs">

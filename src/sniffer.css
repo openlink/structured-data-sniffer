@@ -85,7 +85,11 @@ div#header {
 .btn_block {
     position: absolute;
     right: 10px;
-    top: 15px;
+    top: 8px;
+}
+.action_btn {
+    width: 30px;
+    height: 24px;
 }
 
 
