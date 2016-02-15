@@ -5,7 +5,7 @@ var POSH = (function () {
 
   function POSH(uriStr) {
     this.terms = {};
-    this.terms["description"] = "dc:description";
+    this.terms["description"] = "schema:description";
     this.terms["describedby"] = "wdrs:describedby";
 
     this.prefixes = {
@@ -33,9 +33,9 @@ var POSH = (function () {
     this.pref_list = s;
 
     this.twcard = {
-        "meta@name='twitter:url'": {p:"foaf:homepage", o:"iri:content"},
-        "meta@name='og:url'"     : {p:"foaf:homepage", o:"iri:content"},
-        "meta@property='og:url'" : {p:"foaf:homepage", o:"iri:content"},
+        "meta@name='twitter:url'": {p:"schema:mainEntityOfPage", o:"iri:content"},
+        "meta@name='og:url'"     : {p:"schema:mainEntityOfPage", o:"iri:content"},
+        "meta@property='og:url'" : {p:"schema:mainEntityOfPage", o:"iri:content"},
 
         "meta@name='twitter:player:stream'": {p:"schemavideo:embedUrl", o:"iri:content"},
 
@@ -43,23 +43,23 @@ var POSH = (function () {
 
         "meta@name='twitter:player:stream:'": {p:"formats:media_type", o:"val:content"},
 
-        "meta@name='twitter:url'": {p:"foaf:homepage", o:"iri:content"},
+        "meta@name='twitter:url'": {p:"schema:mainEntityOfPage", o:"iri:content"},
 
-        "meta@name='twitter:title'": [{p:"dc:title", o:"val:content"}, {p:"rdfs:label", o:"val:content"}],
-        "meta@name='og:title'"     : [{p:"dc:title", o:"val:content"}, {p:"rdfs:label", o:"val:content"}],
-        "meta@property='og:title'" : [{p:"dc:title", o:"val:content"}, {p:"rdfs:label", o:"val:content"}],
+        "meta@name='twitter:title'": [{p:"schema:title", o:"val:content"}, {p:"schema:name", o:"val:content"}],
+        "meta@name='og:title'"     : [{p:"schema:title", o:"val:content"}, {p:"schema:name", o:"val:content"}],
+        "meta@property='og:title'" : [{p:"schema:title", o:"val:content"}, {p:"schema:name", o:"val:content"}],
 
-        "meta@name='twitter:description'": {p:"dc:description", o:"val:content"},
-        "meta@name='og:description'"     : {p:"dc:description", o:"val:content"},
-        "meta@property='og:description'" : {p:"dc:description", o:"val:content"},
+        "meta@name='twitter:description'": {p:"schema:description", o:"val:content"},
+        "meta@name='og:description'"     : {p:"schema:description", o:"val:content"},
+        "meta@property='og:description'" : {p:"schema:description", o:"val:content"},
 
-        "meta@name='twitter:image'"    : {p:"foaf:depiction", o:"iri:content"},
-        "meta@name='og:image'"         : {p:"foaf:depiction", o:"iri:content"},
-        "meta@property='og:image'"     : {p:"foaf:depiction", o:"iri:content"},
+        "meta@name='twitter:image'"    : {p:"schema:image", o:"iri:content"},
+        "meta@name='og:image'"         : {p:"schema:image", o:"iri:content"},
+        "meta@property='og:image'"     : {p:"schema:image", o:"iri:content"},
 
 
-        "meta@name='twitter:site'": {p:"foaf:page", o:"iri:content"},
-        "meta@name='twitter:site'@": {p:"foaf:page", o:"cmd:content", cmd:["str_after/@","add_pref/https://twitter.com/"]},
+        "meta@name='twitter:site'": {p:"schema:url", o:"iri:content"},
+        "meta@name='twitter:site'@": {p:"schema:url", o:"cmd:content", cmd:["str_after/@","add_pref/https://twitter.com/"]},
 //  <xsl:template match="h:meta[@name='twitter:site' and starts-with(@content, '@')]" mode="twittercard" priority="5">
 //         <#TwitterCard> foaf:page @content
 //??    <foaf:page rdf:resource="{concat('https://twitter.com/', substring-after(@content, '@'))}"/>
@@ -67,12 +67,12 @@ var POSH = (function () {
 
         "meta@name='twitter:site:id'": {p:"opltw:id", o:"content"},
 
-        "meta@name='twitter:creator'": {p:"foaf:maker", o:"cmd:content", cmd:["str_after/@","add_pref/https://twitter.com/"]},
+        "meta@name='twitter:creator'": {p:"schema:author", o:"cmd:content", cmd:["str_after/@","add_pref/https://twitter.com/"]},
 //  <xsl:template match="h:meta[@name='twitter:creator']" mode="twittercard">
 //         <#TwitterCard> foaf:maker @content
 //??    <foaf:maker rdf:resource="{concat('https://twitter.com/', substring-after(@content, '@'))}"/>
 
-        "meta@name='twitter:creator:id'": {p:"foaf:maker", o:"cmd:content", cmd:["str_after/@","add_pref/https://twitter.com/"]},
+        "meta@name='twitter:creator:id'": {p:"schema:author", o:"cmd:content", cmd:["str_after/@","add_pref/https://twitter.com/"]},
 //  <xsl:template match="h:meta[@name='twitter:creator:id']" mode="twittercard">
 //         <#TwitterCard> foaf:maker @content
 //    <foaf:maker rdf:resource="{concat('https://twitter.com/', substring-after(@content, '@'))}"/>
@@ -141,10 +141,8 @@ var POSH = (function () {
             o = "PhotoCard";
         }
 
-//        addTriple("", "opltw:hasCard", "#TwitterCard");
-//        addTriple("#TwitterCard", "opltw:hasCard", cardtype );
-        addTriple("", "opltw:hasCard", cardtype);
         addTriple("", "rdf:about", "#TwitterCard");
+        addTriple("#TwitterCard", "opltw:hasCard", cardtype);
 
         $("head meta[name^='twitter:'],meta[name^='og:'],meta[property^='og:']").each(function(i, el){
            var name = el.getAttribute("name");
