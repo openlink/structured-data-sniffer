@@ -166,6 +166,7 @@ tabs.on('load', function(tab) {
                           "./lib/microdatajs/jquery.microdata.js", 
                           "./lib/microdatajs/jquery.microdata.json.js", 
                           "./lib/RDFa.js", 
+                          "./lib/posh.js", 
 		          "./browser_ff.js",
                           "./sniffer.js"
       			  ]

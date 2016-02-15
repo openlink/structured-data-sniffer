@@ -25,6 +25,8 @@ Namespace = function() {
     "virtcxml": "http://www.openlinksw.com/schemas/virtcxml#",
      "virtrdf": "http://www.openlinksw.com/schemas/virtrdf#",
      "twitter": "https://dev.twitter.com/cards/markup#",
+       "opltw": "http://www.openlinksw.com/schemas/twitter#",
+//     "rel": "http://www.iana.org/assignments/relation/",
 
 
         // prefixes from => http://prefix.cc/context 
@@ -1943,6 +1945,8 @@ Handle_JSONLD = function () {
   this._pos = 0;
   this._output = null;
   this.start_id = 0;
+  this.skip_error = false;
+  this.skipped_error = [];
 };
 
 Handle_JSONLD.prototype = {
@@ -1959,6 +1963,7 @@ Handle_JSONLD.prototype = {
           jsonld.expand(jsonld_data, 
             function(err, expanded) {
               if (err) {
+//??todo
                 self.callback(""+err, null);
               }
               else {
@@ -2046,6 +2051,7 @@ N3DataConverter.prototype = {
   addTriple: function (subj, pred, obj) 
   {
       var s = null;
+      var o = null;
 
       for(var i=0; i < this.output.length; i++)
         if (this.output[i].s === subj) {
@@ -2060,25 +2066,37 @@ N3DataConverter.prototype = {
 
       if (s.props === undefined) 
         s.props = new Object();
+      if (s.props_obj === undefined) 
+        s.props_obj = new Object();
       
       var p = s.props[pred];
+      var p_obj = s.props_obj[pred];
       if  (p === undefined) {
          s.props[pred] = [];
+         s.props_obj[pred] = {};
       }
 
       p = s.props[pred];
+      p_obj = s.props_obj[pred];
 
-      if (obj[0] !=='"') {
-        p.push({iri :obj});
-      }
-      else {
-        var match = this._LiteralMatcher.exec(obj);
-        if (!match) throw new Error('Invalid literal: ' + obj);
-        p.push({
+      if (!p_obj[obj]) 
+      {
+        p_obj[obj]=1;
+
+        if (obj[0] !=='"') {
+          p.push({iri :obj});
+        }
+        else {
+          var match = this._LiteralMatcher.exec(obj);
+          if (!match) throw new Error('Invalid literal: ' + obj);
+          p.push({
              value:match[1], 
              type:match[2], 
-             lang:match[3]});
+             lang:match[3]
+            });
+        }
       }
+
   }
 }
 
