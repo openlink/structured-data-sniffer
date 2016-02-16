@@ -8,6 +8,8 @@ var POSH = (function () {
     this.terms["description"] = "schema:description";
     this.terms["describedby"] = "wdrs:describedby";
 
+    this.namespace = new Namespace();
+
     this.prefixes = {
         "xhv": "http://www.w3.org/1999/xhtml/vocab#",
         "wdrs": "http://www.w3.org/2007/05/powder-s#",
@@ -25,12 +27,26 @@ var POSH = (function () {
         "rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
       };
 
-    var s = "";
-    $.each(this.prefixes, function(pref, link_url) {
-      s += "@prefix "+pref+": <"+link_url+"> .\n";
-      return true;
-    });
-    this.pref_list = s;
+
+    function fix_twitterid(content) {
+      var o = "";
+      var p = content.indexOf("@");
+
+      if (p!=-1)
+        o +=content.substring(p+1);
+
+      return "https://twitter.com/"+o;
+    }
+
+    function fix_twitter_creator(content) {
+      var o = "";
+      var p = content.indexOf("@");
+
+      if (p!=-1)
+        o +=content.substring(p+1);
+
+      return "https://twitter.com/"+o+"#this";
+    }
 
     this.twcard = {
         "meta@name='twitter:url'": {p:"schema:mainEntityOfPage", o:"iri:content"},
@@ -59,23 +75,13 @@ var POSH = (function () {
 
 
         "meta@name='twitter:site'": {p:"schema:url", o:"iri:content"},
-        "meta@name='twitter:site'@": {p:"schema:url", o:"cmd:content", cmd:["str_after/@","add_pref/https://twitter.com/"]},
-//  <xsl:template match="h:meta[@name='twitter:site' and starts-with(@content, '@')]" mode="twittercard" priority="5">
-//         <#TwitterCard> foaf:page @content
-//??    <foaf:page rdf:resource="{concat('https://twitter.com/', substring-after(@content, '@'))}"/>
-
+        "meta@name='twitter:site'@": {p:"schema:url", o:"cmd:content", cmd:fix_twitterid},
 
         "meta@name='twitter:site:id'": {p:"opltw:id", o:"content"},
 
-        "meta@name='twitter:creator'": {p:"schema:author", o:"cmd:content", cmd:["str_after/@","add_pref/https://twitter.com/"]},
-//  <xsl:template match="h:meta[@name='twitter:creator']" mode="twittercard">
-//         <#TwitterCard> foaf:maker @content
-//??    <foaf:maker rdf:resource="{concat('https://twitter.com/', substring-after(@content, '@'))}"/>
+        "meta@name='twitter:creator'": {p:"schema:author", o:"cmd:content", cmd:fix_twitter_creator},
 
-        "meta@name='twitter:creator:id'": {p:"schema:author", o:"cmd:content", cmd:["str_after/@","add_pref/https://twitter.com/"]},
-//  <xsl:template match="h:meta[@name='twitter:creator:id']" mode="twittercard">
-//         <#TwitterCard> foaf:maker @content
-//    <foaf:maker rdf:resource="{concat('https://twitter.com/', substring-after(@content, '@'))}"/>
+        "meta@name='twitter:creator:id'": {p:"schema:author", o:"cmd:content", cmd:fix_twitter_creator},
        };
   
   }
@@ -94,14 +100,30 @@ var POSH = (function () {
       function node2str(n)
       {
         if (n.length==0)
-          return "<>";
+        {
+          return "<#this>";
+        }
         else if (s_startWith(n, "http://") 
                  || s_startWith(n, "https://")
+                 || s_startWith(n, "mailto:")
                  || s_startWith(n, "#")
                 )
+        {
           return "<"+n+">";
+        }
         else if (n.lastIndexOf(":")!=-1)
-          return n;
+        {
+          var arr = n.split(":");
+          var pref_link = self.namespace.ns_list[arr[0]];
+          if (!pref_link) //unknown prefix
+             return "xhv:"+n;
+          else {
+             var p = self.prefixes[arr[0]];
+             if (!p)
+               self.prefixes[arr[0]] = pref_link;
+             return n;
+          }
+        }
         else {
           var s = self.terms[n];
           if (s)
@@ -113,15 +135,16 @@ var POSH = (function () {
       function addTriple(s, p, o)
       {
         triples += node2str(s)+" "+node2str(p)+" ";
-        if (o==="<>")
+        if (o==="<>" || o==="<#this>")
           triples += o;
         else if (s_startWith(o, "http://") 
                  || s_startWith(o, "https://")
+                 || s_startWith(o, "mailto:")
                  || s_startWith(o, "#")
                 )
           triples += "<"+o+">";
         else
-          triples += '"'+o+'"';
+          triples += '"'+o.replace(/\"/g,'\\\"')+'"';
 
         triples += " .\n";
       } 
@@ -141,7 +164,7 @@ var POSH = (function () {
             o = "PhotoCard";
         }
 
-        addTriple("", "rdf:about", "#TwitterCard");
+        addTriple("#this", "rdf:about", "#TwitterCard");
         addTriple("#TwitterCard", "opltw:hasCard", cardtype);
 
         $("head meta[name^='twitter:'],meta[name^='og:'],meta[property^='og:']").each(function(i, el){
@@ -181,20 +204,7 @@ var POSH = (function () {
                      addTriple("#TwitterCard", op.p, content);
                  } else {
                    //command exec
-                   var o = "";
-                   for (var c=0; c<op.cmd.length; c++) {
-                     var cmd = op.cmd[c];
-                     if (cmd==="str_after/@") {
-                       var p = content.indexOf("@");
-                       if (p!=-1)
-                         o +=content.substring(p+1);
-                     }
-                     else if (cmd==="add_pref/https://twitter.com/") {
-                         o = "https://twitter.com/"+o;
-                     }
-                   }
-                   
-                   addTriple("#TwitterCard", op.p, o);
+                   addTriple("#TwitterCard", op.p, op.cmd(content));
                  }
                } 
              }
@@ -214,10 +224,10 @@ var POSH = (function () {
            var href = el.getAttribute("href");
 
            if (rel && href) {
-             addTriple("", encodeURI(rel), href);   
+             addTriple("#this", encodeURI(rel), href);   
            }
            else if(rev && href) {
-             addTriple(href, encodeURI(rev), "<>")
+             addTriple(href, encodeURI(rev), "<#this>")
            }
          }
          else if (el.localName==="meta") {
@@ -231,13 +241,19 @@ var POSH = (function () {
              }
            }
            else if (name && content) {
-             addTriple("", name, content);   
+             addTriple("#this", name, content);   
            }
 
          }
       });
 
-      return (triples.length > 0)?this.pref_list+triples: triples;
+      var s = "";
+      $.each(this.prefixes, function(pref, link_url) {
+        s += "@prefix "+pref+": <"+link_url+"> .\n";
+        return true;
+      });
+
+      return (triples.length > 0)?s+triples: triples;
     }
   }
 
