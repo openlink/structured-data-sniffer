@@ -133,7 +133,8 @@
             else {
               var pref = self.ns.has_known_ns(obj.iri);
               var sval = (pref!=null) ? self.pref_link(obj.iri, pref) : self.check_link(obj.iri);
-              str += "<tr class='data_row'><td>" + key_str + "</td><td>"+sval+"</td></tr>";
+              var td_class = obj.typeid!==undefined?" class='typeid'":"";
+              str += "<tr class='data_row'><td"+td_class+">" + key_str + "</td><td"+td_class+">"+sval+"</td></tr>";
             }
           } 
           else {

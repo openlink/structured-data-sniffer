@@ -2188,16 +2188,16 @@ MicrodataJSON_Converter.prototype = {
          if ($.isArray(val)) {
            for(var i=0; i<val.length; i++) {
              if (val[i].indexOf(':') === -1)
-               val[i] = { "iri" : ":"+val[i]};
+               val[i] = { "iri" : ":"+val[i], typeid:1};
              else
-               val[i] = { "iri" : val[i]};
+               val[i] = { "iri" : val[i], typeid:1};
            } 
          } 
          else {
            if (val.indexOf(':') === -1)
-               val = [{ "iri" : ":"+val}];
+               val = [{ "iri" : ":"+val, typeid:1}];
            else
-               val = [{ "iri" : val}];
+               val = [{ "iri" : val, typeid:1}];
          } 
          props[self.RDF_TYPE] = val;
        } 
