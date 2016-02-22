@@ -74,7 +74,7 @@
                 </tr> \
               </thead> \
               <tbody> \
-                <tr class='major'><td>Statement Collection #"+item_num+"</td><td></td></tr> \
+                <tr class='major'><td><a name='sc"+item_num+"'>Statement Collection #"+item_num+"</a></td><td></td></tr> \
                 ";
           str += this.format_id(item.s, id_list);
 
@@ -124,11 +124,11 @@
 
         for(var i=0; i<val.length; i++) {
           var obj = val[i];
-          if (obj.iri!==undefined) {
+          if (obj.iri) {
             var iri = obj.iri;
             var entity_id = id_list[iri];
             if (entity_id!==undefined && iri[0]==="_" && iri[1]===":") {
-              str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><i>Statement Collection #" + entity_id + "</i></td></tr>";
+              str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><a href='#sc"+entity_id+"'><i>See Statement Collection #" + entity_id + "</i></a></td></tr>";
             }
             else {
               var pref = self.ns.has_known_ns(obj.iri);
@@ -140,15 +140,15 @@
           else {
             var v = obj.value;
             var sval;
-            if (obj.type!==undefined && obj.type) {
+            if (obj.type) {
               var pref = self.ns.has_known_ns(obj.type);
               if (pref)
                 sval = self.check_link(v)+"("+self.pref_link(obj.type,pref)+")";
               else
                 sval = self.check_link(v)+"("+self.check_link(obj.type)+")";
             }
-            else if (obj.lang!==undefined && obj.lang!==null){
-              sval = self.check_link(v)+"@"+obj.lang;
+            else if (obj.lang){
+              sval = '"'+self.check_link(v)+'"@'+obj.lang;
             } 
             else {
               sval = self.check_link(v);

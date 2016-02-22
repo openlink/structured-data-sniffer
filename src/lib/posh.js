@@ -75,7 +75,7 @@ var POSH = (function () {
 
 
         "meta@name='twitter:site'": {p:"schema:url", o:"iri:content"},
-        "meta@name='twitter:site'@": {p:"schema:url", o:"cmd:content", cmd:fix_twitterid},
+        "meta@name='twitter:site'@": {p:"schema:author", o:"cmd:content", cmd:fix_twitter_creator},
 
         "meta@name='twitter:site:id'": {p:"opltw:id", o:"content"},
 
