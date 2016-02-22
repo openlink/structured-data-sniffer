@@ -476,12 +476,17 @@ Check_Nano.prototype = {
               !(token.type==="IRI" 
                 || token.type==="abbreviation" 
                 || token.type==="prefixed"
+                || token.type==="prefix"
+                || token.type==="PREFIX"
+                || token.type[0]==="@"
                ))
             self._bad_data = true;
           if (token && self._tokens ==1 && 
               !(token.type==="IRI" 
                 || token.type==="abbreviation" 
                 || token.type==="prefixed"
+                || token.type==="prefix"
+                || token.type==="PREFIX"
                 || token.type===","
                 || token.type===";"
                ))
