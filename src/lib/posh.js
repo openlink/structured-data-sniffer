@@ -166,6 +166,8 @@ var POSH = (function () {
 
         addTriple("#this", "rdf:about", "#TwitterCard");
         addTriple("#TwitterCard", "opltw:hasCard", cardtype);
+        addTriple("#TwitterCard", "rdf:type", "schame:CreativeWork");
+        addTriple("#TwitterCard", "schema:url", "<>");
 
         $("head meta[name^='twitter:'],meta[name^='og:'],meta[property^='og:']").each(function(i, el){
            var name = el.getAttribute("name");
