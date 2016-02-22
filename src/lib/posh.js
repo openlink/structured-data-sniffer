@@ -135,6 +135,7 @@ var POSH = (function () {
       function addTriple(s, p, o)
       {
         triples += node2str(s)+" "+node2str(p)+" ";
+        o = o.replace(/\"/g,'\\\"');
         if (o==="<>" || o==="<#this>")
           triples += o;
         else if (s_startWith(o, "http://") 
@@ -143,8 +144,17 @@ var POSH = (function () {
                  || s_startWith(o, "#")
                 )
           triples += "<"+o+">";
+        else if (o.lastIndexOf(":")!=-1) 
+        {
+          var arr = o.split(":");
+          var pref_link = self.namespace.ns_list[arr[0]];
+          if (!pref_link) //unknown prefix
+            triples += '"'+o+'"'
+          else
+            triples += o;
+        }
         else
-          triples += '"'+o.replace(/\"/g,'\\\"')+'"';
+          triples += '"'+o+'"';
 
         triples += " .\n";
       } 
@@ -165,9 +175,10 @@ var POSH = (function () {
         }
 
         addTriple("#this", "rdf:about", "#TwitterCard");
-        addTriple("#TwitterCard", "opltw:hasCard", cardtype);
-        addTriple("#TwitterCard", "rdf:type", "schame:CreativeWork");
+        addTriple("#TwitterCard", "rdf:type", "schema:CreativeWork");
+        addTriple("#TwitterCard", "rdf:type", "opltw:"+cardtype);
         addTriple("#TwitterCard", "schema:url", "<>");
+
 
         $("head meta[name^='twitter:'],meta[name^='og:'],meta[property^='og:']").each(function(i, el){
            var name = el.getAttribute("name");

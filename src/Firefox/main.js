@@ -168,6 +168,7 @@ tabs.on('load', function(tab) {
                           "./lib/RDFa.js", 
                           "./lib/namespace.js", 
                           "./lib/posh.js", 
+                          "./lib/n3-browser.js",
 		          "./browser_ff.js",
                           "./sniffer.js"
       			  ]
