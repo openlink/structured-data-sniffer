@@ -107,6 +107,7 @@ function createSniffPanel()
 		      "./lib/n3-browser.js",
 		      "./lib/jsuri.js",
                       "./lib/FileSaver.js",
+                      "./lib/namespace.js", 
 		      "./browser_ff.js",
 		      "./settings.js",
 		      "./handlers.js",
@@ -168,7 +169,7 @@ tabs.on('load', function(tab) {
                           "./lib/RDFa.js", 
                           "./lib/namespace.js", 
                           "./lib/posh.js", 
-                          "./lib/n3-browser.js",
+		          "./lib/n3-browser.js",
 		          "./browser_ff.js",
                           "./sniffer.js"
       			  ]

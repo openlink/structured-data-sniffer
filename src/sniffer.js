@@ -92,9 +92,11 @@ function sniff_nanotation() {
     var s_split = doc_Text.split(/[\r\n]/);
     var s_doc = "";
     var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
+    var p3 = /## +(JSON-LD) + (Start|End|Stop) *##/;
     var p2 = /^ *#/;
+
     s_split.forEach(function(item, i, arr){
-      if (item.length>0 && (!p2.test(item) || p1.test(item)))
+      if (item.length>0 && (!p2.test(item) || p1.test(item) || p3.test(item)))
         s_doc += item +"\n";
     });
 

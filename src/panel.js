@@ -138,63 +138,6 @@ function selectTab(tab)
   updateTab('#turtle', selectedTab);
   updateTab('#rdfa', selectedTab);
   updateTab('#posh', selectedTab);
-/**
-  var tab_data = $('#micro_items');
-  var tab_id = $('#tabs a[href=#micro]');
-
-  if (tab==='#micro') {
-    tab_data.show()
-    tab_id.addClass('selected');
-  } else {
-    tab_data.hide()
-    tab_id.removeClass('selected');
-  }
-
-  tab_data = $('#jsonld_items');
-  tab_id = $('#tabs a[href=#jsonld]');
-
-  if (tab==='#jsonld') {
-    tab_data.show()
-    tab_id.addClass('selected');
-  } else {
-    tab_data.hide()
-    tab_id.removeClass('selected');
-  }
-
-  tab_data = $('#turtle_items');
-  tab_id = $('#tabs a[href=#turtle]');
-
-  if (tab==='#turtle') {
-    tab_data.show()
-    tab_id.addClass('selected');
-  } else {
-    tab_data.hide()
-    tab_id.removeClass('selected');
-  }
-
-  tab_data = $('#rdfa_items');
-  tab_id = $('#tabs a[href=#rdfa]');
-
-  if (tab==='#rdfa') {
-    tab_data.show()
-    tab_id.addClass('selected');
-  } else {
-    tab_data.hide()
-    tab_id.removeClass('selected');
-  }
-
-  tab_data = $('#posh_items');
-  tab_id = $('#tabs a[href=#posh]');
-
-  if (tab==='#posh') {
-    tab_data.show()
-    tab_id.addClass('selected');
-  } else {
-    tab_data.hide()
-    tab_id.removeClass('selected');
-  }
-**/
-
 }
 
 
@@ -268,21 +211,6 @@ function show_Data(dData)
       micro = true;
   }
 
-/**
-  $('#micro_items #docdata_view').remove();
-  $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (dData.micro.expanded!==null && dData.micro.expanded.length > 0) {
-      $('#micro_items #docdata_view').append(dData.micro.expanded);
-      micro = true;
-  }
-  else if (dData.micro.error) {
-      $('#micro_items #docdata_view').append("<div id='docdata'><i><p>Microdata discovered, but fails syntax checking by parser.<p><span id='micro_error'/></i></div>");
-      $('#micro_items #micro_error').text(dData.micro.error);
-      micro = true;
-  }
-  else
-      $('#micro_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
-**/
 
   $('#jsonld_items #docdata_view').remove();
   $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
@@ -307,21 +235,6 @@ function show_Data(dData)
       jsonld = true;
   }
 
-/**
-  $('#jsonld_items #docdata_view').remove();
-  $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (dData.jsonld.expanded!==null && dData.jsonld.expanded.length > 0) {
-      $('#jsonld_items #docdata_view').append(dData.jsonld.expanded);
-      jsonld = true;
-  }
-  else if (dData.jsonld.error) {
-      $('#jsonld_items #docdata_view').append("<div id='docdata'><i><p>JSON-LD discovered, but fails syntax checking by parser:<p><span id='jsonld_error'/></i></div>");
-      $('#jsonld_items #jsonld_error').text(dData.jsonld.error);
-      jsonld = true;
-  }
-  else
-      $('#jsonld_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
-**/
 
 
   $('#turtle_items #docdata_view').remove();
@@ -365,21 +278,7 @@ function show_Data(dData)
       rdfa = true;
   }
 
-/**
-  $('#rdfa_items #docdata_view').remove();
-  $('#rdfa_items').append("<div id='docdata_view' class='alignleft'/>");
-  if (dData.rdfa.expanded!==null && dData.rdfa.expanded.length > 0) {
-      $('#rdfa_items #docdata_view').append(dData.rdfa.expanded);
-      rdfa = true;
-  }
-  else if (dData.rdfa.error) {
-      $('#rdfa_items #docdata_view').append("<div id='docdata'><i><p>RDFa discovered, but fails syntax checking by parser:<p><span id='rdfa_error'/></i></div>");
-      $('#rdfa_items #rdfa_error').text(dData.rdfa.error);
-      rdfa = true;
-  }
-  else
-      $('#rdfa_items #docdata_view').append("<div id='docdata'><i>No data found.</i></div>");
-**/
+
 
   $('#posh_items #docdata_view').remove();
   $('#posh_items').append("<div id='docdata_view' class='alignleft'/>");

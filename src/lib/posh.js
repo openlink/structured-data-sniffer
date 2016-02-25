@@ -109,7 +109,7 @@ var POSH = (function () {
                  || s_startWith(n, "#")
                 )
         {
-          return "<"+n+">";
+          return "<"+encodeURI(n)+">";
         }
         else if (n.lastIndexOf(":")!=-1)
         {
@@ -143,7 +143,7 @@ var POSH = (function () {
                  || s_startWith(o, "mailto:")
                  || s_startWith(o, "#")
                 )
-          triples += "<"+o+">";
+          triples += "<"+encodeURI(o)+">";
         else if (o.lastIndexOf(":")!=-1) 
         {
           var arr = o.split(":");
