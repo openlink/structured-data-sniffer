@@ -22,11 +22,15 @@ var $ = jQuery;
 var micro_items = 0;
 var json_ld_Text = null;
 var turtle_Text = null;
+var posh_Text = null;
 var rdfa_subjects = null;
-var nano_Text = null;
+var t_nano_Text = null;
+var j_nano_Text = null;
 var data_found = false;
 
-var nano_pattern =/(\{|(## (Nanotation|Turtle) Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) (End|Stop) ##)|\})(.*)/gmi;
+var t_nano_pattern =/(\{|(## (Nanotation|Turtle) Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) (End|Stop) ##)|\})(.*)/gmi;
+var j_nano_pattern =/(\{|(## (JSON-LD) Start ##))((.|\n|\r)*?)((## (JSON-LD) (End|Stop) ##)|\})(.*)/gmi;
+
 
 function getSelectionString(el, win) {
     win = win || window;
@@ -53,8 +57,31 @@ function getSelectionString(el, win) {
 }
 
 
+function fix_Nano_data(str) {
+    str = str.replace(/\xe2\x80\x9c/g, '"')       //replace smart quotes with sensible ones (opening)
+       .replace(/\xe2\x80\x9d/g, '"')       //replace smart quotes with sensible ones (closing)
+       .replace(/\xc3\xa2\xc2\x80\xc2\x9c/g, '"')  //smart->sensible quote replacement, wider encoding
+       .replace(/\xc3\xa2\xc2\x80\xc2\x9d/g, '"')  //smart->sensible quote replacement, wider encoding
+       .replace(/\u00a0/g," ")   //&nbsp
+       .replace(/\u201A/g,"'")
+       .replace(/\u2018/g,"'")
+       .replace(/\u2019/g,"'")
+       .replace(/\u2039/g,"'")
+       .replace(/\u203A/g,"'")
+       .replace(/\u201C/g,'"')
+       .replace(/\u201D/g,'"')
+       .replace(/\u201E/g,'"')
+       .replace(/\u00BB/g,'"')
+       .replace(/\u00AB/g,'"');
+//       .replace(/\u8629/g,' ')
+//       .replace(/\u2026/g,'...');
+    return str;
+}
+
+
 function sniff_nanotation() {
-  var ret = [];
+  var t_ret = [];
+  var j_ret = [];
   var doc_Text = document.body.innerText;
 
   if (doc_Text === undefined)
@@ -65,40 +92,40 @@ function sniff_nanotation() {
     var s_split = doc_Text.split(/[\r\n]/);
     var s_doc = "";
     var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
+    var p3 = /## +(JSON-LD) + (Start|End|Stop) *##/;
     var p2 = /^ *#/;
+
     s_split.forEach(function(item, i, arr){
-      if (item.length>0 && (!p2.test(item) || p1.test(item)))
+      if (item.length>0 && (!p2.test(item) || p1.test(item) || p3.test(item)))
         s_doc += item +"\n";
     });
 
     while(true) {
-      var ndata = nano_pattern.exec(s_doc);
+      var ndata = t_nano_pattern.exec(s_doc);
       if (ndata==null)
         break;
 
       var str = ndata[4]+ndata[5];
-      str = str.replace(/\xe2\x80\x9c/g, '"')       //replace smart quotes with sensible ones (opening)
-         .replace(/\xe2\x80\x9d/g, '"')       //replace smart quotes with sensible ones (closing)
-         .replace(/\xc3\xa2\xc2\x80\xc2\x9c/g, '"')  //smart->sensible quote replacement, wider encoding
-         .replace(/\xc3\xa2\xc2\x80\xc2\x9d/g, '"')  //smart->sensible quote replacement, wider encoding
-         .replace(/\u00a0/g," ")   //&nbsp
-         .replace(/\u201A/g,"'")
-         .replace(/\u2018/g,"'")
-         .replace(/\u2019/g,"'")
-         .replace(/\u2039/g,"'")
-         .replace(/\u203A/g,"'")
-         .replace(/\u201C/g,'"')
-         .replace(/\u201D/g,'"')
-         .replace(/\u201E/g,'"')
-         .replace(/\u00BB/g,'"')
-         .replace(/\u00AB/g,'"');
-//         .replace(/\u8629/g,' ')
-//         .replace(/\u2026/g,'...');
-
-      ret.push(str);
+      str = fix_Nano_data(str);
+      t_ret.push(str);
     }
+/**??todo
+    while(true) {
+      var ndata = j_nano_pattern.exec(s_doc);
+      if (ndata==null)
+        break;
+
+      var str = ndata[4]+ndata[5];
+      str = fix_Nano_data(str);
+      j_ret.push(str);
+    }
+**/
   }
-  return (ret.length > 0)? ret : null;
+
+  if (t_ret.length > 0 || j_ret.length > 0)
+    return {t:t_ret, j:j_ret};
+  else
+    return null;
 }
 
 
@@ -132,6 +159,18 @@ function is_data_exist() {
       }
     }
 
+
+    if (!data_found) {
+      try {
+        posh_Text = new POSH().getData(document.location.href);  
+      } catch(e) {
+        console.log("OSDS:"+e);
+      }
+
+      if (posh_Text && posh_Text.length>0)
+        data_found = true;
+    }
+
     if (!data_found) {
       try {
         GreenTurtle.attach(document);
@@ -146,9 +185,12 @@ function is_data_exist() {
 
 
     if (!data_found) {
-      nano_Text = sniff_nanotation();
-      if (nano_Text!==null)
+      var ret = sniff_nanotation();
+      if (ret) {
+        t_nano_Text = (ret.t.length>0)?ret.t:null;
+        j_nano_Text = (ret.j.length>0)?ret.j:null;
         data_found = true;
+      }
     }
 
 
@@ -182,11 +224,24 @@ function is_data_exist() {
 function sniff_Data() {
   try {
 
-    if (nano_Text===null) {
-      nano_Text = sniff_nanotation();
+    if (t_nano_Text===null && j_nano_Text===null) {
+      var ret = sniff_nanotation();
+      if (ret) {
+        t_nano_Text = (ret.t.length>0)?ret.t:null;
+        j_nano_Text = (ret.j.length>0)?ret.j:null;
+        data_found = true;
+      }
     }
 
     micro_items = $('[itemscope]').not($('[itemscope] [itemscope]'));
+
+    if (posh_Text===null) {
+      try {
+        posh_Text = new POSH().getData(document.location.href);  
+      } catch(e) {
+        console.log("OSDS:"+e);
+      }
+    }
 
     try {
       GreenTurtle.attach(document);
@@ -247,10 +302,25 @@ window.onload = function() {
       return (n && n.substr(0, 2) === '_:')? n : "<"+n+">";
     }
 
+
+    function requested_doc_data()
+    {
+        sniff_Data();
+        if (t_nano_Text) {
+          new Check_Nano().parse(t_nano_Text, function(output){
+            t_nano_Text = output;
+            send_doc_data();
+          });
+        } else {
+          send_doc_data();
+        }
+    }
+
+
     function send_doc_data() 
     {
         //check again ld+json and turtle for any case
-        sniff_Data();
+//        sniff_Data();
 
         var docData = {
                docURL: document.location.href,
@@ -258,7 +328,9 @@ window.onload = function() {
                jsonld :{ text:null },
                rdfa :{ data:null , ttl:null},
                turtle :{ text:null },
-               nano :{ text:null }
+               t_nano :{ text:null },
+               j_nano :{ text:null },
+               posh :{ text:null }
              };
         
         var microdata = jQuery.microdata.json(micro_items, function(o) { return o; });
@@ -326,7 +398,9 @@ window.onload = function() {
         docData.turtle.text = turtle_Text;
         docData.rdfa.data = rdfa;
         docData.rdfa.ttl = rdfa_ttl;
-        docData.nano.text = nano_Text;
+        docData.t_nano.text = t_nano_Text;
+        docData.j_nano.text = j_nano_Text;
+        docData.posh.text = posh_Text;
 
         //send data to extension
         if (Browser.isFirefoxSDK) 
@@ -350,14 +424,17 @@ window.onload = function() {
     if (Browser.isFirefoxSDK) 
     {
         self.port.on("doc_data", function(msg) {
-          send_doc_data();
+//          send_doc_data();
+          requested_doc_data()
         });
     }
     else 
     {
         chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
           if (request.property == "doc_data") 
-            send_doc_data();
+//            send_doc_data();
+            requested_doc_data();
+//            check_nano(); 
           else
             sendResponse({});  /* stop */
         });
@@ -372,3 +449,78 @@ window.onload = function() {
 
 }();
 
+
+
+Check_Nano = function (start_id) {
+  this.callback = null;
+  this._pos = 0;
+  this._output = null;
+  this.start_id = 0;
+  if (start_id!==undefined)
+    this.start_id = start_id;
+  this._tokens = 0;
+  this._bad_data = false;
+};
+
+Check_Nano.prototype = {
+
+  parse : function(textData, callback) {
+    this.callback = callback;
+    var self = this;
+
+    if (this._pos < textData.length) {
+      var lexer = N3.Lexer({ lineMode: false });
+      try {
+        var ttl_data = textData[self._pos];
+
+        lexer.tokenize(ttl_data, function (error, token) {
+          if (token && self._tokens ==0 && 
+              !(token.type==="IRI" 
+                || token.type==="abbreviation" 
+                || token.type==="prefixed"
+                || token.type==="prefix"
+                || token.type==="PREFIX"
+                || token.type[0]==="@"
+               ))
+            self._bad_data = true;
+          if (token && self._tokens ==1 && 
+              !(token.type==="IRI" 
+                || token.type==="abbreviation" 
+                || token.type==="prefixed"
+                || token.type==="prefix"
+                || token.type==="PREFIX"
+                || token.type===","
+                || token.type===";"
+               ))
+            self._bad_data = true;
+
+          if (token && !error && !self._bad_data) {
+            self._tokens++;
+            if (self._tokens==3) {
+              if (self._output === null)
+                self._output = [];
+              self._output.push(textData[self._pos]);
+            }
+          }
+          
+          if (error || (token && token.type==="eof")) {
+            self._pos++;
+            self._tokens = 0;
+            self._bad_data = false;
+            if (self._pos < textData.length)
+               self.parse(textData, self.callback);
+            else
+               self.callback(self._output);
+          }
+        });
+
+      } catch (ex) {
+        self.callback(null);
+      }
+    } else {
+        self.callback(self._output);
+    }
+
+  },
+
+}

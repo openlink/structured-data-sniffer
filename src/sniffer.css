@@ -55,6 +55,11 @@ table.docdata > tbody > tr > td.major {
   font-weight: bold;
 }
 
+table.docdata > tbody > tr > td.typeid {
+  font-weight: bold;
+  background-color: #f1f0ee; 
+}
+
 
 
 body.sniffer {

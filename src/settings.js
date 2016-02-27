@@ -21,8 +21,8 @@
 Settings = function(data) {
   this.def_import_url = "http://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
   this.def_import_srv = "describe";
-//this.def_rww_edit_url = "http://ods-qa.openlinksw.com/rdf-editor/#/editor?newDocument=true&statement:subject={url}";
-  this.def_rww_edit_url = "http://ods-qa.openlinksw.com/rdf-editor/#/editor?newDocument=true&statement:subject={url}&view=statements";
+//  this.def_rww_edit_url = "http://ods-qa.openlinksw.com/rdf-editor/#/editor?newDocument=true&statement:subject={url}&view=statements";
+  this.def_rww_edit_url = "http://linkeddata.uriburner.com/rdf-editor/#/editor?newDocument=true&statement:subject={url}&view=statements";
   this.def_sparql_url = "http://linkeddata.uriburner.com/sparql/?query={query}";
   this.def_sparql_cmd = "select";
 
