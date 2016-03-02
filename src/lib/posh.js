@@ -135,7 +135,7 @@ var POSH = (function () {
       function addTriple(s, p, o)
       {
         triples += node2str(s)+" "+node2str(p)+" ";
-        o = o.replace(/\"/g,'\\\"');
+        o = o.replace(/\\/g,'\\\\').replace(/\"/g,'\\\"');
         if (o==="<>" || o==="<#this>")
           triples += o;
         else if (s_startWith(o, "http://") 
