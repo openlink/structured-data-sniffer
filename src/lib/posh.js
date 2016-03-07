@@ -116,7 +116,7 @@ var POSH = (function () {
           var arr = n.split(":");
           var pref_link = self.namespace.ns_list[arr[0]];
           if (!pref_link) //unknown prefix
-             return "xhv:"+n;
+             return "xhv:"+encodeURI(n);
           else {
              var p = self.prefixes[arr[0]];
              if (!p)
@@ -128,7 +128,7 @@ var POSH = (function () {
           var s = self.terms[n];
           if (s)
             return s;
-          return "xhv:"+n;
+          return "xhv:"+encodeURI(n);
         }
       }
 
