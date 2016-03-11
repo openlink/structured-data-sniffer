@@ -25,6 +25,7 @@ $(function(){
 
 	gPref = new Settings();
 
+        $("#revert-confirm").hide();
 
 	$('#tabs').tabs();
 
@@ -68,22 +69,68 @@ $(function(){
 
 function setImportDefaults() 
 {
-    $('#'+gPref.def_import_srv,'#import-srv').attr('selected','selected');
-    var h_url = createImportURL(gPref.def_import_srv, gPref.def_import_url.trim());
-    $('#import-url').val(h_url);
-    enableCtrls();
+    $( "#revert-confirm" ).dialog({
+      resizable: false,
+      height:160,
+      modal: true,
+      buttons: {
+        "OK": function() {
+
+          $('#'+gPref.def_import_srv,'#import-srv').attr('selected','selected');
+          var h_url = createImportURL(gPref.def_import_srv, gPref.def_import_url.trim());
+          $('#import-url').val(h_url);
+          enableCtrls();
+
+          $(this).dialog( "close" );
+        },
+        Cancel: function() {
+          $(this).dialog( "close" );
+        }
+      }
+    });
 };
 
 function setRWWDefaults() 
 {
-    $('#rww-edit-url').val(gPref.def_rww_edit_url);
+    $( "#revert-confirm" ).dialog({
+      resizable: false,
+      height:160,
+      modal: true,
+      buttons: {
+        "OK": function() {
+
+          $('#rww-store-url').val("");
+          $('#rww-edit-url').val(gPref.def_rww_edit_url);
+
+          $(this).dialog( "close" );
+        },
+        Cancel: function() {
+          $(this).dialog( "close" );
+        }
+      }
+    });
 };
 
 function setSparqlDefaults() 
 {
-    $('#'+gPref.def_sparql_cmd,'#sparql-cmd').attr('selected','selected');
-    $('#sparql-url').val(gPref.def_sparql_url);
-    $('#sparql-query').val(createSparqlQuery(gPref.def_sparql_cmd));
+    $( "#revert-confirm" ).dialog({
+      resizable: false,
+      height:160,
+      modal: true,
+      buttons: {
+        "OK": function() {
+
+          $('#'+gPref.def_sparql_cmd,'#sparql-cmd').attr('selected','selected');
+          $('#sparql-url').val(gPref.def_sparql_url);
+          $('#sparql-query').val(createSparqlQuery(gPref.def_sparql_cmd));
+
+          $(this).dialog( "close" );
+        },
+        Cancel: function() {
+          $(this).dialog( "close" );
+        }
+      }
+    });
 };
 
 
