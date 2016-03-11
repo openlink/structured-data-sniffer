@@ -13,7 +13,7 @@
       "48":  "images/icon48.png",
       "128": "images/icon128.png" },
   "page_action": {
-    "default_icon": "images/icon128.png",
+    "default_icon": "images/icon16.png",
     "default_title": "Show Document Metadata",
     "default_popup": "panel.html"
   },

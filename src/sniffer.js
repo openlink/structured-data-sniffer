@@ -259,7 +259,10 @@ function sniff_Data() {
           var htmlText = all[i].innerHTML;
           if (json_ld_Text == null)
             json_ld_Text = [];
-          json_ld_Text.push(htmlText.replace("<![CDATA[", "").replace("]]>", ""));
+
+          htmlText = htmlText.replace("//<![CDATA[", "").replace("//]]>", "");
+          htmlText = htmlText.replace("<![CDATA[", "").replace("]]>", "");
+          json_ld_Text.push(htmlText);
         }
     }
 
@@ -271,7 +274,10 @@ function sniff_Data() {
           var htmlText = all[i].innerHTML;
           if (turtle_Text == null)
             turtle_Text = [];
-          turtle_Text.push(htmlText.replace("<![CDATA[", "").replace("]]>", "")); 
+
+          htmlText = htmlText.replace("//<![CDATA[", "").replace("//]]>", ""); 
+          htmlText = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
+          turtle_Text.push(htmlText); 
         }
     }
 
