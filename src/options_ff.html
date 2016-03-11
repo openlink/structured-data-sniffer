@@ -45,6 +45,15 @@
   </head>
 
   <body >
+      <div id="revert-confirm" title="Warning">
+        <p/>
+        <table style="font-size: 14px;">
+         <tr>
+          <td> Current setting will be discarded. This cannot be undone.</td>
+         </tr>
+        </table>
+      </div>
+
 
     <!-- Tabs -->
     <div id="tabs" style="WIDTH: 500px">
@@ -80,10 +89,10 @@
                  <td>LOD Cloud Lookup & Upload Service</td>
                  <td>
                    <SELECT id="import-srv" style="WIDTH: 245px" >
-                     <OPTION id="describe" selected>Virtuoso Describe</OPTION>
-                     <OPTION id="describe-ssl">Virtuoso Describe SSL</OPTION>
-                     <OPTION id="about">Virtuoso About</OPTION>
-                     <OPTION id="about-ssl">Virtuoso About SSL</OPTION>
+                     <OPTION id="describe" selected>URIBurner Describe</OPTION>
+                     <OPTION id="describe-ssl">URIBurner Describe SSL</OPTION>
+                     <OPTION id="about">URIBurner About</OPTION>
+                     <OPTION id="about-ssl">URIBurner About SSL</OPTION>
                      <OPTION id="custom">Custom</OPTION>
                    </SELECT>
                  </td>
@@ -100,7 +109,7 @@
            </tr>
            <tr> <p/> </tr>
            <tr>
-               <input id="import-set-def" value="Set Default" type="button">
+               <input id="import-set-def" value="Revert to Defaults" type="button">
            </tr>
 
            <tr> <p/> </tr>
@@ -130,7 +139,7 @@
            </tr>
            <tr> <p/> </tr>
            <tr>
-               <input id="rww-set-def" value="Set Default" type="button">
+               <input id="rww-set-def" value="Revert to Defaults" type="button">
            </tr>
            
            <tr> <p/> </tr>
@@ -165,7 +174,7 @@
            </tr>
            <tr> <p/> </tr>
            <tr>
-               <input id="sparql-set-def" value="Set Default" type="button">
+               <input id="sparql-set-def" value="Revert to Defaults" type="button">
            </tr>
 
 
