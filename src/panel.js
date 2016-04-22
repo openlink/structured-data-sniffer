@@ -658,7 +658,7 @@ function Download_exec()
     filename = "jsonld_data.jsonld";
     fmt = "json";
   }
-  else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.nano.ttl_text!==null)) {
+  else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.t_nano.ttl_text!==null)) {
     filename = "turtle_data.ttl";
     fmt = "ttl";
   }
