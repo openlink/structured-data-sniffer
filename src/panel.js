@@ -718,7 +718,7 @@ function save_data(fname, fmt)
         blob_data.push(gData.j_nano.json_text);
       }
     }
-    else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.nano.ttl_text!==null)) {
+    else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.t_nano.ttl_text!==null)) {
       fmt = "ttl";
       blob_data = gData.turtle.ttl_text;
       if (gData.t_nano.ttl_text!==null) {
