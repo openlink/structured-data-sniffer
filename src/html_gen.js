@@ -127,7 +127,8 @@
           if (obj.iri) {
             var iri = obj.iri;
             var entity_id = id_list[iri];
-            if (entity_id!==undefined && iri[0]==="_" && iri[1]===":") {
+            //nodeID://
+            if (entity_id!==undefined && self.is_BNode(iri)) {
               str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><a href='#sc"+entity_id+"'><i>See Statement Collection #" + entity_id + "</i></a></td></tr>";
             }
             else {
@@ -163,7 +164,7 @@
     format_id : function (value, id_list) 
     {
        var entity_id = id_list[value];
-       if (entity_id!==undefined && value[0]==="_" && value[1]===":") {
+       if (entity_id!==undefined && this.is_BNode(value)) {
          return "";
        }
        else {
@@ -200,6 +201,14 @@
     pre : function (text) 
     {
       return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    },
+
+    s_startWith : function (str, val) {
+        return str.lastIndexOf(val, 0) === 0;
+    },
+
+    is_BNode : function (str) {
+        return (str.lastIndexOf("_:", 0) === 0 || str.lastIndexOf("nodeID://", 0) === 0 || str.lastIndexOf("nodeid://", 0) === 0);
     },
 
   }

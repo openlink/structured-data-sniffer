@@ -20,13 +20,13 @@
   "options_page": "options.html",
   "content_scripts": [
     {
-      "matches": ["*://*/*"],
+      "matches": ["file:///*/*","*://*/*"],
       "css": [],
       "js": ["lib/jquery-1.11.3.min.js", "lib/jquery-migrate-1.2.1.min.js", "lib/jsonld.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", "lib/namespace.js", "lib/posh.js", "browser.js", "sniffer.js"],
       "run_at": "document_idle"
     }
   ],
 "permissions": [
-    "tabs", "http://*/*", "https://*/*"
+    "tabs", "*://*/*", "file:///*/*"
   ]
 }

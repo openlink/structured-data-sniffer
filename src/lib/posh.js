@@ -247,7 +247,14 @@ var POSH = (function () {
            var href = el.getAttribute("href");
 
            if (rel && href) {
+             var title = el.getAttribute("title");
+             var type = el.getAttribute("type");
              addTriple("#this", encodeURI(rel), href);   
+             addTriple(href+"#this", "rdf:type", "schema:CreativeWork");
+             if (title)
+               addTriple(href+"#this", "schema:name", title);   
+             if (type)
+               addTriple(href+"#this", "schema:fileFormat", type);   
            }
            else if(rev && href) {
              addTriple(href, encodeURI(rev), "<#this>")

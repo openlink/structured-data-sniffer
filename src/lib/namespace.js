@@ -1783,7 +1783,8 @@ Namespace.prototype = {
   has_known_ns : function (str) 
   {
     function s_startWith(str, val) {
-     return str.substring(0, val.length) === val;
+     return str.lastIndexOf(val, 0) === 0;
+//     return str.substring(0, val.length) === val;
     }
 
     var rc = null;
