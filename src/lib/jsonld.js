@@ -6983,7 +6983,7 @@ function _toNQuad(triple, graphName) {
 
   // subject is an IRI
   if(s.type === 'IRI') {
-    quad += '<' + s.value + '>';
+    quad += '<' + encodeURI(s.value) + '>';
   } else {
     quad += s.value;
   }
@@ -6991,7 +6991,7 @@ function _toNQuad(triple, graphName) {
 
   // predicate is an IRI
   if(p.type === 'IRI') {
-    quad += '<' + p.value + '>';
+    quad += '<' + encodeURI(p.value) + '>';
   } else {
     quad += p.value;
   }
@@ -6999,7 +6999,7 @@ function _toNQuad(triple, graphName) {
 
   // object is IRI, bnode, or literal
   if(o.type === 'IRI') {
-    quad += '<' + o.value + '>';
+    quad += '<' + encodeURI(o.value) + '>';
   } else if(o.type === 'blank node') {
     quad += o.value;
   } else {

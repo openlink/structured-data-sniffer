@@ -108,8 +108,11 @@ var POSH = (function () {
         else if (s_startWith(n, "http://") 
                  || s_startWith(n, "https://")
                  || s_startWith(n, "mailto:")
-                 || s_startWith(n, "#")
                 )
+        {
+          return "<"+n+">";
+        }
+        else if (s_startWith(n, "#"))
         {
           return "<"+encodeURI(n)+">";
         }
@@ -118,7 +121,7 @@ var POSH = (function () {
           var arr = n.split(":");
           var pref_link = self.namespace.ns_list[arr[0]];
           if (!pref_link) //unknown prefix
-             return "xhv:"+encodeURI(n);
+             return "xhv:"+encodeURIComponent(n);
           else {
              var p = self.prefixes[arr[0]];
              if (!p)
@@ -130,7 +133,7 @@ var POSH = (function () {
           var s = self.terms[n];
           if (s)
             return s;
-          return "xhv:"+encodeURI(n);
+          return "xhv:"+encodeURIComponent(n);
         }
       }
 
@@ -143,8 +146,9 @@ var POSH = (function () {
         else if (s_startWith(o, "http://") 
                  || s_startWith(o, "https://")
                  || s_startWith(o, "mailto:")
-                 || s_startWith(o, "#")
                 )
+          triples += "<"+o+">";
+        else if (s_startWith(o, "#"))
           triples += "<"+encodeURI(o)+">";
         else if (o.lastIndexOf(":")!=-1) 
         {
