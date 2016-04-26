@@ -1,6 +1,6 @@
 {
   "name": "OpenLink Structured Data Sniffer",
-  "version": "2.9.0,
+  "version": "2.10",
   "manifest_version": 2,
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
   "applications": {
@@ -22,13 +22,13 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*/*"],
+      "matches": ["file:///*/*","*://*/*"],
       "css": [],
       "js": ["lib/jquery-1.11.3.min.js", "lib/jquery-migrate-1.2.1.min.js", "lib/jsonld.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", "lib/namespace.js", "lib/posh.js", "browser.js", "sniffer.js"],
       "run_at": "document_idle"
     }
   ],
 "permissions": [
-    "tabs", "http://*/*", "https://*/*"
+    "tabs", "*://*/*", "file:///*/*"
   ]
 }

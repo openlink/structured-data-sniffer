@@ -84,7 +84,7 @@ function sniff_nanotation() {
   var j_ret = [];
   var doc_Text = document.body.innerText;
 
-  if (doc_Text === undefined)
+  if (doc_Text === undefined || (doc_Text!==null && doc_Text.length==0))
     doc_Text = getSelectionString(document.body);
 
   if (doc_Text) {
@@ -142,7 +142,7 @@ function is_data_exist() {
       var all = document.getElementsByTagName("script");
       for( var i = 0; i < all.length; i++ ) {
         if ( all[i].hasAttribute('type') 
-             && all[i].getAttribute('type') == "application/ld+json")
+             && all[i].getAttribute('type') === "application/ld+json")
           {
             data_found = true;
           }
@@ -152,7 +152,9 @@ function is_data_exist() {
     if (!data_found) {
       for( var i = 0; i < all.length; i++ ) {
         if ( all[i].hasAttribute('type') 
-             && all[i].getAttribute('type') == "text/turtle")
+             && (all[i].getAttribute('type') === "text/turtle"
+                 || all[i].getAttribute('type') === "application/turtle")
+           )
           {
             data_found = true;
           }
