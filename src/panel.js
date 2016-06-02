@@ -101,8 +101,11 @@ $(document).ready(function()
   $("#query_place").hide();
 
 
-  $("#restData").footable();
   $('#rest_exec').click(rest_exec);
+  $('#rest_exit').click(function(){
+      selectTab(prevSelectedTab);
+      return false;
+  });
   $('#rest_add').button({
     icons: { primary: 'ui-icon-plusthick' },
     text: false 
@@ -894,13 +897,8 @@ function createSparqlUrl(curUrl)
 
 function show_rest()
 {
-//  $('#tabs a[href=#micro]').hide();
-//  $('#tabs a[href=#jsonld]').hide();
-//  $('#tabs a[href=#turtle]').hide();
-//  $('#tabs a[href=#rdfa]').hide();
-//  $('#tabs a[href=#posh]').hide();
   selectTab('#cons');
-  $('#tabs a[href=#cons]').show();
+//--  $('#tabs a[href=#cons]').show();
   if (yasqe.obj && yasqe.val && !yasqe.init) {
     yasqe.obj.setValue(yasqe.val);
     yasqe.init = true;
@@ -1008,15 +1006,14 @@ function load_restData(doc_url)
   }
 
   var url = new Uri(doc_url);
-  var params = url.queryObj.params;
+  var params = url.queryPairs;
   for(var i=0; i<params.length; i++) {
-    var val = params[i][1].replace(/[+]/g,' ');
+    var val = params[i][1];
     var key = params[i][0];
-    if (key === "query") {
-      yasqe.val = decodeURIComponent(val);
-    }
+    if (key === "query")
+      yasqe.val = val;
     else
-      addRestParam(params[i][0], decodeURIComponent(val));
+      addRestParam(params[i][0], val);
   }
 
   if (params.length == 0)
