@@ -22,11 +22,12 @@
         <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />	
         <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />	
         <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />	
+        <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />	
+        <link type="text/css" href="lib/css/yasqe.min.css" rel="stylesheet" />	
 
         <script type="text/javascript" src="lib/jquery-1.11.3.min.js"></script>
         <script type="text/javascript" src="lib/jquery-migrate-1.2.1.min.js"></script>
         <script type="text/javascript" src="lib/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="lib/footable.js"></script>
 
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.js"></script>
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.json.js"></script>
@@ -35,6 +36,9 @@
         <script type="text/javascript" src="lib/jsuri.js"></script>
         <script type="text/javascript" src="lib/FileSaver.js"></script>
         <script type="text/javascript" src="lib/namespace.js"></script>
+        <script type="text/javascript" src="lib/codemirror.js"></script>
+        <script type="text/javascript" src="lib/yasqe.min.js"></script>
+
 
         <script type="text/javascript" src="browser.js"></script>
         <script type="text/javascript" src="settings.js"></script>
@@ -92,7 +96,7 @@
 
       <div id="header">
         <ul id="tabs">
-          <li><a href="#cons" title="Console">Console</a></li>
+          <li><a href="#cons" title="Web Service Console for RESTful interaction with HTTP Servers">REST</a></li>
           <li><a href="#micro" title="Structured Data encoded using HTML5 Microdata Notation">Microdata</a></li>
           <li><a href="#jsonld" title="Metadata encoded using JSON-LD Notation">JSON-LD</a></li>
           <li><a href="#turtle" title="Metadata encoded using RDF-Turtle Notation">Turtle</a></li>
@@ -106,11 +110,20 @@
         <div id="cons_items">
           <table>
             <tr> 
-              <button id="rest_exec" style="margin:10px; margin-left:10px;">Execute</button>
-            </tr>
+<!--              <button id="rest_exec1" style="margin:10px; margin-left:10px;">Execute</button> -->
+              <input  id="rest_exec" type="image" src="images/osds-icon-rest-24.png" width="24" height="24" title="Execute" style="margin:10px; margin-left:20px;">
             </tr>
           </table>
 
+          <table class="footable">
+            <thead>
+                <th width="auto">Query</th>
+            </thead>
+          </table>
+          <table>
+            <textarea id="rest_sparql" style="width: 100%; height: 100px">
+            </textarea>
+          </table>
           <table class="footable">
             <thead>
               <tr>

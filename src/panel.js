@@ -33,7 +33,7 @@ var gData = {
         j_nano :{ json_text:null },
         posh:{ ttl_text:null }
       };
-
+var yasqe = null;
 
 $(document).ready(function() 
 {
@@ -78,7 +78,20 @@ $(document).ready(function()
   });
 
 
-  $("#restData").footable();
+  try{
+    yasqe = YASQE.fromTextArea(document.getElementById('rest_sparql'), {
+        lineNumbers: true,
+	sparql: { showQueryButton: false },
+	createShortLink : null,
+	createShareLink : null,
+	persistent: null,
+     
+    });
+    yasqe.setSize("100%", 150);
+    $(".yasqe").hide();
+  } catch(e) {
+  }
+
   $('#rest_exec').click(rest_exec);
   $('#rest_add').button({
     icons: { primary: 'ui-icon-trash' },
@@ -877,6 +890,12 @@ function rest_exec() {
   var url = new Uri(doc_URL);
   url.setQuery("");
 
+  if (yasqe) {
+    var val = yasqe.getValue();
+    if (val && val.length > 0) 
+       url.addQueryParam("query", encodeURIComponent(val));
+  }
+
   var rows = $('#restData>tr');
   for(var i=0; i < rows.length; i++) {
     var r = $(rows[i]);
@@ -952,13 +971,15 @@ function delRest()
       $(tr).remove();
     }
   }
-  if ($('#restData>tr>td>#chk').length==0)
-    addRestEmpty();
+//  if ($('#restData>tr>td>#chk').length==0)
+//    addRestEmpty();
 }
 
 
 function load_restData(doc_url)
 {
+  delRest();
+
   if (!doc_url) {
     addRestEmpty();
     return;
@@ -968,7 +989,13 @@ function load_restData(doc_url)
   var params = url.queryObj.params;
   for(var i=0; i<params.length; i++) {
     var val = params[i][1].replace(/[+]/g,' ');
-    addRestParam(params[i][0], decodeURIComponent(val));
+    var key = params[i][0];
+    if (key === "query" && yasqe) {
+      $(".yasqe").show();
+      yasqe.setValue(decodeURIComponent(val));
+    }
+    else
+      addRestParam(params[i][0], decodeURIComponent(val));
   }
 
   if (params.length == 0)
