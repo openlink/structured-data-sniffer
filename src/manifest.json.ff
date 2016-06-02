@@ -29,6 +29,10 @@
     }
   ],
 "permissions": [
-    "tabs", "*://*/*", "file:///*/*"
+    "webRequest", 
+    "webRequestBlocking",
+    "tabs", 
+    "*://*/*", 
+    "file:///*/*"
   ]
 }

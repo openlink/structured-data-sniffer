@@ -353,10 +353,6 @@ function show_Data(dData)
     selectTab('#rdfa');
   else if (posh && !dData.posh.error)
     selectTab('#posh');
-//  else {
-//    cons = true;
-//    selectTab('#cons');
-//  }
 
 
   if (!micro)
@@ -588,7 +584,6 @@ if (Browser.isFirefoxSDK)
       dData.posh.error = null;
       doc_URL = dData.docURL;
 
-//      setTimeout(function() {load_restData(doc_URL);}, 100);
       load_restData(doc_URL);
       
       check_Microdata(dData);
@@ -604,13 +599,13 @@ else
       if (request.property == "status")
       {
         var show_action = request.data_exists;
-        chrome.pageAction.show(sender.tab.id);
-/**
+//        chrome.pageAction.show(sender.tab.id);
+/**/
         if (show_action)
           chrome.pageAction.show(sender.tab.id);
         else
           chrome.pageAction.hide(sender.tab.id);
-**/
+/**/
 
       } 
       else if (request.property == "doc_data")
@@ -633,7 +628,7 @@ else
         dData.posh.error = null;
         doc_URL = dData.docURL;
 
-        setTimeout(function() {load_restData(doc_URL);}, 100);
+        load_restData(doc_URL);
 
         check_Microdata(dData);
 

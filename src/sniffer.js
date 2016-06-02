@@ -106,7 +106,7 @@ function sniff_nanotation() {
       if (ndata==null)
         break;
 
-      var str = ndata[4]+ndata[5];
+      var str = ndata[4]; // var str = ndata[4]+ndata[5];
       str = fix_Nano_data(str);
       t_ret.push(str);
     }
