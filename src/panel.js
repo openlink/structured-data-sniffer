@@ -23,6 +23,7 @@ var items;
 var $ = jQuery;
 var gData_showed = false;
 var doc_URL = null;
+var prevSelectedTab = null;
 var selectedTab = null;
 var gData = {
         micro:{ json_text:null }, 
@@ -51,7 +52,7 @@ $(document).ready(function()
 
   $('#sparql_btn').click(Sparql_exec);
 
-  $('#exec_btn').click(rest_exec);
+  $('#rest_btn').click(show_rest);
 
   $('#download_btn').click(Download_exec);
 
@@ -60,11 +61,7 @@ $(document).ready(function()
   }
 
   $('#tabs a[href=#cons]').click(function(){
-      selectTab('#cons');
-      if (yasqe.obj && yasqe.val && !yasqe.init) {
-        yasqe.obj.setValue(yasqe.val);
-        yasqe.init = true;
-      }
+      selectTab(prevSelectedTab);
       return false;
   });
   $('#tabs a[href=#micro]').click(function(){
@@ -104,6 +101,7 @@ $(document).ready(function()
   $("#query_place").hide();
 
 
+  $("#restData").footable();
   $('#rest_exec').click(rest_exec);
   $('#rest_add').button({
     icons: { primary: 'ui-icon-plusthick' },
@@ -112,7 +110,7 @@ $(document).ready(function()
   $('#rest_add').click(addRestEmpty);
 
 
-  selectTab('#cons');
+  selectTab('#micro');
 
 
   if (Browser.isFirefoxSDK) 
@@ -156,10 +154,9 @@ $('a').live('click', function(e) {
 
 
 
-
-
 function selectTab(tab)
 {
+  prevSelectedTab = selectedTab;
   selectedTab = tab;
 
   function updateTab(tab, selTab) 
@@ -182,6 +179,7 @@ function selectTab(tab)
   updateTab('#turtle', selectedTab);
   updateTab('#rdfa', selectedTab);
   updateTab('#posh', selectedTab);
+  $('#tabs a[href=#cons]').hide();
 }
 
 
@@ -352,10 +350,10 @@ function show_Data(dData)
     selectTab('#rdfa');
   else if (posh && !dData.posh.error)
     selectTab('#posh');
-  else {
-    cons = true;
-    selectTab('#cons');
-  }
+//  else {
+//    cons = true;
+//    selectTab('#cons');
+//  }
 
 
   if (!micro)
@@ -892,6 +890,24 @@ function createSparqlUrl(curUrl)
   var query = encodeURIComponent(query.replace(/{url}/g, curUrl));
   return sparql_url.replace(/{query}/g, query);
 }
+
+
+function show_rest()
+{
+//  $('#tabs a[href=#micro]').hide();
+//  $('#tabs a[href=#jsonld]').hide();
+//  $('#tabs a[href=#turtle]').hide();
+//  $('#tabs a[href=#rdfa]').hide();
+//  $('#tabs a[href=#posh]').hide();
+  selectTab('#cons');
+  $('#tabs a[href=#cons]').show();
+  if (yasqe.obj && yasqe.val && !yasqe.init) {
+    yasqe.obj.setValue(yasqe.val);
+    yasqe.init = true;
+  }
+}
+
+
 
 
 // ==== restData ====
