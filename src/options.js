@@ -26,6 +26,13 @@ $(function(){
 	gPref = new Settings();
 
         $("#revert-confirm").hide();
+        $("#users-edit").hide();
+        $('#users_add').click(addUsersEmpty);
+        $('#users_add').button({
+          icons: { primary: 'ui-icon-plusthick' },
+          text: false 
+        });
+
 
 	$('#tabs').tabs();
 
@@ -55,6 +62,9 @@ $(function(){
         $('#import-set-def').click(setImportDefaults);
         $('#rww-set-def').click(setRWWDefaults);
         $('#sparql-set-def').click(setSparqlDefaults);
+
+        $('#call_edit_users').click(call_edit_users);
+
 
         enableCtrls();
 
@@ -135,11 +145,45 @@ function setSparqlDefaults()
 
 
 
+function load_pref_user()
+{
+    var pref_user = gPref.getValue("ext.osds.pref.user");
+//    if (pref_user)
+//        $('#pref_user').val(pref_user);
+
+    var list = [];
+    try {
+      var v = gPref.getValue('ext.osds.pref.user.list');
+      if (v)
+        list = JSON.parse(v);
+    } catch(e){}
+
+    $('#pref_user')[0].options.length = 0;
+    $.each(list, function (i, item) {
+        if (pref_user === item)
+          $('#pref_user').append($('<option>', { 
+            value: 'uid'+i,
+            text : item,
+            selected: 1 
+          }));
+        else
+          $('#pref_user').append($('<option>', { 
+            value: 'uid'+i,
+            text : item 
+          }));
+    });
+
+   pref_user = $('#pref_user option:selected').text();
+   gPref.setValue("ext.osds.pref.user", pref_user);
+}
+
+
 function loadPref() 
 {
     var uiterm_mode = gPref.getValue("ext.osds.uiterm.mode"); 
     $('#'+uiterm_mode,'#uiterm-mode').attr('selected','selected');
 
+    load_pref_user();
 
     var import_url = gPref.getValue("ext.osds.import.url");
     var import_srv = gPref.getValue("ext.osds.import.srv"); 
@@ -173,6 +217,11 @@ function savePref()
 {
    var uiterm_mode = $('#uiterm-mode option:selected').attr('id');
    gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
+
+//   gPref.setValue("ext.osds.pref.user", $('#pref_user').val().trim());
+
+   var pref_user = $('#pref_user option:selected').text();
+   gPref.setValue("ext.osds.pref.user", pref_user);
 
 
    var import_srv = $('#import-srv option:selected').attr('id');
@@ -260,3 +309,102 @@ function createSparqlQuery(cmd)
     return query;
 };
 
+
+// ========== Users List ===========
+function call_edit_users()
+{
+    var list = [];
+    try {
+      var v = gPref.getValue('ext.osds.pref.user.list');
+      if (v)
+        list = JSON.parse(v);
+    } catch(e){}
+
+    $( "#users-edit" )
+    load_users_data(list);
+    $( "#users-edit" ).dialog({
+      resizable: false,
+      height:300,
+      width:450,
+      modal: true,
+      buttons: {
+        "OK": function() {
+          save_users_data();
+          load_pref_user();
+          $(this).dialog( "close" );
+        },
+        Cancel: function() {
+          $(this).dialog( "close" );
+        }
+      }
+    });
+}
+
+
+function createUsersRow(v)
+{
+  if (!v)
+    v = "";
+  var del = '<button id="users_del" class="users_del">Del</button>';
+  return '<tr><td width="16px">'+del+'</td>'
+            +'<td><input id="v" style="WIDTH: 98%" value="'+v+'"></td></tr>';
+}
+
+
+function addUsersEmpty()
+{
+  addUsersItem("");
+}
+
+function addUsersItem(v)
+{
+  $('#users_data').append(createUsersRow(v));
+  $('.users_del').button({
+    icons: { primary: 'ui-icon-minusthick' },
+    text: false 
+  });
+  $('.users_del').click(users_del);
+}
+
+function emptyUsers()
+{
+  var data = $('#users_data>tr');
+  for(var i=0; i < data.length; i++) {
+    $(data[i]).remove();
+  }
+}
+
+
+function users_del(e) {
+  //get the row we clicked on
+  var row = $(this).parents('tr:first');
+  $(row).remove();
+
+  return true;
+}
+
+function load_users_data(params)
+{
+  emptyUsers();
+
+  for(var i=0; i<params.length; i++) {
+    addUsersItem(params[i]);
+  }
+
+  if (params.length == 0)
+    addUsersItem("");
+}
+
+function save_users_data()
+{
+  var list = [];
+  var rows = $('#users_data>tr');
+  for(var i=0; i < rows.length; i++) {
+    var r = $(rows[i]);
+    var v = r.find('#v').val();
+    if (v.length>0)
+       list.push(v);
+  }
+
+  gPref.setValue('ext.osds.pref.user.list', JSON.stringify(list, undefined, 2));
+}

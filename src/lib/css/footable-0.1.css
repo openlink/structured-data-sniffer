@@ -35,7 +35,7 @@
 .footable > tbody > tr > td, .footable > thead > tr > th {
   border-left: 1px solid #ccc;
   border-top: 1px solid #ccc;
-  padding: 6px;
+  padding: 4px;
   text-align: left;
 }
 
@@ -112,5 +112,5 @@
   box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
   border-top: 1px solid #ccc;
   text-shadow: 0 1px 0 rgba(255,255,255,.5);
-  padding: 6px;
+  padding: 4px;
 }

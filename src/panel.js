@@ -33,7 +33,12 @@ var gData = {
         j_nano :{ json_text:null },
         posh:{ ttl_text:null }
       };
-var yasqe = null;
+var yasqe = {
+        obj : null,
+        val : null,
+        init: false,
+      };
+
 
 $(document).ready(function() 
 {
@@ -46,6 +51,8 @@ $(document).ready(function()
 
   $('#sparql_btn').click(Sparql_exec);
 
+  $('#exec_btn').click(rest_exec);
+
   $('#download_btn').click(Download_exec);
 
   if (Browser.isFirefoxSDK) {
@@ -54,6 +61,10 @@ $(document).ready(function()
 
   $('#tabs a[href=#cons]').click(function(){
       selectTab('#cons');
+      if (yasqe.obj && yasqe.val && !yasqe.init) {
+        yasqe.obj.setValue(yasqe.val);
+        yasqe.init = true;
+      }
       return false;
   });
   $('#tabs a[href=#micro]').click(function(){
@@ -79,7 +90,7 @@ $(document).ready(function()
 
 
   try{
-    yasqe = YASQE.fromTextArea(document.getElementById('rest_sparql'), {
+    yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
         lineNumbers: true,
 	sparql: { showQueryButton: false },
 	createShortLink : null,
@@ -87,14 +98,15 @@ $(document).ready(function()
 	persistent: null,
      
     });
-    yasqe.setSize("100%", 150);
-    $(".yasqe").hide();
+    yasqe.obj.setSize("100%", 150);
   } catch(e) {
   }
+  $("#query_place").hide();
+
 
   $('#rest_exec').click(rest_exec);
   $('#rest_add').button({
-    icons: { primary: 'ui-icon-trash' },
+    icons: { primary: 'ui-icon-plusthick' },
     text: false 
   });
   $('#rest_add').click(addRestEmpty);
@@ -346,7 +358,6 @@ function show_Data(dData)
   }
 
 
-
   if (!micro)
     $('#tabs a[href=#micro]').hide();
   if (!jsonld)
@@ -576,7 +587,8 @@ if (Browser.isFirefoxSDK)
       dData.posh.error = null;
       doc_URL = dData.docURL;
 
-      setTimeout(function() {load_restData(doc_URL);}, 100);
+//      setTimeout(function() {load_restData(doc_URL);}, 100);
+      load_restData(doc_URL);
       
       check_Microdata(dData);
   });
@@ -635,6 +647,7 @@ else
     }
 
   });
+
 }
 
 
@@ -890,8 +903,8 @@ function rest_exec() {
   var url = new Uri(doc_URL);
   url.setQuery("");
 
-  if (yasqe) {
-    var val = yasqe.getValue();
+  if (yasqe.obj) {
+    var val = yasqe.obj.getValue();
     if (val && val.length > 0) 
        url.addQueryParam("query", encodeURIComponent(val));
   }
@@ -936,7 +949,7 @@ function rest_del(e) {
 function createRestRow(h,v)
 {
   var del = '<button id="rest_del" class="rest_del">Del</button>';
-  return '<tr><td width="16px">'+del+'</td>'
+  return '<tr><td width="12px">'+del+'</td>'
             +'<td><input id="h" style="WIDTH: 100%" value="'+h+'"></td>'
             +'<td><input id="v" style="WIDTH: 100%" value="'+v+'"></td></tr>';
 }
@@ -944,40 +957,33 @@ function createRestRow(h,v)
 
 function addRestEmpty()
 {
-  $('#restData').append(createRestRow("",""));
-  $('.rest_del').button({
-    icons: { primary: 'ui-icon-trash' },
-    text: false 
-  });
-  $('.rest_del').click(rest_del);
+  addRestParam("","");
 }
 
 function addRestParam(h,v)
 {
   $('#restData').append(createRestRow(h, v));
   $('.rest_del').button({
-    icons: { primary: 'ui-icon-trash' },
-    text: false 
+    icons: { primary: 'ui-icon-minusthick' },
+    text: false          	
   });
   $('.rest_del').click(rest_del);
 }
 
 function delRest()
 {
-  var data = $('#restData>tr>td>#chk');
+  var data = $('#users_data>tr');
+  var data = $('#restData>tr');
   for(var i=0; i < data.length; i++) {
-    if (data[i].checked) {
-      var tr = data[i].parentNode.parentNode;
-      $(tr).remove();
-    }
+    $(data[i]).remove();
   }
-//  if ($('#restData>tr>td>#chk').length==0)
-//    addRestEmpty();
 }
 
 
 function load_restData(doc_url)
 {
+  yasqe.val = null;
+
   delRest();
 
   if (!doc_url) {
@@ -990,9 +996,8 @@ function load_restData(doc_url)
   for(var i=0; i<params.length; i++) {
     var val = params[i][1].replace(/[+]/g,' ');
     var key = params[i][0];
-    if (key === "query" && yasqe) {
-      $(".yasqe").show();
-      yasqe.setValue(decodeURIComponent(val));
+    if (key === "query") {
+      yasqe.val = decodeURIComponent(val);
     }
     else
       addRestParam(params[i][0], decodeURIComponent(val));
@@ -1000,6 +1005,14 @@ function load_restData(doc_url)
 
   if (params.length == 0)
     addRestEmpty();
+
+  if (yasqe.obj && yasqe.val) {
+    yasqe.obj.setValue(yasqe.val);    
+  } 
+  else {
+    $(".yasqe").hide();
+//    $("#rest_query").hide();
+  }
 }
 // ==== restData  END ====
 
