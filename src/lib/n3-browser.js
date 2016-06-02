@@ -180,6 +180,7 @@ N3Lexer.prototype = {
   _newline: /^[ \t]*(?:#[^\n\r]*)?(?:\r\n|\n|\r)[ \t]*/,
   _whitespace: /^[ \t]+/,
   _endOfFile: /^(?:#[^\n\r]*)?$/,
+  _sugar: /^(?:is|of)(?=\s+|<)/i,
 
   // ## Private methods
 
@@ -335,6 +336,17 @@ N3Lexer.prototype = {
           inconclusive = true;
         break;
 
+      case 'i': //Sugar
+      case 'I':
+      case 'o':
+      case 'O':
+        // Try to find an abbreviated predicate.
+        if (match = this._sugar.exec(input))
+          type = 'sugar'; //continue;
+        else
+          inconclusive = true;
+        break;
+
       case ',':
       case ';':
       case '[':
@@ -381,9 +393,11 @@ N3Lexer.prototype = {
           return this._input = input;
       }
 
-      // Emit the parsed token.
-      callback(null, { line: line, type: type, value: value, prefix: prefix });
-      this._prevTokenType = type;
+      if (type !== 'sugar') {
+        // Emit the parsed token.
+        callback(null, { line: line, type: type, value: value, prefix: prefix });
+        this._prevTokenType = type;
+      }
 
       // Advance to next part to tokenize.
       input = input.substr(matchLength || match[0].length, input.length);

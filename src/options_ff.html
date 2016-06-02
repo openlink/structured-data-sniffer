@@ -23,6 +23,7 @@
     <title>OpenLink Structured Data Sniffer</title>
     <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />	
     <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />	
+    <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />	
 <!-- exclude for FF --
     <script type="text/javascript" src="lib/jquery-1.11.3.min.js"></script>
     <script type="text/javascript" src="lib/jquery-migrate-1.2.1.min.js"></script>
@@ -45,6 +46,22 @@
   </head>
 
   <body >
+
+      <div id="users-edit" title="Preferred Users">
+        <p/>
+          <table id="users_tbl" class="footable">
+            <tbody id="users_data">
+            </tbody>
+          </table>
+          <table>
+            <tr >
+              <button style="margin:8px; margin-top:2px;" id="users_add" class="users_add">Add</button>
+            </tr>
+          </table>
+      </div>
+
+      
+
       <div id="revert-confirm" title="Warning">
         <p/>
         <table style="font-size: 14px;">
@@ -76,6 +93,15 @@
                  </SELECT>
                </td>
               </tr>
+              <tr>
+               <td>Preferred User ID:</td>
+               <td>
+                 <SELECT id="pref_user" style="WIDTH: 295px" >
+                 </SELECT>
+               </td>
+               <td> <input id="call_edit_users" value="Edit" type="button"> </td>
+              </tr>
+
              </table>
            </tr>
 

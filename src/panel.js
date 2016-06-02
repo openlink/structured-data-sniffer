@@ -23,6 +23,7 @@ var items;
 var $ = jQuery;
 var gData_showed = false;
 var doc_URL = null;
+var prevSelectedTab = null;
 var selectedTab = null;
 var gData = {
         micro:{ json_text:null }, 
@@ -32,6 +33,11 @@ var gData = {
         t_nano :{ ttl_text:null},
         j_nano :{ json_text:null },
         posh:{ ttl_text:null }
+      };
+var yasqe = {
+        obj : null,
+        val : null,
+        init: false,
       };
 
 
@@ -46,12 +52,18 @@ $(document).ready(function()
 
   $('#sparql_btn').click(Sparql_exec);
 
+  $('#rest_btn').click(show_rest);
+
   $('#download_btn').click(Download_exec);
 
   if (Browser.isFirefoxSDK) {
     $('#prefs_btn').click(Prefs_exec);
   }
 
+  $('#tabs a[href=#cons]').click(function(){
+      selectTab(prevSelectedTab);
+      return false;
+  });
   $('#tabs a[href=#micro]').click(function(){
       selectTab('#micro');
       return false;
@@ -72,6 +84,34 @@ $(document).ready(function()
       selectTab('#posh');
       return false;
   });
+
+
+  try{
+    yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
+        lineNumbers: true,
+	sparql: { showQueryButton: false },
+	createShortLink : null,
+	createShareLink : null,
+	persistent: null,
+     
+    });
+    yasqe.obj.setSize("100%", 150);
+  } catch(e) {
+  }
+  $("#query_place").hide();
+
+
+  $('#rest_exec').click(rest_exec);
+  $('#rest_exit').click(function(){
+      selectTab(prevSelectedTab);
+      return false;
+  });
+  $('#rest_add').button({
+    icons: { primary: 'ui-icon-plusthick' },
+    text: false 
+  });
+  $('#rest_add').click(addRestEmpty);
+
 
   selectTab('#micro');
 
@@ -115,8 +155,11 @@ $('a').live('click', function(e) {
 });
 
 
+
+
 function selectTab(tab)
 {
+  prevSelectedTab = selectedTab;
   selectedTab = tab;
 
   function updateTab(tab, selTab) 
@@ -133,17 +176,20 @@ function selectTab(tab)
     }
   }
 
+  updateTab('#cons', selectedTab);
   updateTab('#micro', selectedTab);
   updateTab('#jsonld', selectedTab);
   updateTab('#turtle', selectedTab);
   updateTab('#rdfa', selectedTab);
   updateTab('#posh', selectedTab);
+  $('#tabs a[href=#cons]').hide();
 }
 
 
 
 function show_Data(dData)
 {
+  var cons = false;
   var micro = false;
   var jsonld = false;
   var turtle = false;
@@ -307,7 +353,6 @@ function show_Data(dData)
     selectTab('#rdfa');
   else if (posh && !dData.posh.error)
     selectTab('#posh');
-
 
 
   if (!micro)
@@ -539,6 +584,8 @@ if (Browser.isFirefoxSDK)
       dData.posh.error = null;
       doc_URL = dData.docURL;
 
+      load_restData(doc_URL);
+      
       check_Microdata(dData);
   });
 }
@@ -552,10 +599,13 @@ else
       if (request.property == "status")
       {
         var show_action = request.data_exists;
+//        chrome.pageAction.show(sender.tab.id);
+/**/
         if (show_action)
           chrome.pageAction.show(sender.tab.id);
         else
           chrome.pageAction.hide(sender.tab.id);
+/**/
 
       } 
       else if (request.property == "doc_data")
@@ -578,7 +628,10 @@ else
         dData.posh.error = null;
         doc_URL = dData.docURL;
 
+        load_restData(doc_URL);
+
         check_Microdata(dData);
+
 
       }
       else
@@ -590,6 +643,7 @@ else
     }
 
   });
+
 }
 
 
@@ -834,3 +888,139 @@ function createSparqlUrl(curUrl)
   var query = encodeURIComponent(query.replace(/{url}/g, curUrl));
   return sparql_url.replace(/{query}/g, query);
 }
+
+
+function show_rest()
+{
+  selectTab('#cons');
+//--  $('#tabs a[href=#cons]').show();
+  if (yasqe.obj && yasqe.val && !yasqe.init) {
+    yasqe.obj.setValue(yasqe.val);
+    yasqe.init = true;
+  }
+}
+
+
+
+
+// ==== restData ====
+function rest_exec() {
+  if (!doc_URL) {
+    return;
+  }
+
+  var url = new Uri(doc_URL);
+  url.setQuery("");
+
+  if (yasqe.obj) {
+    var val = yasqe.obj.getValue();
+    if (val && val.length > 0) 
+       url.addQueryParam("query", encodeURIComponent(val));
+  }
+
+  var rows = $('#restData>tr');
+  for(var i=0; i < rows.length; i++) {
+    var r = $(rows[i]);
+    var h = r.find('#h').val();
+    var v = r.find('#v').val();
+    if (h.length>0)
+       url.addQueryParam(h, encodeURIComponent(v));
+  }
+
+  window.open(url.toString());
+}
+
+
+function rest_del(e) {
+  //get the row we clicked on
+  var row = $(this).parents('tr:first');
+
+  $('#alert-msg').prop('textContent',"Delete row ?"); 
+  $( "#alert-dlg" ).dialog({
+    resizable: false,
+    height:180,
+    modal: true,
+    buttons: {
+      "Yes": function() {
+          $(row).remove();
+          $(this).dialog( "close" );
+      },
+      "No": function() {
+          $(this).dialog( "close" );
+      }
+    }
+  });
+  return true;
+}
+
+
+
+function createRestRow(h,v)
+{
+  var del = '<button id="rest_del" class="rest_del">Del</button>';
+  return '<tr><td width="12px">'+del+'</td>'
+            +'<td><input id="h" style="WIDTH: 100%" value="'+h+'"></td>'
+            +'<td><input id="v" style="WIDTH: 100%" value="'+v+'"></td></tr>';
+}
+
+
+function addRestEmpty()
+{
+  addRestParam("","");
+}
+
+function addRestParam(h,v)
+{
+  $('#restData').append(createRestRow(h, v));
+  $('.rest_del').button({
+    icons: { primary: 'ui-icon-minusthick' },
+    text: false          	
+  });
+  $('.rest_del').click(rest_del);
+}
+
+function delRest()
+{
+  var data = $('#users_data>tr');
+  var data = $('#restData>tr');
+  for(var i=0; i < data.length; i++) {
+    $(data[i]).remove();
+  }
+}
+
+
+function load_restData(doc_url)
+{
+  yasqe.val = null;
+
+  delRest();
+
+  if (!doc_url) {
+    addRestEmpty();
+    return;
+  }
+
+  var url = new Uri(doc_url);
+  var params = url.queryPairs;
+  for(var i=0; i<params.length; i++) {
+    var val = params[i][1];
+    var key = params[i][0];
+    if (key === "query")
+      yasqe.val = val;
+    else
+      addRestParam(params[i][0], val);
+  }
+
+  if (params.length == 0)
+    addRestEmpty();
+
+  if (yasqe.obj && yasqe.val) {
+    yasqe.obj.setValue(yasqe.val);    
+  } 
+  else {
+    $(".yasqe").hide();
+//    $("#rest_query").hide();
+  }
+}
+// ==== restData  END ====
+

@@ -17,6 +17,8 @@
  *  51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
+var events = require("sdk/system/events");
+var { Ci } = require("chrome");
 var { ToggleButton } = require('sdk/ui/button/toggle');
 var panels = require("sdk/panel");
 var self = require("sdk/self");
@@ -108,6 +110,8 @@ function createSniffPanel()
 		      "./lib/jsuri.js",
                       "./lib/FileSaver.js",
                       "./lib/namespace.js", 
+                      "./lib/codemirror.js",
+                      "./lib/yasqe.min.js",
 		      "./browser_ff.js",
 		      "./settings.js",
 		      "./handlers.js",
@@ -203,8 +207,8 @@ tabs.on('close', function(tab) {
 function createPrefPanel()
 {
   var pref_panel = panels.Panel({
-    width: 550,
-    height: 690,
+    width: 570,
+    height: 710,
     contentURL: "./options_ff.html",
     contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
    		      "./lib/jquery-migrate-1.2.1.min.js",
@@ -220,6 +224,9 @@ function createPrefPanel()
   pref_panel.port.on("close", function(msg)
   {
     try {
+      if (msg.osds_pref_user) {
+        ss.storage.prefUser = msg.osds_pref_user;
+      }
       pref_panel.destroy();
     } catch(e) {
       console.log(e);
@@ -232,3 +239,13 @@ function createPrefPanel()
 
 
 
+///// Add Preferred Id to HTTP headers
+function listener(event) {
+  var user = ss.storage.prefUser;
+  if (user) {
+    var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
+    channel.setRequestHeader("On-Behalf-Of", user, false);
+  }
+}
+
+events.on("http-on-modify-request", listener);
