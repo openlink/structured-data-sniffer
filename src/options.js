@@ -239,7 +239,7 @@ function savePref()
    gPref.setValue("ext.osds.sparql.query", $('#sparql-query').val().trim());
 
    if (Browser.isFirefoxSDK)
-     self.port.emit("close", "");
+     self.port.emit("close", {osds_pref_user:pref_user});
 
    window.close();
 }
