@@ -52,6 +52,10 @@ $(document).ready(function()
     $('#prefs_btn').click(Prefs_exec);
   }
 
+  $('#tabs a[href=#cons]').click(function(){
+      selectTab('#cons');
+      return false;
+  });
   $('#tabs a[href=#micro]').click(function(){
       selectTab('#micro');
       return false;
@@ -73,7 +77,17 @@ $(document).ready(function()
       return false;
   });
 
-  selectTab('#micro');
+
+  $("#restData").footable();
+  $('#rest_exec').click(rest_exec);
+  $('#rest_add').button({
+    icons: { primary: 'ui-icon-trash' },
+    text: false 
+  });
+  $('#rest_add').click(addRestEmpty);
+
+
+  selectTab('#cons');
 
 
   if (Browser.isFirefoxSDK) 
@@ -115,6 +129,10 @@ $('a').live('click', function(e) {
 });
 
 
+
+
+
+
 function selectTab(tab)
 {
   selectedTab = tab;
@@ -133,6 +151,7 @@ function selectTab(tab)
     }
   }
 
+  updateTab('#cons', selectedTab);
   updateTab('#micro', selectedTab);
   updateTab('#jsonld', selectedTab);
   updateTab('#turtle', selectedTab);
@@ -144,6 +163,7 @@ function selectTab(tab)
 
 function show_Data(dData)
 {
+  var cons = false;
   var micro = false;
   var jsonld = false;
   var turtle = false;
@@ -307,6 +327,10 @@ function show_Data(dData)
     selectTab('#rdfa');
   else if (posh && !dData.posh.error)
     selectTab('#posh');
+  else {
+    cons = true;
+    selectTab('#cons');
+  }
 
 
 
@@ -539,6 +563,8 @@ if (Browser.isFirefoxSDK)
       dData.posh.error = null;
       doc_URL = dData.docURL;
 
+      setTimeout(function() {load_restData(doc_URL);}, 100);
+      
       check_Microdata(dData);
   });
 }
@@ -552,10 +578,13 @@ else
       if (request.property == "status")
       {
         var show_action = request.data_exists;
+        chrome.pageAction.show(sender.tab.id);
+/**
         if (show_action)
           chrome.pageAction.show(sender.tab.id);
         else
           chrome.pageAction.hide(sender.tab.id);
+**/
 
       } 
       else if (request.property == "doc_data")
@@ -578,7 +607,10 @@ else
         dData.posh.error = null;
         doc_URL = dData.docURL;
 
+        setTimeout(function() {load_restData(doc_URL);}, 100);
+
         check_Microdata(dData);
+
 
       }
       else
@@ -834,3 +866,113 @@ function createSparqlUrl(curUrl)
   var query = encodeURIComponent(query.replace(/{url}/g, curUrl));
   return sparql_url.replace(/{query}/g, query);
 }
+
+
+// ==== restData ====
+function rest_exec() {
+  if (!doc_URL) {
+    return;
+  }
+
+  var url = new Uri(doc_URL);
+  url.setQuery("");
+
+  var rows = $('#restData>tr');
+  for(var i=0; i < rows.length; i++) {
+    var r = $(rows[i]);
+    var h = r.find('#h').val();
+    var v = r.find('#v').val();
+    if (h.length>0)
+       url.addQueryParam(h, encodeURIComponent(v));
+  }
+
+  window.open(url.toString());
+}
+
+
+function rest_del(e) {
+  //get the row we clicked on
+  var row = $(this).parents('tr:first');
+
+  $('#alert-msg').prop('textContent',"Delete row ?"); 
+  $( "#alert-dlg" ).dialog({
+    resizable: false,
+    height:180,
+    modal: true,
+    buttons: {
+      "Yes": function() {
+          $(row).remove();
+          $(this).dialog( "close" );
+      },
+      "No": function() {
+          $(this).dialog( "close" );
+      }
+    }
+  });
+  return true;
+}
+
+
+
+function createRestRow(h,v)
+{
+  var del = '<button id="rest_del" class="rest_del">Del</button>';
+  return '<tr><td width="16px">'+del+'</td>'
+            +'<td><input id="h" style="WIDTH: 100%" value="'+h+'"></td>'
+            +'<td><input id="v" style="WIDTH: 100%" value="'+v+'"></td></tr>';
+}
+
+
+function addRestEmpty()
+{
+  $('#restData').append(createRestRow("",""));
+  $('.rest_del').button({
+    icons: { primary: 'ui-icon-trash' },
+    text: false 
+  });
+  $('.rest_del').click(rest_del);
+}
+
+function addRestParam(h,v)
+{
+  $('#restData').append(createRestRow(h, v));
+  $('.rest_del').button({
+    icons: { primary: 'ui-icon-trash' },
+    text: false 
+  });
+  $('.rest_del').click(rest_del);
+}
+
+function delRest()
+{
+  var data = $('#restData>tr>td>#chk');
+  for(var i=0; i < data.length; i++) {
+    if (data[i].checked) {
+      var tr = data[i].parentNode.parentNode;
+      $(tr).remove();
+    }
+  }
+  if ($('#restData>tr>td>#chk').length==0)
+    addRestEmpty();
+}
+
+
+function load_restData(doc_url)
+{
+  if (!doc_url) {
+    addRestEmpty();
+    return;
+  }
+
+  var url = new Uri(doc_url);
+  var params = url.queryObj.params;
+  for(var i=0; i<params.length; i++) {
+    var val = params[i][1].replace(/[+]/g,' ');
+    addRestParam(params[i][0], decodeURIComponent(val));
+  }
+
+  if (params.length == 0)
+    addRestEmpty();
+}
+// ==== restData  END ====
+

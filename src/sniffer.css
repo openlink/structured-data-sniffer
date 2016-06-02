@@ -151,3 +151,18 @@ ul#tabs li a.selected {
 div.tabContent { border: 1px solid #c9c3ba; padding: 0.5em; background-color: #f1f0ee; }
 div.tabContent.hide { display: none; }
 **/
+
+.ui-button#rest_add .ui-button-icon-primary {
+    background: url('lib/css/img/plus.png') ;
+    background-size: 12px 12px;
+    background-repeat: no-repeat;
+    background-position: center; 
+}
+
+.ui-button#rest_del .ui-button-icon-primary {
+    background: url('lib/css/img/minus.png') ;
+    background-size: 12px 12px;
+    background-repeat: no-repeat;
+    background-position: center; 
+}
+

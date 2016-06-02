@@ -21,10 +21,13 @@
 	<meta charset="UTF-8">
         <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />	
         <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />	
+        <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />	
 
         <script type="text/javascript" src="lib/jquery-1.11.3.min.js"></script>
         <script type="text/javascript" src="lib/jquery-migrate-1.2.1.min.js"></script>
         <script type="text/javascript" src="lib/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="lib/footable.js"></script>
+
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.js"></script>
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.json.js"></script>
         <script type="text/javascript" src="lib/jsonld.js"></script>
@@ -89,6 +92,7 @@
 
       <div id="header">
         <ul id="tabs">
+          <li><a href="#cons" title="Console">Console</a></li>
           <li><a href="#micro" title="Structured Data encoded using HTML5 Microdata Notation">Microdata</a></li>
           <li><a href="#jsonld" title="Metadata encoded using JSON-LD Notation">JSON-LD</a></li>
           <li><a href="#turtle" title="Metadata encoded using RDF-Turtle Notation">Turtle</a></li>
@@ -98,6 +102,33 @@
       </div>
 
       <div class="content">
+
+        <div id="cons_items">
+          <table>
+            <tr> 
+              <button id="rest_exec" style="margin:10px; margin-left:10px;">Execute</button>
+            </tr>
+            </tr>
+          </table>
+
+          <table class="footable">
+            <thead>
+              <tr>
+                <th width="16px"></th>
+                <th width="40%">Param</th>
+                <th width="auto">Value</th>
+              </tr>
+            </thead>
+            <tbody id="restData">
+            </tbody>
+          </table>
+          <table>
+            <tr >
+              <button style="margin:8px; margin-top:2px;" id="rest_add" class="rest_add">Add</button>
+            </tr>
+          </table>
+        
+        </div>
 
         <div id="micro_items">
             <table class="wait">
@@ -148,7 +179,7 @@
 
       <table class="copyright_left">
         <tr>
-          <td id="ext_ver" style="width:45px">ver:0.0.0</td>
+          <td id="ext_ver" style="width:50px">ver:0.0.0</td>
           <td><a href="http://osds.openlinksw.com">OpenLink Structured Data Sniffer</a></td>
         </tr>
       </table>
