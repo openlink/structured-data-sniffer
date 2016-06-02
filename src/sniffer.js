@@ -27,7 +27,6 @@ var rdfa_subjects = null;
 var t_nano_Text = null;
 var j_nano_Text = null;
 var data_found = false;
-//--var sniff_attempt = 0;
 
 var t_nano_pattern =/(\{|(## (Nanotation|Turtle) Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) (End|Stop) ##)|\})(.*)/gmi;
 var j_nano_pattern =/(\{|(## (JSON-LD) Start ##))((.|\n|\r)*?)((## (JSON-LD) (End|Stop) ##)|\})(.*)/gmi;
@@ -132,7 +131,6 @@ function sniff_nanotation() {
 
 function is_data_exist() {
   try {
-//--    sniff_attempt++;
 
     data_found = false;
 
@@ -198,7 +196,6 @@ function is_data_exist() {
     }
 
 
-//--    if (data_found || sniff_attempt>=2) {
     if (data_found) {
       // Tell the chrome extension that we're ready to receive messages
       //send data_exists flag to extension
