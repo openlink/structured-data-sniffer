@@ -27,15 +27,7 @@ table.wait {
 
 table.docdata {
   border: 1px solid #000;
-  width:665px;
-  table-layout: fixed;
-  font-size: 12px;
-  word-wrap:break-word;
-}
-
-table.pdocdata {
-  border: 1px solid #000;
-  width:99%;
+  width:100%;
   table-layout: fixed;
   font-size: 12px;
   word-wrap:break-word;
@@ -71,27 +63,15 @@ table.docdata > tbody > tr > td.typeid {
 
 
 body.sniffer {
-    width: 670px;
-    height: 580px;
-}
-
-body.psniffer {
     width: 99%;
-    height: 580px;
+    height: 96%;
 }
 
 
 div.content {
     overflow: auto;
-    width: 665px;
-    height: 530px;
-    border: 1px solid lightgray;
-}
-
-div.pcontent {
-    overflow: auto;
     width: 99%;
-    height: 530px;
+    height: 96%;
     border: 1px solid lightgray;
 }
 

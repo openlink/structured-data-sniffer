@@ -1,0 +1,213 @@
+<html>
+<!--
+    This file is part of the OpenLink Structured Data Sniffer
+
+    Copyright (C) 2015-2016 OpenLink Software
+
+    This project is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; only version 2 of the License, dated June 1991.
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+-->
+    <head>
+	<meta charset="UTF-8">
+        <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />	
+        <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />	
+        <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />	
+        <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />	
+        <link type="text/css" href="lib/css/yasqe.min.css" rel="stylesheet" />	
+
+        <script type="text/javascript" src="lib/jquery-1.11.3.min.js"></script>
+        <script type="text/javascript" src="lib/jquery-migrate-1.2.1.min.js"></script>
+        <script type="text/javascript" src="lib/jquery-ui.min.js"></script>
+
+        <script type="text/javascript" src="lib/microdatajs/jquery.microdata.js"></script>
+        <script type="text/javascript" src="lib/microdatajs/jquery.microdata.json.js"></script>
+        <script type="text/javascript" src="lib/jsonld.js"></script>
+        <script type="text/javascript" src="lib/n3-browser.js"></script>
+        <script type="text/javascript" src="lib/jsuri.js"></script>
+        <script type="text/javascript" src="lib/FileSaver.js"></script>
+        <script type="text/javascript" src="lib/namespace.js"></script>
+        <script type="text/javascript" src="lib/codemirror.js"></script>
+        <script type="text/javascript" src="lib/yasqe.min.js"></script>
+
+
+        <script type="text/javascript" src="browser.js"></script>
+        <script type="text/javascript" src="settings.js"></script>
+        <script type="text/javascript" src="page_panel.js"></script>
+        <script type="text/javascript" src="handlers.js"></script>
+        <script type="text/javascript" src="html_gen.js"></script>
+        <link rel="stylesheet" href="psniffer.css" />
+
+    </head>
+    <body class="sniffer">
+      <div id="alert-dlg" title="Info">
+        <p id="alert-msg">
+        </p>
+      </div>
+
+      <div id="save-confirm" title="Save data">
+        <p/>
+        <table style="font-size: 14px;">
+         <tr>
+          <td> Save&nbsp;As: </td>
+          <td> <input id="save-file" style="WIDTH: 200px"> </td>
+         </tr>
+
+         <tr>
+          <td>Format:</td>
+          <td>
+            <SELECT id="save-fmt" style="WIDTH: 100px" >
+              <OPTION id="ttl" selected>Turtle</OPTION>
+              <OPTION id="json">JSON-LD</OPTION>
+            </SELECT>
+          </td>
+         </tr>
+        </table>
+      </div>
+
+
+      <div class="top"></div>
+
+      <table class="btn_block">
+       <tr>
+        <td class="action_btn">
+         <input type="image" id="sparql_btn" src="images/osds-icon-query-24.png" width="24" height="24" title="LOD Cloud Lookup Query using SPARQL Query Language">
+        </td>
+        <td class="action_btn">
+         <input type="image" id="rww_btn" src="images/osds-icon-annotate-24.png" width="24" height="24" title="Create Annotations and store to a Document Location of your choice, using WebDAV, LDP, or SPARQL protocols">
+        </td>
+        <td class="action_btn">
+          <input type="image" id="import_btn" src="images/osds-icon-describe-24.png" width="24" height="24" title="Obtain a description of this Web Document i.e., the document identified by the hyperlink in the address bar">
+        </td>
+        <td class="action_btn">
+          <input type="image" id="rest_btn" src="images/osds-icon-rest-24.png" width="24" height="24" title="Web Service Console for RESTful interaction with HTTP Servers">
+        </td>
+        <td class="action_btn">
+          <input type="image" id="download_btn" src="images/osds-icon-download-24.png" width="24" height="24" title="Download current data">
+        </td>
+       </tr>
+      </table>
+
+      <div id="header">
+        <ul id="tabs">
+          <li><a href="#cons" title="Close tab">X</a></li>
+          <li><a href="#micro" title="Structured Data encoded using HTML5 Microdata Notation">Microdata</a></li>
+          <li><a href="#jsonld" title="Metadata encoded using JSON-LD Notation">JSON-LD</a></li>
+          <li><a href="#turtle" title="Metadata encoded using RDF-Turtle Notation">Turtle</a></li>
+          <li><a href="#rdfa" title="Metadata  encoded using RDFa Notation">RDFa</a></li>
+          <li><a href="#posh" title="Metadata encoded using Plain Old Semantic HTML Notation">POSH</a></li>
+        </ul>
+      </div>
+
+      <div class="content">
+
+        <div id="cons_items" style="font-size: 13px;">
+          <table>
+            <tr> 
+              <td>
+                <button id="rest_exec" style="margin:5px; margin-left:10px;">Run</button>
+              </td>
+              <td>
+                <button id="rest_exit" >Exit</button>
+              </td>
+            </tr>
+          </table>
+
+          <table id="rest_query" class="footable">
+            <thead>
+                <th width="auto">Query</th>
+            </thead>
+          </table>
+          <table>
+            <textarea id="query_place" style="width: 100%; height: 100px">
+            </textarea>
+          </table>
+          <table id="rest_query" class="footable">
+            <thead>
+              <tr>
+                <th width="12px"></th>
+                <th width="40%">Param</th>
+                <th width="auto">Value</th>
+              </tr>
+            </thead>
+            <tbody id="restData">
+            </tbody>
+          </table>
+          <table>
+            <tr >
+              <button style="margin:8px; margin-top:2px;" id="rest_add" class="rest_add">Add</button>
+            </tr>
+          </table>
+        
+        </div>
+
+        <div id="micro_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="jsonld_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="turtle_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="rdfa_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="posh_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+      </div>
+
+      <table class="copyright_left">
+        <tr>
+          <td id="ext_ver" style="width:50px">ver:0.0.0</td>
+          <td><a href="http://osds.openlinksw.com">OpenLink Structured Data Sniffer</a></td>
+        </tr>
+      </table>
+
+      <table class="copyright_right">
+        <tr>
+          <td>Copyright &copy; 2015-2016 <a href="http://www.openlinksw.com"> OpenLink Software </a></td>
+        </tr>
+      </table>
+    </body>
+</html>

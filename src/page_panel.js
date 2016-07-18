@@ -25,15 +25,13 @@ var gData_showed = false;
 var doc_URL = null;
 var prevSelectedTab = null;
 var selectedTab = null;
+
 var gData = {
-        micro:{ json_text:null }, 
-        jsonld:{ json_text:null },
-        rdfa:{ text:null },
-        turtle:{ ttl_text:null },
-        t_nano :{ ttl_text:null},
-        j_nano :{ json_text:null },
-        posh:{ ttl_text:null }
+        text: null, 
+        type: null,
+        url: null
       };
+
 var yasqe = {
         obj : null,
         val : null,
@@ -113,31 +111,19 @@ $(document).ready(function()
   $('#rest_add').click(addRestEmpty);
 
 
-  selectTab('#micro');
-
-
   if (Browser.isFirefoxSDK) 
   {
     jQuery('#ext_ver').text('ver: '+ self.options.ver);
-
-    //req data from extension
-    self.port.emit("doc_data", "");
   }
   else 
   {
     jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
-
-    chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
-      if (tabs.length > 0) {
-        //?? Request the microdata items in JSON format from the client (foreground) tab.
-        chrome.tabs.sendMessage(tabs[0].id, {
-            property: 'doc_data'
-          }, 
-          function(response) {
-          });
-      }
-    });
   }
+
+  selectTab('#micro');
+
+  load_data_from_url(document.location);
+
 
 });
 
@@ -155,6 +141,65 @@ $('a').live('click', function(e) {
 });
 
 
+function load_data_from_url(loc)
+{
+    function parseUrlQuery(loc) 
+    {
+      var data = {};
+      if(loc.search) {
+        var pair = (loc.search.substr(1)).split('&');
+        for(var i = 0; i < pair.length; i ++) {
+            var param = pair[i].split('=');
+            data[param[0]] = param[1];
+        }
+      }
+      return data;
+    }
+
+    var params = parseUrlQuery(loc);
+    if (!params["url"])
+      return;
+
+    var url = decodeURIComponent(params.url);
+    var type = params.type;
+    $.get(url, function(data, status){
+       start_parse_data(data, type, url);
+    }, "text").fail(function(msg) {
+       alert("Could not load data from: "+url);
+    });;
+}
+
+
+function start_parse_data(data_text, data_type, data_url)
+{
+  gData.text = data_text;
+  gData.type = data_type;
+  gData.url = data_url;
+  doc_URL = data_url;
+
+  load_restData(doc_URL);
+
+  if (data_type==="turtle") 
+    {
+      var handler = new Handle_Turtle();
+      var ns = new Namespace();
+      handler.ns_pref = ns.get_ns_desc();
+      handler.ns_pref_size = Object.keys(ns.ns_list).length;
+      handler.parse([data_text], data_url, 
+        function(error, html_data) {
+          show_Data(error, html_data);
+      });
+    }
+  else if (data_type==="jsonld") 
+    {
+      var handler = new Handle_JSONLD();
+      handler.parse([data_text], data_url, 
+        function(error, html_data) {
+          show_Data(error, html_data);
+      });
+    }
+
+}
 
 
 function selectTab(tab)
@@ -187,7 +232,7 @@ function selectTab(tab)
 
 
 
-function show_Data(dData)
+function show_Data(data_error, html_data)
 {
   var cons = false;
   var micro = false;
@@ -220,151 +265,54 @@ function show_Data(dData)
                   +" discovered, but fails syntax checking by parser:</td></tr>"
                   +err_html+"</table>";
     } 
-    return (err_html.length>0)?err_html:null;
+    return err_html;
   }
 
-
-  if (dData.t_nano.expanded) {
-    if (dData.turtle.expanded == null)
-      dData.turtle.expanded = dData.t_nano.expanded;
-    else
-      dData.turtle.expanded += dData.t_nano.expanded;
-  }
-
-  if (dData.t_nano.error)
-    t_nano_error.push(dData.t_nano.error);
-
-  if (dData.t_nano.skipped_error && dData.t_nano.skipped_error.length>0) {
-    for(var i=0; i < dData.t_nano.skipped_error.length; i++)
-      t_nano_error.push(dData.t_nano.skipped_error[i]);
-  }
+  $('#tabs a[href=#micro]').hide();
+  $('#tabs a[href=#jsonld]').hide();
+  $('#tabs a[href=#turtle]').hide();
+  $('#tabs a[href=#rdfa]').hide();
+  $('#tabs a[href=#posh]').hide();
 
 
-  $('#micro_items #docdata_view').remove();
-  $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  error = [];
-  if (dData.micro.expanded!==null && dData.micro.expanded.length > 0) {
-      html += dData.micro.expanded;
-  }
-  if (dData.micro.error) {
-      var err_msg = create_err_msg("Microdata", dData.micro.error);
-      if (err_msg)
-        html += err_msg;
-  }
-  if (html.length > 0) {
-      $('#micro_items #docdata_view').append(html);
-      micro = true;
-  }
+  if (gData.type === "turtle") 
+    {
+      $('#turtle_items #docdata_view').remove();
+      $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
+      html = "";
+      if (data_error) {
+        html += create_err_msg("Turtle", data_error);
+      } else {
+        html += html_data;
+      }
 
+      if (html.length > 0) {
+          $('#turtle_items #docdata_view').append(html);
+          turtle = true;
+      }
 
-  $('#jsonld_items #docdata_view').remove();
-  $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  error = [];
-  if (dData.jsonld.expanded!==null && dData.jsonld.expanded.length > 0) {
-      html += dData.jsonld.expanded;
-  }
-  if (dData.jsonld.error) {
-      error.push(dData.jsonld.error);
-  }
-  if (j_nano_error.length>0) {
-      error = error.concat(j_nano_error);
-  }
-  if (error.length > 0) {
-      var err_msg = create_err_msg("JSON-LD", error);
-      if (err_msg)
-        html += err_msg;
-  }
-  if (html.length > 0) {
-      $('#jsonld_items #docdata_view').append(html);
-      jsonld = true;
-  }
+      $('#tabs a[href=#turtle]').show();
+      selectTab('#turtle');
+    }
+  else if (gData.type === "jsonld") 
+    {
+      $('#jsonld_items #docdata_view').remove();
+      $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
+      html = "";
+      if (data_error) {
+        html += create_err_msg("JSON-LD", data_error);
+      } else {
+        html += html_data;
+      }
 
+      if (html.length > 0) {
+          $('#jsonld_items #docdata_view').append(html);
+          turtle = true;
+      }
 
-
-  $('#turtle_items #docdata_view').remove();
-  $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  error = [];
-  if (dData.turtle.expanded!==null && dData.turtle.expanded.length > 0) {
-      html += dData.turtle.expanded;
-  }
-  if (dData.turtle.error) {
-      error.push(dData.turtle.error);
-  }
-  if (t_nano_error.length>0) {
-      error = error.concat(t_nano_error);
-  }
-  if (error.length > 0) {
-      var err_msg = create_err_msg("Turtle", error);
-      if (err_msg)
-        html += err_msg;
-  }
-  if (html.length > 0) {
-      $('#turtle_items #docdata_view').append(html);
-      turtle = true;
-  }
-
-
-  $('#rdfa_items #docdata_view').remove();
-  $('#rdfa_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  error = [];
-  if (dData.rdfa.expanded!==null && dData.rdfa.expanded.length > 0) {
-      html += dData.rdfa.expanded;
-  }
-  if (dData.rdfa.error) {
-      var err_msg = create_err_msg("RDFa", dData.rdfa.error);
-      if (err_msg)
-        html += err_msg;
-  }
-  if (html.length > 0) {
-      $('#rdfa_items #docdata_view').append(html);
-      rdfa = true;
-  }
-
-
-
-  $('#posh_items #docdata_view').remove();
-  $('#posh_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  error = [];
-  if (dData.posh.expanded!==null && dData.posh.expanded.length > 0) {
-      html += dData.posh.expanded;
-  }
-  if (dData.posh.error) {
-      var err_msg = create_err_msg("POSH", dData.posh.error);
-      if (err_msg)
-        html += err_msg;
-  }
-  if (html.length > 0) {
-      $('#posh_items #docdata_view').append(html);
-      posh = true;
-  }
-
-  if (micro && !dData.micro.error)
-    selectTab('#micro');
-  else if (jsonld && !dData.jsonld.error)
-    selectTab('#jsonld');
-  else if (turtle && !dData.turtle.error)
-    selectTab('#turtle');
-  else if (rdfa && !dData.rdfa.error)
-    selectTab('#rdfa');
-  else if (posh && !dData.posh.error)
-    selectTab('#posh');
-
-
-  if (!micro)
-    $('#tabs a[href=#micro]').hide();
-  if (!jsonld)
-    $('#tabs a[href=#jsonld]').hide();
-  if (!turtle)
-    $('#tabs a[href=#turtle]').hide();
-  if (!rdfa)
-    $('#tabs a[href=#rdfa]').hide();
-  if (!posh)
-    $('#tabs a[href=#posh]').hide();
+      $('#tabs a[href=#jsonld]').show();
+      selectTab('#jsonld');
+    }
 
   gData_showed = true;
 }
@@ -526,128 +474,10 @@ function check_Turtle_Nano(dData)
 }
 
 
-/**??todo
-function check_Json_Nano(dData) 
-{
-//??todo JSONLD
-  if (dData.j_nano.text!==null && dData.j_nano.text.length > 0)
-  {
-    
-    var handler = new Handle_Turtle();
-    var ns = new Namespace();
-    handler.ns_pref = ns.get_ns_desc();
-    handler.ns_pref_size = Object.keys(ns.ns_list).length;
-    handler.skip_error = true;
-    handler.parse(dData.j_nano.text, dData.docURL, 
-      function(error, html_data) {
-        if (error)
-          dData.j_nano.error = error;
-        else {
-          dData.j_nano.expanded = html_data;
-          if (handler.skipped_error.length>0)
-            dData.nano.skipped_error = handler.skipped_error;
-          gData.j_nano.ttl_text = dData.j_nano.text;
-        }
-
-        show_Data(dData);
-    });
-  }
-  else
-  {
-    show_Data(dData);
-  }
-}
-**/
-
-
-if (Browser.isFirefoxSDK) 
-{
-  //Firefox SDK
-  //wait data from extension
-  self.port.on("doc_data", function(msg) {
-
-      var dData = $.parseJSON(msg.data);
-      dData.micro.expanded = null;
-      dData.micro.error = null;
-      dData.jsonld.expanded = null;
-      dData.jsonld.error = null;
-      dData.rdfa.expanded = null;
-      dData.turtle.expanded = null;
-      dData.turtle.error = null;
-      dData.rdfa.expanded = null;
-      dData.rdfa.error = null;
-      dData.t_nano.expanded = null;
-      dData.t_nano.error = null;
-      dData.j_nano.expanded = null;
-      dData.j_nano.error = null;
-      dData.posh.expanded = null;
-      dData.posh.error = null;
-      doc_URL = dData.docURL;
-
-      load_restData(doc_URL);
-      
-      check_Microdata(dData);
-  });
-}
-else 
-{
-  //Chrome API
-  //wait data from extension
-  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) 
-  {
-    try {
-      if (request.property == "status")
-      {
-        var show_action = request.data_exists;
-//        chrome.pageAction.show(sender.tab.id);
-/**/
-        if (show_action)
-          chrome.pageAction.show(sender.tab.id);
-        else
-          chrome.pageAction.hide(sender.tab.id);
-/**/
-
-      } 
-      else if (request.property == "doc_data")
-      {
-        var dData = $.parseJSON(request.data);
-        dData.micro.expanded = null;
-        dData.micro.error = null;
-        dData.jsonld.expanded = null;
-        dData.jsonld.error = null;
-        dData.rdfa.expanded = null;
-        dData.turtle.expanded = null;
-        dData.turtle.error = null;
-        dData.rdfa.expanded = null;
-        dData.rdfa.error = null;
-        dData.t_nano.expanded = null;
-        dData.t_nano.error = null;
-        dData.j_nano.expanded = null;
-        dData.j_nano.error = null;
-        dData.posh.expanded = null;
-        dData.posh.error = null;
-        doc_URL = dData.docURL;
-
-        load_restData(doc_URL);
-
-        check_Microdata(dData);
-
-
-      }
-      else
-      {
-        sendResponse({}); /* stop */
-      }
-    } catch(e) {
-      console.log("OSDS: onMsg="+e);
-    }
-
-  });
-
-}
 
 
 
+//////////////////////////////////////////////////////////////////////////////
 
 function Import_doc() 
 {
@@ -708,24 +538,12 @@ function Download_exec()
   var filename = null;
   var fmt = "json";
 
-  if (selectedTab==="#jsonld" && gData.jsonld.json_text!==null) {
+  if (gData.type == "jsonld" && gData.text) {
     filename = "jsonld_data.jsonld";
     fmt = "json";
   }
-  else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.t_nano.ttl_text!==null)) {
+  else if (gData.type == "turtle" && gData.text) {
     filename = "turtle_data.ttl";
-    fmt = "ttl";
-  }
-  else if (selectedTab==="#micro" && gData.micro.json_text!==null) {
-    filename = "microdata_data.jsonld";
-    fmt = "json";
-  }
-  else if (selectedTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
-    filename = "rdfa_data.ttl";
-    fmt = "ttl";
-  }
-  else if (selectedTab==="#posh" && gData.posh.ttl_text!==null) {
-    filename = "posh_data.ttl";
     fmt = "ttl";
   }
 
@@ -763,41 +581,11 @@ function save_data(fname, fmt)
 {
   try{
     var blob = null;
-    var blob_data = null;
-
-    if (selectedTab==="#jsonld" && gData.jsonld.json_text!==null) {
-      fmt = "json";
-      blob_data = gData.jsonld.json_text;
-      if (gData.j_nano.json_text!==null) {
-        blob_data = blob_data==null?[]:blob_data;
-        blob_data.push(gData.j_nano.json_text);
-      }
-    }
-    else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.t_nano.ttl_text!==null)) {
-      fmt = "ttl";
-      blob_data = gData.turtle.ttl_text;
-      if (gData.t_nano.ttl_text!==null) {
-        blob_data = blob_data==null?[]:blob_data;
-        blob_data.push(gData.t_nano.ttl_text);
-      }
-    }
-    else if (selectedTab==="#micro" && gData.micro.json_text!==null) {
-      fmt = "json";
-      blob_data = gData.micro.json_text;
-    }
-    else if (selectedTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
-      fmt = "ttl";
-      blob_data = gData.rdfa.ttl_text;
-    }
-    else if (selectedTab==="#posh" && gData.posh.ttl_text!==null) {
-      fmt = "ttl";
-      blob_data = [gData.posh.ttl_text];
-    }
 
     if (fmt === "ttl")
-      blob = new Blob(blob_data, {type: "text/turtle;charset=utf-8"});
+      blob = new Blob([gData.text], {type: "text/turtle;charset=utf-8"});
     else
-      blob = new Blob(blob_data, {type: "application/ld+json;charset=utf-8"});
+      blob = new Blob([gData.text], {type: "application/ld+json;charset=utf-8"});
 
     saveAs(blob, fname);    
 
@@ -928,7 +716,11 @@ function rest_exec() {
        url.addQueryParam(h, encodeURIComponent(v));
   }
 
-  window.open(url.toString());
+  var win_url = chrome.extension.getURL("page_panel.html?url="
+                  +encodeURIComponent(url.toString())
+                  +"&type="+gData.type);
+
+  window.open(win_url);
 }
 
 
