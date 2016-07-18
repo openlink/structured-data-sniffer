@@ -3,6 +3,12 @@ if (Browser.isChromeAPI)
   var setting = new Settings();
   var _r = {};
   var _rb = {};
+  var ext_url = chrome.extension.getURL("page_panel.html");
+
+  function s_startWith(str, val) 
+  {
+     return str.lastIndexOf(val, 0) === 0;
+  }
 
 
   chrome.webRequest.onBeforeSendHeaders.addListener(
@@ -48,6 +54,9 @@ if (Browser.isChromeAPI)
   function onHeadersReceived(d) 
   {
     //console.log(d);
+//    if (s_startWith(d.url, ext_url))
+//      return;
+    
     var rc = null;
     try {
       rc = _rb[d.requestId];
@@ -111,8 +120,12 @@ if (Browser.isChromeAPI)
         var url = chrome.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+v.type);
 
         if (url != null) {
+/**
           chrome.tabs.update(d.tabId, { url: url });
           return { cancel: true };
+**/
+          window.open(url);
+          return { cancel: false };
         } else {
           return { cancel: false };
         }
