@@ -1,7 +1,7 @@
 {
   "name": "OpenLink Structured Data Sniffer",
   "short_name": "OSD Sniffer",
-  "version": "2.11.2",
+  "version": "2.11.3",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
