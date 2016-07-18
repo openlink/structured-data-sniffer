@@ -1,6 +1,6 @@
 {
   "name": "OpenLink Structured Data Sniffer",
-  "version": "2.11.4",
+  "version": "2.11.5",
   "manifest_version": 2,
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
   "applications": {
