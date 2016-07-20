@@ -716,9 +716,10 @@ function rest_exec() {
        url.addQueryParam(h, encodeURIComponent(v));
   }
 
-  var win_url = chrome.extension.getURL("page_panel.html?url="
-                  +encodeURIComponent(url.toString())
-                  +"&type="+gData.type);
+//  var win_url = chrome.extension.getURL("page_panel.html?url="
+//                  +encodeURIComponent(url.toString())
+//                  +"&type="+gData.type);
+  var win_url = url.toString();
 
   window.open(win_url);
 }
