@@ -28,9 +28,8 @@ var t_nano_Text = null;
 var j_nano_Text = null;
 var data_found = false;
 
-var t_nano_pattern =/(\{|(## (Nanotation|Turtle) Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) (End|Stop) ##)|\})(.*)/gmi;
-var j_nano_pattern =/(\{|(## (JSON-LD) Start ##))((.|\n|\r)*?)((## (JSON-LD) (End|Stop) ##)|\})(.*)/gmi;
-
+var t_nano_pattern =/(\{|(## (Nanotation|Turtle) +Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) +(End|Stop) ##)|\})(.*)/gmi;
+var j_nano_pattern =/(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
 
 function getSelectionString(el, win) {
     win = win || window;
@@ -92,7 +91,7 @@ function sniff_nanotation() {
     var s_split = doc_Text.split(/[\r\n]/);
     var s_doc = "";
     var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
-    var p3 = /## +(JSON-LD) + (Start|End|Stop) *##/;
+    var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
     var p2 = /^ *#/;
 
     s_split.forEach(function(item, i, arr){
@@ -105,21 +104,21 @@ function sniff_nanotation() {
       if (ndata==null)
         break;
 
-      var str = ndata[4]; // var str = ndata[4]+ndata[5];
+      var str = ndata[4];
       str = fix_Nano_data(str);
-      t_ret.push(str);
+      if (str.length>0)
+        t_ret.push(str);
     }
-/**??todo
     while(true) {
       var ndata = j_nano_pattern.exec(s_doc);
       if (ndata==null)
         break;
 
-      var str = ndata[4]+ndata[5];
+      var str = ndata[2];
       str = fix_Nano_data(str);
-      j_ret.push(str);
+      if (str.length>0)
+        j_ret.push(str);
     }
-**/
   }
 
   if (t_ret.length > 0 || j_ret.length > 0)
@@ -264,7 +263,8 @@ function sniff_Data() {
 
           htmlText = htmlText.replace("//<![CDATA[", "").replace("//]]>", "");
           htmlText = htmlText.replace("<![CDATA[", "").replace("]]>", "");
-          json_ld_Text.push(htmlText);
+          if (htmlText.length > 0)
+            json_ld_Text.push(htmlText);
         }
     }
 
@@ -279,7 +279,8 @@ function sniff_Data() {
 
           htmlText = htmlText.replace("//<![CDATA[", "").replace("//]]>", ""); 
           htmlText = htmlText.replace("<![CDATA[", "").replace("]]>", ""); 
-          turtle_Text.push(htmlText); 
+          if (htmlText.length > 0)
+            turtle_Text.push(htmlText); 
         }
     }
 

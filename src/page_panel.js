@@ -111,18 +111,18 @@ $(document).ready(function()
   $('#rest_add').click(addRestEmpty);
 
 
+  selectTab('#micro');
+
   if (Browser.isFirefoxSDK) 
   {
     jQuery('#ext_ver').text('ver: '+ self.options.ver);
+    load_data_from_url(null, self.options.url, self.options.type);
   }
   else 
   {
     jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
+    load_data_from_url(document.location);
   }
-
-  selectTab('#micro');
-
-  load_data_from_url(document.location);
 
 
 });
@@ -141,7 +141,7 @@ $('a').live('click', function(e) {
 });
 
 
-function load_data_from_url(loc)
+function load_data_from_url(loc, uri, ctype)
 {
     function parseUrlQuery(loc) 
     {
@@ -156,18 +156,29 @@ function load_data_from_url(loc)
       return data;
     }
 
-    var params = parseUrlQuery(loc);
-    if (!params["url"])
-      return;
+    var url;
+    var type;
 
-    var url = decodeURIComponent(params.url);
-    var type = params.type;
+    if (loc) {
+      var params = parseUrlQuery(loc);
+      if (!params["url"])
+        return;
+
+      url = decodeURIComponent(params.url);
+      type = params.type;
+    } 
+    else {
+      url = uri;
+      type = ctype;
+    }
+
     $.get(url, function(data, status){
        start_parse_data(data, type, url);
     }, "text").fail(function(msg) {
        alert("Could not load data from: "+url);
     });;
 }
+
 
 
 function start_parse_data(data_text, data_type, data_url)
@@ -185,6 +196,7 @@ function start_parse_data(data_text, data_type, data_url)
       var ns = new Namespace();
       handler.ns_pref = ns.get_ns_desc();
       handler.ns_pref_size = Object.keys(ns.ns_list).length;
+      handler.skip_error = false;
       handler.parse([data_text], data_url, 
         function(error, html_data) {
           show_Data(error, html_data);
@@ -193,6 +205,7 @@ function start_parse_data(data_text, data_type, data_url)
   else if (data_type==="jsonld") 
     {
       var handler = new Handle_JSONLD();
+      handler.skip_error = false;
       handler.parse([data_text], data_url, 
         function(error, html_data) {
           show_Data(error, html_data);
@@ -240,8 +253,6 @@ function show_Data(data_error, html_data)
   var turtle = false;
   var rdfa = false;
   var posh = false;
-  var t_nano_error = [];
-  var j_nano_error = [];
   var error = [];
   var html = "";
 
@@ -318,160 +329,6 @@ function show_Data(data_error, html_data)
 }
 
 
-
-function check_Microdata(dData) 
-{
-  if (dData.micro.data)
-  {
-    var handler = new Handle_Microdata();
-    handler.parse(dData.micro.data, dData.docURL,
-      function(error, html_data) 
-      {
-        if (error)
-          dData.micro.error = error.toString();
-        else {
-          dData.micro.expanded = html_data;
-          gData.micro.json_text = [JSON.stringify(dData.micro.data, undefined, 2)];
-        }
-
-      check_JSON_LD(dData);
-    });
-  }
-  else
-  {
-    check_JSON_LD(dData);
-  }
-}
-
-
-function check_JSON_LD(dData) 
-{
-  if (dData.jsonld.text!==null && dData.jsonld.text.length > 0)
-  {
-    var handler = new Handle_JSONLD();
-    handler.parse(dData.jsonld.text, dData.docURL,
-      function(error, html_data) {
-        if (error)
-          dData.jsonld.error = error;
-        else {
-          dData.jsonld.expanded = html_data;
-          gData.jsonld.json_text = dData.jsonld.text;
-        }
-
-        check_Turtle(dData);
-    });
-  }
-  else
-  {
-    check_Turtle(dData);
-  }
-}
-
-
-
-
-function check_Turtle(dData) 
-{
-  if (dData.turtle.text!==null && dData.turtle.text.length > 0)
-  {
-    var handler = new Handle_Turtle();
-    handler.parse(dData.turtle.text, dData.docURL, 
-      function(error, html_data) {
-        if (error)
-          dData.turtle.error = error;
-        else {
-          dData.turtle.expanded = html_data;
-          gData.turtle.ttl_text = dData.turtle.text;
-        }
-
-        check_POSH(dData);
-    });
-  }
-  else
-  {
-    check_POSH(dData);
-  }
-}
-
-
-
-function check_POSH(dData) 
-{
-  if (dData.posh.text!==null && dData.posh.text.length > 0)
-  {
-    var handler = new Handle_Turtle();
-    handler.parse([dData.posh.text], dData.docURL, 
-      function(error, html_data) {
-        if (error)
-          dData.posh.error = error;
-        else {
-          dData.posh.expanded = html_data;
-          gData.posh.ttl_text = dData.posh.text;
-        }
-
-        check_RDFa(dData);
-    });
-  }
-  else
-  {
-    check_RDFa(dData);
-  }
-}
-
-
-
-function check_RDFa(dData) 
-{
-  if (dData.rdfa.data)
-  {
-    var handler = new Handle_RDFa();
-    handler.parse(dData.rdfa.data, 
-      function(error, html_data) {
-        if (error)
-          dData.rdfa.error = error;
-        else {
-          dData.rdfa.expanded = html_data;
-          gData.rdfa.ttl_text = [dData.rdfa.ttl];
-        }
-
-        check_Turtle_Nano(dData);
-    });
-  }
-  else
-  {
-    check_Turtle_Nano(dData);
-  }
-}
-
-
-function check_Turtle_Nano(dData) 
-{
-  if (dData.t_nano.text!==null && dData.t_nano.text.length > 0)
-  {
-    var handler = new Handle_Turtle();
-    var ns = new Namespace();
-    handler.ns_pref = ns.get_ns_desc();
-    handler.ns_pref_size = Object.keys(ns.ns_list).length;
-    handler.skip_error = true;
-    handler.parse(dData.t_nano.text, dData.docURL, 
-      function(error, html_data) {
-        if (error)
-          dData.t_nano.error = error;
-        else {
-          dData.t_nano.expanded = html_data;
-          if (handler.skipped_error.length>0)
-            dData.t_nano.skipped_error = handler.skipped_error;
-          gData.t_nano.ttl_text = dData.t_nano.text;
-        }
-
-        show_Data(dData);
-    });
-  }
-  else
-  {
-    show_Data(dData);
-  }
-}
 
 
 
@@ -813,7 +670,6 @@ function load_restData(doc_url)
   } 
   else {
     $(".yasqe").hide();
-//    $("#rest_query").hide();
   }
 }
 // ==== restData  END ====
