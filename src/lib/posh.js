@@ -96,7 +96,10 @@ var POSH = (function () {
       var twittercard = false;
 
       function s_startWith(str, val) {
-        return str.lastIndexOf(val, 0) === 0;
+        if (str)
+          return str.lastIndexOf(val, 0) === 0;
+        else
+          return false;
       }
 
       function node2str(n)
@@ -238,6 +241,31 @@ var POSH = (function () {
       }
 
 
+      function fix_href(n)
+      {
+        if (n.length==0)
+        {
+          return n;
+        }
+        else if (s_startWith(n, "http://") 
+                 || s_startWith(n, "https://")
+                 || s_startWith(n, "mailto:")
+                )
+        {
+          return n;
+        }
+        else if (s_startWith(n, "#") 
+                 || s_startWith(n, "/")
+                 )
+        {
+          return baseURI+n;
+        }
+        else
+        {
+          return baseURI+"/"+n;
+        }
+      }
+
 
 //      $("head link,meta[name],meta[property]").each(function(i, el){
       $("head link,meta[name]").each(function(i, el){
@@ -247,6 +275,7 @@ var POSH = (function () {
            var href = el.getAttribute("href");
 
            if (rel && href) {
+             href = fix_href(href);
              var title = el.getAttribute("title");
              var type = el.getAttribute("type");
              addTriple("#this", encodeURI(rel), href);   
@@ -257,6 +286,7 @@ var POSH = (function () {
                addTriple(href+"#this", "schema:fileFormat", type);   
            }
            else if(rev && href) {
+             href = fix_href(href);
              addTriple(href, encodeURI(rev), "<#this>")
            }
          }

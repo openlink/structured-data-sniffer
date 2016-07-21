@@ -18,7 +18,7 @@
  *
  */
 var events = require("sdk/system/events");
-var { Ci } = require("chrome");
+var {Cc, Ci} = require("chrome");
 var { ToggleButton } = require('sdk/ui/button/toggle');
 var panels = require("sdk/panel");
 var self = require("sdk/self");
@@ -163,6 +163,41 @@ function createSniffPanel()
 
 
 
+function createHandlerPanel(_uri, _type)
+{
+  var htab = tabs.open({
+        url: "./page_panel_ff.html",
+        onReady: function(tab) {
+          tab.attach({
+          contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
+   		      "./lib/jquery-migrate-1.2.1.min.js",
+   		      "./lib/jquery-ui.min.js",
+		      "./lib/microdatajs/jquery.microdata.js",
+		      "./lib/microdatajs/jquery.microdata.json.js",
+		      "./lib/jsonld.js",
+		      "./lib/n3-browser.js",
+		      "./lib/jsuri.js",
+                      "./lib/FileSaver.js",
+                      "./lib/namespace.js", 
+                      "./lib/codemirror.js",
+                      "./lib/yasqe.min.js",
+		      "./browser_ff.js",
+		      "./settings.js",
+		      "./page_panel.js",
+		      "./handlers.js",
+		      "./html_gen.js"
+      		     ],
+            contentScriptOptions : { ver: self.version,
+                                     url: _uri,
+                                     type: _type }
+          });
+        }
+      });
+}
+
+
+
+
 tabs.on('load', function(tab) {
   var worker = tab.attach({
       contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
@@ -239,13 +274,79 @@ function createPrefPanel()
 
 
 
-///// Add Preferred Id to HTTP headers
-function listener(event) {
-  var user = ss.storage.prefUser;
-  if (user) {
-    var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
-    channel.setRequestHeader("On-Behalf-Of", user, false);
-  }
+function check_XHR(request)
+{
+    try
+    {
+        var callbacks = request.notificationCallbacks;
+        var xhrRequest = callbacks ? callbacks.getInterface(Ci.nsIXMLHttpRequest) : null;
+        return (xhrRequest != null);
+    }
+    catch (exc)
+    {
+    }
+
+    return false;
 }
 
-events.on("http-on-modify-request", listener);
+
+
+///// Add Preferred Id to HTTP headers
+function header_listener(event) {
+  var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
+  var user = ss.storage.prefUser;
+
+  if (user)
+    channel.setRequestHeader("On-Behalf-Of", user, false);
+}
+
+
+function content_listener(event) {
+  var channel = event.subject.QueryInterface(Ci.nsITraceableChannel);
+  var contentType = channel.contentType;
+  var uri = null;
+  var handle = false;
+  var type = null;
+  var origin = null;
+  var isXHR = false;
+
+  try {
+    origin = channel.getRequestHeader("origin");
+  } catch(e) {
+    origin = null;
+  }
+
+  isXHR = origin===null ? check_XHR(event.subject) : true;
+
+  if (!isXHR && channel.originalURI && contentType) {
+    uri= channel.originalURI.spec;
+
+    if (contentType.match(/\/(turtle)/)) {
+      handle = true;
+      type = "turtle"
+    }
+    else if (contentType.match(/\/(n3)/)) {
+      handle = true;
+      type = "turtle"
+    }
+    else if (contentType.match(/\/(json\+ld)/)) {
+      handle = true;
+      type = "jsonld"
+    }
+    else if (contentType.match(/\/(ld\+json)/)) {
+      handle = true;
+      type = "jsonld"
+    }
+  }
+
+  if (handle)
+    createHandlerPanel(uri, type);
+}
+
+
+events.on("http-on-modify-request", header_listener);
+
+events.on("http-on-examine-response", content_listener);
+events.on("http-on-examine-cached-response", content_listener);
+events.on("http-on-examine-merged-response", content_listener);
+

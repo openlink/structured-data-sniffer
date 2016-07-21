@@ -195,8 +195,6 @@ function show_Data(dData)
   var turtle = false;
   var rdfa = false;
   var posh = false;
-  var t_nano_error = [];
-  var j_nano_error = [];
   var error = [];
   var html = "";
 
@@ -224,21 +222,6 @@ function show_Data(dData)
   }
 
 
-  if (dData.t_nano.expanded) {
-    if (dData.turtle.expanded == null)
-      dData.turtle.expanded = dData.t_nano.expanded;
-    else
-      dData.turtle.expanded += dData.t_nano.expanded;
-  }
-
-  if (dData.t_nano.error)
-    t_nano_error.push(dData.t_nano.error);
-
-  if (dData.t_nano.skipped_error && dData.t_nano.skipped_error.length>0) {
-    for(var i=0; i < dData.t_nano.skipped_error.length; i++)
-      t_nano_error.push(dData.t_nano.skipped_error[i]);
-  }
-
 
   $('#micro_items #docdata_view').remove();
   $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
@@ -265,13 +248,7 @@ function show_Data(dData)
   if (dData.jsonld.expanded!==null && dData.jsonld.expanded.length > 0) {
       html += dData.jsonld.expanded;
   }
-  if (dData.jsonld.error) {
-      error.push(dData.jsonld.error);
-  }
-  if (j_nano_error.length>0) {
-      error = error.concat(j_nano_error);
-  }
-  if (error.length > 0) {
+  if (dData.jsonld.error.length > 0) {
       var err_msg = create_err_msg("JSON-LD", error);
       if (err_msg)
         html += err_msg;
@@ -290,13 +267,7 @@ function show_Data(dData)
   if (dData.turtle.expanded!==null && dData.turtle.expanded.length > 0) {
       html += dData.turtle.expanded;
   }
-  if (dData.turtle.error) {
-      error.push(dData.turtle.error);
-  }
-  if (t_nano_error.length>0) {
-      error = error.concat(t_nano_error);
-  }
-  if (error.length > 0) {
+  if (dData.turtle.error.length > 0) {
       var err_msg = create_err_msg("Turtle", error);
       if (err_msg)
         html += err_msg;
@@ -396,6 +367,10 @@ function check_Microdata(dData)
 }
 
 
+
+
+/**??todo
+**/
 function check_JSON_LD(dData) 
 {
   if (dData.jsonld.text!==null && dData.jsonld.text.length > 0)
@@ -403,12 +378,42 @@ function check_JSON_LD(dData)
     var handler = new Handle_JSONLD();
     handler.parse(dData.jsonld.text, dData.docURL,
       function(error, html_data) {
+        gData.jsonld.json_text = dData.jsonld.text;
         if (error)
-          dData.jsonld.error = error;
-        else {
+          dData.jsonld.error.push(error);
+
+        if (html_data)
           dData.jsonld.expanded = html_data;
-          gData.jsonld.json_text = dData.jsonld.text;
-        }
+
+        if (handler.skipped_error.length>0)
+          dData.jsonld.error = dData.jsonld.error.concat(handler.skipped_error);
+
+        check_Json_Nano(dData);
+    });
+  }
+  else
+  {
+    check_Json_Nano(dData);
+  }
+}
+
+
+function check_Json_Nano(dData) 
+{
+  if (dData.j_nano.text!==null && dData.j_nano.text.length > 0)
+  {
+    var handler = new Handle_JSONLD();
+    handler.parse(dData.j_nano.text, dData.docURL, 
+      function(error, html_data) {
+        gData.j_nano.json_text = dData.j_nano.text;
+        if (error)
+          dData.jsonld.error.push(error);
+
+        if (html_data)
+          dData.jsonld.expanded = html_data;
+
+        if (handler.skipped_error.length>0)
+          dData.jsonld.error = dData.jsonld.error.concat(handler.skipped_error);
 
         check_Turtle(dData);
     });
@@ -421,7 +426,6 @@ function check_JSON_LD(dData)
 
 
 
-
 function check_Turtle(dData) 
 {
   if (dData.turtle.text!==null && dData.turtle.text.length > 0)
@@ -429,12 +433,45 @@ function check_Turtle(dData)
     var handler = new Handle_Turtle();
     handler.parse(dData.turtle.text, dData.docURL, 
       function(error, html_data) {
+        gData.turtle.ttl_text = dData.turtle.text;
         if (error)
-          dData.turtle.error = error;
-        else {
+          dData.turtle.error.push(error);
+
+        if (html_data)
           dData.turtle.expanded = html_data;
-          gData.turtle.ttl_text = dData.turtle.text;
-        }
+
+        if (handler.skipped_error.length>0)
+          dData.turtle.error = dData.turtle.error.concat(handler.skipped_error);
+
+        check_Turtle_Nano(dData);
+    });
+  }
+  else
+  {
+    check_Turtle_Nano(dData);
+  }
+}
+
+
+function check_Turtle_Nano(dData) 
+{
+  if (dData.t_nano.text!==null && dData.t_nano.text.length > 0)
+  {
+    var handler = new Handle_Turtle();
+    var ns = new Namespace();
+    handler.ns_pref = ns.get_ns_desc();
+    handler.ns_pref_size = Object.keys(ns.ns_list).length;
+    handler.parse(dData.t_nano.text, dData.docURL, 
+      function(error, html_data) {
+        gData.t_nano.ttl_text = dData.t_nano.text;
+        if (error)
+          dData.turtle.error.push(error);
+
+        if (html_data)
+          dData.turtle.expanded = html_data;
+
+        if (handler.skipped_error.length>0)
+          dData.turtle.error = dData.turtle.error.concat(handler.skipped_error);
 
         check_POSH(dData);
     });
@@ -486,36 +523,6 @@ function check_RDFa(dData)
           gData.rdfa.ttl_text = [dData.rdfa.ttl];
         }
 
-        check_Turtle_Nano(dData);
-    });
-  }
-  else
-  {
-    check_Turtle_Nano(dData);
-  }
-}
-
-
-function check_Turtle_Nano(dData) 
-{
-  if (dData.t_nano.text!==null && dData.t_nano.text.length > 0)
-  {
-    var handler = new Handle_Turtle();
-    var ns = new Namespace();
-    handler.ns_pref = ns.get_ns_desc();
-    handler.ns_pref_size = Object.keys(ns.ns_list).length;
-    handler.skip_error = true;
-    handler.parse(dData.t_nano.text, dData.docURL, 
-      function(error, html_data) {
-        if (error)
-          dData.t_nano.error = error;
-        else {
-          dData.t_nano.expanded = html_data;
-          if (handler.skipped_error.length>0)
-            dData.t_nano.skipped_error = handler.skipped_error;
-          gData.t_nano.ttl_text = dData.t_nano.text;
-        }
-
         show_Data(dData);
     });
   }
@@ -526,38 +533,32 @@ function check_Turtle_Nano(dData)
 }
 
 
-/**??todo
-function check_Json_Nano(dData) 
-{
-//??todo JSONLD
-  if (dData.j_nano.text!==null && dData.j_nano.text.length > 0)
-  {
-    
-    var handler = new Handle_Turtle();
-    var ns = new Namespace();
-    handler.ns_pref = ns.get_ns_desc();
-    handler.ns_pref_size = Object.keys(ns.ns_list).length;
-    handler.skip_error = true;
-    handler.parse(dData.j_nano.text, dData.docURL, 
-      function(error, html_data) {
-        if (error)
-          dData.j_nano.error = error;
-        else {
-          dData.j_nano.expanded = html_data;
-          if (handler.skipped_error.length>0)
-            dData.nano.skipped_error = handler.skipped_error;
-          gData.j_nano.ttl_text = dData.j_nano.text;
-        }
 
-        show_Data(dData);
-    });
-  }
-  else
-  {
-    show_Data(dData);
-  }
+function parse_Data(dData)
+{
+  dData.micro.expanded = null;
+  dData.micro.error = null;
+  dData.jsonld.expanded = null;
+  dData.jsonld.error = [];
+  dData.rdfa.expanded = null;
+  dData.turtle.expanded = null;
+  dData.turtle.error = [];
+  dData.rdfa.expanded = null;
+  dData.rdfa.error = null;
+  dData.t_nano.expanded = null;
+  dData.t_nano.error = null;
+  dData.j_nano.expanded = null;
+  dData.j_nano.error = null;
+  dData.posh.expanded = null;
+  dData.posh.error = null;
+  doc_URL = dData.docURL;
+
+  load_restData(doc_URL);
+  
+  check_Microdata(dData);
 }
-**/
+
+
 
 
 if (Browser.isFirefoxSDK) 
@@ -567,26 +568,7 @@ if (Browser.isFirefoxSDK)
   self.port.on("doc_data", function(msg) {
 
       var dData = $.parseJSON(msg.data);
-      dData.micro.expanded = null;
-      dData.micro.error = null;
-      dData.jsonld.expanded = null;
-      dData.jsonld.error = null;
-      dData.rdfa.expanded = null;
-      dData.turtle.expanded = null;
-      dData.turtle.error = null;
-      dData.rdfa.expanded = null;
-      dData.rdfa.error = null;
-      dData.t_nano.expanded = null;
-      dData.t_nano.error = null;
-      dData.j_nano.expanded = null;
-      dData.j_nano.error = null;
-      dData.posh.expanded = null;
-      dData.posh.error = null;
-      doc_URL = dData.docURL;
-
-      load_restData(doc_URL);
-      
-      check_Microdata(dData);
+      parse_Data(dData);
   });
 }
 else 
@@ -611,28 +593,7 @@ else
       else if (request.property == "doc_data")
       {
         var dData = $.parseJSON(request.data);
-        dData.micro.expanded = null;
-        dData.micro.error = null;
-        dData.jsonld.expanded = null;
-        dData.jsonld.error = null;
-        dData.rdfa.expanded = null;
-        dData.turtle.expanded = null;
-        dData.turtle.error = null;
-        dData.rdfa.expanded = null;
-        dData.rdfa.error = null;
-        dData.t_nano.expanded = null;
-        dData.t_nano.error = null;
-        dData.j_nano.expanded = null;
-        dData.j_nano.error = null;
-        dData.posh.expanded = null;
-        dData.posh.error = null;
-        doc_URL = dData.docURL;
-
-        load_restData(doc_URL);
-
-        check_Microdata(dData);
-
-
+        parse_Data(dData);
       }
       else
       {
@@ -763,6 +724,7 @@ function save_data(fname, fmt)
 {
   try{
     var blob = null;
+    var blob_data = null;
 
     if (selectedTab==="#jsonld" && gData.jsonld.json_text!==null) {
       fmt = "json";
@@ -904,6 +866,7 @@ function show_rest()
 
 
 // ==== restData ====
+
 function rest_exec() {
   if (!doc_URL) {
     return;

@@ -54,7 +54,7 @@ Handle_Turtle = function (start_id) {
     this.start_id = start_id;
   this.ns_pref = null;
   this.ns_pref_size = 0;
-  this.skip_error = false;
+  this.skip_error = true;
   this.skipped_error = [];
   this._pattern = /([0-9]*).$/gm;
 };
@@ -101,6 +101,7 @@ Handle_Turtle.prototype = {
                 self.error = error;
                 self.callback(self.error, null);
               }
+
             }
             else if (tr) {
               store.addTriple(self.fixNode(tr.subject), 
@@ -164,7 +165,7 @@ Handle_JSONLD = function () {
   this._pos = 0;
   this._output = null;
   this.start_id = 0;
-  this.skip_error = false;
+  this.skip_error = true;
   this.skipped_error = [];
 };
 
@@ -174,28 +175,46 @@ Handle_JSONLD.prototype = {
     this.callback = callback;
     var self = this;
 
+    function handle_error(error) 
+    {
+      if (self.skip_error) 
+      {
+        self.skipped_error.push(""+error);
+        self._pos++;
+
+        if (self._pos < textData.length)
+          self.parse(textData, docURL, self.callback);
+        else
+          self.callback(null, self._output);
+      } 
+      else {
+          self.callback(""+error, null);
+      }
+    }
+
+
     if (this._pos < textData.length) 
     {
       try {
         jsonld_data = JSON.parse(textData[this._pos]);
         if (jsonld_data != null) {
           jsonld.expand(jsonld_data, 
-            function(err, expanded) {
-              if (err) {
-//??todo
-                self.callback(""+err, null);
+            function(error, expanded) {
+              if (error) {
+                handle_error(error);
               }
               else {
                 jsonld.toRDF(expanded, {format: 'application/nquads'}, 
-                  function(err, nquads) {
-                    if (err) {
-                      self.callback(""+err, null);
+                  function(error, nquads) {
+                    if (error) {
+                      handle_error(error);
                     }
                     else {
                       var handler = new Handle_Turtle(self.start_id);
+                      handler.skip_error = false;
                       handler.parse([nquads], docURL, function(error, html_data) {
                         if (error) {
-                          self.callback(""+error, null);
+                          handle_error(error);
                         }
                         else {
                           if (self._output===null)

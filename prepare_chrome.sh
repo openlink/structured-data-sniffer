@@ -20,12 +20,12 @@ SRC_DIR=$EXT_SRC
 DST_DIR=$EXT_DIRNAME
 
 #copy common files
-for I_DIR in handlers.js html_gen.js options.js panel.js settings.js sniffer.css sniffer.js; do
+for I_DIR in handlers.js html_gen.js options.js panel.js settings.js sniffer.css sniffer.js page_panel.js psniffer.css; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
 #copy Chrome related files
-for I_DIR in browser.js options.html panel.html; do
+for I_DIR in webrequest.js browser.js options.html panel.html page_panel.html; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 

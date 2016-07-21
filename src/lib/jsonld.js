@@ -1891,6 +1891,10 @@ jsonld.documentLoaders.xhr = function(options) {
 
   function loader(url, callback) {
     if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
+      url = "http://"+url;
+    }
+
+    if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; only "http" and "https" URLs are ' +
         'supported.',
