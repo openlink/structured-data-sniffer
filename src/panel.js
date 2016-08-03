@@ -115,6 +115,7 @@ $(document).ready(function()
 
   selectTab('#micro');
 
+  gData_showed = false;
 
   if (Browser.isFirefoxSDK) 
   {
@@ -568,7 +569,8 @@ if (Browser.isFirefoxSDK)
   self.port.on("doc_data", function(msg) {
 
       var dData = $.parseJSON(msg.data);
-      parse_Data(dData);
+      if (!gData_showed)
+        parse_Data(dData);
   });
 }
 else 
@@ -982,7 +984,6 @@ function load_restData(doc_url)
   } 
   else {
     $(".yasqe").hide();
-//    $("#rest_query").hide();
   }
 }
 // ==== restData  END ====
