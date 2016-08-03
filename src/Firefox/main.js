@@ -100,8 +100,8 @@ function createSniffPanel()
     width: 680,
     height: 600,
     contentURL: "./panel_ff.html", // the same : self.data.url("panel.html"),
-    contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
-   		      "./lib/jquery-migrate-1.2.1.min.js",
+    contentScriptFile: ["./lib/jquery-3.1.0.min.js", 
+   		      "./lib/jquery-migrate-3.0.0.min.js",
    		      "./lib/jquery-ui.min.js",
 		      "./lib/microdatajs/jquery.microdata.js",
 		      "./lib/microdatajs/jquery.microdata.json.js",
@@ -169,8 +169,8 @@ function createHandlerPanel(_uri, _type)
         url: "./page_panel_ff.html",
         onReady: function(tab) {
           tab.attach({
-          contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
-   		      "./lib/jquery-migrate-1.2.1.min.js",
+          contentScriptFile: ["./lib/jquery-3.1.0.min.js", 
+   		      "./lib/jquery-migrate-3.0.0.min.js",
    		      "./lib/jquery-ui.min.js",
 		      "./lib/microdatajs/jquery.microdata.js",
 		      "./lib/microdatajs/jquery.microdata.json.js",
@@ -200,8 +200,8 @@ function createHandlerPanel(_uri, _type)
 
 tabs.on('load', function(tab) {
   var worker = tab.attach({
-      contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
-       			  "./lib/jquery-migrate-1.2.1.min.js",
+      contentScriptFile: ["./lib/jquery-3.1.0.min.js", 
+       			  "./lib/jquery-migrate-3.0.0.min.js",
                           "./lib/jsonld.js", 
                           "./lib/microdatajs/jquery.microdata.js", 
                           "./lib/microdatajs/jquery.microdata.json.js", 
@@ -245,8 +245,8 @@ function createPrefPanel()
     width: 570,
     height: 710,
     contentURL: "./options_ff.html",
-    contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
-   		      "./lib/jquery-migrate-1.2.1.min.js",
+    contentScriptFile: ["./lib/jquery-3.1.0.min.js", 
+   		      "./lib/jquery-migrate-3.0.0.min.js",
    		      "./lib/jquery-ui.min.js",
 		      "./lib/jsuri.js",
 		      "./browser_ff.js",

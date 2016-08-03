@@ -144,7 +144,19 @@ $(document).ready(function()
 
 
 // Trap any link clicks and open them in the current tab.
+/**
 $('a').live('click', function(e) {
+  var url = new Uri(document.baseURI).setAnchor("");
+  var href = e.currentTarget.href;
+  if (href.lastIndexOf(url+"#sc", 0) === 0) {
+    return true;
+  } else {
+    window.open(href);
+    return false;
+  }
+});
+**/
+$(document).on('click', 'a', function(e) {
   var url = new Uri(document.baseURI).setAnchor("");
   var href = e.currentTarget.href;
   if (href.lastIndexOf(url+"#sc", 0) === 0) {
