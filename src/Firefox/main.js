@@ -25,8 +25,9 @@ var self = require("sdk/self");
 var tabs = require("sdk/tabs");
 var workers = require("sdk/content/worker");
 var ss = require("sdk/simple-storage");
-var sniff_panel = null;
+const {XMLHttpRequest} = require("sdk/net/xhr");
 
+var sniff_panel = null;
 
 
 var button = ToggleButton({
@@ -168,7 +169,7 @@ function createHandlerPanel(_uri, _type)
   var htab = tabs.open({
         url: "./page_panel_ff.html",
         onReady: function(tab) {
-          tab.attach({
+          tab._handler_worker = tab.attach({
           contentScriptFile: ["./lib/jquery-3.1.0.min.js", 
    		      "./lib/jquery-migrate-3.0.0.min.js",
    		      "./lib/jquery-ui.min.js",
@@ -191,8 +192,33 @@ function createHandlerPanel(_uri, _type)
                                      url: _uri,
                                      type: _type }
           });
+
+
+          tab._handler_worker.port.on("load_data", function(msg){
+            if (msg.url) {
+
+              var xhr = new XMLHttpRequest();
+
+              xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+                  if (xhr.status===200)
+                    tab._handler_worker.port.emit("url_data", xhr.responseText);
+                  else
+                    {
+                      tab._handler_worker.port.emit("url_error", "error");
+                    }
+                }
+              }
+              xhr.open ('GET', msg.url, true);
+              xhr.setRequestHeader ('Accept', 'text/plain, */*');
+              xhr.send (null);
+            }
+          });
+
         }
       });
+
+
 }
 
 
@@ -285,7 +311,6 @@ function check_XHR(request)
     catch (exc)
     {
     }
-
     return false;
 }
 

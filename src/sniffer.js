@@ -433,7 +433,6 @@ window.onload = function() {
     if (Browser.isFirefoxSDK) 
     {
         self.port.on("doc_data", function(msg) {
-//          send_doc_data();
           requested_doc_data()
         });
     }
@@ -441,9 +440,7 @@ window.onload = function() {
     {
         chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
           if (request.property == "doc_data") 
-//            send_doc_data();
             requested_doc_data();
-//            check_nano(); 
           else
             sendResponse({});  /* stop */
         });

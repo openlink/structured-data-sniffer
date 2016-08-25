@@ -116,7 +116,7 @@ $(document).ready(function()
   if (Browser.isFirefoxSDK) 
   {
     jQuery('#ext_ver').text('ver: '+ self.options.ver);
-    load_data_from_url(null, self.options.url, self.options.type);
+    self.port.emit("load_data", {url: self.options.url});
   }
   else 
   {
@@ -128,19 +128,18 @@ $(document).ready(function()
 });
 
 
-// Trap any link clicks and open them in the current tab.
-/**
-$('a').live('click', function(e) {
-  var url = new Uri(document.baseURI).setAnchor("");
-  var href = e.currentTarget.href;
-  if (href.lastIndexOf(url+"#sc", 0) === 0) {
-    return true;
-  } else {
-    window.open(href);
-    return false;
-  }
-});
-**/
+if (Browser.isFirefoxSDK) 
+{
+  self.port.on("url_data", function(msg) {
+    start_parse_data(msg, self.options.type, self.options.url);
+  });
+
+  self.port.on("url_error", function(msg) {
+    start_parse_data(null, self.options.type, self.options.url);
+  });
+}
+
+
 $(document).on('click', 'a', function(e) {
   var url = new Uri(document.baseURI).setAnchor("");
   var href = e.currentTarget.href;
@@ -168,7 +167,7 @@ function load_data_from_url(loc, uri, ctype)
       return data;
     }
 
-    var url;
+    var data_url;
     var type;
 
     if (loc) {
@@ -176,18 +175,18 @@ function load_data_from_url(loc, uri, ctype)
       if (!params["url"])
         return;
 
-      url = decodeURIComponent(params.url);
+      data_url = decodeURIComponent(params.url);
       type = params.type;
     } 
     else {
-      url = uri;
+      data_url = uri;
       type = ctype;
     }
 
-    $.get(url, function(data, status){
-       start_parse_data(data, type, url);
+    $.get(data_url, function(data, status){
+       start_parse_data(data, type, data_url);
     }, "text").fail(function(msg) {
-       alert("Could not load data from: "+url);
+       start_parse_data(null, type, data_url);
     });;
 }
 
@@ -201,8 +200,11 @@ function start_parse_data(data_text, data_type, data_url)
   doc_URL = data_url;
 
   load_restData(doc_URL);
-
-  if (data_type==="turtle") 
+  if (data_text==null)
+    {
+      show_Data("Could not load data from:"+data_url, null);
+    }
+  else if (data_type==="turtle") 
     {
       var handler = new Handle_Turtle();
       var ns = new Namespace();
@@ -223,7 +225,6 @@ function start_parse_data(data_text, data_type, data_url)
           show_Data(error, html_data);
       });
     }
-
 }
 
 
@@ -585,9 +586,6 @@ function rest_exec() {
        url.addQueryParam(h, encodeURIComponent(v));
   }
 
-//  var win_url = chrome.extension.getURL("page_panel.html?url="
-//                  +encodeURIComponent(url.toString())
-//                  +"&type="+gData.type);
   var win_url = url.toString();
 
   window.open(win_url);
