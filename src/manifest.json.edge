@@ -6,27 +6,20 @@
   "manifest_version": 2,
   "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
-  "applications": {
-    "gecko": {
-      "id": "osds@openlinksw.com"
-    }
-  },
   "icons": {
       "16":  "images/icon16.png",
       "48":  "images/icon48.png",
       "128": "images/icon128.png" },
   "page_action": {
-    "default_icon": "images/icon16.png",
+    "default_icon": {"19":"images/icon16.png"},
     "default_title": "Show Document Metadata",
     "default_popup": "panel.html"
   },
   "background": {
-    "page": "panel.html"
+    "page": "panel.html",
+    "persistent": true
   },
-  "options_ui": {
-    "page": "options.html",
-    "open_in_tab": true
-  },
+  "options_page": "options.html",
   "content_scripts": [
     {
       "matches": ["file:///*/*","*://*/*"],

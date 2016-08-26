@@ -19,6 +19,14 @@
  */
 
 // React when the browser action's icon is clicked.
+
+var _browser;
+
+try {
+  _browser = (Browser.isChromeAPI) ? chrome : browser;
+} catch(e) {}
+
+
 var items;
 var $ = jQuery;
 var gData_showed = false;
@@ -116,11 +124,11 @@ $(document).ready(function()
   if (Browser.isFirefoxSDK) 
   {
     jQuery('#ext_ver').text('ver: '+ self.options.ver);
-    self.port.emit("load_data", {url: self.options.url});
+    load_data_from_url(null, self.options.url, self.options.type);
   }
   else 
   {
-    jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
+    jQuery('#ext_ver').text('ver: '+ _browser.runtime.getManifest().version);
     load_data_from_url(document.location);
   }
 
@@ -128,18 +136,19 @@ $(document).ready(function()
 });
 
 
-if (Browser.isFirefoxSDK) 
-{
-  self.port.on("url_data", function(msg) {
-    start_parse_data(msg, self.options.type, self.options.url);
-  });
-
-  self.port.on("url_error", function(msg) {
-    start_parse_data(null, self.options.type, self.options.url);
-  });
-}
-
-
+// Trap any link clicks and open them in the current tab.
+/**
+$('a').live('click', function(e) {
+  var url = new Uri(document.baseURI).setAnchor("");
+  var href = e.currentTarget.href;
+  if (href.lastIndexOf(url+"#sc", 0) === 0) {
+    return true;
+  } else {
+    window.open(href);
+    return false;
+  }
+});
+**/
 $(document).on('click', 'a', function(e) {
   var url = new Uri(document.baseURI).setAnchor("");
   var href = e.currentTarget.href;
@@ -167,7 +176,7 @@ function load_data_from_url(loc, uri, ctype)
       return data;
     }
 
-    var data_url;
+    var url;
     var type;
 
     if (loc) {
@@ -175,18 +184,18 @@ function load_data_from_url(loc, uri, ctype)
       if (!params["url"])
         return;
 
-      data_url = decodeURIComponent(params.url);
+      url = decodeURIComponent(params.url);
       type = params.type;
     } 
     else {
-      data_url = uri;
+      url = uri;
       type = ctype;
     }
 
-    $.get(data_url, function(data, status){
-       start_parse_data(data, type, data_url);
+    $.get(url, function(data, status){
+       start_parse_data(data, type, url);
     }, "text").fail(function(msg) {
-       start_parse_data(null, type, data_url);
+       alert("Could not load data from: "+url);
     });;
 }
 
@@ -200,11 +209,8 @@ function start_parse_data(data_text, data_type, data_url)
   doc_URL = data_url;
 
   load_restData(doc_URL);
-  if (data_text==null)
-    {
-      show_Data("Could not load data from:"+data_url, null);
-    }
-  else if (data_type==="turtle") 
+
+  if (data_type==="turtle") 
     {
       var handler = new Handle_Turtle();
       var ns = new Namespace();
@@ -225,6 +231,7 @@ function start_parse_data(data_text, data_type, data_url)
           show_Data(error, html_data);
       });
     }
+
 }
 
 

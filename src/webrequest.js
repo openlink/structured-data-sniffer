@@ -1,9 +1,15 @@
+var _browser;
+
+try {
+  _browser = (Browser.isChromeAPI) ? chrome : browser;
+} catch(e) {}
+
+
 if (Browser.isChromeAPI) 
 {
   var setting = new Settings();
   var _r = {};
-  var _rb = {};
-  var ext_url = chrome.extension.getURL("page_panel.html");
+  var ext_url = _browser.extension.getURL("page_panel.html");
 
   function s_startWith(str, val) 
   {
@@ -11,16 +17,8 @@ if (Browser.isChromeAPI)
   }
 
 
-  chrome.webRequest.onBeforeSendHeaders.addListener(
+  _browser.webRequest.onBeforeSendHeaders.addListener(
         function(details) {
-/**
-          for (var i = 0; i < details.requestHeaders.length; ++i) {
-            if (details.requestHeaders[i].name === 'User-Agent') {
-              details.requestHeaders.splice(i, 1);
-              break;
-            }
-          }
-**/
           var pref_user = setting.getValue('ext.osds.pref.user');
           if (pref_user && pref_user.length> 0)
             details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
@@ -30,42 +28,14 @@ if (Browser.isChromeAPI)
         ["blocking", "requestHeaders"]);
 
 
-  chrome.webRequest.onCompleted.addListener (
-  	onCompleted, {types: ['main_frame'], urls: ["<all_urls>"]});
-  chrome.webRequest.onErrorOccurred.addListener(
-  	onErrorOccurred, {types: ['main_frame'], urls: ["<all_urls>"]});
-  chrome.webRequest.onHeadersReceived.addListener(
+  _browser.webRequest.onHeadersReceived.addListener(
   	onHeadersReceived, {types: ["main_frame"], urls: ["<all_urls>"]}, ["responseHeaders", "blocking"]);
-
-
-  function onErrorOccurred(d) 
-  { 
-    delete _rb[d.requestId];
-    return finish(d); 
-  }
-
-
-  function onCompleted(d) 
-  { 
-    delete _rb[d.requestId];
-  }
 
 
   function onHeadersReceived(d) 
   {
     //console.log(d);
-//    if (s_startWith(d.url, ext_url))
-//      return;
     
-    var rc = null;
-    try {
-      rc = _rb[d.requestId];
-    }catch(e) {}
-
-    if (rc != null)
-      return;
-
-    var found = false;
     for (var i in d.responseHeaders) {
         var header = d.responseHeaders[i];
         var handle = false;
@@ -99,38 +69,17 @@ if (Browser.isChromeAPI)
 
         if (handle)
           {
-            _r[d.requestId] = {handle: true, type:type};
-            found = true;
+            var _url = _browser.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
+            if (Browser.isEdgeWebExt) {
+              return { redirectUrl: _url };
+            } else {
+              _browser.tabs.update(d.tabId, { url: _url });
+              return { cancel: true };
+            }
           }
     }
-    if (found)
-      return finish(d);
   }
 
-
-  function finish(d) 
-  {
-    var v = _r[d.requestId];
-    if (v && v.handle == true) 
-      {
-        var url;
-        delete _r[d.requestId];
-
-//        var url = 'view-source:'+d.url
-        var url = chrome.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+v.type);
-
-        if (url != null) {
-/**
-          chrome.tabs.update(d.tabId, { url: url });
-          return { cancel: true };
-**/
-          window.open(url);
-          return { cancel: false };
-        } else {
-          return { cancel: false };
-        }
-      }
-  }
 
 
 

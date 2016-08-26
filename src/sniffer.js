@@ -18,6 +18,12 @@
  *
  */
 
+var _browser;
+
+try {
+  _browser = (Browser.isChromeAPI) ? chrome : browser;
+} catch(e) {}
+
 var $ = jQuery;
 var micro_items = 0;
 var json_ld_Text = null;
@@ -30,6 +36,7 @@ var data_found = false;
 
 var t_nano_pattern =/(\{|(## (Nanotation|Turtle) +Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) +(End|Stop) ##)|\})(.*)/gmi;
 var j_nano_pattern =/(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
+
 
 function getSelectionString(el, win) {
     win = win || window;
@@ -204,7 +211,7 @@ function is_data_exist() {
       }
       else
       {
-        chrome.runtime.sendMessage(null, {
+        _browser.runtime.sendMessage(null, {
                property: "status", 
                status: 'ready',
                data_exists: data_found
@@ -418,7 +425,7 @@ window.onload = function() {
         }
         else
         {
-            chrome.runtime.sendMessage(null, 
+            _browser.runtime.sendMessage(null, 
                 { property: "doc_data", 
                   data: JSON.stringify(docData, undefined, 2)
                 }, 
@@ -438,7 +445,7 @@ window.onload = function() {
     }
     else 
     {
-        chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        _browser.runtime.onMessage.addListener(function(request, sender, sendResponse) {
           if (request.property == "doc_data") 
             requested_doc_data();
           else

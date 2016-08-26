@@ -24,6 +24,5 @@ var Browser = {
     isChromeAPI: true,
     isFirefoxSDK: false,
     isFirefoxWebExt: false,
-    isEdgeWebExt: false
-
+    isEdgeWebExt: true
 }

@@ -22,5 +22,7 @@ var Browser = {
 //    isFirefox:(!navigator.userAgent.match(/khtml/i) && !!navigator.userAgent.match(/Gecko/i)&& !!navigator.userAgent.match(/Firefox/i)),
 //    isWebKit:!!navigator.userAgent.match(/AppleWebKit/),
     isChromeAPI: false,
-    isFirefoxSDK: true
+    isFirefoxSDK: true,
+    isFirefoxWebExt: false,
+    isEdgeWebExt: false
 }

@@ -19,6 +19,12 @@
  */
 
 // React when the browser action's icon is clicked.
+var _browser;
+
+try {
+  _browser = (Browser.isChromeAPI) ? chrome : browser;
+} catch(e) {}
+
 var items;
 var $ = jQuery;
 var gData_showed = false;
@@ -126,12 +132,12 @@ $(document).ready(function()
   }
   else 
   {
-    jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
+    jQuery('#ext_ver').text('ver: '+ _browser.runtime.getManifest().version);
 
-    chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
+    _browser.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
-        chrome.tabs.sendMessage(tabs[0].id, {
+        _browser.tabs.sendMessage(tabs[0].id, {
             property: 'doc_data'
           }, 
           function(response) {
@@ -589,18 +595,18 @@ else
 {
   //Chrome API
   //wait data from extension
-  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) 
+  _browser.runtime.onMessage.addListener(function(request, sender, sendResponse) 
   {
     try {
       if (request.property == "status")
       {
         var show_action = request.data_exists;
-//        chrome.pageAction.show(sender.tab.id);
+//        _browser.pageAction.show(sender.tab.id);
 /**/
         if (show_action)
-          chrome.pageAction.show(sender.tab.id);
+          _browser.pageAction.show(sender.tab.id);
         else
-          chrome.pageAction.hide(sender.tab.id);
+          _browser.pageAction.hide(sender.tab.id);
 /**/
 
       } 
