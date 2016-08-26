@@ -23,6 +23,8 @@ var Browser = {
 //    isWebKit:!!navigator.userAgent.match(/AppleWebKit/),
     isChromeAPI: true,
     isFirefoxSDK: false,
+
+    isChromeWebExt: false,
     isFirefoxWebExt: false,
     isEdgeWebExt: true
 }

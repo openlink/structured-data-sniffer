@@ -22,7 +22,7 @@
 var _browser;
 
 try {
-  _browser = (Browser.isChromeAPI) ? chrome : browser;
+  _browser = (Browser.isChromeAPI && Browser.isChromeWebExt) ? chrome : browser;
 } catch(e) {}
 
 var items;
