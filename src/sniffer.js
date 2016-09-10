@@ -18,11 +18,6 @@
  *
  */
 
-var _browser;
-
-try {
-  _browser = (Browser.isChromeAPI && Browser.isChromeWebExt) ? chrome : browser;
-} catch(e) {}
 
 var $ = jQuery;
 var micro_items = 0;
@@ -211,7 +206,7 @@ function is_data_exist() {
       }
       else
       {
-        _browser.runtime.sendMessage(null, {
+        Browser.api.runtime.sendMessage(null, {
                property: "status", 
                status: 'ready',
                data_exists: data_found
@@ -335,9 +330,6 @@ window.onload = function() {
 
     function send_doc_data() 
     {
-        //check again ld+json and turtle for any case
-//        sniff_Data();
-
         var docData = {
                docURL: document.location.href,
                micro :{ data:null }, 
@@ -425,7 +417,7 @@ window.onload = function() {
         }
         else
         {
-            _browser.runtime.sendMessage(null, 
+            Browser.api.runtime.sendMessage(null, 
                 { property: "doc_data", 
                   data: JSON.stringify(docData, undefined, 2)
                 }, 
@@ -445,7 +437,7 @@ window.onload = function() {
     }
     else 
     {
-        _browser.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse) {
           if (request.property == "doc_data") 
             requested_doc_data();
           else

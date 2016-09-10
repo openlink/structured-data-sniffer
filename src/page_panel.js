@@ -20,12 +20,6 @@
 
 // React when the browser action's icon is clicked.
 
-var _browser;
-
-try {
-  _browser = (Browser.isChromeAPI && Browser.isChromeWebExt) ? chrome : browser;
-} catch(e) {}
-
 
 var items;
 var $ = jQuery;
@@ -128,7 +122,7 @@ $(document).ready(function()
   }
   else 
   {
-    jQuery('#ext_ver').text('ver: '+ _browser.runtime.getManifest().version);
+    jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
     load_data_from_url(document.location);
   }
 
@@ -155,7 +149,7 @@ $(document).on('click', 'a', function(e) {
   if (href.lastIndexOf(url+"#sc", 0) === 0) {
     return true;
   } else {
-    window.open(href);
+    Browser.openTab(href);
     return false;
   }
 });
@@ -273,7 +267,6 @@ function show_Data(data_error, html_data)
   var turtle = false;
   var rdfa = false;
   var posh = false;
-  var error = [];
   var html = "";
 
   wait_data = $('table.wait').hide();
@@ -359,8 +352,8 @@ function show_Data(data_error, html_data)
 function Import_doc() 
 {
   if (doc_URL!==null) {
-     var url = createImportUrl(doc_URL);
-     window.open(url);
+     var _url = createImportUrl(doc_URL);
+     Browser.api.tabs.create({url:_url});
   }
 
   return false;
@@ -370,8 +363,8 @@ function Import_doc()
 function Rww_exec() 
 {
   if (doc_URL!==null) {
-     var url = createRwwUrl(doc_URL);
-     window.open(url);
+     var _url = createRwwUrl(doc_URL);
+     Browser.api.tabs.create({url:_url});
   }
 
   return false;
@@ -381,8 +374,8 @@ function Rww_exec()
 function Sparql_exec() 
 {
   if (doc_URL!==null) {
-     var url = createSparqlUrl(doc_URL);
-     window.open(url);
+     var _url = createSparqlUrl(doc_URL);
+     Browser.api.tabs.create({url:_url});
   }
 
   return false;
@@ -416,11 +409,11 @@ function Download_exec()
   var fmt = "json";
 
   if (gData.type == "jsonld" && gData.text) {
-    filename = "jsonld_data.jsonld";
+    filename = "jsonld_data.txt";
     fmt = "json";
   }
   else if (gData.type == "turtle" && gData.text) {
-    filename = "turtle_data.ttl";
+    filename = "turtle_data.txt";
     fmt = "ttl";
   }
 
@@ -432,7 +425,7 @@ function Download_exec()
 
     $( "#save-confirm" ).dialog({
       resizable: false,
-      height:180,
+      height:230,
       modal: true,
       buttons: {
         "OK": function() {
@@ -457,13 +450,7 @@ function Download_exec()
 function save_data(fname, fmt) 
 {
   try{
-    var blob = null;
-
-    if (fmt === "ttl")
-      blob = new Blob([gData.text], {type: "text/turtle;charset=utf-8"});
-    else
-      blob = new Blob([gData.text], {type: "application/ld+json;charset=utf-8"});
-
+    var blob = new Blob([gData.text], {type: "text/plain;charset=utf-8"});
     saveAs(blob, fname);    
 
   } catch(ex) {
@@ -595,7 +582,7 @@ function rest_exec() {
 
   var win_url = url.toString();
 
-  window.open(win_url);
+  Browser.api.tabs.create({url:win_url});
 }
 
 

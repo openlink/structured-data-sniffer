@@ -18,12 +18,6 @@
  *
  */
 
-var _browser;
-
-try {
-  _browser = (Browser.isChromeAPI && Browser.isChromeWebExt) ? chrome : browser;
-} catch(e) {}
-
 var gPref = null;
 
 $(function(){
@@ -77,7 +71,7 @@ $(function(){
 	if (Browser.isFirefoxSDK)
           jQuery('#ext_ver').text('Version: '+ self.options.ver);
         else
-          $('#ext_ver').text('Version: '+ _browser.runtime.getManifest().version);
+          $('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
 
 });
 

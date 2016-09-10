@@ -1,15 +1,30 @@
-var _browser;
+/*
+ *  This file is part of the OpenLink Structured Data Sniffer
+ *
+ *  Copyright (C) 2015-2016 OpenLink Software
+ *
+ *  This project is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License as published by the
+ *  Free Software Foundation; only version 2 of the License, dated June 1991.
+ *
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *  General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ */
 
-try {
-  _browser = (Browser.isChromeAPI && Browser.isChromeWebExt) ? chrome : browser;
-} catch(e) {}
 
 
 if (Browser.isChromeAPI) 
 {
   var setting = new Settings();
   var _r = {};
-  var ext_url = _browser.extension.getURL("page_panel.html");
+  var ext_url = Browser.api.extension.getURL("page_panel.html");
 
   function s_startWith(str, val) 
   {
@@ -17,7 +32,7 @@ if (Browser.isChromeAPI)
   }
 
 
-  _browser.webRequest.onBeforeSendHeaders.addListener(
+  Browser.api.webRequest.onBeforeSendHeaders.addListener(
         function(details) {
           var pref_user = setting.getValue('ext.osds.pref.user');
           if (pref_user && pref_user.length> 0)
@@ -28,7 +43,7 @@ if (Browser.isChromeAPI)
         ["blocking", "requestHeaders"]);
 
 
-  _browser.webRequest.onHeadersReceived.addListener(
+  Browser.api.webRequest.onHeadersReceived.addListener(
   	onHeadersReceived, {types: ["main_frame"], urls: ["<all_urls>"]}, ["responseHeaders", "blocking"]);
 
 
@@ -69,11 +84,11 @@ if (Browser.isChromeAPI)
 
         if (handle)
           {
-            var _url = _browser.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
+            var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
             if (Browser.isEdgeWebExt) {
               return { redirectUrl: _url };
             } else {
-              _browser.tabs.update(d.tabId, { url: _url });
+              Browser.api.tabs.update(d.tabId, { url: _url });
               return { cancel: true };
             }
           }

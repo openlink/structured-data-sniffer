@@ -19,11 +19,6 @@
  */
 
 // React when the browser action's icon is clicked.
-var _browser;
-
-try {
-  _browser = (Browser.isChromeAPI && Browser.isChromeWebExt) ? chrome : browser;
-} catch(e) {}
 
 var items;
 var $ = jQuery;
@@ -38,7 +33,8 @@ var gData = {
         turtle:{ ttl_text:null },
         t_nano :{ ttl_text:null},
         j_nano :{ json_text:null },
-        posh:{ ttl_text:null }
+        posh:{ ttl_text:null },
+        tab_index: null
       };
 var yasqe = {
         obj : null,
@@ -132,12 +128,12 @@ $(document).ready(function()
   }
   else 
   {
-    jQuery('#ext_ver').text('ver: '+ _browser.runtime.getManifest().version);
+    jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
 
-    _browser.tabs.query({active:true, currentWindow:true}, function(tabs) {
+    Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
-        _browser.tabs.sendMessage(tabs[0].id, {
+        Browser.api.tabs.sendMessage(tabs[0].id, {
             property: 'doc_data'
           }, 
           function(response) {
@@ -168,7 +164,7 @@ $(document).on('click', 'a', function(e) {
   if (href.lastIndexOf(url+"#sc", 0) === 0) {
     return true;
   } else {
-    window.open(href);
+    Browser.openTab(href, gData.tab_index);
     return false;
   }
 });
@@ -214,7 +210,6 @@ function show_Data(dData)
   var turtle = false;
   var rdfa = false;
   var posh = false;
-  var error = [];
   var html = "";
 
   wait_data = $('table.wait').hide();
@@ -245,7 +240,6 @@ function show_Data(dData)
   $('#micro_items #docdata_view').remove();
   $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  error = [];
   if (dData.micro.expanded!==null && dData.micro.expanded.length > 0) {
       html += dData.micro.expanded;
   }
@@ -263,12 +257,11 @@ function show_Data(dData)
   $('#jsonld_items #docdata_view').remove();
   $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  error = [];
   if (dData.jsonld.expanded!==null && dData.jsonld.expanded.length > 0) {
       html += dData.jsonld.expanded;
   }
   if (dData.jsonld.error.length > 0) {
-      var err_msg = create_err_msg("JSON-LD", error);
+      var err_msg = create_err_msg("JSON-LD", dData.jsonld.error);
       if (err_msg)
         html += err_msg;
   }
@@ -282,12 +275,11 @@ function show_Data(dData)
   $('#turtle_items #docdata_view').remove();
   $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  error = [];
   if (dData.turtle.expanded!==null && dData.turtle.expanded.length > 0) {
       html += dData.turtle.expanded;
   }
   if (dData.turtle.error.length > 0) {
-      var err_msg = create_err_msg("Turtle", error);
+      var err_msg = create_err_msg("Turtle", dData.turtle.error);
       if (err_msg)
         html += err_msg;
   }
@@ -300,7 +292,6 @@ function show_Data(dData)
   $('#rdfa_items #docdata_view').remove();
   $('#rdfa_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  error = [];
   if (dData.rdfa.expanded!==null && dData.rdfa.expanded.length > 0) {
       html += dData.rdfa.expanded;
   }
@@ -319,7 +310,6 @@ function show_Data(dData)
   $('#posh_items #docdata_view').remove();
   $('#posh_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  error = [];
   if (dData.posh.expanded!==null && dData.posh.expanded.length > 0) {
       html += dData.posh.expanded;
   }
@@ -595,24 +585,27 @@ else
 {
   //Chrome API
   //wait data from extension
-  _browser.runtime.onMessage.addListener(function(request, sender, sendResponse) 
+  Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse) 
   {
     try {
       if (request.property == "status")
       {
         var show_action = request.data_exists;
-//        _browser.pageAction.show(sender.tab.id);
+//        Browser.api.pageAction.show(sender.tab.id);
 /**/
         if (show_action)
-          _browser.pageAction.show(sender.tab.id);
+          Browser.api.pageAction.show(sender.tab.id);
         else
-          _browser.pageAction.hide(sender.tab.id);
+          Browser.api.pageAction.hide(sender.tab.id);
 /**/
 
       } 
       else if (request.property == "doc_data")
       {
         var dData = $.parseJSON(request.data);
+        try { 
+          gData.tab_index = sender.tab.index;
+        } catch(e){}
         parse_Data(dData);
       }
       else
@@ -633,8 +626,8 @@ else
 function Import_doc() 
 {
   if (doc_URL!==null) {
-     var url = createImportUrl(doc_URL);
-     window.open(url);
+     var _url = createImportUrl(doc_URL);
+     Browser.openTab(_url, gData.tab_index);
   }
 
   return false;
@@ -644,8 +637,8 @@ function Import_doc()
 function Rww_exec() 
 {
   if (doc_URL!==null) {
-     var url = createRwwUrl(doc_URL);
-     window.open(url);
+     var _url = createRwwUrl(doc_URL);
+     Browser.openTab(_url, gData.tab_index);
   }
 
   return false;
@@ -655,8 +648,8 @@ function Rww_exec()
 function Sparql_exec() 
 {
   if (doc_URL!==null) {
-     var url = createSparqlUrl(doc_URL);
-     window.open(url);
+     var _url = createSparqlUrl(doc_URL);
+     Browser.openTab(_url, gData.tab_index);
   }
 
   return false;
@@ -690,23 +683,23 @@ function Download_exec()
   var fmt = "json";
 
   if (selectedTab==="#jsonld" && gData.jsonld.json_text!==null) {
-    filename = "jsonld_data.jsonld";
+    filename = "jsonld_data.txt";
     fmt = "json";
   }
   else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.t_nano.ttl_text!==null)) {
-    filename = "turtle_data.ttl";
+    filename = "turtle_data.txt";
     fmt = "ttl";
   }
   else if (selectedTab==="#micro" && gData.micro.json_text!==null) {
-    filename = "microdata_data.jsonld";
+    filename = "microdata_data.txt";
     fmt = "json";
   }
   else if (selectedTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
-    filename = "rdfa_data.ttl";
+    filename = "rdfa_data.txt";
     fmt = "ttl";
   }
   else if (selectedTab==="#posh" && gData.posh.ttl_text!==null) {
-    filename = "posh_data.ttl";
+    filename = "posh_data.txt";
     fmt = "ttl";
   }
 
@@ -718,7 +711,7 @@ function Download_exec()
 
     $( "#save-confirm" ).dialog({
       resizable: false,
-      height:180,
+      height:230,
       modal: true,
       buttons: {
         "OK": function() {
@@ -775,11 +768,7 @@ function save_data(fname, fmt)
       blob_data = [gData.posh.ttl_text];
     }
 
-    if (fmt === "ttl")
-      blob = new Blob(blob_data, {type: "text/turtle;charset=utf-8"});
-    else
-      blob = new Blob(blob_data, {type: "application/ld+json;charset=utf-8"});
-
+    blob = new Blob(blob_data, {type: "text/plain;charset=utf-8"});
     saveAs(blob, fname);    
 
   } catch(ex) {
@@ -892,13 +881,13 @@ function rest_exec() {
     return;
   }
 
-  var url = new Uri(doc_URL);
-  url.setQuery("");
+  var _url = new Uri(doc_URL);
+  _url.setQuery("");
 
   if (yasqe.obj) {
     var val = yasqe.obj.getValue();
     if (val && val.length > 0) 
-       url.addQueryParam("query", encodeURIComponent(val));
+       _url.addQueryParam("query", encodeURIComponent(val));
   }
 
   var rows = $('#restData>tr');
@@ -907,10 +896,10 @@ function rest_exec() {
     var h = r.find('#h').val();
     var v = r.find('#v').val();
     if (h.length>0)
-       url.addQueryParam(h, encodeURIComponent(v));
+       _url.addQueryParam(h, encodeURIComponent(v));
   }
 
-  window.open(url.toString());
+  Browser.openTab(_url.toString(), gData.tab_index);
 }
 
 

@@ -19,12 +19,33 @@
  */
 
 var Browser = {
-//    isFirefox:(!navigator.userAgent.match(/khtml/i) && !!navigator.userAgent.match(/Gecko/i)&& !!navigator.userAgent.match(/Firefox/i)),
-//    isWebKit:!!navigator.userAgent.match(/AppleWebKit/),
     isChromeAPI: true,
     isFirefoxSDK: false,
 
     isChromeWebExt: false,
     isFirefoxWebExt: true,
-    isEdgeWebExt: false
+    isEdgeWebExt: false,
+
+    api: null,
+
+    openTab : function(uri, tab_index) {
+      if (Browser.isEdgeWebExt) {
+        if (tab_index!==undefined) 
+          Browser.api.tabs.create({url:uri, index:tab_index+1 });
+        else
+          Browser.api.tabs.getCurrent(
+            function(tab) {
+              if (tab!==undefined)
+                Browser.api.tabs.create({url:uri, index:tab.index+1 });
+              else
+                Browser.api.tabs.create({url:uri});
+            }
+          )
+      }else
+        window.open(uri);
+    }
 }
+
+try {
+  Browser.api = (Browser.isChromeAPI && Browser.isChromeWebExt) ? chrome : browser;
+} catch(e) {}

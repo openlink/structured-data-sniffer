@@ -238,7 +238,7 @@ Handle_JSONLD.prototype = {
         else
           self.callback(null, null);
       } catch (ex) {
-        self.callback(ex.toString(), null);
+        handle_error(ex.toString());
       }
 
     } else {
