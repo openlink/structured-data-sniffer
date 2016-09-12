@@ -466,23 +466,33 @@ function check_Turtle_Nano(dData)
 {
   if (dData.t_nano.text!==null && dData.t_nano.text.length > 0)
   {
-    var handler = new Handle_Turtle();
-    var ns = new Namespace();
-    handler.ns_pref = ns.get_ns_desc();
-    handler.ns_pref_size = Object.keys(ns.ns_list).length;
-    handler.parse(dData.t_nano.text, dData.docURL, 
-      function(error, html_data) {
-        gData.t_nano.ttl_text = dData.t_nano.text;
-        if (error)
-          dData.turtle.error.push(error);
+    new Fix_Nano().parse(dData.t_nano.text, 
+      function(output){
+        dData.t_nano.text = output;
 
-        if (html_data)
-          dData.turtle.expanded = html_data;
+        if (dData.t_nano.text!==null && dData.t_nano.text.length > 0) {
+          var handler = new Handle_Turtle();
+          var ns = new Namespace();
+          handler.ns_pref = ns.get_ns_desc();
+          handler.ns_pref_size = Object.keys(ns.ns_list).length;
+          handler.parse(dData.t_nano.text, dData.docURL, 
+            function(error, html_data) {
+              gData.t_nano.ttl_text = dData.t_nano.text;
+              if (error)
+                dData.turtle.error.push(error);
 
-        if (handler.skipped_error.length>0)
-          dData.turtle.error = dData.turtle.error.concat(handler.skipped_error);
+              if (html_data)
+                dData.turtle.expanded = html_data;
 
-        check_POSH(dData);
+              if (handler.skipped_error.length>0)
+                dData.turtle.error = dData.turtle.error.concat(handler.skipped_error);
+
+              check_POSH(dData);
+          });
+        } 
+        else {
+          check_POSH(dData);
+        }
     });
   }
   else

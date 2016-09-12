@@ -18,6 +18,80 @@
  *
  */
 
+Fix_Nano = function (start_id) {
+  this.callback = null;
+  this._pos = 0;
+  this._output = null;
+  this.start_id = 0;
+  if (start_id!==undefined)
+    this.start_id = start_id;
+  this._tokens = 0;
+  this._bad_data = false;
+};
+
+Fix_Nano.prototype = {
+
+  parse : function(textData, callback) {
+    this.callback = callback;
+    var self = this;
+
+    if (this._pos < textData.length) {
+      var lexer = N3.Lexer({ lineMode: false });
+      try {
+        var ttl_data = textData[self._pos];
+
+        lexer.tokenize(ttl_data, function (error, token) {
+          if (token && self._tokens ==0 && 
+              !(token.type==="IRI" 
+                || token.type==="abbreviation" 
+                || token.type==="prefixed"
+                || token.type==="prefix"
+                || token.type==="PREFIX"
+                || token.type[0]==="@"
+               ))
+            self._bad_data = true;
+          if (token && self._tokens ==1 && 
+              !(token.type==="IRI" 
+                || token.type==="abbreviation" 
+                || token.type==="prefixed"
+                || token.type==="prefix"
+                || token.type==="PREFIX"
+                || token.type===","
+                || token.type===";"
+               ))
+            self._bad_data = true;
+
+          if (token && !error && !self._bad_data) {
+            self._tokens++;
+            if (self._tokens==3) {
+              if (self._output === null)
+                self._output = [];
+              self._output.push(textData[self._pos]);
+            }
+          }
+          
+          if (error || (token && token.type==="eof")) {
+            self._pos++;
+            self._tokens = 0;
+            self._bad_data = false;
+            if (self._pos < textData.length)
+               self.parse(textData, self.callback);
+            else
+               self.callback(self._output);
+          }
+        });
+
+      } catch (ex) {
+        self.callback(null);
+      }
+    } else {
+        self.callback(self._output);
+    }
+
+  },
+}
+
+
 
 Handle_Microdata = function () {
   this.callback = null;
