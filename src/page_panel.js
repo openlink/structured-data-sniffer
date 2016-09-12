@@ -60,6 +60,10 @@ $(document).ready(function()
     $('#prefs_btn').click(Prefs_exec);
   }
 
+  $('#tabs a[href=#src]').click(function(){
+      selectTab(prevSelectedTab);
+      return false;
+  });
   $('#tabs a[href=#cons]').click(function(){
       selectTab(prevSelectedTab);
       return false;
@@ -112,17 +116,21 @@ $(document).ready(function()
   });
   $('#rest_add').click(addRestEmpty);
 
+  $('#src_exit').click(function(){
+      selectTab(prevSelectedTab);
+      return false;
+  });
 
   selectTab('#micro');
 
   if (Browser.isFirefoxSDK) 
   {
-    jQuery('#ext_ver').text('ver: '+ self.options.ver);
+//--    jQuery('#ext_ver').text('ver: '+ self.options.ver);
     load_data_from_url(null, self.options.url, self.options.type);
   }
   else 
   {
-    jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
+//--    jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
     load_data_from_url(document.location);
   }
 
@@ -190,7 +198,7 @@ function load_data_from_url(loc, uri, ctype)
        start_parse_data(data, type, url);
     }, "text").fail(function(msg) {
        alert("Could not load data from: "+url);
-    });;
+    });
 }
 
 
@@ -248,12 +256,14 @@ function selectTab(tab)
     }
   }
 
+  updateTab('#src', selectedTab);
   updateTab('#cons', selectedTab);
   updateTab('#micro', selectedTab);
   updateTab('#jsonld', selectedTab);
   updateTab('#turtle', selectedTab);
   updateTab('#rdfa', selectedTab);
   updateTab('#posh', selectedTab);
+  $('#tabs a[href=#src]').hide();
   $('#tabs a[href=#cons]').hide();
 }
 
@@ -394,16 +404,33 @@ function Prefs_exec()
 
 function Download_exec() 
 {
-  var isFileSaverSupported = false;
+  $('#save-action').change(function() {
+    var cmd = $('#save-action option:selected').attr('id');
+    if (cmd==='filesave')
+      $('#save-file').show();
+    else
+      $('#save-file').hide();
+  });
 
+  var cmd = $('#save-action option:selected').attr('id');
+  if (cmd==="filesave")
+      $('#save-file').show();
+    else
+      $('#save-file').hide();
+
+  
+  var isFileSaverSupported = false;
   try {
     isFileSaverSupported = !!new Blob;
   } catch (e) {}
 
   if (!isFileSaverSupported) {
-    showInfo("FileSaver isn't supported");
-    return false;
+    $('#save-action').prop('disabled', true);
   }
+
+  if (Browser.isEdgeWebExt)
+    $('#save-action').prop('disabled', true);
+
 
   var filename = null;
   var fmt = "json";
@@ -419,7 +446,7 @@ function Download_exec()
 
 
   if (filename!==null) {
-    $('#save-file').val(filename); 
+    $('#save-filename').val(filename); 
     $('#'+fmt,'#save-fmt').attr('selected','selected');
     $('#save-fmt').prop('disabled', true);
 
@@ -429,8 +456,9 @@ function Download_exec()
       modal: true,
       buttons: {
         "OK": function() {
-          var fname = $('#save-file').val().trim();
-          save_data(fname, fmt);
+          var action = $('#save-action option:selected').attr('id');
+          var fname = $('#save-filename').val().trim();
+          save_data(action, fname, fmt);
           $(this).dialog( "close" );
         },
         Cancel: function() {
@@ -439,7 +467,7 @@ function Download_exec()
       }
     });
   } else {
-    showInfo("No data for saving");
+//    showInfo("No data for saving");
     return false;
   }
 
@@ -447,11 +475,17 @@ function Download_exec()
 }
 
 
-function save_data(fname, fmt) 
+function save_data(action, fname, fmt) 
 {
   try{
-    var blob = new Blob([gData.text], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, fname);    
+    if (action==="filesave") {
+      var blob = new Blob([gData.text], {type: "text/plain;charset=utf-8"});
+      saveAs(blob, fname);    
+
+    } else {
+      selectTab("#src");
+      $("#src_place").val(gData.text); 
+    }
 
   } catch(ex) {
     showInfo(ex);
@@ -462,8 +496,8 @@ function save_data(fname, fmt)
 
 function showInfo(msg)
 {
-  $('#alert-msg').prop('textContent',msg); 
-  $( "#alert-dlg" ).dialog({
+  $("#alert-msg").prop("textContent",msg); 
+  $("#alert-dlg" ).dialog({
     resizable: false,
     height:180,
     modal: true,

@@ -62,6 +62,10 @@ $(document).ready(function()
     $('#prefs_btn').click(Prefs_exec);
   }
 
+  $('#tabs a[href=#src]').click(function(){
+      selectTab(prevSelectedTab);
+      return false;
+  });
   $('#tabs a[href=#cons]').click(function(){
       selectTab(prevSelectedTab);
       return false;
@@ -114,6 +118,10 @@ $(document).ready(function()
   });
   $('#rest_add').click(addRestEmpty);
 
+  $('#src_exit').click(function(){
+      selectTab(prevSelectedTab);
+      return false;
+  });
 
   selectTab('#micro');
 
@@ -191,12 +199,14 @@ function selectTab(tab)
     }
   }
 
+  updateTab('#src', selectedTab);
   updateTab('#cons', selectedTab);
   updateTab('#micro', selectedTab);
   updateTab('#jsonld', selectedTab);
   updateTab('#turtle', selectedTab);
   updateTab('#rdfa', selectedTab);
   updateTab('#posh', selectedTab);
+  $('#tabs a[href=#src]').hide();
   $('#tabs a[href=#cons]').hide();
 }
 
@@ -378,8 +388,6 @@ function check_Microdata(dData)
 
 
 
-/**??todo
-**/
 function check_JSON_LD(dData) 
 {
   if (dData.jsonld.text!==null && dData.jsonld.text.length > 0)
@@ -601,14 +609,10 @@ else
       if (request.property == "status")
       {
         var show_action = request.data_exists;
-//        Browser.api.pageAction.show(sender.tab.id);
-/**/
         if (show_action)
           Browser.api.pageAction.show(sender.tab.id);
         else
           Browser.api.pageAction.hide(sender.tab.id);
-/**/
-
       } 
       else if (request.property == "doc_data")
       {
@@ -678,21 +682,37 @@ function Prefs_exec()
 
 function Download_exec() 
 {
-  var isFileSaverSupported = false;
+  $('#save-action').change(function() {
+    var cmd = $('#save-action option:selected').attr('id');
+    if (cmd==='filesave')
+      $('#save-file').show();
+    else
+      $('#save-file').hide();
+  });
 
+  var cmd = $('#save-action option:selected').attr('id');
+  if (cmd==="filesave")
+      $('#save-file').show();
+    else
+      $('#save-file').hide();
+  
+  
+  var isFileSaverSupported = false;
   try {
     isFileSaverSupported = !!new Blob;
   } catch (e) {}
 
   if (!isFileSaverSupported) {
-    showInfo("FileSaver isn't supported");
-    return false;
+    $('#save-action').prop('disabled', true);
   }
+
+  if (Browser.isEdgeWebExt)
+    $('#save-action').prop('disabled', true);
 
   var filename = null;
   var fmt = "json";
 
-  if (selectedTab==="#jsonld" && gData.jsonld.json_text!==null) {
+  if (selectedTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.j_nano.json_text!==null)) {
     filename = "jsonld_data.txt";
     fmt = "json";
   }
@@ -715,7 +735,7 @@ function Download_exec()
 
 
   if (filename!==null) {
-    $('#save-file').val(filename); 
+    $('#save-filename').val(filename); 
     $('#'+fmt,'#save-fmt').attr('selected','selected');
     $('#save-fmt').prop('disabled', true);
 
@@ -725,8 +745,9 @@ function Download_exec()
       modal: true,
       buttons: {
         "OK": function() {
-          var fname = $('#save-file').val().trim();
-          save_data(fname, fmt);
+          var action = $('#save-action option:selected').attr('id');
+          var fname = $('#save-filename').val().trim();
+          save_data(action, fname, fmt);
           $(this).dialog( "close" );
         },
         Cancel: function() {
@@ -735,7 +756,7 @@ function Download_exec()
       }
     });
   } else {
-    showInfo("No data for saving");
+//    showInfo("No data for saving");
     return false;
   }
 
@@ -743,43 +764,68 @@ function Download_exec()
 }
 
 
-function save_data(fname, fmt) 
+function save_data(action, fname, fmt) 
 {
+  function txt_from(data) 
+  {
+    if ($.isArray(data)) {
+      var ret = "";
+      for(var i=0; i < data.length; i++)
+        ret += data+"\n";
+      return ret;
+    }
+    else
+      return data;
+  }
+
+
   try{
     var blob = null;
-    var blob_data = null;
+    var txt_data = "";
 
-    if (selectedTab==="#jsonld" && gData.jsonld.json_text!==null) {
+    if (selectedTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.j_nano.json_text!==null)) {
       fmt = "json";
-      blob_data = gData.jsonld.json_text;
+
+      if (gData.jsonld.json_text!==null)
+        txt_data = txt_from(gData.jsonld.json_text);
+
       if (gData.j_nano.json_text!==null) {
-        blob_data = blob_data==null?[]:blob_data;
-        blob_data.push(gData.j_nano.json_text);
+        if (txt_data.length > 0)
+          txt_data += "\n";
+        txt_data += txt_from(gData.j_nano.json_text);
       }
     }
     else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.t_nano.ttl_text!==null)) {
       fmt = "ttl";
-      blob_data = gData.turtle.ttl_text;
+      if (gData.turtle.ttl_text!==null)
+        txt_data = txt_from(gData.turtle.ttl_text);
+
       if (gData.t_nano.ttl_text!==null) {
-        blob_data = blob_data==null?[]:blob_data;
-        blob_data.push(gData.t_nano.ttl_text);
+        if (txt_data.length > 0)
+          txt_data += "\n";
+        txt_data += txt_from(gData.t_nano.ttl_text);
       }
     }
     else if (selectedTab==="#micro" && gData.micro.json_text!==null) {
       fmt = "json";
-      blob_data = gData.micro.json_text;
+      txt_data = txt_from(gData.micro.json_text);
     }
     else if (selectedTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
       fmt = "ttl";
-      blob_data = gData.rdfa.ttl_text;
+      txt_data = txt_from(gData.rdfa.ttl_text);
     }
     else if (selectedTab==="#posh" && gData.posh.ttl_text!==null) {
       fmt = "ttl";
-      blob_data = [gData.posh.ttl_text];
+      txt_data = txt_from(gData.posh.ttl_text);
     }
 
-    blob = new Blob(blob_data, {type: "text/plain;charset=utf-8"});
-    saveAs(blob, fname);    
+    if (action==="filesave") {
+      blob = new Blob([txt_data], {type: "text/plain;charset=utf-8"});
+      saveAs(blob, fname);    
+    } else {
+      selectTab("#src");
+      $("#src_place").val(txt_data); 
+    }
 
   } catch(ex) {
     showInfo(ex);
@@ -790,8 +836,8 @@ function save_data(fname, fmt)
 
 function showInfo(msg)
 {
-  $('#alert-msg').prop('textContent',msg); 
-  $( "#alert-dlg" ).dialog({
+  $("#alert-msg").prop("textContent",msg); 
+  $("#alert-dlg" ).dialog({
     resizable: false,
     height:180,
     modal: true,
