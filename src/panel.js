@@ -796,7 +796,7 @@ function save_data(action, fname, fmt)
     if ($.isArray(data)) {
       var ret = "";
       for(var i=0; i < data.length; i++)
-        ret += data+"\n";
+        ret += data[i]+"\n";
       return ret;
     }
     else
