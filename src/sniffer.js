@@ -65,6 +65,8 @@ function fix_Nano_data(str) {
        .replace(/\xc3\xa2\xc2\x80\xc2\x9c/g, '"')  //smart->sensible quote replacement, wider encoding
        .replace(/\xc3\xa2\xc2\x80\xc2\x9d/g, '"')  //smart->sensible quote replacement, wider encoding
        .replace(/\u00a0/g," ")   //&nbsp
+       .replace(/\u009d/g," ")   //&nbsp
+       .replace(/\u0080/g," ")   //&nbsp
        .replace(/\u201A/g,"'")
        .replace(/\u2018/g,"'")
        .replace(/\u2019/g,"'")
