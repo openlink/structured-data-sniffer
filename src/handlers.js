@@ -106,7 +106,7 @@ Handle_Microdata.prototype = {
       var conv = new MicrodataJSON_Converter();
       var out_data = conv.transform(jsonData, docURL);
 
-      var html_data = new HTML_Gen().load(out_data);
+      var html_data = new HTML_Gen(docURL).load(out_data);
       self.callback(null, html_data);
     } 
     catch (ex) {
@@ -188,7 +188,7 @@ Handle_Turtle.prototype = {
               
               var triples = store.output;
 
-              var html_str =  new HTML_Gen().load(triples, self.start_id);
+              var html_str =  new HTML_Gen(docURL).load(triples, self.start_id);
               self._output += (html_str==null?"":html_str);
               self._pos++;
 
@@ -332,12 +332,12 @@ Handle_RDFa = function () {
 
 Handle_RDFa.prototype = {
 
-  parse : function(data, callback) {
+  parse : function(data, docURL, callback) {
     this.callback = callback;
 
     var self = this;
     try {
-      var str = new HTML_Gen().load(data);
+      var str = new HTML_Gen(docURL).load(data);
       self.callback(null, str);
     } catch (ex) {
       self.callback(ex.toString(), null);

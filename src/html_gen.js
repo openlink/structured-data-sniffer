@@ -19,12 +19,13 @@
  */
   
 
-  HTML_Gen = function() {
+  HTML_Gen = function(_docURI) {
     this.ns = new Namespace();
     this.uimode = "";
     this.SubjName = "Subject";
     this.PredName = "Predicate";
     this.ObjName  = "Object";
+    this.docURI = _docURI;
   };
 
   HTML_Gen.prototype = {
@@ -168,9 +169,17 @@
          return "";
        }
        else {
+         // for scroll between entities on page
+         var href = String(value);
+         var anc = "";
+         if (this.docURI && href.match(/^http(s)?:\/\//) && this.check_URI(href)) {
+           var hashPos = href.lastIndexOf("#");
+           if (hashPos!=-1 && hashPos!=href.length-1)
+             anc = '<a name="'+href.substr(hashPos+1)+'"/>';           
+         }
          var pref = this.ns.has_known_ns(value);
          var sval = (pref!=null) ? this.pref_link(value, pref) : this.check_link(value);
-         return "<tr class='major data_row'><td>"+this.SubjName+"</td><td>" + sval + "</td></tr>";
+         return "<tr class='major data_row'><td>"+anc+this.SubjName+"</td><td>" + sval + "</td></tr>";
        }
     },
 
@@ -209,6 +218,13 @@
 
     is_BNode : function (str) {
         return (str.lastIndexOf("_:", 0) === 0 || str.lastIndexOf("nodeID://", 0) === 0 || str.lastIndexOf("nodeid://", 0) === 0);
+    },
+
+    check_URI : function(uri) {
+      if (this.docURI[this.docURI.length-1]==="#")
+        return uri.lastIndexOf(this.docURI,0) === 0;
+      else
+        return uri.lastIndexOf(this.docURI+'#',0) === 0;
     },
 
   }

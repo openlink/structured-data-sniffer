@@ -152,11 +152,35 @@ $('a').live('click', function(e) {
 });
 **/
 $(document).on('click', 'a', function(e) {
-  var url = new Uri(document.baseURI).setAnchor("");
+  function check_URI(uri) {
+    if (doc_URL[doc_URL.length-1]==="#")
+      return uri.lastIndexOf(doc_URL,0) === 0;
+    else
+      return uri.lastIndexOf(doc_URL+'#',0) === 0;
+  }
+  
+  
+  var hashName = null;
   var href = e.currentTarget.href;
+  var hashPos = href.lastIndexOf('#'); 
+
+  if (hashPos!=-1 && hashPos!=href.length-1)
+    hashName = href.substring(hashPos+1);
+
+  var url = new Uri(document.baseURI).setAnchor("");
   if (href.lastIndexOf(url+"#sc", 0) === 0) {
     return true;
-  } else {
+  } 
+  else if (check_URI(href) && hashName) {
+    var el = $('a[name = "'+hashName+'"]');
+    if (el.length > 0)
+      el[0].scrollIntoView();
+    return false;
+  }
+  else if (href === doc_URL) {
+    return false;
+  }
+  else {
     Browser.openTab(href);
     return false;
   }
