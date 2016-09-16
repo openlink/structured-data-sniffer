@@ -83,48 +83,98 @@ function fix_Nano_data(str) {
 }
 
 
+function sniff_frames(doc_Texts, frames)
+{
+  for(var i=0; i<frames.length; i++) {
+    var win = frames[i];
+    var txt = null;
+
+    try {
+      txt = win.document.body.innerText;
+    } catch(e) {}
+
+    if (txt === undefined || (txt && txt.length==0))
+      txt = getSelectionString(win.document.body, win);
+
+    if (txt && txt.length > 0)
+      doc_Texts.push(txt);
+
+    if (frames[i].frames.length > 0)
+      sniff_frames(doc_Texts, frames[i].frames);
+  }
+}
+
+
+
 function sniff_nanotation() {
+  var doc_Texts = [];
   var t_ret = [];
   var j_ret = [];
-  var doc_Text = document.body.innerText;
 
-  if (doc_Text === undefined || (doc_Text!==null && doc_Text.length==0))
-    doc_Text = getSelectionString(document.body);
+  var txt = document.body.innerText;
 
-  if (doc_Text) {
-    //drop commetns
-    var s_split = doc_Text.split(/[\r\n]/);
-    var s_doc = "";
-    var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
-    var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
-    var p2 = /^ *#/;
+  if (txt === undefined || (txt && txt.length==0))
+    txt = getSelectionString(document.body, window);
 
-    s_split.forEach(function(item, i, arr){
-      if (item.length>0 && (!p2.test(item) || p1.test(item) || p3.test(item)))
-        s_doc += item +"\n";
-    });
+  if (txt && txt.length > 0)
+    doc_Texts.push(txt);
 
-    while(true) {
-      var ndata = t_nano_pattern.exec(s_doc);
-      if (ndata==null)
-        break;
+  if (window.frames.length > 0)
+      sniff_frames(doc_Texts, window.frames);
 
-      var str = ndata[4];
-      str = fix_Nano_data(str);
-      if (str.length>0)
-        t_ret.push(str);
-    }
-    while(true) {
-      var ndata = j_nano_pattern.exec(s_doc);
-      if (ndata==null)
-        break;
+  for(var i=0; i<doc_Texts.length; i++) {
 
-      var str = ndata[2];
-      str = fix_Nano_data(str);
-      if (str.length>0)
-        j_ret.push(str);
+    txt = doc_Texts[i];
+    if (txt) {
+      //drop commetns
+      var s_split = txt.split(/[\r\n]/);
+      var s_doc = "";
+      var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
+      var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
+      var p2 = /^ *#/;
+
+      s_split.forEach(function(item, i, arr){
+        if (item.length>0 && (!p2.test(item) || p1.test(item) || p3.test(item)))
+          s_doc += item +"\n";
+      });
+
+      //try get Turtle Nano
+      while(true) {
+        var ndata = t_nano_pattern.exec(s_doc);
+        if (ndata==null)
+          break;
+
+        var str = ndata[4];
+        str = fix_Nano_data(str);
+        if (str.length>0)
+          t_ret.push(str);
+      }
+
+      //try get JSON-LD Nano
+      while(true) {
+        var ndata = j_nano_pattern.exec(s_doc);
+        if (ndata==null)
+          break;
+
+        var str = ndata[2];
+        str = fix_Nano_data(str);
+        if (str.length>0) {
+          var add = false;
+          for(var c=0; c<str.length; c++) {
+            add = str[c]==="{" ? true:false;
+            if (add)
+              break;
+            if (str[c]!==" ")
+              break;
+          }
+          
+          if (add)
+            j_ret.push(str);
+        }
+      }
     }
   }
+
 
   if (t_ret.length > 0 || j_ret.length > 0)
     return {t:t_ret, j:j_ret};
@@ -317,7 +367,7 @@ window.onload = function() {
     }
 
 
-    function requested_doc_data()
+    function request_doc_data()
     {
         sniff_Data();
         send_doc_data();
@@ -428,14 +478,14 @@ window.onload = function() {
     if (Browser.isFirefoxSDK) 
     {
         self.port.on("doc_data", function(msg) {
-          requested_doc_data()
+          request_doc_data()
         });
     }
     else 
     {
         Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse) {
           if (request.property == "doc_data") 
-            requested_doc_data();
+            request_doc_data();
           else
             sendResponse({});  /* stop */
         });
