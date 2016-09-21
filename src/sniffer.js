@@ -91,9 +91,11 @@ function sniff_frames(doc_Texts, frames)
 
     try {
       txt = win.document.body.innerText;
-    } catch(e) {}
+    } catch(e) {
+      console.log(e);
+    }
 
-    if (txt === undefined || (txt && txt.length==0))
+    if (txt === undefined || (txt!==null && txt.length==0))
       txt = getSelectionString(win.document.body, win);
 
     if (txt && txt.length > 0)
@@ -111,9 +113,20 @@ function sniff_nanotation() {
   var t_ret = [];
   var j_ret = [];
 
+  function isWhitespace(c){
+    var cc = c.charCodeAt(0);
+    if ( ( cc >= 0x0009 && cc <= 0x000D ) ||
+        ( cc == 0x0020 ) ||
+        ( cc == 0x0085 ) ||
+        ( cc == 0x00A0 ) ){
+        return true ;
+    }
+    return false ;
+  }
+
   var txt = document.body.innerText;
 
-  if (txt === undefined || (txt && txt.length==0))
+  if (txt === undefined || (txt!==null && txt.length==0))
     txt = getSelectionString(document.body, window);
 
   if (txt && txt.length > 0)
@@ -127,7 +140,9 @@ function sniff_nanotation() {
     txt = doc_Texts[i];
     if (txt) {
       //drop commetns
-      var s_split = txt.split(/[\r\n]/);
+      var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
+//      var s_split = txt.split(/[\r\n]/);
+      var s_split = txt.split(eoln);
       var s_doc = "";
       var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
       var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
@@ -164,7 +179,7 @@ function sniff_nanotation() {
             add = str[c]==="{" ? true:false;
             if (add)
               break;
-            if (str[c]!==" ")
+            if (!isWhitespace(str[c]))
               break;
           }
           

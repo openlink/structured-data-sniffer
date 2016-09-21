@@ -472,7 +472,6 @@ function Download_exec()
   if (filename!==null) {
     $('#save-filename').val(filename); 
     $('#'+fmt,'#save-fmt').attr('selected','selected');
-    $('#save-fmt').prop('disabled', true);
 
     $( "#save-confirm" ).dialog({
       resizable: false,
@@ -481,6 +480,7 @@ function Download_exec()
       buttons: {
         "OK": function() {
           var action = $('#save-action option:selected').attr('id');
+          var fmt = $('#save-fmt option:selected').attr('id');
           var fname = $('#save-filename').val().trim();
           save_data(action, fname, fmt);
           $(this).dialog( "close" );
@@ -501,6 +501,84 @@ function Download_exec()
 
 function save_data(action, fname, fmt) 
 {
+  function txt_from(data, error, skipped_error) 
+  {
+    var outdata = [];
+
+    if (data) {
+      if ($.isArray(data))
+        outdata = outdata.concat(data);
+      else
+        outdata.push(data);
+    }
+
+    if (error)
+      outdata.push("\n"+error);
+
+    if (skipped_error) {
+      outdata.push("\n");
+      outdata = outdata.concat(skipped_error);
+    }
+
+    var ret = "";
+    for(var i=0; i < outdata.length; i++)
+      ret += outdata[i]+"\n\n";
+    return ret;
+  }
+
+  function exec_action(action, txt_data) 
+  {
+    if (action==="filesave") {
+      blob = new Blob([txt_data], {type: "text/plain;charset=utf-8"});
+      saveAs(blob, fname);    
+    } else {
+      selectTab("#src");
+      $("#src_place").val(txt_data); 
+    }
+  }
+  
+
+  try{
+    var data = [];
+    var src_fmt = null;
+
+    if (gData.type==="jsonld" && gData.text!==null) {
+      src_fmt = "json";
+      data = data.concat(gData.text);
+    }
+    else if (gData.type==="turtle" && gData.text!==null) {
+      src_fmt = "ttl";
+      data = data.concat(gData.text);
+    }
+    else
+      return;
+
+    if (src_fmt!==fmt) 
+    {
+      if (src_fmt==="ttl") {
+        var handler = new Convert_Turtle2JSON();
+        handler.parse(data, doc_URL,
+          function(error, json_data) {
+            exec_action(action, txt_from(json_data, error, handler.skipped_error));
+          });
+      }
+      else {
+        var handler = new Handle_JSONLD(true);
+        handler.parse(data, doc_URL, 
+          function(error, json_data) 
+          {
+            exec_action(action, txt_from(json_data, error, handler.skipped_error));
+          });
+      }
+    } else {
+      exec_action(action, txt_from(data));
+    }
+
+  } catch(ex) {
+    showInfo(ex);
+  }
+
+/***
   try{
     if (action==="filesave") {
       var blob = new Blob([gData.text], {type: "text/plain;charset=utf-8"});
@@ -514,7 +592,7 @@ function save_data(action, fname, fmt)
   } catch(ex) {
     showInfo(ex);
   }
-
+***/
 }
 
 

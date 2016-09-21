@@ -116,6 +116,8 @@ function createSniffPanel()
 		      "./browser_ff.js",
 		      "./settings.js",
 		      "./handlers.js",
+                      "./converters.js",
+                      "./ttl_gen.js",
 		      "./html_gen.js",
 		      "./panel.js"
       		     ],
@@ -186,6 +188,8 @@ function createHandlerPanel(_uri, _type)
 		      "./settings.js",
 		      "./page_panel.js",
 		      "./handlers.js",
+                      "./converters.js",
+                      "./ttl_gen.js",
 		      "./html_gen.js"
       		     ],
             contentScriptOptions : { ver: self.version,
