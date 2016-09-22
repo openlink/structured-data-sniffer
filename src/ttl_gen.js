@@ -90,16 +90,16 @@
               var pref = self.ns.has_known_ns(obj.type);
               if (pref!=null) {
                 self.prefixes[pref.ns]=pref.link;
-                obj_str = self.check_link(v) +"^^"+self.pref_link(obj.type, pref);
+                obj_str = self.obj_value(v) +"^^"+self.pref_link(obj.type, pref);
               }
               else
-                obj_str = self.check_link(v) +"^^<"+obj.type+">";
+                obj_str = self.obj_value(v) +"^^<"+obj.type+">";
             }
             else if (obj.lang){
-              obj_str = self.check_link(v)+'@'+obj.lang;
+              obj_str = self.obj_value(v)+'@'+obj.lang;
             } 
             else {
-              obj_str = self.check_link(v);
+              obj_str = self.obj_value(v);
             }
           }
           ret.push(pred_str +" "+obj_str);
@@ -138,6 +138,12 @@
         val = '"'+this.pre(val)+'"';
       }
       return val;
+    },
+
+    obj_value : function (val) 
+    {
+      val = String(val);
+      return '"'+this.pre(val)+'"';
     },
 
     pref_link : function (val, pref) 
