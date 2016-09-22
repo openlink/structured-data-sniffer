@@ -61,15 +61,15 @@ Fix_Nano.prototype = {
                ))
             self._bad_data = true;
 
-          if (token && !error && !self._bad_data) {
-            self._tokens++;
-            if (self._tokens==3) {
+          if (self._tokens==2 && !self._bad_data) {
               if (self._output === null)
                 self._output = [];
               self._output.push(textData[self._pos]);
-            }
           }
-          
+
+          if (token && !error && !self._bad_data)
+            self._tokens++;
+
           if (error || (token && token.type==="eof")) {
             self._pos++;
             self._tokens = 0;
