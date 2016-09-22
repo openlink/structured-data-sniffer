@@ -19,6 +19,8 @@
  */
 
 
+var isTop = true;
+var _osds_frames = {};
 var $ = jQuery;
 var micro_items = 0;
 var json_ld_Text = null;
@@ -67,6 +69,16 @@ function fix_Nano_data(str) {
        .replace(/\u00a0/g," ")   //&nbsp
        .replace(/\u009d/g," ")   //&nbsp
        .replace(/\u0080/g," ")   //&nbsp
+
+       .replace(/\u202F/g," ")   // NARROW NO-BREAK SPACE
+       .replace(/\u2009/g," ")   // thin space
+       .replace(/\u2007/g," ")   // FIGURE SPACE
+
+       .replace(/\u200B/g,"")   //ZERO WIDTH SPACE
+       .replace(/\u200D/g,"")   // WORD-JOINER
+       .replace(/\u200C/g,"")   // ZERO WIDTH NON-JOINER 
+       .replace(/\uFEFF/g,"")   // zero width no-break space Unicode code point
+
        .replace(/\u201A/g,"'")
        .replace(/\u2018/g,"'")
        .replace(/\u2019/g,"'")
@@ -83,16 +95,17 @@ function fix_Nano_data(str) {
 }
 
 
-function sniff_frames(doc_Texts, frames)
+function sniff_frames(doc_Texts, frames, id)
 {
   for(var i=0; i<frames.length; i++) {
     var win = frames[i];
     var txt = null;
+    var frame_id = id+"_"+i;
 
     try {
       txt = win.document.body.innerText;
     } catch(e) {
-      console.log(e);
+      txt = _osds_frames[frame_id];
     }
 
     if (txt === undefined || (txt!==null && txt.length==0))
@@ -102,7 +115,27 @@ function sniff_frames(doc_Texts, frames)
       doc_Texts.push(txt);
 
     if (frames[i].frames.length > 0)
-      sniff_frames(doc_Texts, frames[i].frames);
+      sniff_frames(doc_Texts, frames[i].frames, frame_id);
+  }
+}
+
+
+function scan_frames() {
+  if (window.frames.length > 0) {
+     window._osds_frames = {};
+     scan_iframes(window.frames, "f");
+  }
+}
+
+function scan_iframes(frames, id) {
+  for(var i=0; i < frames.length; i++) {
+    var win = frames[i];
+    var frame_id = id+"_"+i;
+
+    win.postMessage('osds:{"sniff":true, "frame":"'+frame_id+'"}', "*");
+
+    if (win.frames.length > 0)
+      scan_iframes(win.frames, frame_id);
   }
 }
 
@@ -133,7 +166,7 @@ function sniff_nanotation() {
     doc_Texts.push(txt);
 
   if (window.frames.length > 0)
-      sniff_frames(doc_Texts, window.frames);
+      sniff_frames(doc_Texts, window.frames, "f");
 
   for(var i=0; i<doc_Texts.length; i++) {
 
@@ -201,6 +234,7 @@ function sniff_nanotation() {
 function is_data_exist() {
   try {
 
+    scan_frames();
     data_found = false;
 
     var items = $('[itemscope]').not($('[itemscope] [itemscope]'));
@@ -295,15 +329,6 @@ function is_data_exist() {
 function sniff_Data() {
   try {
 
-    if (t_nano_Text===null && j_nano_Text===null) {
-      var ret = sniff_nanotation();
-      if (ret) {
-        t_nano_Text = (ret.t.length>0)?ret.t:null;
-        j_nano_Text = (ret.j.length>0)?ret.j:null;
-        data_found = true;
-      }
-    }
-
     micro_items = $('[itemscope]').not($('[itemscope] [itemscope]'));
 
     if (posh_Text===null) {
@@ -354,6 +379,14 @@ function sniff_Data() {
         }
     }
 
+    t_nano_Text===null;
+    j_nano_Text===null;
+    var ret = sniff_nanotation();
+    if (ret) {
+      t_nano_Text = (ret.t.length>0)?ret.t:null;
+      j_nano_Text = (ret.j.length>0)?ret.j:null;
+    }
+
   } catch (e) {
     console.log("OSDS:"+e);
   }
@@ -362,11 +395,10 @@ function sniff_Data() {
 
 
 
-
-
 window.onload = function() {
 
   try {
+
 
     is_data_exist();
     if (!data_found) {
@@ -384,8 +416,14 @@ window.onload = function() {
 
     function request_doc_data()
     {
-        sniff_Data();
-        send_doc_data();
+        scan_frames();
+
+        function prepared_data() {
+          sniff_Data();
+          send_doc_data();
+        }
+
+        setTimeout(prepared_data, 500);
     }
 
 
