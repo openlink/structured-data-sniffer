@@ -19,8 +19,9 @@
  */
 
 
-var isTop = true;
-var _osds_frames = {};
+window._osds_isTop = true;
+window._osds_frames = {};
+
 var $ = jQuery;
 var micro_items = 0;
 var json_ld_Text = null;
@@ -33,6 +34,7 @@ var data_found = false;
 
 var t_nano_pattern =/(\{|(## (Nanotation|Turtle) +Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) +(End|Stop) ##)|\})(.*)/gmi;
 var j_nano_pattern =/(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
+
 
 
 function getSelectionString(el, win) {
@@ -91,40 +93,45 @@ function fix_Nano_data(str) {
        .replace(/\u00AB/g,'"');
 //       .replace(/\u8629/g,' ')
 //       .replace(/\u2026/g,'...');
+
     return str;
 }
 
 
 function sniff_frames(doc_Texts, frames, id)
 {
-  for(var i=0; i<frames.length; i++) {
-    var win = frames[i];
-    var txt = null;
-    var frame_id = id+"_"+i;
+  try {
+    for(var i=0; i<frames.length; i++) {
+      var win = frames[i];
+      var txt = null;
+      var frame_id = id+"_"+i;
 
-    try {
-      txt = win.document.body.innerText;
-    } catch(e) {
-      txt = _osds_frames[frame_id];
+      try {
+        txt = win.document.body.innerText;
+      } catch(e) {
+        txt = window._osds_frames[frame_id];
+      }
+
+      if (txt === undefined || (txt!==null && txt.length==0))
+        txt = getSelectionString(win.document.body, win);
+
+      if (txt && txt.length > 0)
+        doc_Texts.push(txt);
+
+      if (frames[i].frames.length > 0)
+        sniff_frames(doc_Texts, frames[i].frames, frame_id);
     }
-
-    if (txt === undefined || (txt!==null && txt.length==0))
-      txt = getSelectionString(win.document.body, win);
-
-    if (txt && txt.length > 0)
-      doc_Texts.push(txt);
-
-    if (frames[i].frames.length > 0)
-      sniff_frames(doc_Texts, frames[i].frames, frame_id);
-  }
+  } catch(e) {}
 }
 
 
 function scan_frames() {
-  if (window.frames.length > 0) {
-     window._osds_frames = {};
-     scan_iframes(window.frames, "f");
-  }
+  try {
+    if (window.frames.length > 0) {
+       window._osds_frames = {};
+       scan_iframes(window.frames, "f");
+    }
+  } catch(e) {}
 }
 
 function scan_iframes(frames, id) {
@@ -174,7 +181,6 @@ function sniff_nanotation() {
     if (txt) {
       //drop commetns
       var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
-//      var s_split = txt.split(/[\r\n]/);
       var s_split = txt.split(eoln);
       var s_doc = "";
       var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
@@ -398,7 +404,6 @@ function sniff_Data() {
 window.onload = function() {
 
   try {
-
 
     is_data_exist();
     if (!data_found) {

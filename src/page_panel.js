@@ -43,6 +43,9 @@ var yasqe = {
 
 $(document).ready(function() 
 {
+  if (Browser.isFirefoxWebExt)
+      $("#src_place").css("white-space","pre"); 
+
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
 

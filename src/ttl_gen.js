@@ -154,7 +154,10 @@
       if (data[len-1]==="/") 
         data = data.substr(0, data.length-1);
 
-      return pref.ns+":"+this.pre(data);
+      if (data.indexOf("/")!==-1)
+        return "<"+val+">";
+      else
+        return pref.ns+":"+this.pre(data);
     },
 
     pre : function (value) 

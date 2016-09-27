@@ -45,6 +45,9 @@ var yasqe = {
 
 $(document).ready(function() 
 {
+  if (Browser.isFirefoxWebExt)
+      $("#src_place").css("white-space","pre"); 
+
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
 
@@ -609,6 +612,12 @@ function parse_Data(dData)
 
 
 
+if (Browser.isFirefoxWebExt) {
+  try {
+    Browser.api.browserAction.disable();
+  } catch(e) {}
+}
+
 
 if (Browser.isFirefoxSDK) 
 {
@@ -631,10 +640,18 @@ else
       if (request.property == "status")
       {
         var show_action = request.data_exists;
-        if (show_action)
-          Browser.api.pageAction.show(sender.tab.id);
-        else
-          Browser.api.pageAction.hide(sender.tab.id);
+        if (Browser.isFirefoxWebExt) {
+          if (show_action)
+            Browser.api.browserAction.enable(sender.tab.id);
+          else
+            Browser.api.browserAction.disable(sender.tab.id);
+        }
+        else {
+          if (show_action)
+            Browser.api.pageAction.show(sender.tab.id);
+          else
+            Browser.api.pageAction.hide(sender.tab.id);
+        }
       } 
       else if (request.property == "doc_data")
       {

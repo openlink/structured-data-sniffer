@@ -61,7 +61,7 @@ function recvMessage(event)
   }
 
   
-  if (window.isTop) {
+  if (window._osds_isTop) {
     if (ev_data && ev_data.sendBack && ev_data.data && ev_data.frame) {
 //      console.log("from frame =>"+event.data);
       window._osds_frames[ev_data.frame] = ev_data.data;

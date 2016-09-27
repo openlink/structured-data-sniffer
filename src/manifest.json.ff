@@ -1,6 +1,6 @@
 {
   "name": "OpenLink Structured Data Sniffer",
-  "short_name": "OSD Sniffer",
+  "short_name": "osds",
   "author":"OpenLink Software",
   "version": "2.12.17",
   "manifest_version": 2,
@@ -15,7 +15,7 @@
       "16":  "images/icon16.png",
       "48":  "images/icon48.png",
       "128": "images/icon128.png" },
-  "page_action": {
+  "browser_action": {
     "default_icon": "images/icon16.png",
     "default_title": "Show Document Metadata",
     "default_popup": "panel.html"
