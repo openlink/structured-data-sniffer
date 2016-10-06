@@ -34,7 +34,8 @@ var gData = {
         t_nano :{ ttl_text:null},
         j_nano :{ json_text:null },
         posh:{ ttl_text:null },
-        tab_index: null
+        tab_index: null,
+        tabs:[]
       };
 var yasqe = {
         obj : null,
@@ -249,7 +250,9 @@ function show_Data(dData)
   var rdfa = false;
   var posh = false;
   var html = "";
+  var err_tabs = [];
 
+  gData.tabs = [];
   wait_data = $('table.wait').hide();
 
   function create_err_msg(fmt_name, errors) 
@@ -280,11 +283,14 @@ function show_Data(dData)
   html = "";
   if (dData.micro.expanded!==null && dData.micro.expanded.length > 0) {
       html += dData.micro.expanded;
+      gData.tabs.push("#micro");
   }
   if (dData.micro.error) {
       var err_msg = create_err_msg("Microdata", dData.micro.error);
-      if (err_msg)
+      if (err_msg) {
         html += err_msg;
+        err_tabs.push("#micro");
+      }
   }
   if (html.length > 0) {
       $('#micro_items #docdata_view').append(html);
@@ -297,11 +303,14 @@ function show_Data(dData)
   html = "";
   if (dData.jsonld.expanded!==null && dData.jsonld.expanded.length > 0) {
       html += dData.jsonld.expanded;
+      gData.tabs.push("#jsonld");
   }
   if (dData.jsonld.error.length > 0) {
       var err_msg = create_err_msg("JSON-LD", dData.jsonld.error);
-      if (err_msg)
+      if (err_msg) {
         html += err_msg;
+        err_tabs.push("#jsonld");
+      }
   }
   if (html.length > 0) {
       $('#jsonld_items #docdata_view').append(html);
@@ -315,11 +324,14 @@ function show_Data(dData)
   html = "";
   if (dData.turtle.expanded!==null && dData.turtle.expanded.length > 0) {
       html += dData.turtle.expanded;
+      gData.tabs.push("#turtle");
   }
   if (dData.turtle.error.length > 0) {
       var err_msg = create_err_msg("Turtle", dData.turtle.error);
-      if (err_msg)
+      if (err_msg) {
         html += err_msg;
+        err_tabs.push("#turtle");
+      }
   }
   if (html.length > 0) {
       $('#turtle_items #docdata_view').append(html);
@@ -332,11 +344,14 @@ function show_Data(dData)
   html = "";
   if (dData.rdfa.expanded!==null && dData.rdfa.expanded.length > 0) {
       html += dData.rdfa.expanded;
+      gData.tabs.push("#rdfa");
   }
   if (dData.rdfa.error) {
       var err_msg = create_err_msg("RDFa", dData.rdfa.error);
-      if (err_msg)
+      if (err_msg) {
         html += err_msg;
+        err_tabs.push("#rdfa");
+      }
   }
   if (html.length > 0) {
       $('#rdfa_items #docdata_view').append(html);
@@ -350,27 +365,25 @@ function show_Data(dData)
   html = "";
   if (dData.posh.expanded!==null && dData.posh.expanded.length > 0) {
       html += dData.posh.expanded;
+      gData.tabs.push("#posh");
   }
   if (dData.posh.error) {
       var err_msg = create_err_msg("POSH", dData.posh.error);
-      if (err_msg)
+      if (err_msg) {
         html += err_msg;
+        err_tabs.push("#posh");
+      }
   }
   if (html.length > 0) {
       $('#posh_items #docdata_view').append(html);
       posh = true;
   }
 
-  if (micro && !dData.micro.error)
-    selectTab('#micro');
-  else if (jsonld && !dData.jsonld.error)
-    selectTab('#jsonld');
-  else if (turtle && !dData.turtle.error)
-    selectTab('#turtle');
-  else if (rdfa && !dData.rdfa.error)
-    selectTab('#rdfa');
-  else if (posh && !dData.posh.error)
-    selectTab('#posh');
+
+  if (gData.tabs.length > 0)
+    selectTab(gData.tabs[0]);
+  else if (err_tabs.length > 0)
+    selectTab(err_tabs[0]);
 
 
   if (!micro)

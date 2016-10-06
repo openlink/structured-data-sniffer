@@ -51,7 +51,7 @@ function recvMessage(event)
 {
   var ev_data;
 
-  if (event.data.lastIndexOf("osds:",0)!==0)
+  if (String(event.data).lastIndexOf("osds:",0)!==0)
     return;
 
   try {
