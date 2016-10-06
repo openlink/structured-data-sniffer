@@ -88,12 +88,16 @@ if (Browser.isChromeAPI)
         if (handle)
           {
             var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
+/***
             if (Browser.isEdgeWebExt) {
               return { redirectUrl: _url };
             } else {
               Browser.api.tabs.update(d.tabId, { url: _url });
               return { cancel: true };
             }
+***/
+            Browser.openTab(_url);
+            return { cancel: false };
           }
     }
   }

@@ -28,6 +28,7 @@
     this.docURI = _docURI;
     this.subst_list = {
       "http://www.w3.org/1999/02/22-rdf-syntax-ns#label": "Label",
+            "http://www.w3.org/2000/01/rdf-schema#label": "Label",
                                 "http://schema.org/name": "Name",
           "http://www.w3.org/2004/02/skos/core#altLabel": "AltLabel",
          "http://www.w3.org/2004/02/skos/core#prefLabel": "PrefLabel",
@@ -246,7 +247,7 @@
       if (this.s_startWith(uri, this.docURI)) {
         var s = uri.substr(this.docURI.length);
         if (s[0]==="#") {
-          var v = '<a href="' + uri + '" title="' + uri + '">' + s[1].toUpperCase()+s.substr(2)+ '</a>';
+          var v = '<a href="' + uri + '" title="' + uri + '">' +s.substr(1)+ '</a>';
           return {rc:true, val:v};
         }
         else
