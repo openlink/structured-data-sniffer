@@ -478,7 +478,7 @@ function Download_exec()
 
     $( "#save-confirm" ).dialog({
       resizable: false,
-      height:230,
+      height:300,
       modal: true,
       buttons: {
         "OK": function() {

@@ -34,9 +34,12 @@ if (Browser.isChromeAPI)
 
   Browser.api.webRequest.onBeforeSendHeaders.addListener(
         function(details) {
-          var pref_user = setting.getValue('ext.osds.pref.user');
-          if (pref_user && pref_user.length> 0)
-            details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
+          var chk = setting.getValue('ext.osds.pref.user.chk');
+          if (chk && chk==="1") {
+            var pref_user = setting.getValue('ext.osds.pref.user');
+            if (pref_user && pref_user.length> 0)
+              details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
+          }
           return {requestHeaders: details.requestHeaders};
         },
         {urls: ["<all_urls>"]},
