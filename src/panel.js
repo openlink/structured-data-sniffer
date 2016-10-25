@@ -556,12 +556,15 @@ function check_POSH(dData)
     var handler = new Handle_Turtle();
     handler.parse([dData.posh.text], dData.docURL, 
       function(error, html_data) {
+        gData.posh.ttl_text = dData.posh.text;
         if (error)
-          dData.posh.error = error;
-        else {
+          dData.posh.error.push(error);
+
+        if (html_data)
           dData.posh.expanded = html_data;
-          gData.posh.ttl_text = dData.posh.text;
-        }
+
+        if (handler.skipped_error.length>0)
+          dData.posh.error = dData.posh.error.concat(handler.skipped_error);
 
         check_RDFa(dData);
     });
@@ -615,7 +618,7 @@ function parse_Data(dData)
   dData.j_nano.expanded = null;
   dData.j_nano.error = null;
   dData.posh.expanded = null;
-  dData.posh.error = null;
+  dData.posh.error = [];
   doc_URL = dData.docURL;
 
   load_restData(doc_URL);
