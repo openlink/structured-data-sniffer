@@ -85,6 +85,9 @@ Settings.prototype = {
       return val;
 
     switch(id) {
+      case "ext.osds.pref.user.chk":
+          val = "1";
+          break;
       case "ext.osds.uiterm.mode":
           val = "ui-eav"
           break;

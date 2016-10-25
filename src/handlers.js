@@ -18,9 +18,86 @@
  *
  */
 
-
-Handle_Microdata = function () {
+Fix_Nano = function (start_id) {
   this.callback = null;
+  this._pos = 0;
+  this._output = null;
+  this.start_id = 0;
+  if (start_id!==undefined)
+    this.start_id = start_id;
+  this._tokens = 0;
+  this._bad_data = false;
+};
+
+Fix_Nano.prototype = {
+
+  parse : function(textData, callback) {
+    this.callback = callback;
+    var self = this;
+
+    if (this._pos < textData.length) {
+      var lexer = N3.Lexer({ lineMode: false });
+      try {
+        var ttl_data = textData[self._pos];
+
+        lexer.tokenize(ttl_data, function (error, token) {
+          if (token && self._tokens ==0 && 
+              !(token.type==="IRI" 
+                || token.type==="abbreviation" 
+                || token.type==="prefixed"
+                || token.type==="prefix"
+                || token.type==="PREFIX"
+                || token.type[0]==="@"
+               ))
+            self._bad_data = true;
+          if (token && self._tokens ==1 && 
+              !(token.type==="IRI" 
+                || token.type==="abbreviation" 
+                || token.type==="prefixed"
+                || token.type==="prefix"
+                || token.type==="PREFIX"
+                || token.type===","
+                || token.type===";"
+               ))
+            self._bad_data = true;
+
+          if (self._tokens==2 && !self._bad_data) {
+              if (self._output === null)
+                self._output = [];
+              self._output.push(textData[self._pos]);
+          }
+
+          if (token && !error && !self._bad_data)
+            self._tokens++;
+
+          if (error || (token && token.type==="eof")) {
+            self._pos++;
+            self._tokens = 0;
+            self._bad_data = false;
+            if (self._pos < textData.length)
+               self.parse(textData, self.callback);
+            else
+               self.callback(self._output);
+          }
+        });
+
+      } catch (ex) {
+        self.callback(null);
+      }
+    } else {
+        self.callback(self._output);
+    }
+
+  },
+}
+
+
+
+Handle_Microdata = function (make_ttl) {
+  this.callback = null;
+  this._make_ttl = false;
+  if (make_ttl)
+    this._make_ttl = make_ttl;
 };
 
 Handle_Microdata.prototype = {
@@ -32,8 +109,14 @@ Handle_Microdata.prototype = {
       var conv = new MicrodataJSON_Converter();
       var out_data = conv.transform(jsonData, docURL);
 
-      var html_data = new HTML_Gen().load(out_data);
-      self.callback(null, html_data);
+      var ret_data = null;
+
+      if (self._make_ttl) 
+        ret_data = new TTL_Gen(docURL).load(out_data);
+      else
+        ret_data = new HTML_Gen(docURL).load(out_data);
+        
+      self.callback(null, ret_data);
     } 
     catch (ex) {
       self.callback(ex.toString(), null);
@@ -44,7 +127,7 @@ Handle_Microdata.prototype = {
 
 
 
-Handle_Turtle = function (start_id) {
+Handle_Turtle = function (start_id, make_ttl) {
   this.callback = null;
   this.baseURI = null;
   this._pos = 0;
@@ -52,14 +135,24 @@ Handle_Turtle = function (start_id) {
   this.start_id = 0;
   if (start_id!==undefined)
     this.start_id = start_id;
+  this.ns = new Namespace();
   this.ns_pref = null;
   this.ns_pref_size = 0;
   this.skip_error = true;
   this.skipped_error = [];
   this._pattern = /([0-9]*).$/gm;
+  this._make_ttl = false;
+  if (make_ttl)
+    this._make_ttl = make_ttl;
 };
 
 Handle_Turtle.prototype = {
+
+  parse_nano : function(textData, docURL, callback) {
+    this.ns_pref = this.ns.get_ns_desc();
+    this.ns_pref_size = Object.keys(this.ns.ns_list).length;
+    this.parse(textData, docURL, callback);
+  },
 
   parse : function(textData, docURL, callback) {
     this.callback = callback;
@@ -71,6 +164,7 @@ Handle_Turtle.prototype = {
       var parser = N3.Parser();
       try {
         var ttl_data = textData[self._pos];
+
         if (this.ns_pref!==null)
           ttl_data = this.ns_pref + ttl_data;
 
@@ -109,13 +203,25 @@ Handle_Turtle.prototype = {
                               self.fixNode(tr.object));
             }
             else {
-              if (self._output===null)
-                self._output = "";
               
               var triples = store.output;
 
-              var html_str =  new HTML_Gen().load(triples, self.start_id);
-              self._output += (html_str==null?"":html_str);
+              if (self._make_ttl) {
+                if (self._output===null)
+                  self._output = [];
+              
+                var ttl_data =  new TTL_Gen(docURL).load(triples, self.start_id);
+                self._output.push(ttl_data==null?"":ttl_data);
+              } 
+              else 
+              {
+                if (self._output===null)
+                  self._output = "";
+              
+                var html_str =  new HTML_Gen(docURL).load(triples, self.start_id);
+                self._output += (html_str==null?"":html_str);
+              }  
+
               self._pos++;
 
               if (triples!==null && triples.length!==undefined)
@@ -160,13 +266,16 @@ Handle_Turtle.prototype = {
 
 
 
-Handle_JSONLD = function () {
+Handle_JSONLD = function (make_ttl) {
   this.callback = null;
   this._pos = 0;
   this._output = null;
   this.start_id = 0;
   this.skip_error = true;
   this.skipped_error = [];
+  this._make_ttl = false;
+  if (make_ttl)
+    this._make_ttl = make_ttl;
 };
 
 Handle_JSONLD.prototype = {
@@ -210,7 +319,7 @@ Handle_JSONLD.prototype = {
                       handle_error(error);
                     }
                     else {
-                      var handler = new Handle_Turtle(self.start_id);
+                      var handler = new Handle_Turtle(self.start_id, self._make_ttl);
                       handler.skip_error = false;
                       handler.parse([nquads], docURL, function(error, html_data) {
                         if (error) {
@@ -221,6 +330,7 @@ Handle_JSONLD.prototype = {
                             self._output = "";
 
                           self._output += html_data;
+                          self._output += "\n\n";
                           self._pos++;
                           self.start_id += handler.start_id;
  
@@ -238,7 +348,7 @@ Handle_JSONLD.prototype = {
         else
           self.callback(null, null);
       } catch (ex) {
-        self.callback(ex.toString(), null);
+        handle_error(ex.toString());
       }
 
     } else {
@@ -258,12 +368,12 @@ Handle_RDFa = function () {
 
 Handle_RDFa.prototype = {
 
-  parse : function(data, callback) {
+  parse : function(data, docURL, callback) {
     this.callback = callback;
 
     var self = this;
     try {
-      var str = new HTML_Gen().load(data);
+      var str = new HTML_Gen(docURL).load(data);
       self.callback(null, str);
     } catch (ex) {
       self.callback(ex.toString(), null);

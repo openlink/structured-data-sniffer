@@ -1784,7 +1784,6 @@ Namespace.prototype = {
   {
     function s_startWith(str, val) {
      return str.lastIndexOf(val, 0) === 0;
-//     return str.substring(0, val.length) === val;
     }
 
     var rc = null;

@@ -25,8 +25,9 @@ var self = require("sdk/self");
 var tabs = require("sdk/tabs");
 var workers = require("sdk/content/worker");
 var ss = require("sdk/simple-storage");
-var sniff_panel = null;
+const {XMLHttpRequest} = require("sdk/net/xhr");
 
+var sniff_panel = null;
 
 
 var button = ToggleButton({
@@ -100,8 +101,8 @@ function createSniffPanel()
     width: 680,
     height: 600,
     contentURL: "./panel_ff.html", // the same : self.data.url("panel.html"),
-    contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
-   		      "./lib/jquery-migrate-1.2.1.min.js",
+    contentScriptFile: ["./lib/jquery-3.1.0.min.js", 
+   		      "./lib/jquery-migrate-3.0.0.min.js",
    		      "./lib/jquery-ui.min.js",
 		      "./lib/microdatajs/jquery.microdata.js",
 		      "./lib/microdatajs/jquery.microdata.json.js",
@@ -115,6 +116,8 @@ function createSniffPanel()
 		      "./browser_ff.js",
 		      "./settings.js",
 		      "./handlers.js",
+                      "./converters.js",
+                      "./ttl_gen.js",
 		      "./html_gen.js",
 		      "./panel.js"
       		     ],
@@ -168,9 +171,9 @@ function createHandlerPanel(_uri, _type)
   var htab = tabs.open({
         url: "./page_panel_ff.html",
         onReady: function(tab) {
-          tab.attach({
-          contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
-   		      "./lib/jquery-migrate-1.2.1.min.js",
+          tab._handler_worker = tab.attach({
+          contentScriptFile: ["./lib/jquery-3.1.0.min.js", 
+   		      "./lib/jquery-migrate-3.0.0.min.js",
    		      "./lib/jquery-ui.min.js",
 		      "./lib/microdatajs/jquery.microdata.js",
 		      "./lib/microdatajs/jquery.microdata.json.js",
@@ -185,14 +188,41 @@ function createHandlerPanel(_uri, _type)
 		      "./settings.js",
 		      "./page_panel.js",
 		      "./handlers.js",
+                      "./converters.js",
+                      "./ttl_gen.js",
 		      "./html_gen.js"
       		     ],
             contentScriptOptions : { ver: self.version,
                                      url: _uri,
                                      type: _type }
           });
+
+
+          tab._handler_worker.port.on("load_data", function(msg){
+            if (msg.url) {
+
+              var xhr = new XMLHttpRequest();
+
+              xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+                  if (xhr.status===200)
+                    tab._handler_worker.port.emit("url_data", xhr.responseText);
+                  else
+                    {
+                      tab._handler_worker.port.emit("url_error", "error");
+                    }
+                }
+              }
+              xhr.open ('GET', msg.url, true);
+              xhr.setRequestHeader ('Accept', 'text/plain, */*');
+              xhr.send (null);
+            }
+          });
+
         }
       });
+
+
 }
 
 
@@ -200,8 +230,8 @@ function createHandlerPanel(_uri, _type)
 
 tabs.on('load', function(tab) {
   var worker = tab.attach({
-      contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
-       			  "./lib/jquery-migrate-1.2.1.min.js",
+      contentScriptFile: ["./lib/jquery-3.1.0.min.js", 
+       			  "./lib/jquery-migrate-3.0.0.min.js",
                           "./lib/jsonld.js", 
                           "./lib/microdatajs/jquery.microdata.js", 
                           "./lib/microdatajs/jquery.microdata.json.js", 
@@ -245,8 +275,8 @@ function createPrefPanel()
     width: 570,
     height: 710,
     contentURL: "./options_ff.html",
-    contentScriptFile: ["./lib/jquery-1.11.3.min.js", 
-   		      "./lib/jquery-migrate-1.2.1.min.js",
+    contentScriptFile: ["./lib/jquery-3.1.0.min.js", 
+   		      "./lib/jquery-migrate-3.0.0.min.js",
    		      "./lib/jquery-ui.min.js",
 		      "./lib/jsuri.js",
 		      "./browser_ff.js",
@@ -285,7 +315,6 @@ function check_XHR(request)
     catch (exc)
     {
     }
-
     return false;
 }
 

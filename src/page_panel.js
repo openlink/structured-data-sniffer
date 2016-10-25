@@ -19,6 +19,8 @@
  */
 
 // React when the browser action's icon is clicked.
+
+
 var items;
 var $ = jQuery;
 var gData_showed = false;
@@ -41,6 +43,9 @@ var yasqe = {
 
 $(document).ready(function() 
 {
+  if (Browser.isFirefoxWebExt)
+      $("#src_place").css("white-space","pre"); 
+
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
 
@@ -58,6 +63,10 @@ $(document).ready(function()
     $('#prefs_btn').click(Prefs_exec);
   }
 
+  $('#tabs a[href=#src]').click(function(){
+      selectTab(prevSelectedTab);
+      return false;
+  });
   $('#tabs a[href=#cons]').click(function(){
       selectTab(prevSelectedTab);
       return false;
@@ -110,17 +119,21 @@ $(document).ready(function()
   });
   $('#rest_add').click(addRestEmpty);
 
+  $('#src_exit').click(function(){
+      selectTab(prevSelectedTab);
+      return false;
+  });
 
   selectTab('#micro');
 
   if (Browser.isFirefoxSDK) 
   {
-    jQuery('#ext_ver').text('ver: '+ self.options.ver);
+//--    jQuery('#ext_ver').text('ver: '+ self.options.ver);
     load_data_from_url(null, self.options.url, self.options.type);
   }
   else 
   {
-    jQuery('#ext_ver').text('ver: '+ chrome.runtime.getManifest().version);
+//--    jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
     load_data_from_url(document.location);
   }
 
@@ -129,6 +142,7 @@ $(document).ready(function()
 
 
 // Trap any link clicks and open them in the current tab.
+/**
 $('a').live('click', function(e) {
   var url = new Uri(document.baseURI).setAnchor("");
   var href = e.currentTarget.href;
@@ -136,6 +150,41 @@ $('a').live('click', function(e) {
     return true;
   } else {
     window.open(href);
+    return false;
+  }
+});
+**/
+$(document).on('click', 'a', function(e) {
+  function check_URI(uri) {
+    if (doc_URL[doc_URL.length-1]==="#")
+      return uri.lastIndexOf(doc_URL,0) === 0;
+    else
+      return uri.lastIndexOf(doc_URL+'#',0) === 0;
+  }
+  
+  
+  var hashName = null;
+  var href = e.currentTarget.href;
+  var hashPos = href.lastIndexOf('#'); 
+
+  if (hashPos!=-1 && hashPos!=href.length-1)
+    hashName = href.substring(hashPos+1);
+
+  var url = new Uri(document.baseURI).setAnchor("");
+  if (href.lastIndexOf(url+"#sc", 0) === 0) {
+    return true;
+  } 
+  else if (check_URI(href) && hashName) {
+    var el = $('a[name = "'+hashName+'"]');
+    if (el.length > 0)
+      el[0].scrollIntoView();
+    return false;
+  }
+  else if (href === doc_URL) {
+    return false;
+  }
+  else {
+    Browser.openTab(href);
     return false;
   }
 });
@@ -176,7 +225,7 @@ function load_data_from_url(loc, uri, ctype)
        start_parse_data(data, type, url);
     }, "text").fail(function(msg) {
        alert("Could not load data from: "+url);
-    });;
+    });
 }
 
 
@@ -234,12 +283,14 @@ function selectTab(tab)
     }
   }
 
+  updateTab('#src', selectedTab);
   updateTab('#cons', selectedTab);
   updateTab('#micro', selectedTab);
   updateTab('#jsonld', selectedTab);
   updateTab('#turtle', selectedTab);
   updateTab('#rdfa', selectedTab);
   updateTab('#posh', selectedTab);
+  $('#tabs a[href=#src]').hide();
   $('#tabs a[href=#cons]').hide();
 }
 
@@ -253,7 +304,6 @@ function show_Data(data_error, html_data)
   var turtle = false;
   var rdfa = false;
   var posh = false;
-  var error = [];
   var html = "";
 
   wait_data = $('table.wait').hide();
@@ -339,8 +389,8 @@ function show_Data(data_error, html_data)
 function Import_doc() 
 {
   if (doc_URL!==null) {
-     var url = createImportUrl(doc_URL);
-     window.open(url);
+     var _url = createImportUrl(doc_URL);
+     Browser.api.tabs.create({url:_url});
   }
 
   return false;
@@ -350,8 +400,8 @@ function Import_doc()
 function Rww_exec() 
 {
   if (doc_URL!==null) {
-     var url = createRwwUrl(doc_URL);
-     window.open(url);
+     var _url = createRwwUrl(doc_URL);
+     Browser.api.tabs.create({url:_url});
   }
 
   return false;
@@ -361,8 +411,8 @@ function Rww_exec()
 function Sparql_exec() 
 {
   if (doc_URL!==null) {
-     var url = createSparqlUrl(doc_URL);
-     window.open(url);
+     var _url = createSparqlUrl(doc_URL);
+     Browser.api.tabs.create({url:_url});
   }
 
   return false;
@@ -381,43 +431,61 @@ function Prefs_exec()
 
 function Download_exec() 
 {
-  var isFileSaverSupported = false;
+  $('#save-action').change(function() {
+    var cmd = $('#save-action option:selected').attr('id');
+    if (cmd==='filesave')
+      $('#save-file').show();
+    else
+      $('#save-file').hide();
+  });
 
+  var cmd = $('#save-action option:selected').attr('id');
+  if (cmd==="filesave")
+      $('#save-file').show();
+    else
+      $('#save-file').hide();
+
+  
+  var isFileSaverSupported = false;
   try {
     isFileSaverSupported = !!new Blob;
   } catch (e) {}
 
   if (!isFileSaverSupported) {
-    showInfo("FileSaver isn't supported");
-    return false;
+    $('#save-action').prop('disabled', true);
   }
+
+  if (Browser.isEdgeWebExt)
+    $('#save-action').prop('disabled', true);
+
 
   var filename = null;
   var fmt = "json";
 
   if (gData.type == "jsonld" && gData.text) {
-    filename = "jsonld_data.jsonld";
+    filename = "jsonld_data.txt";
     fmt = "json";
   }
   else if (gData.type == "turtle" && gData.text) {
-    filename = "turtle_data.ttl";
+    filename = "turtle_data.txt";
     fmt = "ttl";
   }
 
 
   if (filename!==null) {
-    $('#save-file').val(filename); 
+    $('#save-filename').val(filename); 
     $('#'+fmt,'#save-fmt').attr('selected','selected');
-    $('#save-fmt').prop('disabled', true);
 
     $( "#save-confirm" ).dialog({
       resizable: false,
-      height:180,
+      height:300,
       modal: true,
       buttons: {
         "OK": function() {
-          var fname = $('#save-file').val().trim();
-          save_data(fname, fmt);
+          var action = $('#save-action option:selected').attr('id');
+          var fmt = $('#save-fmt option:selected').attr('id');
+          var fname = $('#save-filename').val().trim();
+          save_data(action, fname, fmt);
           $(this).dialog( "close" );
         },
         Cancel: function() {
@@ -426,7 +494,7 @@ function Download_exec()
       }
     });
   } else {
-    showInfo("No data for saving");
+//    showInfo("No data for saving");
     return false;
   }
 
@@ -434,29 +502,107 @@ function Download_exec()
 }
 
 
-function save_data(fname, fmt) 
+function save_data(action, fname, fmt) 
 {
+  function txt_from(data, error, skipped_error) 
+  {
+    var outdata = [];
+
+    if (data) {
+      if ($.isArray(data))
+        outdata = outdata.concat(data);
+      else
+        outdata.push(data);
+    }
+
+    if (error)
+      outdata.push("\n"+error);
+
+    if (skipped_error) {
+      outdata.push("\n");
+      outdata = outdata.concat(skipped_error);
+    }
+
+    var ret = "";
+    for(var i=0; i < outdata.length; i++)
+      ret += outdata[i]+"\n\n";
+    return ret;
+  }
+
+  function exec_action(action, txt_data) 
+  {
+    if (action==="filesave") {
+      blob = new Blob([txt_data], {type: "text/plain;charset=utf-8"});
+      saveAs(blob, fname);    
+    } else {
+      selectTab("#src");
+      $("#src_place").val(txt_data); 
+    }
+  }
+  
+
   try{
-    var blob = null;
+    var data = [];
+    var src_fmt = null;
 
-    if (fmt === "ttl")
-      blob = new Blob([gData.text], {type: "text/turtle;charset=utf-8"});
+    if (gData.type==="jsonld" && gData.text!==null) {
+      src_fmt = "json";
+      data = data.concat(gData.text);
+    }
+    else if (gData.type==="turtle" && gData.text!==null) {
+      src_fmt = "ttl";
+      data = data.concat(gData.text);
+    }
     else
-      blob = new Blob([gData.text], {type: "application/ld+json;charset=utf-8"});
+      return;
 
-    saveAs(blob, fname);    
+    if (src_fmt!==fmt) 
+    {
+      if (src_fmt==="ttl") {
+        var handler = new Convert_Turtle2JSON();
+        handler.parse(data, doc_URL,
+          function(error, json_data) {
+            exec_action(action, txt_from(json_data, error, handler.skipped_error));
+          });
+      }
+      else {
+        var handler = new Handle_JSONLD(true);
+        handler.parse(data, doc_URL, 
+          function(error, json_data) 
+          {
+            exec_action(action, txt_from(json_data, error, handler.skipped_error));
+          });
+      }
+    } else {
+      exec_action(action, txt_from(data));
+    }
 
   } catch(ex) {
     showInfo(ex);
   }
 
+/***
+  try{
+    if (action==="filesave") {
+      var blob = new Blob([gData.text], {type: "text/plain;charset=utf-8"});
+      saveAs(blob, fname);    
+
+    } else {
+      selectTab("#src");
+      $("#src_place").val(gData.text); 
+    }
+
+  } catch(ex) {
+    showInfo(ex);
+  }
+***/
 }
 
 
 function showInfo(msg)
 {
-  $('#alert-msg').prop('textContent',msg); 
-  $( "#alert-dlg" ).dialog({
+  $("#alert-msg").prop("textContent",msg); 
+  $("#alert-dlg" ).dialog({
     resizable: false,
     height:180,
     modal: true,
@@ -573,12 +719,9 @@ function rest_exec() {
        url.addQueryParam(h, encodeURIComponent(v));
   }
 
-//  var win_url = chrome.extension.getURL("page_panel.html?url="
-//                  +encodeURIComponent(url.toString())
-//                  +"&type="+gData.type);
   var win_url = url.toString();
 
-  window.open(win_url);
+  Browser.api.tabs.create({url:win_url});
 }
 
 

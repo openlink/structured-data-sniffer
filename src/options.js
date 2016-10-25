@@ -71,7 +71,7 @@ $(function(){
 	if (Browser.isFirefoxSDK)
           jQuery('#ext_ver').text('Version: '+ self.options.ver);
         else
-          $('#ext_ver').text('Version: '+ chrome.runtime.getManifest().version);
+          $('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
 
 });
 
@@ -183,6 +183,10 @@ function loadPref()
     var uiterm_mode = gPref.getValue("ext.osds.uiterm.mode"); 
     $('#'+uiterm_mode,'#uiterm-mode').attr('selected','selected');
 
+    var chk_user = gPref.getValue("ext.osds.pref.user.chk");
+    if (chk_user && chk_user==="1")
+      $("#chk_pref_user").attr('checked','checked');
+
     load_pref_user();
 
     var import_url = gPref.getValue("ext.osds.import.url");
@@ -217,6 +221,8 @@ function savePref()
 {
    var uiterm_mode = $('#uiterm-mode option:selected').attr('id');
    gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
+
+   gPref.setValue("ext.osds.pref.user.chk", $('#chk_pref_user').is(':checked')?"1":"0");
 
 //   gPref.setValue("ext.osds.pref.user", $('#pref_user').val().trim());
 

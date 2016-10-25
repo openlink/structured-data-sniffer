@@ -19,12 +19,12 @@
  */
 
 var Browser = {
-    isChromeAPI: false,
-    isFirefoxSDK: true,
+    isChromeAPI: true,
+    isFirefoxSDK: false,
 
     isChromeWebExt: false,
     isFirefoxWebExt: false,
-    isEdgeWebExt: false,
+    isEdgeWebExt: true,
 
     api: null,
 

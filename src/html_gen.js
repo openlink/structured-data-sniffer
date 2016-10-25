@@ -19,12 +19,20 @@
  */
   
 
-  HTML_Gen = function() {
+  HTML_Gen = function(_docURI) {
     this.ns = new Namespace();
     this.uimode = "";
     this.SubjName = "Subject";
     this.PredName = "Predicate";
     this.ObjName  = "Object";
+    this.docURI = _docURI;
+    this.subst_list = {
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#label": "Label",
+            "http://www.w3.org/2000/01/rdf-schema#label": "Label",
+                                "http://schema.org/name": "Name",
+          "http://www.w3.org/2004/02/skos/core#altLabel": "AltLabel",
+         "http://www.w3.org/2004/02/skos/core#prefLabel": "PrefLabel",
+    };
   };
 
   HTML_Gen.prototype = {
@@ -118,9 +126,7 @@
             || (!only_rdf_type && key===self.ns.RDF_TYPE))
           return;
 
-        var key_str = key;
-        var pref = self.ns.has_known_ns(key);
-        var key_str = (pref!=null) ? self.pref_link(key, pref) : self.check_link(key, true);
+        var key_str = self.iri2html(key, true);
 
         for(var i=0; i<val.length; i++) {
           var obj = val[i];
@@ -132,8 +138,7 @@
               str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><a href='#sc"+entity_id+"'><i>See Statement Collection #" + entity_id + "</i></a></td></tr>";
             }
             else {
-              var pref = self.ns.has_known_ns(obj.iri);
-              var sval = (pref!=null) ? self.pref_link(obj.iri, pref) : self.check_link(obj.iri);
+              var sval = self.iri2html(obj.iri);
               var td_class = obj.typeid!==undefined?" class='typeid'":"";
               str += "<tr class='data_row'><td"+td_class+">" + key_str + "</td><td"+td_class+">"+sval+"</td></tr>";
             }
@@ -168,12 +173,32 @@
          return "";
        }
        else {
-         var pref = this.ns.has_known_ns(value);
-         var sval = (pref!=null) ? this.pref_link(value, pref) : this.check_link(value);
-         return "<tr class='major data_row'><td>"+this.SubjName+"</td><td>" + sval + "</td></tr>";
+         // for scroll between entities on page
+         var uri = String(value);
+         var anc = "";
+         if (this.docURI && uri.match(/^http(s)?:\/\//) && this.check_URI(uri)) {
+           var hashPos = uri.lastIndexOf("#");
+           if (hashPos!=-1 && hashPos!=uri.length-1)
+             anc = '<a name="'+uri.substr(hashPos+1)+'"/>';           
+         }
+         var sval = this.iri2html(uri);
+         return "<tr class='major data_row'><td>"+anc+this.SubjName+"</td><td>" + sval + "</td></tr>";
        }
     },
 
+    iri2html : function (uri, is_key)
+    {
+      var v = this.check_subst(uri);
+
+      if (v.rc==true) {
+         return v.val;
+      }
+      else { 
+        var pref = this.ns.has_known_ns(uri);
+        return (pref!=null) ? this.pref_link(uri, pref) : this.check_link(uri, is_key);
+      }
+    },
+    
     check_link : function (val, is_key) 
     {
       if ( String(val).match(/^http(s)?:\/\//) ) {
@@ -209,6 +234,34 @@
 
     is_BNode : function (str) {
         return (str.lastIndexOf("_:", 0) === 0 || str.lastIndexOf("nodeID://", 0) === 0 || str.lastIndexOf("nodeid://", 0) === 0);
+    },
+
+    check_URI : function(uri) {
+      if (this.docURI[this.docURI.length-1]==="#")
+        return uri.lastIndexOf(this.docURI,0) === 0;
+      else
+        return uri.lastIndexOf(this.docURI+'#',0) === 0;
+    },
+
+    check_subst : function(uri) {
+      if (this.s_startWith(uri, this.docURI)) {
+        var s = uri.substr(this.docURI.length);
+        if (s[0]==="#") {
+          var v = '<a href="' + uri + '" title="' + uri + '">' +s.substr(1)+ '</a>';
+          return {rc:true, val:v};
+        }
+        else
+          return {rc:false};
+      } 
+      else {
+        var anc_name = this.subst_list[uri];
+        if (anc_name) {
+          var v = '<a href="' + uri + '" title="' + uri + '">' + anc_name + '</a>';
+          return {rc:true, val:v};
+        }
+        else
+          return {rc:false};
+      }
     },
 
   }

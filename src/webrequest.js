@@ -1,9 +1,30 @@
+/*
+ *  This file is part of the OpenLink Structured Data Sniffer
+ *
+ *  Copyright (C) 2015-2016 OpenLink Software
+ *
+ *  This project is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License as published by the
+ *  Free Software Foundation; only version 2 of the License, dated June 1991.
+ *
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *  General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ */
+
+
+
 if (Browser.isChromeAPI) 
 {
   var setting = new Settings();
   var _r = {};
-  var _rb = {};
-  var ext_url = chrome.extension.getURL("page_panel.html");
+  var ext_url = Browser.api.extension.getURL("page_panel.html");
 
   function s_startWith(str, val) 
   {
@@ -11,61 +32,28 @@ if (Browser.isChromeAPI)
   }
 
 
-  chrome.webRequest.onBeforeSendHeaders.addListener(
+  Browser.api.webRequest.onBeforeSendHeaders.addListener(
         function(details) {
-/**
-          for (var i = 0; i < details.requestHeaders.length; ++i) {
-            if (details.requestHeaders[i].name === 'User-Agent') {
-              details.requestHeaders.splice(i, 1);
-              break;
-            }
+          var chk = setting.getValue('ext.osds.pref.user.chk');
+          if (chk && chk==="1") {
+            var pref_user = setting.getValue('ext.osds.pref.user');
+            if (pref_user && pref_user.length> 0)
+              details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
           }
-**/
-          var pref_user = setting.getValue('ext.osds.pref.user');
-          if (pref_user && pref_user.length> 0)
-            details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
           return {requestHeaders: details.requestHeaders};
         },
         {urls: ["<all_urls>"]},
         ["blocking", "requestHeaders"]);
 
 
-  chrome.webRequest.onCompleted.addListener (
-  	onCompleted, {types: ['main_frame'], urls: ["<all_urls>"]});
-  chrome.webRequest.onErrorOccurred.addListener(
-  	onErrorOccurred, {types: ['main_frame'], urls: ["<all_urls>"]});
-  chrome.webRequest.onHeadersReceived.addListener(
+  Browser.api.webRequest.onHeadersReceived.addListener(
   	onHeadersReceived, {types: ["main_frame"], urls: ["<all_urls>"]}, ["responseHeaders", "blocking"]);
-
-
-  function onErrorOccurred(d) 
-  { 
-    delete _rb[d.requestId];
-    return finish(d); 
-  }
-
-
-  function onCompleted(d) 
-  { 
-    delete _rb[d.requestId];
-  }
 
 
   function onHeadersReceived(d) 
   {
     //console.log(d);
-//    if (s_startWith(d.url, ext_url))
-//      return;
     
-    var rc = null;
-    try {
-      rc = _rb[d.requestId];
-    }catch(e) {}
-
-    if (rc != null)
-      return;
-
-    var found = false;
     for (var i in d.responseHeaders) {
         var header = d.responseHeaders[i];
         var handle = false;
@@ -99,38 +87,21 @@ if (Browser.isChromeAPI)
 
         if (handle)
           {
-            _r[d.requestId] = {handle: true, type:type};
-            found = true;
+            var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
+/***
+            if (Browser.isEdgeWebExt) {
+              return { redirectUrl: _url };
+            } else {
+              Browser.api.tabs.update(d.tabId, { url: _url });
+              return { cancel: true };
+            }
+***/
+            Browser.openTab(_url);
+            return { cancel: false };
           }
     }
-    if (found)
-      return finish(d);
   }
 
-
-  function finish(d) 
-  {
-    var v = _r[d.requestId];
-    if (v && v.handle == true) 
-      {
-        var url;
-        delete _r[d.requestId];
-
-//        var url = 'view-source:'+d.url
-        var url = chrome.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+v.type);
-
-        if (url != null) {
-/**
-          chrome.tabs.update(d.tabId, { url: url });
-          return { cancel: true };
-**/
-          window.open(url);
-          return { cancel: false };
-        } else {
-          return { cancel: false };
-        }
-      }
-  }
 
 
 

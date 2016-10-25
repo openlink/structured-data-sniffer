@@ -1,7 +1,10 @@
 {
   "name": "OpenLink Structured Data Sniffer",
-  "version": "2.12",
+  "short_name": "osds",
+  "author":"OpenLink Software",
+  "version": "2.13",
   "manifest_version": 2,
+  "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
   "applications": {
     "gecko": {
@@ -12,7 +15,7 @@
       "16":  "images/icon16.png",
       "48":  "images/icon48.png",
       "128": "images/icon128.png" },
-  "page_action": {
+  "browser_action": {
     "default_icon": "images/icon16.png",
     "default_title": "Show Document Metadata",
     "default_popup": "panel.html"
@@ -20,12 +23,21 @@
   "background": {
     "page": "panel.html"
   },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "content_scripts": [
     {
       "matches": ["file:///*/*","*://*/*"],
-      "css": [],
-      "js": ["lib/jquery-1.11.3.min.js", "lib/jquery-migrate-1.2.1.min.js", "lib/jsonld.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", "lib/namespace.js", "lib/posh.js", "browser.js", "sniffer.js"],
+      "js": ["lib/jquery-3.1.0.min.js", "lib/jquery-migrate-3.0.0.min.js", "lib/jsonld.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", "lib/namespace.js", "lib/posh.js", "browser.js", "sniffer.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["frame.js"],
+      "run_at": "document_idle",
+      "all_frames": true
     }
   ],
 "permissions": [

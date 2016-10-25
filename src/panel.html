@@ -25,8 +25,8 @@
         <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />	
         <link type="text/css" href="lib/css/yasqe.min.css" rel="stylesheet" />	
 
-        <script type="text/javascript" src="lib/jquery-1.11.3.min.js"></script>
-        <script type="text/javascript" src="lib/jquery-migrate-1.2.1.min.js"></script>
+        <script type="text/javascript" src="lib/jquery-3.1.0.min.js"></script>
+        <script type="text/javascript" src="lib/jquery-migrate-3.0.0.min.js"></script>
         <script type="text/javascript" src="lib/jquery-ui.min.js"></script>
 
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.js"></script>
@@ -44,23 +44,39 @@
         <script type="text/javascript" src="settings.js"></script>
         <script type="text/javascript" src="panel.js"></script>
         <script type="text/javascript" src="handlers.js"></script>
+        <script type="text/javascript" src="converters.js"></script>
+        <script type="text/javascript" src="ttl_gen.js"></script>
         <script type="text/javascript" src="html_gen.js"></script>
         <script type="text/javascript" src="webrequest.js"></script>
         <link rel="stylesheet" href="sniffer.css" />
 
+        <style type="text/css">
+          .popup { font: 62.5% "Trebuchet MS", sans-serif; }
+        </style>	
+
     </head>
     <body class="sniffer">
-      <div id="alert-dlg" title="Info">
+      <div class="popup" id="alert-dlg" title="Info">
         <p id="alert-msg">
         </p>
       </div>
 
-      <div id="save-confirm" title="Save data">
+      <div class="popup" id="save-confirm" title="Data Source">
         <p/>
         <table style="font-size: 14px;">
          <tr>
+          <td>Action:</td>
+          <td>
+            <SELECT id="save-action" style="WIDTH: 200px" >
+              <OPTION id="view" selected>View Raw Data</OPTION>
+              <OPTION id="filesave">Download Raw Data</OPTION>
+            </SELECT>
+          </td>
+         </tr>
+
+         <tr id="save-file">
           <td> Save&nbsp;As: </td>
-          <td> <input id="save-file" style="WIDTH: 200px"> </td>
+          <td> <input id="save-filename" style="WIDTH: 200px"> </td>
          </tr>
 
          <tr>
@@ -93,13 +109,15 @@
           <input type="image" id="rest_btn" src="images/osds-icon-rest-24.png" width="24" height="24" title="Web Service Console for RESTful interaction with HTTP Servers">
         </td>
         <td class="action_btn">
-          <input type="image" id="download_btn" src="images/osds-icon-download-24.png" width="24" height="24" title="Download current data">
+          <input type="image" id="download_btn" src="images/osds-icon-download-24.png" width="24" height="24" title="View or Download structured data">
         </td>
        </tr>
       </table>
 
+
       <div id="header">
         <ul id="tabs">
+          <li><a href="#src"  title="Close tab">X</a></li>
           <li><a href="#cons" title="Close tab">X</a></li>
           <li><a href="#micro" title="Structured Data encoded using HTML5 Microdata Notation">Microdata</a></li>
           <li><a href="#jsonld" title="Metadata encoded using JSON-LD Notation">JSON-LD</a></li>
@@ -110,6 +128,22 @@
       </div>
 
       <div class="content">
+
+        <div id="src_items" style="font-size: 13px;">
+          <table style="width: 100%; height: 100%;">
+            <tr> 
+              <td>
+                <button id="src_exit" style="margin:5px; margin-left:10px;">Exit</button>
+              </td>
+            </tr>
+            <tr>
+              <td style="height: 100%;">
+                <textarea id="src_place" style="width: 100%; height: 100%; white-space:nowrap">
+                </textarea>
+              </td>
+            </tr>
+          </table>
+        </div>
 
         <div id="cons_items" style="font-size: 13px;">
           <table>
