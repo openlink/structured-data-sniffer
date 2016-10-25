@@ -32,7 +32,8 @@ var t_nano_Text = null;
 var j_nano_Text = null;
 var data_found = false;
 
-var t_nano_pattern =/(\{|(## (Nanotation|Turtle) +Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) +(End|Stop) ##)|\})(.*)/gmi;
+//var t_nano_pattern =/(\{|(## (Nanotation|Turtle) +Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) +(End|Stop) ##)|\})(.*)/gmi;
+var t_nano_pattern =/(## (Nanotation|Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle) +(End|Stop) ##)(.*)/gmi;
 var j_nano_pattern =/(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
 
 
@@ -198,11 +199,38 @@ function sniff_nanotation() {
         if (ndata==null)
           break;
 
-        var str = ndata[4];
+        var str = ndata[3];
         str = fix_Nano_data(str);
         if (str.length>0)
           t_ret.push(str);
       }
+
+      //try get Turtle Nano in CurlyBraces { ... }
+      var j = 0;
+      var inCurly = 0;
+      var str = "";
+      while(j < s_doc.length) {
+        var ch = s_doc[j++];
+        if (ch == '"') {
+          var rc = s_doc.indexOf(ch, j);
+          if (rc==-1)
+            break;
+          if (inCurly>0)
+            str += s_doc.substring(j-1, rc+1);
+          j = rc+1;
+        } 
+        else if (ch == '{') {
+          inCurly++;
+        }
+        else if (ch == '}') {
+          inCurly--;
+          t_ret.push(str);
+          str = "";
+        }
+        else if (inCurly>0) {
+          str += ch;
+        }
+      } 
 
       //try get JSON-LD Nano
       while(true) {
