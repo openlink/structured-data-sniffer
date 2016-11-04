@@ -850,7 +850,7 @@ function save_data(action, fname, fmt, callback)
     if (error)
       errors.push("\n"+error);
 
-    if (skipped_error) {
+    if (skipped_error && skipped_error.length>0) {
       errors.push("\n");
       errors = errors.concat(skipped_error);
     }
