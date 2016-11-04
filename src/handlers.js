@@ -48,6 +48,7 @@ Fix_Nano.prototype = {
                 || token.type==="prefix"
                 || token.type==="PREFIX"
                 || token.type[0]==="@"
+                || token.type==="["
                ))
             self._bad_data = true;
           if (token && self._tokens ==1 && 
@@ -58,6 +59,7 @@ Fix_Nano.prototype = {
                 || token.type==="PREFIX"
                 || token.type===","
                 || token.type===";"
+                || token.type==="]"
                ))
             self._bad_data = true;
 
