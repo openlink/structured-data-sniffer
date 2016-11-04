@@ -389,7 +389,7 @@ function show_Data(data_error, html_data)
 function Import_doc() 
 {
   if (doc_URL!==null) {
-     var _url = createImportUrl(doc_URL);
+     var _url = new Settings().createImportUrl(doc_URL);
      Browser.api.tabs.create({url:_url});
   }
 
@@ -399,9 +399,20 @@ function Import_doc()
 
 function Rww_exec() 
 {
+  function openRww(data) 
+  {
+     var _url = new Settings().createRwwUrl(doc_URL, data);
+     Browser.openTab(_url, gData.tab_index);
+  }
+
   if (doc_URL!==null) {
-     var _url = createRwwUrl(doc_URL);
-     Browser.api.tabs.create({url:_url});
+     var edit_url = new Settings().getValue('ext.osds.rww.edit.url');
+
+     if (edit_url.indexOf("{data}")!=-1) {
+        save_data("export-rww", "data.txt", "ttl", openRww);
+     } else {
+        openRww(null);
+     }
   }
 
   return false;
@@ -411,7 +422,7 @@ function Rww_exec()
 function Sparql_exec() 
 {
   if (doc_URL!==null) {
-     var _url = createSparqlUrl(doc_URL);
+     var _url = new Settings().createSparqlUrl(doc_URL);
      Browser.api.tabs.create({url:_url});
   }
 
@@ -458,7 +469,6 @@ function Download_exec()
   if (Browser.isEdgeWebExt)
     $('#save-action').prop('disabled', true);
 
-
   var filename = null;
   var fmt = "json";
 
@@ -502,11 +512,14 @@ function Download_exec()
 }
 
 
-function save_data(action, fname, fmt) 
+function save_data(action, fname, fmt, callback) 
 {
-  function txt_from(data, error, skipped_error) 
+
+  function out_from(data, error, skipped_error) 
   {
+    var retdata = {txt:"", error:""};
     var outdata = [];
+    var errors = [];
 
     if (data) {
       if ($.isArray(data))
@@ -516,27 +529,39 @@ function save_data(action, fname, fmt)
     }
 
     if (error)
-      outdata.push("\n"+error);
+      errors.push("\n"+error);
 
-    if (skipped_error) {
-      outdata.push("\n");
-      outdata = outdata.concat(skipped_error);
+    if (skipped_error && skipped_error.length>0) {
+      errors.push("\n");
+      errors = errors.concat(skipped_error);
     }
 
-    var ret = "";
     for(var i=0; i < outdata.length; i++)
-      ret += outdata[i]+"\n\n";
-    return ret;
+      retdata.txt += outdata[i]+"\n\n";
+
+    for(var i=0; i < errors.length; i++)
+      retdata.error += errors[i]+"\n\n";
+
+    return retdata;
   }
 
-  function exec_action(action, txt_data) 
+  function exec_action(action, retdata) 
   {
-    if (action==="filesave") {
-      blob = new Blob([txt_data], {type: "text/plain;charset=utf-8"});
+    if (action==="export-rww") {
+      if (retdata.error.length > 0) {
+        showInfo(retdata.error);
+      } else {
+        if (callback)
+          callback(retdata.txt);
+      }
+    }
+    else if (action==="filesave") {
+      blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
       saveAs(blob, fname);    
-    } else {
+    } 
+    else {
       selectTab("#src");
-      $("#src_place").val(txt_data); 
+      $("#src_place").val(retdata.txt + retdata.error); 
     }
   }
   
@@ -562,7 +587,7 @@ function save_data(action, fname, fmt)
         var handler = new Convert_Turtle2JSON();
         handler.parse(data, doc_URL,
           function(error, json_data) {
-            exec_action(action, txt_from(json_data, error, handler.skipped_error));
+            exec_action(action, out_from(json_data, error, handler.skipped_error));
           });
       }
       else {
@@ -570,32 +595,17 @@ function save_data(action, fname, fmt)
         handler.parse(data, doc_URL, 
           function(error, json_data) 
           {
-            exec_action(action, txt_from(json_data, error, handler.skipped_error));
+            exec_action(action, out_from(json_data, error, handler.skipped_error));
           });
       }
     } else {
-      exec_action(action, txt_from(data));
+      exec_action(action, out_from(data));
     }
 
   } catch(ex) {
     showInfo(ex);
   }
 
-/***
-  try{
-    if (action==="filesave") {
-      var blob = new Blob([gData.text], {type: "text/plain;charset=utf-8"});
-      saveAs(blob, fname);    
-
-    } else {
-      selectTab("#src");
-      $("#src_place").val(gData.text); 
-    }
-
-  } catch(ex) {
-    showInfo(ex);
-  }
-***/
 }
 
 
@@ -612,73 +622,6 @@ function showInfo(msg)
       }
     }
   });
-}
-
-
-function createImportUrl(curUrl) 
-{
-  var setting = new Settings();
-  var handle_url = setting.getValue('ext.osds.import.url');
-  var srv = setting.getValue('ext.osds.import.srv');
-  var docURL = encodeURIComponent(curUrl);
-
-  switch(srv) {
-    case 'about':
-    case 'about-ssl':
-      var result = curUrl.match(/^((\w+):\/)?\/?(.*)$/);
-      if (!result) {
-        throw 'Invalid url:\n' + curUrl;
-        return null;
-      }
-//      var protocol = result[2]=="https"?"http":result[2];
-      var protocol = result[2];
-      docURL = protocol + '/' + result[3];
-      break;
-
-    case 'ode':
-    case 'ode-ssl':
-    case 'describe':
-    case 'describe-ssl':
-    default:
-      break;
-  }
-
-  if (handle_url.indexOf("{url}")!=-1)
-     return handle_url.replace("{url}",docURL);
-  else
-     return handle_url + docURL;
-}
-
-
-function createRwwUrl(curUrl) 
-{
-  var setting = new Settings();
-  var edit_url = setting.getValue('ext.osds.rww.edit.url');
-  var store_url = setting.getValue('ext.osds.rww.store.url');
-  var docURL = encodeURIComponent(curUrl);
-
-  if (store_url!==null && store_url.length>0) {
-    if (edit_url.indexOf("?")!=-1)
-      edit_url += "&uri="+encodeURIComponent(store_url);
-    else
-      edit_url += "?uri="+encodeURIComponent(store_url);
-  }
-
-  if (edit_url.indexOf("{url}")!=-1)
-     return edit_url.replace("{url}",docURL);
-  else
-     return edit_url;
-}
-
-
-function createSparqlUrl(curUrl) 
-{
-  var setting = new Settings();
-  var sparql_url = setting.getValue('ext.osds.sparql.url');
-  var query = setting.getValue('ext.osds.sparql.query');
-
-  var query = encodeURIComponent(query.replace(/{url}/g, curUrl));
-  return sparql_url.replace(/{query}/g, query);
 }
 
 

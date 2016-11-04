@@ -695,7 +695,7 @@ else
 function Import_doc() 
 {
   if (doc_URL!==null) {
-     var _url = createImportUrl(doc_URL);
+     var _url = new Settings().createImportUrl(doc_URL);
      Browser.openTab(_url, gData.tab_index);
   }
 
@@ -707,13 +707,13 @@ function Rww_exec()
 {
   function openRww(data) 
   {
-     var _url = createRwwUrl(doc_URL, data);
+     var _url = new Settings().createRwwUrl(doc_URL, data);
      Browser.openTab(_url, gData.tab_index);
   }
 
 
   if (doc_URL!==null) {
-     var edit_url = setting.getValue('ext.osds.rww.edit.url');
+     var edit_url = new Settings().getValue('ext.osds.rww.edit.url');
 
      if (edit_url.indexOf("{data}")!=-1) {
         save_data("export-rww", "data.txt", "ttl", openRww);
@@ -729,7 +729,7 @@ function Rww_exec()
 function Sparql_exec() 
 {
   if (doc_URL!==null) {
-     var _url = createSparqlUrl(doc_URL);
+     var _url = new Settings().createSparqlUrl(doc_URL);
      Browser.openTab(_url, gData.tab_index);
   }
 
@@ -1013,76 +1013,6 @@ function showInfo(msg)
 }
 
 
-function createImportUrl(curUrl) 
-{
-  var setting = new Settings();
-  var handle_url = setting.getValue('ext.osds.import.url');
-  var srv = setting.getValue('ext.osds.import.srv');
-  var docURL = encodeURIComponent(curUrl);
-
-  switch(srv) {
-    case 'about':
-    case 'about-ssl':
-      var result = curUrl.match(/^((\w+):\/)?\/?(.*)$/);
-      if (!result) {
-        throw 'Invalid url:\n' + curUrl;
-        return null;
-      }
-//      var protocol = result[2]=="https"?"http":result[2];
-      var protocol = result[2];
-      docURL = protocol + '/' + result[3];
-      break;
-
-    case 'ode':
-    case 'ode-ssl':
-    case 'describe':
-    case 'describe-ssl':
-    default:
-      break;
-  }
-
-  if (handle_url.indexOf("{url}")!=-1)
-     return handle_url.replace("{url}",docURL);
-  else
-     return handle_url + docURL;
-}
-
-
-function createRwwUrl(curUrl, data) 
-{
-  var setting = new Settings();
-  var edit_url = setting.getValue('ext.osds.rww.edit.url');
-  var store_url = setting.getValue('ext.osds.rww.store.url');
-  var docURL = encodeURIComponent(curUrl);
-
-  if (store_url!==null && store_url.length>0) {
-    if (edit_url.indexOf("?")!=-1)
-      edit_url += "&uri="+encodeURIComponent(store_url);
-    else
-      edit_url += "?uri="+encodeURIComponent(store_url);
-  }
-
-  if (edit_url.indexOf("{url}")!=-1)
-     edit_url = edit_url.replace("{url}",docURL);
-
-  if (edit_url.indexOf("{data}")!=-1) 
-     edit_url = edit_url.replace("{data}", encodeURIComponent(data?data:""));
-
-  return edit_url;
-}
-
-
-function createSparqlUrl(curUrl) 
-{
-  var setting = new Settings();
-  var sparql_url = setting.getValue('ext.osds.sparql.url');
-  var query = setting.getValue('ext.osds.sparql.query');
-
-  var query = encodeURIComponent(query.replace(/{url}/g, curUrl));
-  return sparql_url.replace(/{query}/g, query);
-}
-
-
 function show_rest()
 {
   selectTab('#cons');
@@ -1097,7 +1027,6 @@ function show_rest()
 
 
 // ==== restData ====
-
 function rest_exec() {
   if (!doc_URL) {
     return;

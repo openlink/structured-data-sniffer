@@ -127,6 +127,77 @@ Settings.prototype = {
     } catch(e) {
       console.log(e);
     }
+  },
+
+  createRwwUrl : function (curUrl, data) 
+  {
+    var edit_url = this.getValue('ext.osds.rww.edit.url');
+    var store_url = this.getValue('ext.osds.rww.store.url');
+    var docURL = encodeURIComponent(curUrl);
+
+    if (store_url!==null && store_url.length>0) {
+      if (edit_url.indexOf("?")!=-1)
+        edit_url += "&uri="+encodeURIComponent(store_url);
+      else
+        edit_url += "?uri="+encodeURIComponent(store_url);
+    }
+
+    if (edit_url.indexOf("{url}")!=-1)
+      edit_url = edit_url.replace("{url}",docURL);
+
+    if (edit_url.indexOf("{data}")!=-1) 
+      edit_url = edit_url.replace("{data}", encodeURIComponent(data?data:""));
+
+    return edit_url;
+  },
+
+
+  createSparqlUrl : function (curUrl) 
+  {
+    var sparql_url = this.getValue('ext.osds.sparql.url');
+    var query = this.getValue('ext.osds.sparql.query');
+
+    var query = encodeURIComponent(query.replace(/{url}/g, curUrl));
+    return sparql_url.replace(/{query}/g, query);
+  },
+
+
+  createImportUrl : function (curUrl) 
+  {
+    var handle_url = this.getValue('ext.osds.import.url');
+    var srv = this.getValue('ext.osds.import.srv');
+    var docURL = encodeURIComponent(curUrl);
+
+    switch(srv) {
+      case 'about':
+      case 'about-ssl':
+        var result = curUrl.match(/^((\w+):\/)?\/?(.*)$/);
+        if (!result) {
+          throw 'Invalid url:\n' + curUrl;
+          return null;
+        }
+//        var protocol = result[2]=="https"?"http":result[2];
+        var protocol = result[2];
+        docURL = protocol + '/' + result[3];
+        break;
+
+      case 'ode':
+      case 'ode-ssl':
+      case 'describe':
+      case 'describe-ssl':
+      default:
+        break;
+    }
+
+    if (handle_url.indexOf("{url}")!=-1)
+       return handle_url.replace("{url}",docURL);
+    else
+       return handle_url + docURL;
   }
+
+
+
+
+
 }
   
