@@ -705,9 +705,21 @@ function Import_doc()
 
 function Rww_exec() 
 {
-  if (doc_URL!==null) {
-     var _url = createRwwUrl(doc_URL);
+  function openRww(data) 
+  {
+     var _url = createRwwUrl(doc_URL, data);
      Browser.openTab(_url, gData.tab_index);
+  }
+
+
+  if (doc_URL!==null) {
+     var edit_url = setting.getValue('ext.osds.rww.edit.url');
+
+     if (edit_url.indexOf("{data}")!=-1) {
+        save_data("export-rww", "data.txt", "ttl", openRww);
+     } else {
+        openRww(null);
+     }
   }
 
   return false;
@@ -819,7 +831,7 @@ function Download_exec()
 }
 
 
-function save_data(action, fname, fmt) 
+function save_data(action, fname, fmt, callback) 
 {
 
   function txt_from(data, error, skipped_error) 
@@ -849,10 +861,15 @@ function save_data(action, fname, fmt)
 
   function exec_action(action, txt_data) 
   {
-    if (action==="filesave") {
+    if (action==="export-rww") {
+      if (callback)
+        callback(txt_data);
+    }
+    else if (action==="filesave") {
       blob = new Blob([txt_data], {type: "text/plain;charset=utf-8"});
       saveAs(blob, fname);    
-    } else {
+    } 
+    else {
       selectTab("#src");
       $("#src_place").val(txt_data); 
     }
@@ -1023,7 +1040,7 @@ function createImportUrl(curUrl)
 }
 
 
-function createRwwUrl(curUrl) 
+function createRwwUrl(curUrl, data) 
 {
   var setting = new Settings();
   var edit_url = setting.getValue('ext.osds.rww.edit.url');
@@ -1038,9 +1055,12 @@ function createRwwUrl(curUrl)
   }
 
   if (edit_url.indexOf("{url}")!=-1)
-     return edit_url.replace("{url}",docURL);
-  else
-     return edit_url;
+     edit_url = edit_url.replace("{url}",docURL);
+
+  if (edit_url.indexOf("{data}")!=-1 && data)
+     edit_url = edit_url.replace("{data}", encodeURIComponent(data));
+
+  return edit_url;
 }
 
 
