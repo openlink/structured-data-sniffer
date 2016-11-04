@@ -429,6 +429,150 @@ function sniff_Data() {
 
 
 
+function isBlank(n) {
+  return n && n.substr(0, 2) === '_:';
+}
+
+function iri2str(n) {
+  return (n && n.substr(0, 2) === '_:')? n : "<"+n+">";
+}
+
+
+/**
+function isElement(o){
+  return (
+    typeof HTMLElement === "object" ? o instanceof HTMLElement : //DOM2
+    o && typeof o === "object" && o !== null && o.nodeType === 1 && typeof o.nodeName==="string"
+  );
+}
+***/
+function NodeList2Str(list) 
+{
+  var s = "";
+  for(var i=0; i < list.length; i++) {
+    if (i>0)
+      s+= "\n";
+    if (list[i].innerHTML)
+      s+= list[i].innerHTML;
+    else
+      s+= list[i].textContent;
+  }
+  return s;  
+}
+
+function get_rdfa_data() 
+{
+    var escape    = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
+    var escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
+    var escapeReplacements = { '\\': '\\\\', '"': '\\"', '\t': '\\t',
+                       '\n': '\\n', '\r': '\\r', '\b': '\\b', '\f': '\\f' };
+    
+    function fmt(value) 
+    {
+      function characterReplacer(character) {
+        // Replace a single character by its escaped version
+        var result = escapeReplacements[character];
+        if (result === undefined) {
+          // Replace a single character with its 4-bit unicode escape sequence
+          if (character.length === 1) {
+            result = character.charCodeAt(0).toString(16);
+            result = '\\u0000'.substr(0, 6 - result.length) + result;
+          }
+          // Replace a surrogate pair with its 8-bit unicode escape sequence
+          else {
+            result = ((character.charCodeAt(0) - 0xD800) * 0x400 +
+                   character.charCodeAt(1) + 0x2400).toString(16);
+            result = '\\U00000000'.substr(0, 10 - result.length) + result;
+          }
+        }
+        return result;
+      }
+
+      if (escape.test(value))
+        value = value.replace(escapeAll, characterReplacer);
+
+      return value;
+    }
+
+
+    var rdfa = null;
+    var rdfa_ttl = null;
+
+    ///Convert RDFa data to internal format
+    if (rdfa_subjects!=null && rdfa_subjects.length>0) 
+    {
+       rdfa = [];
+       rdfa_ttl = "";
+       var _LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
+
+       for(var i=0; i<rdfa_subjects.length; i++) {
+         var s_triple = " "+iri2str(fmt(rdfa_subjects[i]));
+         var p_triple ;
+         var o_triple ;
+         var s = {s:rdfa_subjects[i], n:i+1};
+         rdfa.push(s);
+         var plist = document.data.getProperties(rdfa_subjects[i]);
+         s.props = new Object();
+        
+         for(var j=0; j < plist.length; j++) {
+           var p = s.props[plist[j]];
+           if (p === undefined)
+             s.props[plist[j]] = [];
+
+           p = s.props[plist[j]];
+           p_triple = " "+iri2str(fmt(plist[j]));
+
+           var vlist = document.data.getObjects(rdfa_subjects[i], plist[j]);
+           for (var z=0; z<vlist.length; z++) {
+             var v = vlist[z];
+             if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#object") {
+               p.push({"iri": String(v.value)});
+               o_triple = " "+iri2str(fmt(v.value));
+             }
+             else if (v.type === "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral") {
+               var v_val = null;
+
+               if (v.value instanceof NodeList)
+                 v_val = NodeList2Str(v.value);
+               else
+                 v_val = v.value!=null?String(v.value):null;
+
+               var v_lang = v.language!=null?String(v.language):null;
+               p.push({value:v_val, type:null, lang:v_lang});
+               o_triple = ' "'+fmt(v_val)+'"';
+               if (v_lang!=null)
+                 o_triple += '@'+v_lang;
+             }
+             else {
+               var v_val = null;
+
+               if (v.value instanceof NodeList)
+                 v_val = NodeList2Str(v.value);
+               else
+                 v_val = v.value!=null?String(v.value):null;
+
+               var v_lang = v.language!=null?String(v.language):null;
+               var v_type = v.type!=null?String(v.type):null;
+               p.push({value:v_val, type:v_type, lang:v_lang});
+               o_triple = ' "'+fmt(v_val)+'"';
+               if (v_lang!=null)
+                 o_triple += '@'+v_lang;
+               else if (v_type!=null) 
+                 o_triple += '^^<'+v_type+">";
+             }
+             rdfa_ttl += s_triple+p_triple+o_triple+" .\n";
+           }
+         }
+       } 
+    }
+
+    return {data:rdfa, ttl:rdfa_ttl};
+}
+
+
+
+
+
 window.onload = function() {
 
   try {
@@ -436,14 +580,6 @@ window.onload = function() {
     is_data_exist();
     if (!data_found) {
        setTimeout(is_data_exist, 3000);
-    }
-
-    function isBlank(n) {
-      return n && n.substr(0, 2) === '_:';
-    }
-
-    function iri2str(n) {
-      return (n && n.substr(0, 2) === '_:')? n : "<"+n+">";
     }
 
 
@@ -474,9 +610,10 @@ window.onload = function() {
              };
         
         var microdata = jQuery.microdata.json(micro_items, function(o) { return o; });
-        var rdfa = null;
-        var rdfa_ttl = null;
+        var rdfa = get_rdfa_data(); //null;
+//        var rdfa_ttl = get_rdfa_ttl(); //null;
 
+/**
         ///Convert RDFa data to internal format
         if (rdfa_subjects!=null && rdfa_subjects.length>0) 
         {
@@ -532,12 +669,13 @@ window.onload = function() {
              }
            } 
         }
+****/
 
         docData.micro.data = microdata;
         docData.jsonld.text = json_ld_Text;
         docData.turtle.text = turtle_Text;
-        docData.rdfa.data = rdfa;
-        docData.rdfa.ttl = rdfa_ttl;
+        docData.rdfa.data = rdfa.data;
+        docData.rdfa.ttl = rdfa.ttl;
         docData.t_nano.text = t_nano_Text;
         docData.j_nano.text = j_nano_Text;
         docData.posh.text = posh_Text;

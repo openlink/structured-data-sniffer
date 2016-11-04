@@ -834,9 +834,11 @@ function Download_exec()
 function save_data(action, fname, fmt, callback) 
 {
 
-  function txt_from(data, error, skipped_error) 
+  function out_from(data, error, skipped_error) 
   {
+    var retdata = {txt:"", error:""};
     var outdata = [];
+    var errors = [];
 
     if (data) {
       if ($.isArray(data))
@@ -846,35 +848,41 @@ function save_data(action, fname, fmt, callback)
     }
 
     if (error)
-      outdata.push("\n"+error);
+      errors.push("\n"+error);
 
     if (skipped_error) {
-      outdata.push("\n");
-      outdata = outdata.concat(skipped_error);
+      errors.push("\n");
+      errors = errors.concat(skipped_error);
     }
 
-    var ret = "";
     for(var i=0; i < outdata.length; i++)
-      ret += outdata[i]+"\n\n";
-    return ret;
+      retdata.txt += outdata[i]+"\n\n";
+
+    for(var i=0; i < errors.length; i++)
+      retdata.error += errors[i]+"\n\n";
+
+    return retdata;
   }
 
-  function exec_action(action, txt_data) 
+  function exec_action(action, retdata) 
   {
     if (action==="export-rww") {
-      if (callback)
-        callback(txt_data);
+      if (retdata.error.length > 0) {
+        showInfo(retdata.error);
+      } else {
+        if (callback)
+          callback(retdata.txt);
+      }
     }
     else if (action==="filesave") {
-      blob = new Blob([txt_data], {type: "text/plain;charset=utf-8"});
+      blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
       saveAs(blob, fname);    
     } 
     else {
       selectTab("#src");
-      $("#src_place").val(txt_data); 
+      $("#src_place").val(retdata.txt + retdata.error); 
     }
   }
-
 
   try{
     var data = [];
@@ -921,17 +929,17 @@ function save_data(action, fname, fmt, callback)
         function(error, ttl_data) 
         {
           if (error) {
-            exec_action(action, txt_from(error));
+            exec_action(action, out_from(error));
             return;
           }
           if (fmt==="ttl") {
-            exec_action(action, txt_from(ttl_data));
+            exec_action(action, out_from(ttl_data));
           }
           else if (ttl_data!=null) { // json
             var jhandler = new Convert_Turtle2JSON();
             jhandler.parse([ttl_data], doc_URL,
               function(error, json_data) {
-                exec_action(action, txt_from(json_data, error, jhandler.skipped_error));
+                exec_action(action, out_from(json_data, error, jhandler.skipped_error));
               });
           }
         });
@@ -942,18 +950,18 @@ function save_data(action, fname, fmt, callback)
       handler.parse(data, doc_URL, 
         function(error, ttl_data) 
         {
-          if (error) {
-            exec_action(action, txt_from(error));
+          if (error || handler.skipped_error.length > 0) {
+            exec_action(action, out_from(null, error, handler.skipped_error));
             return;
           }
           if (fmt==="ttl") {
-            exec_action(action, txt_from(ttl_data));
+            exec_action(action, out_from(ttl_data));
           }  
           else if (ttl_data!=null) { // json
             var jhandler = new Convert_Turtle2JSON();
             jhandler.parse(ttl_data, doc_URL,
               function(error, json_data) {
-                exec_action(action, txt_from(json_data, error, jhandler.skipped_error));
+                exec_action(action, out_from(json_data, error, jhandler.skipped_error));
               });
           }
         });
@@ -964,7 +972,7 @@ function save_data(action, fname, fmt, callback)
         var handler = new Convert_Turtle2JSON();
         handler.parse_ttl(data, quad_data, doc_URL,
           function(error, json_data) {
-            exec_action(action, txt_from(json_data, error, handler.skipped_error));
+            exec_action(action, out_from(json_data, error, handler.skipped_error));
           });
       }
       else {
@@ -972,12 +980,12 @@ function save_data(action, fname, fmt, callback)
         handler.parse(data, doc_URL, 
           function(error, json_data) 
           {
-            exec_action(action, txt_from(json_data, error, handler.skipped_error));
+            exec_action(action, out_from(json_data, error, handler.skipped_error));
           });
       }
     } else {
       data = data.concat(quad_data);
-      exec_action(action, txt_from(data));
+      exec_action(action, out_from(data));
     }
 
   } catch(ex) {
@@ -1057,8 +1065,8 @@ function createRwwUrl(curUrl, data)
   if (edit_url.indexOf("{url}")!=-1)
      edit_url = edit_url.replace("{url}",docURL);
 
-  if (edit_url.indexOf("{data}")!=-1 && data)
-     edit_url = edit_url.replace("{data}", encodeURIComponent(data));
+  if (edit_url.indexOf("{data}")!=-1) 
+     edit_url = edit_url.replace("{data}", encodeURIComponent(data?data:""));
 
   return edit_url;
 }
