@@ -194,6 +194,7 @@
                         s_doc += item + "\n";
                 });
 
+                s_doc = fix_Nano_data(s_doc);
                 //try get Turtle Nano
                 while (true) {
                     var ndata = t_nano_pattern.exec(s_doc);
@@ -201,7 +202,6 @@
                         break;
 
                     var str = ndata[3];
-                    str = fix_Nano_data(str);
                     if (str.length > 0)
                         t_ret.push(str);
                 }
@@ -225,7 +225,7 @@
                     }
                     else if (ch == '}') {
                         inCurly--;
-                        t_ret.push(fix_Nano_data(str));
+                        t_ret.push(str);
                         str = "";
                     }
                     else if (inCurly > 0) {
@@ -240,7 +240,6 @@
                         break;
 
                     var str = ndata[2];
-                    str = fix_Nano_data(str);
                     if (str.length > 0) {
                         var add = false;
                         for (var c = 0; c < str.length; c++) {

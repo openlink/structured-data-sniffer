@@ -53,11 +53,7 @@ $(function(){
         });
 
         $('#OK_btn').click(savePref);
-        $('#Cancel_btn').click(function() { 
-            if (Browser.isFirefoxSDK)
-              self.port.emit("close", "");
-            window.close(); 
-         });
+        $('#Cancel_btn').click(closeOptions);
 
         $('#import-set-def').click(setImportDefaults);
         $('#rww-set-def').click(setRWWDefaults);
@@ -76,6 +72,18 @@ $(function(){
 });
 
 
+function closeOptions() 
+{
+    if (Browser.isChromeAPI && Browser.isFirefoxWebExt) {
+      Browser.api.tabs.getCurrent(function(tab) {
+        Browser.api.tabs.remove(tab.id);
+      });
+    } else {
+      if (Browser.isFirefoxSDK)
+        self.port.emit("close", "");
+      window.close(); 
+    }
+}
 
 function setImportDefaults() 
 {
@@ -247,7 +255,7 @@ function savePref()
    if (Browser.isFirefoxSDK)
      self.port.emit("close", {osds_pref_user:pref_user});
 
-   window.close();
+   closeOptions();
 }
 
 
