@@ -87,6 +87,22 @@
       parts[key] = m[i] || '';
     });
 
+    if (parts["path"]===parts["directory"]) {
+       var s = parts["path"];
+       if (s.length > 1 && s[0]=="/" && s[1]=="#") {
+         parts["path"]="/";
+         parts["relative"]="/";
+         parts["directory"]="/";
+         parts["anchor"]=s.substring(1);
+       }
+       else if (s.length > 0 && s[0]=="#") {
+         parts["path"]="/";
+         parts["relative"]="/";
+         parts["directory"]="/";
+         parts["anchor"]=s;
+       }
+
+    }
     return parts;
   }
 
