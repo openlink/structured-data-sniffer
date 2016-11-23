@@ -40,7 +40,7 @@ if (Browser.isChromeAPI)
             if (pref_user && pref_user.length> 0)
               details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
           }
-          return {requestHeaders: details.requestHeaders};
+          return {"requestHeaders": details.requestHeaders};
         },
         {urls: ["<all_urls>"]},
         ["blocking", "requestHeaders"]);

@@ -44,7 +44,7 @@ jQuery.microdata.json = function(selector, format) {
     });
 
 
-    var add_items = $item.items().not($item.properties()).not($(memo_scope));
+    var add_items = $item.sub_items().not($item.properties()).not($(memo_scope));
 
     add_items.each(function(i, elem) {
       var $elem = $(elem);
@@ -91,7 +91,7 @@ jQuery.microdata.json = function(selector, format) {
       if ($item.itemScope()) {
         result.items.push(getObject(item, []));
         // JCD: Process any top-level descendant itemscopes, but where the node doesn't directly contain an itemprop attribute.
-//        var descendants = $item.find('[itemscope]').not($item.find('[itemscope] [itemscope]')).not($item.find('[itemprop]'));
+//      var descendants = $item.find('[itemscope]').not($item.find('[itemscope] [itemscope]')).not($item.find('[itemprop]'));
         var descendants = $item.find('[itemscope]').not($item.find('[itemscope] [itemscope]')).not($item.find('[itemprop]')).not($(memo_scope));
         processItemScope(descendants, result);
       }

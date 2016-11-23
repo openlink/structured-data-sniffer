@@ -292,7 +292,7 @@ function show_Data(dData)
         err_tabs.push("#micro");
       }
   }
-  if (html.length > 0) {
+  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
       $('#micro_items #docdata_view').append(html);
       micro = true;
   }
@@ -312,7 +312,7 @@ function show_Data(dData)
         err_tabs.push("#jsonld");
       }
   }
-  if (html.length > 0) {
+  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
       $('#jsonld_items #docdata_view').append(html);
       jsonld = true;
   }
@@ -333,7 +333,7 @@ function show_Data(dData)
         err_tabs.push("#turtle");
       }
   }
-  if (html.length > 0) {
+  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
       $('#turtle_items #docdata_view').append(html);
       turtle = true;
   }
@@ -353,7 +353,7 @@ function show_Data(dData)
         err_tabs.push("#rdfa");
       }
   }
-  if (html.length > 0) {
+  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
       $('#rdfa_items #docdata_view').append(html);
       rdfa = true;
   }
@@ -374,7 +374,7 @@ function show_Data(dData)
         err_tabs.push("#posh");
       }
   }
-  if (html.length > 0) {
+  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
       $('#posh_items #docdata_view').append(html);
       posh = true;
   }

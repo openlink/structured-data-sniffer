@@ -586,6 +586,8 @@ MicrodataJSON_Converter.prototype = {
            v_lst.push({ "iri" : val});
          else if (val.substring(0,8) ==="https://")
            v_lst.push({ "iri" : val});
+         else if (val.substring(0,9) ==="nodeid://")
+           v_lst.push({ "iri" : val});
          else
            v_lst.push({ "value" : val}); //??todo parse literal
 /**
@@ -609,6 +611,8 @@ MicrodataJSON_Converter.prototype = {
             key = id_ns.link+key;
           else
             key = ":"+key;
+        } else if (key===":unnamed") {
+            key = self.new_bnode();
         }
 
        var v = [];
