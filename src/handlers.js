@@ -163,7 +163,7 @@ Handle_Turtle.prototype = {
 
     if (this._pos < textData.length) {
       var store = new N3DataConverter();
-      var parser = N3.Parser();
+      var parser = N3.Parser({documentIRI:self.baseURI});
       try {
         var ttl_data = textData[self._pos];
 
