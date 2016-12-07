@@ -35,7 +35,8 @@ var gData = {
         j_nano :{ json_text:null },
         posh:{ ttl_text:null },
         tab_index: null,
-        tabs:[]
+        tabs:[],
+        baseURL: null
       };
 var yasqe = {
         obj : null,
@@ -408,7 +409,7 @@ function check_Microdata(dData)
   {
     var handler = new Handle_Microdata();
     gData.micro.json_text = [JSON.stringify(dData.micro.data, undefined, 2)];
-    handler.parse(dData.micro.data, dData.docURL,
+    handler.parse(dData.micro.data, gData.baseURL,
       function(error, html_data) 
       {
         if (error)
@@ -433,7 +434,7 @@ function check_JSON_LD(dData)
   if (dData.jsonld.text!==null && dData.jsonld.text.length > 0)
   {
     var handler = new Handle_JSONLD();
-    handler.parse(dData.jsonld.text, dData.docURL,
+    handler.parse(dData.jsonld.text, gData.baseURL,
       function(error, html_data) {
         gData.jsonld.json_text = dData.jsonld.text;
         if (error)
@@ -461,7 +462,7 @@ function check_Json_Nano(dData, start_id)
   {
     var handler = new Handle_JSONLD();
     handler.start_id = start_id;
-    handler.parse(dData.j_nano.text, dData.docURL, 
+    handler.parse(dData.j_nano.text, gData.baseURL, 
       function(error, html_data) {
         gData.j_nano.json_text = dData.j_nano.text;
         if (error)
@@ -489,7 +490,7 @@ function check_Turtle(dData)
   if (dData.turtle.text!==null && dData.turtle.text.length > 0)
   {
     var handler = new Handle_Turtle();
-    handler.parse(dData.turtle.text, dData.docURL, 
+    handler.parse(dData.turtle.text, gData.baseURL, 
       function(error, html_data) {
         gData.turtle.ttl_text = dData.turtle.text;
         if (error)
@@ -521,7 +522,7 @@ function check_Turtle_Nano(dData, start_id)
 
         if (dData.t_nano.text!==null && dData.t_nano.text.length > 0) {
           var handler = new Handle_Turtle(start_id);
-          handler.parse_nano(dData.t_nano.text, dData.docURL, 
+          handler.parse_nano(dData.t_nano.text, gData.baseURL, 
             function(error, html_data) {
               gData.t_nano.ttl_text = dData.t_nano.text;
               if (error)
@@ -554,7 +555,7 @@ function check_POSH(dData)
   if (dData.posh.text!==null && dData.posh.text.length > 0)
   {
     var handler = new Handle_Turtle();
-    handler.parse([dData.posh.text], dData.docURL, 
+    handler.parse([dData.posh.text], gData.baseURL, 
       function(error, html_data) {
         gData.posh.ttl_text = dData.posh.text;
         if (error)
@@ -582,7 +583,7 @@ function check_RDFa(dData)
   if (dData.rdfa.data)
   {
     var handler = new Handle_RDFa();
-    handler.parse(dData.rdfa.data, dData.docURL, 
+    handler.parse(dData.rdfa.data, gData.baseURL, 
       function(error, html_data) {
         if (error)
           dData.rdfa.error = error;
@@ -620,6 +621,11 @@ function parse_Data(dData)
   dData.posh.expanded = null;
   dData.posh.error = [];
   doc_URL = dData.docURL;
+  
+  var url = new Uri(doc_URL);
+  url.setAnchor("");
+  url.setQuery("");
+  gData.baseURL = url.toString();
 
   load_restData(doc_URL);
   
@@ -925,7 +931,7 @@ function save_data(action, fname, fmt, callback)
     if (selectedTab==="#micro" && data.length > 0) 
     {
       var handler = new Handle_Microdata(true);
-      handler.parse($.parseJSON(data[0]), doc_URL,
+      handler.parse($.parseJSON(data[0]), gData.baseURL,
         function(error, ttl_data) 
         {
           if (error) {
@@ -937,7 +943,7 @@ function save_data(action, fname, fmt, callback)
           }
           else if (ttl_data!=null) { // json
             var jhandler = new Convert_Turtle2JSON();
-            jhandler.parse([ttl_data], doc_URL,
+            jhandler.parse([ttl_data], gData.baseURL,
               function(error, json_data) {
                 exec_action(action, out_from(json_data, error, jhandler.skipped_error));
               });
@@ -947,7 +953,7 @@ function save_data(action, fname, fmt, callback)
     else if (selectedTab==="#rdfa" && data.length > 0) 
     {
       var handler = new Handle_Turtle(0, true);
-      handler.parse(data, doc_URL, 
+      handler.parse(data, gData.baseURL, 
         function(error, ttl_data) 
         {
           if (error || handler.skipped_error.length > 0) {
@@ -959,7 +965,7 @@ function save_data(action, fname, fmt, callback)
           }  
           else if (ttl_data!=null) { // json
             var jhandler = new Convert_Turtle2JSON();
-            jhandler.parse(ttl_data, doc_URL,
+            jhandler.parse(ttl_data, gData.baseURL,
               function(error, json_data) {
                 exec_action(action, out_from(json_data, error, jhandler.skipped_error));
               });
@@ -970,14 +976,14 @@ function save_data(action, fname, fmt, callback)
     {
       if (src_fmt==="ttl") {
         var handler = new Convert_Turtle2JSON();
-        handler.parse_ttl(data, quad_data, doc_URL,
+        handler.parse_ttl(data, quad_data, gData.baseURL,
           function(error, json_data) {
             exec_action(action, out_from(json_data, error, handler.skipped_error));
           });
       }
       else {
         var handler = new Handle_JSONLD(true);
-        handler.parse(data, doc_URL, 
+        handler.parse(data, gData.baseURL, 
           function(error, json_data) 
           {
             exec_action(action, out_from(json_data, error, handler.skipped_error));

@@ -36,8 +36,8 @@ Fix_Nano.prototype = {
     var self = this;
 
     if (this._pos < textData.length) {
-      var lexer = N3.Lexer({ lineMode: false });
       try {
+        var lexer = N3.Lexer({ lineMode: false });
         var ttl_data = textData[self._pos];
 
         lexer.tokenize(ttl_data, function (error, token) {
@@ -106,23 +106,22 @@ Handle_Microdata.prototype = {
   parse : function(jsonData, docURL, callback) {
     this.callback = callback;
     var self = this;
+    var ret_data = null;
+    var error = null;
     try 
     {
       var conv = new MicrodataJSON_Converter();
       var out_data = conv.transform(jsonData, docURL);
 
-      var ret_data = null;
-
       if (self._make_ttl) 
         ret_data = new TTL_Gen(docURL).load(out_data);
       else
         ret_data = new HTML_Gen(docURL).load(out_data);
-        
-      self.callback(null, ret_data);
     } 
     catch (ex) {
-      self.callback(ex.toString(), null);
+      error = ex.toString();
     }
+    self.callback(error, ret_data);
   }
 
 }
@@ -162,9 +161,9 @@ Handle_Turtle.prototype = {
     var self = this;
 
     if (this._pos < textData.length) {
-      var store = new N3DataConverter();
-      var parser = N3.Parser({documentIRI:self.baseURI});
       try {
+        var store = new N3DataConverter();
+        var parser = N3.Parser({documentIRI:self.baseURI});
         var ttl_data = textData[self._pos];
 
         if (this.ns_pref!==null)

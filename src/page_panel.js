@@ -237,6 +237,12 @@ function start_parse_data(data_text, data_type, data_url)
   gData.url = data_url;
   doc_URL = data_url;
 
+  var url = new Uri(data_url);
+  url.setAnchor("");
+  url.setQuery("");
+  var baseURL = url.toString();
+
+
   load_restData(doc_URL);
 
   if (data_type==="turtle") 
@@ -246,7 +252,7 @@ function start_parse_data(data_text, data_type, data_url)
       handler.ns_pref = ns.get_ns_desc();
       handler.ns_pref_size = Object.keys(ns.ns_list).length;
       handler.skip_error = false;
-      handler.parse([data_text], data_url, 
+      handler.parse([data_text], baseURL, 
         function(error, html_data) {
           show_Data(error, html_data);
       });
@@ -255,7 +261,7 @@ function start_parse_data(data_text, data_type, data_url)
     {
       var handler = new Handle_JSONLD();
       handler.skip_error = false;
-      handler.parse([data_text], data_url, 
+      handler.parse([data_text], baseURL, 
         function(error, html_data) {
           show_Data(error, html_data);
       });
