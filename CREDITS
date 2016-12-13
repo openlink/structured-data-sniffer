@@ -66,6 +66,32 @@ following projects:
 		  comment out some unused code. The original file can be found in
 		  lib/original/RDFa.js for comparison.
 
+* rdflib.js
+    Project	: https://github.com/linkeddata/rdflib.js
+    License	: MIT license
+    Description : Linked Data API for JavaScript 
+
+
+* jsuri.js
+    Project	: https://github.com/derek-watson/jsUri
+    License	: MIT license
+    Description	: Uri parsing and manipulation for node.js and the browser.
+
+* FileSaver.js
+    Project	: https://github.com/eligrey/FileSaver.js
+    License	: MIT license
+    Description	: A saveAs() FileSaver implementation.
+
+* CodeMirror
+    Project	: https://github.com/codemirror/CodeMirror
+    License	: MIT license
+    Description	: In-browser code editor http://codemirror.net/
+
+* Yasqe
+    Project	: http://yasqe.yasgui.org/
+    License	: MIT license
+    Description	: Yet Another Sparql Query Editor.
+
 
 This list may not complete. If you feel any third party project is missing from this list, please
 email the current maintainer.

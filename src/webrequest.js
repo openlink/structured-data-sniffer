@@ -60,13 +60,6 @@ if (Browser.isChromeAPI)
         var type = null;
 
         if (header.name && header.name.match(/content-type/i)) {
-/**
-          if (header.value.match(/\/(rdf)/)) {
-            handle = true;
-            type = "rdf";
-          }
-          else 
-**/
           if (header.value.match(/\/(turtle)/)) {
             handle = true;
             type = "turtle"
@@ -82,6 +75,11 @@ if (Browser.isChromeAPI)
           else if (header.value.match(/\/(ld\+json)/)) {
             handle = true;
             type = "jsonld"
+          }
+//application/rdf+xml
+          else if (header.value.match(/\/(rdf\+xml)/)) {
+            handle = true;
+            type = "rdf"
           }
         }
 

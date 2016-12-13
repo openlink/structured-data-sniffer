@@ -610,9 +610,7 @@ MicrodataJSON_Converter.prototype = {
             key = id_ns.link+key;
           else
             key = ":"+key;
-        } else if (key===":unnamed") {
-            key = self.new_bnode();
-        }
+        } 
 
        var v = [];
 /**
@@ -643,12 +641,51 @@ MicrodataJSON_Converter.prototype = {
          handle_val(v, val);
        }
 
-       props[key] = v;
+       if (key!==":unnamed")
+         props[key] = v;
         
       });
     }
 
     return retVal;
   }
+
+}
+
+
+Handle_RDF_XML = function () {
+  this.callback = null;
+  this.skipped_error = [];
+};
+
+Handle_RDF_XML.prototype = {
+
+  parse : function(textData, baseURL, callback) {
+    this.callback = callback;
+    var self = this;
+
+    try {
+      var store=$rdf.graph();
+      $rdf.parse(textData, store, baseURL, 'application/rdf+xml');
+
+      var ttl = $rdf.serialize(undefined, store, baseURL, "text/turtle");
+
+      var handler = new Handle_Turtle();
+      handler.skip_error = false;
+      handler.parse([ttl], baseURL, function(error, html_data) {
+        if (error) {
+          self.callback(error.toString(), null);
+        }
+        else {
+          self.callback(null, html_data);
+        }
+      });
+
+    } catch (ex) {
+        self.callback(ex.toString(), null);
+
+    }
+  },
+
 
 }

@@ -20,7 +20,7 @@
     ends_with_slashes: /\/+$/,
     pluses: /\+/g,
     query_separator: /[&;]/,
-    uri_parser: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@\/]*)(?::([^:@\/]*))?)?@)?(\[[0-9a-fA-F:.]+\]|[^:\/?#]*)(?::(\d+|(?=:)))?(:)?)((((?:[^?](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    uri_parser: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@\/]*)(?::([^:@\/]*))?)?@)?(\[[0-9a-fA-F:.]+\]|[^:\/?#]*)(?::(\d+|(?=:)))?(:)?)((((?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
   };
 
   /**
@@ -87,28 +87,6 @@
       parts[key] = m[i] || '';
     });
 
-    if (parts["path"]===parts["directory"]) {
-       var s = parts["path"];
-       var pos = 0;
-       if (s.length > 1 && s[0]=="/" && s[1]=="#") {
-         parts["path"]="/";
-         parts["relative"]="/";
-         parts["directory"]="/";
-         parts["anchor"]=s.substring(1);
-       }
-       else if (s.length > 0 && s[0]=="#") {
-         parts["path"]="/";
-         parts["relative"]="/";
-         parts["directory"]="/";
-         parts["anchor"]=s;
-       }
-       else if ((pos = s.lastIndexOf("#"))!=-1 && s.indexOf("/",pos)==-1) {
-         parts["path"]=s.substring(0,pos);
-         parts["relative"]=parts["path"];
-         parts["directory"]=parts["path"];
-         parts["anchor"]=s.substring(pos+1);
-       }
-    }
     return parts;
   }
 
@@ -216,8 +194,8 @@
         s += param[0];
         s += '=';
         if (typeof param[1] !== 'undefined') {
-//          s += encodeURIComponent(param[1]);
-          s += param[1];
+          s += encodeURIComponent(param[1]);
+//--          s += param[1];
         }
       }
     }

@@ -61,7 +61,7 @@ Convert_Turtle2JSON.prototype = {
 
     if (this._pos < textData.length) {
       var store = N3.Writer({ format: 'N-Triples' });
-      var parser = N3.Parser();
+      var parser = N3.Parser({documentIRI:self.baseURI});
       try {
         var ttl_data = textData[self._pos];
 
@@ -102,7 +102,7 @@ Convert_Turtle2JSON.prototype = {
                    function(error, doc) 
                    {
                      if (error) {
-                       self.skipped_error.push(error);
+                       self.skipped_error.push(error+(error.details?JSON.stringify(error.details,undefined, 2):""));
 
                        if (self._pos < textData.length)
                          self.parse(textData, docURL, self.callback);
@@ -156,4 +156,56 @@ Convert_Turtle2JSON.prototype = {
 
 }
 
+
+Convert_RDF_XML = function (make_ttl) {
+  this.callback = null;
+  this.skipped_error = [];
+};
+
+Convert_RDF_XML.prototype = {
+
+  convert2ttl : function(textData, baseURL, callback) {
+    this.callback = callback;
+    var self = this;
+
+    try {
+      var store=$rdf.graph();
+      $rdf.parse(textData, store, baseURL, 'application/rdf+xml');
+
+      var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
+      self.callback(null, ttl_data);
+
+    } catch (ex) {
+        self.callback(ex.toString(), null);
+
+    }
+  },
+
+  convert2json : function(textData, baseURL, callback) {
+    this.callback = callback;
+    var self = this;
+
+    try {
+      var store=$rdf.graph();
+      $rdf.parse(textData, store, baseURL, 'application/rdf+xml');
+
+      var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
+      var handler = new Convert_Turtle2JSON();
+      handler.parse([ttl_data], baseURL,
+        function(error, json_data) {
+          var err_msg = error ? error : "";
+          if (handler.skipped_error && handler.skipped_error.length > 0) {
+            for (var i=0; i < handler.skipped_error.length; i++)
+              err_msg += ((err_msg.length > 0)?"\n":"")+handler.skipped_error[i];
+          }
+          self.callback(err_msg.length>0?err_msg:null, json_data);
+        });
+
+    } catch (ex) {
+        self.callback(ex.toString(), null);
+
+    }
+  }
+
+}
 

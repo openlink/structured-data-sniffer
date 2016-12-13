@@ -1044,7 +1044,7 @@ function rest_exec() {
   if (yasqe.obj) {
     var val = yasqe.obj.getValue();
     if (val && val.length > 0) 
-       _url.addQueryParam("query", encodeURIComponent(val));
+       _url.addQueryParam("query", val);
   }
 
   var rows = $('#restData>tr');
@@ -1053,7 +1053,7 @@ function rest_exec() {
     var h = r.find('#h').val();
     var v = r.find('#v').val();
     if (h.length>0)
-       _url.addQueryParam(h, encodeURIComponent(v));
+       _url.addQueryParam(h, v);
   }
 
   Browser.openTab(_url.toString(), gData.tab_index);
