@@ -29,13 +29,16 @@
     var turtle_Text = null;
     var posh_Text = null;
     var rdfa_subjects = null;
-    var t_nano_Text = null;
-    var j_nano_Text = null;
+    var rdf_Text = null;
+    var ttl_nano_Text = null;
+    var json_nano_Text = null;
+    var rdf_nano_Text = null;
     var data_found = false;
 
-//var t_nano_pattern =/(\{|(## (Nanotation|Turtle) +Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) +(End|Stop) ##)|\})(.*)/gmi;
-    var t_nano_pattern = /(## (Nanotation|Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle) +(End|Stop) ##)(.*)/gmi;
-    var j_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
+//var ttl_nano_pattern =/(\{|(## (Nanotation|Turtle) +Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) +(End|Stop) ##)|\})(.*)/gmi;
+    var ttl_nano_pattern = /(## (Nanotation|Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle) +(End|Stop) ##)(.*)/gmi;
+    var json_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
+    var rdf_nano_pattern = /(## RDF\/XML +Start ##)((.|\n|\r)*?)((## RDF\/XML +(End|Stop) ##))(.*)/gmi;
 
 
     function getSelectionString(el, win) {
@@ -152,8 +155,9 @@
 
     function sniff_nanotation() {
         var doc_Texts = [];
-        var t_ret = [];
-        var j_ret = [];
+        var ttl_ret = [];
+        var json_ret = [];
+        var rdf_ret = [];
 
         function isWhitespace(c) {
             var cc = c.charCodeAt(0);
@@ -186,24 +190,25 @@
                 var s_split = txt.split(eoln);
                 var s_doc = "";
                 var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
-                var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
                 var p2 = /^ *#/;
+                var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
+                var p4 = /## +(RDF\/XML) +(Start|End|Stop) *##/;
 
                 s_split.forEach(function (item, i, arr) {
-                    if (item.length > 0 && (!p2.test(item) || p1.test(item) || p3.test(item)))
+                    if (item.length > 0 && (!p2.test(item) || p1.test(item) || p3.test(item) || p4.test(item)))
                         s_doc += item + "\n";
                 });
 
                 s_doc = fix_Nano_data(s_doc);
                 //try get Turtle Nano
                 while (true) {
-                    var ndata = t_nano_pattern.exec(s_doc);
+                    var ndata = ttl_nano_pattern.exec(s_doc);
                     if (ndata == null)
                         break;
 
                     var str = ndata[3];
                     if (str.length > 0)
-                        t_ret.push(str);
+                        ttl_ret.push(str);
                 }
 
                 //try get Turtle Nano in CurlyBraces { ... }
@@ -225,7 +230,7 @@
                     }
                     else if (ch == '}') {
                         inCurly--;
-                        t_ret.push(str);
+                        ttl_ret.push(str);
                         str = "";
                     }
                     else if (inCurly > 0) {
@@ -235,7 +240,7 @@
 
                 //try get JSON-LD Nano
                 while (true) {
-                    var ndata = j_nano_pattern.exec(s_doc);
+                    var ndata = json_nano_pattern.exec(s_doc);
                     if (ndata == null)
                         break;
 
@@ -251,15 +256,28 @@
                         }
 
                         if (add)
-                            j_ret.push(str);
+                            json_ret.push(str);
                     }
                 }
+
+                //try get RDF/XML Nano
+                while (true) {
+                    var ndata = rdf_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
+                    var str = ndata[2];
+                    if (str.length > 0) {
+                        rdf_ret.push(str);
+                    }
+                }
+
             }
         }
 
 
-        if (t_ret.length > 0 || j_ret.length > 0)
-            return {t: t_ret, j: j_ret};
+        if (ttl_ret.length > 0 || json_ret.length > 0 || rdf_ret.length > 0)
+            return {ttl: ttl_ret, json: json_ret, rdf: rdf_ret};
         else
             return null;
     }
@@ -298,6 +316,17 @@
 
 
             if (!data_found) {
+                var all = document.getElementsByTagName("script");
+                for (var i = 0; i < all.length; i++) {
+                    if (all[i].hasAttribute('type')
+                        && all[i].getAttribute('type') === "application/rdf+xml") {
+                        data_found = true;
+                    }
+                }
+            }
+
+
+            if (!data_found) {
                 try {
                     posh_Text = new POSH().getData(document.location.href);
                 } catch (e) {
@@ -324,8 +353,9 @@
             if (!data_found) {
                 var ret = sniff_nanotation();
                 if (ret) {
-                    t_nano_Text = (ret.t.length > 0) ? ret.t : null;
-                    j_nano_Text = (ret.j.length > 0) ? ret.j : null;
+                    ttl_nano_Text = (ret.ttl.length > 0) ? ret.ttl : null;
+                    json_nano_Text = (ret.json.length > 0) ? ret.json : null;
+                    rdf_nano_Text = (ret.rdf.length > 0) ? ret.rdf : null;
                     data_found = true;
                 }
             }
@@ -406,12 +436,29 @@
                 }
             }
 
-            t_nano_Text === null;
-            j_nano_Text === null;
+            rdf_Text = null;
+            for (var i = 0; i < all.length; i++) {
+                if (all[i].hasAttribute('type')
+                    && all[i].getAttribute('type') == "application/rdf+xml") {
+                    var htmlText = all[i].innerHTML;
+                    if (rdf_Text == null)
+                        rdf_Text = [];
+
+                    htmlText = htmlText.replace("//<![CDATA[", "").replace("//]]>", "");
+                    htmlText = htmlText.replace("<![CDATA[", "").replace("]]>", "");
+                    if (htmlText.length > 0)
+                        rdf_Text.push(htmlText);
+                }
+            }
+
+            ttl_nano_Text === null;
+            json_nano_Text === null;
+            rdf_nano_Text === null;
             var ret = sniff_nanotation();
             if (ret) {
-                t_nano_Text = (ret.t.length > 0) ? ret.t : null;
-                j_nano_Text = (ret.j.length > 0) ? ret.j : null;
+                ttl_nano_Text = (ret.ttl.length > 0) ? ret.ttl : null;
+                json_nano_Text = (ret.json.length > 0) ? ret.json : null;
+                rdf_nano_Text = (ret.rdf.length > 0) ? ret.rdf : null;
             }
 
         } catch (e) {
@@ -580,9 +627,11 @@
                     micro: {data: null},
                     jsonld: {text: null},
                     rdfa: {data: null, ttl: null},
+                    rdf: {text: null},
                     turtle: {text: null},
-                    t_nano: {text: null},
-                    j_nano: {text: null},
+                    ttl_nano: {text: null},
+                    json_nano: {text: null},
+                    rdf_nano: {text: null},
                     posh: {text: null}
                 };
 
@@ -594,10 +643,12 @@
                 docData.micro.data = microdata;
                 docData.jsonld.text = json_ld_Text;
                 docData.turtle.text = turtle_Text;
+                docData.rdf.text = rdf_Text;
                 docData.rdfa.data = rdfa.data;
                 docData.rdfa.ttl = rdfa.ttl;
-                docData.t_nano.text = t_nano_Text;
-                docData.j_nano.text = j_nano_Text;
+                docData.ttl_nano.text = ttl_nano_Text;
+                docData.json_nano.text = json_nano_Text;
+                docData.rdf_nano.text = rdf_nano_Text;
                 docData.posh.text = posh_Text;
 
                 //send data to extension
@@ -638,4 +689,3 @@
     });
 
 })();
-

@@ -57,6 +57,7 @@ if (Browser.isChromeAPI)
     for (var i in d.responseHeaders) {
         var header = d.responseHeaders[i];
         var handle = false;
+        var v_cancel = false;
         var type = null;
 
         if (header.name && header.name.match(/content-type/i)) {
@@ -76,10 +77,12 @@ if (Browser.isChromeAPI)
             handle = true;
             type = "jsonld"
           }
-//application/rdf+xml
+          //application/rdf+xml
           else if (header.value.match(/\/(rdf\+xml)/)) {
             handle = true;
+            v_cancel = true;
             type = "rdf"
+            header.value = "text/plain";
           }
         }
 
@@ -95,8 +98,12 @@ if (Browser.isChromeAPI)
               return { cancel: false };
             } 
             else {
-              Browser.openTab(_url);
-              return { cancel: false };
+              if (v_cancel)
+                Browser.api.tabs.update(d.tabId, { url: _url });
+              else
+                Browser.openTab(_url);
+              return { "responseHeaders":d.responseHeaders };
+//              return { cancel: false};
             }
           }
     }

@@ -19,7 +19,8 @@
  */
 
 
-Convert_Turtle2JSON = function () {
+
+Convert_Turtle = function () {
   this.callback = null;
   this.baseURI = null;
   this.ns = new Namespace();
@@ -30,15 +31,15 @@ Convert_Turtle2JSON = function () {
 };
 
 
-Convert_Turtle2JSON.prototype = {
+Convert_Turtle.prototype = {
 
-  parse_ttl : function(ttlData, quadData, docURL, callback) {
+  _fix_nano_ttl : function(ttlData, nanoData, baseURL, callback) {
     var self = this;
-    if (quadData!==null && quadData.length > 0) {
+    if (nanoData!==null && nanoData.length > 0) {
       var handler = new Handle_Turtle(0, true);
-      handler.parse_nano(quadData, docURL,
+      handler.parse_nano(nanoData, baseURL,
           function(error, data) {
-            if (error) 
+            if (error)
               self.skipped_error.push(error);
 
             self.skipped_error = self.skipped_error.concat(handler.skipped_error);
@@ -46,23 +47,78 @@ Convert_Turtle2JSON.prototype = {
             if (data)
               ttlData = ttlData.concat(data);
 
-            self.parse(ttlData, docURL, callback);
+            callback(ttlData);
           });
     } else {
-      this.parse(ttlData, docURL, callback);
+      callback(ttlData);
     }
   },
 
-  parse : function(textData, docURL, callback) {
+  to_json : function(ttlData, nanoData, baseURL, callback) {
+    var self = this;
+    this._fix_nano_ttl(ttlData, nanoData, baseURL,
+       function(fixed_ttl) {
+           self._to_json_exec(fixed_ttl, baseURL, callback);
+       });
+  },
+
+
+  to_rdf : function(ttlData, nanoData, baseURL, callback) {
+    var self = this;
+    this._fix_nano_ttl(ttlData, nanoData, baseURL,
+       function(fixed_ttl) {
+           self._to_rdf_exec(fixed_ttl, baseURL, callback);
+       });
+  },
+
+
+  _to_rdf_exec : function(textData, baseURL, callback) {
 
     this.callback = callback;
-    this.baseURI = docURL;
+    this.baseURI = baseURL;
     var self = this;
 
     if (this._pos < textData.length) {
-      var store = N3.Writer({ format: 'N-Triples' });
-      var parser = N3.Parser({documentIRI:self.baseURI});
       try {
+        var store=$rdf.graph();
+        var ttl_data = textData[self._pos];
+
+        $rdf.parse(ttl_data, store, baseURL, 'text/turtle');
+
+        var rdf_data = $rdf.serialize(undefined, store, baseURL, "application/rdf+xml");
+        self._pos++;
+        self._output.push(rdf_data);
+
+        if (self._pos < textData.length)
+          self._to_rdf_exec(textData, self.baseURI, self.callback);
+        else
+          self.callback(null, self._output);
+
+      } catch (ex) {
+        self.skipped_error.push(""+ex.toString());
+        self._pos++;
+
+        if (self._pos < textData.length)
+          self._to_rdf_exec(textData, self.baseURL, self.callback);
+        else
+          self.callback(null, self._output);
+      }
+    } else {
+        self.callback(null, this._output);
+    }
+  },
+
+
+  _to_json_exec : function(textData, baseURL, callback) {
+
+    this.callback = callback;
+    this.baseURI = baseURL;
+    var self = this;
+
+    if (this._pos < textData.length) {
+      try {
+        var store = N3.Writer({ format: 'N-Triples' });
+        var parser = N3.Parser({documentIRI:self.baseURI});
         var ttl_data = textData[self._pos];
 
         parser.parse(ttl_data,
@@ -74,60 +130,66 @@ Convert_Turtle2JSON.prototype = {
               self._pos++;
 
               if (self._pos < textData.length)
-                self.parse(textData, docURL, self.callback);
+                self._to_json_exec(textData, self.baseURI, self.callback);
               else
                 self.callback(null, self._output);
             }
             else if (tr) {
-              store.addTriple(self.fixNode(tr.subject), 
-                              self.fixNode(tr.predicate), 
+              store.addTriple(self.fixNode(tr.subject),
+                              self.fixNode(tr.predicate),
                               self.fixNode(tr.object));
             }
             else {
-              var context = prefixes;  
+              var context = prefixes;
 
-              store.end(function (error, ttl_text) { 
+              store.end(function (error, ttl_text) {
                 self._pos++;
 
                 if (error) {
                   self.skipped_error.push(error);
-                  
+
                   if (self._pos < textData.length)
-                    self.parse(textData, docURL, self.callback);
+                    self._to_json_exec(textData, self.baseURI, self.callback);
                   else
                     self.callback(null, self._output);
                 }
 
-                jsonld.fromRDF(ttl_text, {format: 'application/nquads'}, 
-                   function(error, doc) 
+                jsonld.fromRDF(ttl_text, {format: 'application/nquads'},
+                   function(error, doc)
                    {
                      if (error) {
                        self.skipped_error.push(error+(error.details?JSON.stringify(error.details,undefined, 2):""));
 
                        if (self._pos < textData.length)
-                         self.parse(textData, docURL, self.callback);
+                         self._to_json_exec(textData, self.baseURI, self.callback);
                        else
                          self.callback(null, self._output);
                      }
                      else {
                        jsonld.compact(doc, context, function(error, compacted) {
-                         if (error) 
+                         if (error)
                            self.skipped_error.push(error);
                          else
                            self._output.push(JSON.stringify(compacted, null, 2));
 
                          if (self._pos < textData.length)
-                           self.parse(textData, docURL, self.callback);
+                           self._to_json_exec(textData, self.baseURI, self.callback);
                          else
                            self.callback(null, self._output);
                        });
-                     } 
+                     }
                    });
               });
             }
           });
       } catch (ex) {
-        self.callback(ex.toString(), null);
+        self.skipped_error.push(""+ex.toString());
+        self._pos++;
+
+        if (self._pos < textData.length)
+          self._to_json_exec(textData, self.baseURL, self.callback);
+        else
+          self.callback(null, self._output);
       }
     } else {
         self.callback(null, this._output);
@@ -136,16 +198,16 @@ Convert_Turtle2JSON.prototype = {
   },
 
 
-  fixNode : function (n) 
+  fixNode : function (n)
   {
      if ( n==="")
          return this.baseURI;
      else if (N3.Util.isIRI(n)) {
        if (n==="")
          return this.baseURI;
-       else if (n.substring(0,1)==="#") 
+       else if (n.substring(0,1)==="#")
          return this.baseURI+n;
-       else if (n.substring(0,1)===":") 
+       else if (n.substring(0,1)===":")
          return this.baseURI+n;
        else
          return n;
@@ -157,55 +219,212 @@ Convert_Turtle2JSON.prototype = {
 }
 
 
+
 Convert_RDF_XML = function (make_ttl) {
   this.callback = null;
   this.skipped_error = [];
+  this._output = [];
+  this._pos = 0;
 };
 
 Convert_RDF_XML.prototype = {
 
-  convert2ttl : function(textData, baseURL, callback) {
-    this.callback = callback;
+  to_ttl : function(textData, baseURL, callback) {
     var self = this;
+    this.callback = callback;
+    this.baseURI = baseURL;
 
-    try {
-      var store=$rdf.graph();
-      $rdf.parse(textData, store, baseURL, 'application/rdf+xml');
+    if (this._pos < textData.length) {
+      try {
+        var rdf_data = textData[self._pos];
+        var store=$rdf.graph();
 
-      var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
-      self.callback(null, ttl_data);
+        $rdf.parse(rdf_data, store, baseURL, "application/rdf+xml");
+        var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
+        self._pos++;
+        self._output.push(ttl_data);
 
-    } catch (ex) {
-        self.callback(ex.toString(), null);
+        if (self._pos < textData.length)
+          self.to_ttl(textData, self.baseURI, self.callback);
+        else
+          self.callback(null, self._output);
 
+      } catch (ex) {
+        self.skipped_error.push(""+ex.toString());
+        self._pos++;
+
+        if (self._pos < textData.length)
+          self.to_rdf(textData, self.baseURL, self.callback);
+        else
+          self.callback(null, self._output);
+      }
+    } else {
+      self.callback(null, this._output);
     }
   },
 
-  convert2json : function(textData, baseURL, callback) {
-    this.callback = callback;
+
+  to_json: function(textData, baseURL, callback) {
     var self = this;
+    this.callback = callback;
+    this.baseURI = baseURL;
 
-    try {
-      var store=$rdf.graph();
-      $rdf.parse(textData, store, baseURL, 'application/rdf+xml');
+    if (this._pos < textData.length) {
+      try {
+        var rdf_data = textData[self._pos];
+        var store=$rdf.graph();
 
-      var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
-      var handler = new Convert_Turtle2JSON();
-      handler.parse([ttl_data], baseURL,
-        function(error, json_data) {
-          var err_msg = error ? error : "";
-          if (handler.skipped_error && handler.skipped_error.length > 0) {
-            for (var i=0; i < handler.skipped_error.length; i++)
-              err_msg += ((err_msg.length > 0)?"\n":"")+handler.skipped_error[i];
-          }
-          self.callback(err_msg.length>0?err_msg:null, json_data);
-        });
+        $rdf.parse(rdf_data, store, baseURL, "application/rdf+xml");
+        var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
 
-    } catch (ex) {
-        self.callback(ex.toString(), null);
+        var conv = new Convert_Turtle();
+        conv.to_json([ttl_data], null, self.baseURI,
+          function(error, json_data) {
+            if (error)
+              self.skipped_error.push(error);
 
+            if (conv.skipped_error && conv.skipped_error.length > 0)
+              self.skipped_error = self.skipped_error.concat(conv.skipped_error);
+
+            self._pos++;
+            self._output.push(json_data);
+
+            if (self._pos < textData.length)
+              self.to_json(textData, self.baseURI, self.callback);
+            else
+              self.callback(null, self._output);
+          });
+
+      } catch (ex) {
+        self.skipped_error.push(""+ex.toString());
+        self._pos++;
+
+        if (self._pos < textData.length)
+          self.to_rdf(textData, self.baseURL, self.callback);
+        else
+          self.callback(null, self._output);
+      }
+    } else {
+      self.callback(null, this._output);
     }
-  }
+  },
 
 }
 
+
+Convert_JSONLD = function () {
+  this.callback = null;
+  this._pos = 0;
+  this._output = [];
+  this.start_id = 0;
+  this.skipped_error = [];
+};
+
+Convert_JSONLD.prototype = {
+
+  to_ttl : function(textData, baseURL, callback) {
+    this.callback = callback;
+    var self = this;
+
+    function handle_error(error)
+    {
+      self.skipped_error.push(""+error);
+      self._pos++;
+
+      if (self._pos < textData.length)
+        self.parse(textData, baseURL, self.callback);
+      else
+        self.callback(null, self._output);
+    }
+
+
+    if (this._pos < textData.length)
+    {
+      try {
+        jsonld_data = JSON.parse(textData[this._pos]);
+        if (jsonld_data != null) {
+          jsonld.expand(jsonld_data,
+            function(error, expanded) {
+              if (error) {
+                handle_error(error);
+              }
+              else {
+                jsonld.toRDF(expanded, {format: 'application/nquads'},
+                  function(error, nquads) {
+                    if (error) {
+                      handle_error(error);
+                    }
+                    else {
+                      var handler = new Handle_Turtle(self.start_id, true);
+                      handler.skip_error = false;
+                      handler.parse([nquads], baseURL, function(error, html_data) {
+                        if (error) {
+                          handle_error(error);
+                        }
+                        else {
+                          self._output.push(html_data);
+                          self._pos++;
+                          self.start_id += handler.start_id;
+
+                          if (self._pos < textData.length)
+                            self.parse(textData, baseURL, self.callback);
+                          else
+                            self.callback(null, self._output);
+                        }
+                      });
+                    }
+                });
+              }
+            })
+        }
+        else
+          self.callback(null, null);
+      } catch (ex) {
+        handle_error(ex.toString());
+      }
+
+    } else {
+       self.callback(null, this._output);
+    }
+  },
+
+
+  to_rdf : function(textData, baseURL, callback)
+  {
+    var self = this;
+    this.callback = callback;
+    this.baseURI = baseURL;
+
+    if (this._pos < textData.length) {
+      try {
+        var store=$rdf.graph();
+        var ttl_data = textData[self._pos];
+
+        $rdf.parse(ttl_data, store, baseURL, "application/ld+json");
+
+        var rdf_data = $rdf.serialize(undefined, store, baseURL, "application/rdf+xml");
+        self._pos++;
+        self._output.push(rdf_data);
+
+        if (self._pos < textData.length)
+          self.to_rdf(textData, self.baseURI, self.callback);
+        else
+          self.callback(null, self._output);
+
+      } catch (ex) {
+        self.skipped_error.push(""+ex.toString());
+        self._pos++;
+
+        if (self._pos < textData.length)
+          self.to_rdf(textData, self.baseURL, self.callback);
+        else
+          self.callback(null, self._output);
+      }
+    } else {
+        self.callback(null, this._output);
+    }
+  },
+
+
+
+}
