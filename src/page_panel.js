@@ -548,10 +548,18 @@ function Download_exec()
 
   if (filename!==null) {
     $('#save-filename').val(filename);
-    $('#'+fmt,'#save-fmt').attr('selected','selected');
+
+    var cur_fmt = $('#save-fmt option:selected').attr('id');
+    $('#'+cur_fmt,'#save-fmt').removeProp('selected');
+    $('#'+fmt,'#save-fmt').prop('selected',true);
+
+    if (fmt!=="rdf")
+      $('#rdf','#save-fmt').prop('disabled', true);
+    else
+      $('#rdf','#save-fmt').prop('disabled', false);
 
     $( "#save-confirm" ).dialog({
-      resizable: false,
+      resizable: true,
       height:300,
       modal: true,
       buttons: {
@@ -560,10 +568,10 @@ function Download_exec()
           var fmt = $('#save-fmt option:selected').attr('id');
           var fname = $('#save-filename').val().trim();
           save_data(action, fname, fmt);
-          $(this).dialog( "close" );
+          $(this).dialog( "destroy" );
         },
         Cancel: function() {
-          $(this).dialog( "close" );
+          $(this).dialog( "destroy" );
         }
       }
     });
@@ -709,12 +717,12 @@ function showInfo(msg)
 {
   $("#alert-msg").prop("textContent",msg);
   $("#alert-dlg" ).dialog({
-    resizable: false,
+    resizable: true,
     height:180,
     modal: true,
     buttons: {
       Cancel: function() {
-        $(this).dialog( "close" );
+        $(this).dialog( "destroy" );
       }
     }
   });
@@ -776,10 +784,10 @@ function rest_del(e) {
     buttons: {
       "Yes": function() {
           $(row).remove();
-          $(this).dialog( "close" );
+          $(this).dialog( "destroy" );
       },
       "No": function() {
-          $(this).dialog( "close" );
+          $(this).dialog( "destroy" );
       }
     }
   });
