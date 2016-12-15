@@ -35,7 +35,6 @@
     var rdf_nano_Text = null;
     var data_found = false;
 
-//var ttl_nano_pattern =/(\{|(## (Nanotation|Turtle) +Start ##))((.|\n|\r)*?)((## (Nanotation|Turtle) +(End|Stop) ##)|\})(.*)/gmi;
     var ttl_nano_pattern = /(## (Nanotation|Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle) +(End|Stop) ##)(.*)/gmi;
     var json_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
     var rdf_nano_pattern = /(## RDF\/XML +Start ##)((.|\n|\r)*?)((## RDF\/XML +(End|Stop) ##))(.*)/gmi;
@@ -284,10 +283,15 @@
 
 
     function is_data_exist() {
+        var path_pattern = /\/sparql\/?$/gmi;
         try {
 
             scan_frames();
             data_found = false;
+
+            var loc  = document.location;
+            if (path_pattern.test(loc.pathname) && loc.search.length>0 && loc.search[0]==="?")
+              data_found = true;
 
             var items = jQuery('[itemscope]').not(jQuery('[itemscope] [itemscope]'));
             if (items && items.length > 0)
