@@ -53,6 +53,8 @@ if (Browser.isChromeAPI)
   function onHeadersReceived(d) 
   {
     //console.log(d);
+    if (d.method && d.method!=="GET")
+      return;
     
     for (var i in d.responseHeaders) {
         var header = d.responseHeaders[i];
