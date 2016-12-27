@@ -20,13 +20,13 @@
 
 
 
-if (Browser.isChromeAPI) 
+if (Browser.isChromeAPI)
 {
   var setting = new Settings();
   var _r = {};
   var ext_url = Browser.api.extension.getURL("page_panel.html");
 
-  function s_startWith(str, val) 
+  function s_startWith(str, val)
   {
      return str.lastIndexOf(val, 0) === 0;
   }
@@ -50,68 +50,70 @@ if (Browser.isChromeAPI)
   	onHeadersReceived, {types: ["main_frame"], urls: ["<all_urls>"]}, ["responseHeaders", "blocking"]);
 
 
-  function onHeadersReceived(d) 
+  function onHeadersReceived(d)
   {
     //console.log(d);
     if (d.method && d.method!=="GET")
       return;
-    
+
+    var handle = false;
+    var v_cancel = false;
+    var type = null;
+    var content_type = null;
+
     for (var i in d.responseHeaders) {
         var header = d.responseHeaders[i];
-        var handle = false;
-        var v_cancel = false;
-        var type = null;
 
         if (header.name && header.name.match(/content-type/i)) {
           if (header.value.match(/\/(turtle)/)) {
             handle = true;
-            type = "turtle"
+            type = "turtle";
           }
           else if (header.value.match(/\/(n3)/)) {
             handle = true;
-            type = "turtle"
+            type = "turtle";
           }
           else if (header.value.match(/\/(json\+ld)/)) {
             handle = true;
-            type = "jsonld"
+            type = "jsonld";
           }
           else if (header.value.match(/\/(ld\+json)/)) {
             handle = true;
-            type = "jsonld"
+            type = "jsonld";
           }
           //application/rdf+xml
           else if (header.value.match(/\/(rdf\+xml)/)) {
             handle = true;
             v_cancel = true;
-            type = "rdf"
+            type = "rdf";
             header.value = "text/plain";
+          }
+          else {
+            content_type = header.value;
           }
         }
 
         if (handle)
-          {
-            var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
-            if (Browser.isEdgeWebExt) {
-              return { redirectUrl: _url };
-            }
-            else if (Browser.isFirefoxWebExt) {
-              Browser.api.tabs.update(d.tabId, { url: _url });
-//don't show save dialog      return { cancel: true };
-              return { cancel: false };
-            } 
-            else {
-              if (v_cancel)
-                Browser.api.tabs.update(d.tabId, { url: _url });
-              else
-                Browser.openTab(_url);
-              return { "responseHeaders":d.responseHeaders };
-//              return { cancel: false};
-            }
+          break;
+      }
+
+      if (!handle && (content_type===null || content_type.match(/(application\/xml)/))) {
+        if (d.url.endsWith(".owl") || d.url.endsWith(".rdf")) {
+          handle = true;
+          type = "rdf";
+        }
+      }
+
+      if (handle)  {
+          var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
+          if (Browser.isEdgeWebExt) {
+            return { redirectUrl: _url };
           }
-    }
-  }
-
-
-
-
-}
+          else if (Browser.isFirefoxWebExt) {
+            Browser.api.tabs.update(d.tabId, { url: _url });
+//don't show save dialog      return { cancel: true };
+            return { cancel: false };
+          }
+          else {
+            if (v_cancel)
+              Browser.api.tabs.update(d.tabId, { url: 
