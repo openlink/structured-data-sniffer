@@ -25,7 +25,7 @@ function frame_getSelectionString(el, win) {
 
     if (win.getSelection && doc.createRange) {
         sel = win.getSelection();
-        if (sel.rangeCount) {
+        if (sel && sel.rangeCount) {
           prevRange = sel.getRangeAt(0);
         }
         range = doc.createRange();

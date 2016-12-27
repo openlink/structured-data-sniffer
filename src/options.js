@@ -53,11 +53,7 @@ $(function(){
         });
 
         $('#OK_btn').click(savePref);
-        $('#Cancel_btn').click(function() { 
-            if (Browser.isFirefoxSDK)
-              self.port.emit("close", "");
-            window.close(); 
-         });
+        $('#Cancel_btn').click(closeOptions);
 
         $('#import-set-def').click(setImportDefaults);
         $('#rww-set-def').click(setRWWDefaults);
@@ -76,6 +72,18 @@ $(function(){
 });
 
 
+function closeOptions() 
+{
+    if (Browser.isChromeAPI && Browser.isFirefoxWebExt) {
+      Browser.api.tabs.getCurrent(function(tab) {
+        Browser.api.tabs.remove(tab.id);
+      });
+    } else {
+      if (Browser.isFirefoxSDK)
+        self.port.emit("close", "");
+      window.close(); 
+    }
+}
 
 function setImportDefaults() 
 {
@@ -87,7 +95,7 @@ function setImportDefaults()
         "OK": function() {
 
           $('#'+gPref.def_import_srv,'#import-srv').attr('selected','selected');
-          var h_url = createImportURL(gPref.def_import_srv, gPref.def_import_url.trim());
+          var h_url = createCmdImportURL(gPref.def_import_srv, gPref.def_import_url.trim());
           $('#import-url').val(h_url);
           enableCtrls();
 
@@ -247,7 +255,7 @@ function savePref()
    if (Browser.isFirefoxSDK)
      self.port.emit("close", {osds_pref_user:pref_user});
 
-   window.close();
+   closeOptions();
 }
 
 
@@ -255,24 +263,26 @@ function savePref()
 function enableCtrls() 
 {
     var srv = $('#import-srv option:selected').attr('id');
-    var h_url = createImportURL(srv, $('#import-url').val().trim());
+    var h_url = createCmdImportURL(srv, $('#import-url').val().trim());
 
     $('#import-url-bcast').show();
     $('#import-url').val(h_url);
 };
 
 
-function createImportURL(srv, _url) 
+function createCmdImportURL(srv, _url) 
 {
     var url = new Uri(_url);
     var h_url = "";
 
     switch (srv) {
       case 'describe':
-        h_url = url.setProtocol("http").setPath('/describe/').setQuery('?url={url}&sponger:get=add').setAnchor('').toString(); 
+        h_url = url.setProtocol("http").setPath('/describe/').setQuery('').setAnchor('').toString();
+        h_url += '?url={url}&sponger:get=add'; 
         break;
       case 'describe-ssl':
-        h_url = url.setProtocol("https").setPath('/describe/').setQuery('?url={url}&sponger:get=add').setAnchor('').toString(); 
+        h_url = url.setProtocol("https").setPath('/describe/').setQuery('').setAnchor('').toString(); 
+        h_url += '?url={url}&sponger:get=add';
         break;
       case 'about':
 	h_url = url.setProtocol("http").setPath('/about/html/').setQuery('').setAnchor('').toString();

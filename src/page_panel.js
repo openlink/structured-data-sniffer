@@ -25,11 +25,12 @@ var items;
 var $ = jQuery;
 var gData_showed = false;
 var doc_URL = null;
+var baseURL = null;
 var prevSelectedTab = null;
 var selectedTab = null;
 
 var gData = {
-        text: null, 
+        text: null,
         type: null,
         url: null
       };
@@ -41,10 +42,10 @@ var yasqe = {
       };
 
 
-$(document).ready(function() 
+$(document).ready(function()
 {
   if (Browser.isFirefoxWebExt)
-      $("#src_place").css("white-space","pre"); 
+      $("#src_place").css("white-space","pre");
 
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
@@ -87,6 +88,10 @@ $(document).ready(function()
       selectTab('#rdfa');
       return false;
   });
+  $('#tabs a[href=#rdf]').click(function(){
+      selectTab('#rdf');
+      return false;
+  });
   $('#tabs a[href=#posh]').click(function(){
       selectTab('#posh');
       return false;
@@ -100,7 +105,7 @@ $(document).ready(function()
 	createShortLink : null,
 	createShareLink : null,
 	persistent: null,
-     
+
     });
     yasqe.obj.setSize("100%", 150);
   } catch(e) {
@@ -115,7 +120,7 @@ $(document).ready(function()
   });
   $('#rest_add').button({
     icons: { primary: 'ui-icon-plusthick' },
-    text: false 
+    text: false
   });
   $('#rest_add').click(addRestEmpty);
 
@@ -126,12 +131,12 @@ $(document).ready(function()
 
   selectTab('#micro');
 
-  if (Browser.isFirefoxSDK) 
+  if (Browser.isFirefoxSDK)
   {
 //--    jQuery('#ext_ver').text('ver: '+ self.options.ver);
     load_data_from_url(null, self.options.url, self.options.type);
   }
-  else 
+  else
   {
 //--    jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
     load_data_from_url(document.location);
@@ -161,11 +166,11 @@ $(document).on('click', 'a', function(e) {
     else
       return uri.lastIndexOf(doc_URL+'#',0) === 0;
   }
-  
-  
+
+
   var hashName = null;
   var href = e.currentTarget.href;
-  var hashPos = href.lastIndexOf('#'); 
+  var hashPos = href.lastIndexOf('#');
 
   if (hashPos!=-1 && hashPos!=href.length-1)
     hashName = href.substring(hashPos+1);
@@ -173,7 +178,7 @@ $(document).on('click', 'a', function(e) {
   var url = new Uri(document.baseURI).setAnchor("");
   if (href.lastIndexOf(url+"#sc", 0) === 0) {
     return true;
-  } 
+  }
   else if (check_URI(href) && hashName) {
     var el = $('a[name = "'+hashName+'"]');
     if (el.length > 0)
@@ -190,9 +195,9 @@ $(document).on('click', 'a', function(e) {
 });
 
 
-function load_data_from_url(loc, uri, ctype)
+function load_data_from_url(loc, uri, contType)
 {
-    function parseUrlQuery(loc) 
+    function parseUrlQuery(loc)
     {
       var data = {};
       if(loc.search) {
@@ -215,17 +220,43 @@ function load_data_from_url(loc, uri, ctype)
 
       url = decodeURIComponent(params.url);
       type = params.type;
-    } 
+    }
     else {
       url = uri;
-      type = ctype;
+      type = contType;
     }
 
+    var hdr_accept = "";
+
+    if (type==="turtle")
+      hdr_accept = 'text/turtle,text/n3;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
+    else if (type==="jsonld")
+      hdr_accept = 'application/ld+json;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
+    else if (type==="rdf")
+      hdr_accept = 'application/rdf+xml;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
+
+
+    jQuery.ajaxSetup({
+       dataType: "text",
+       headers:{'Accept': hdr_accept,
+                'Cache-control': 'no-cache'},
+       cache: false,
+       timeout: 30000
+    });
+
+    jQuery.get(url, function(data, status){
+        start_parse_data(data, type, url);
+    }, "text").fail(function(msg) {
+        alert("Could not load data from: "+url+"\nError: "+msg.statusText);
+    });
+
+/**
     $.get(url, function(data, status){
        start_parse_data(data, type, url);
     }, "text").fail(function(msg) {
        alert("Could not load data from: "+url);
     });
+**/
 }
 
 
@@ -237,25 +268,39 @@ function start_parse_data(data_text, data_type, data_url)
   gData.url = data_url;
   doc_URL = data_url;
 
+  var url = new Uri(data_url);
+  url.setAnchor("");
+  url.setQuery("");
+  baseURL = url.toString();
+
+
   load_restData(doc_URL);
 
-  if (data_type==="turtle") 
+  if (data_type==="turtle")
     {
       var handler = new Handle_Turtle();
       var ns = new Namespace();
       handler.ns_pref = ns.get_ns_desc();
       handler.ns_pref_size = Object.keys(ns.ns_list).length;
       handler.skip_error = false;
-      handler.parse([data_text], data_url, 
+      handler.parse([data_text], baseURL,
         function(error, html_data) {
           show_Data(error, html_data);
       });
     }
-  else if (data_type==="jsonld") 
+  else if (data_type==="jsonld")
     {
       var handler = new Handle_JSONLD();
       handler.skip_error = false;
-      handler.parse([data_text], data_url, 
+      handler.parse([data_text], baseURL,
+        function(error, html_data) {
+          show_Data(error, html_data);
+      });
+    }
+  else if (data_type==="rdf")
+    {
+      var handler = new Handle_RDF_XML();
+      handler.parse([data_text], baseURL,
         function(error, html_data) {
           show_Data(error, html_data);
       });
@@ -269,7 +314,7 @@ function selectTab(tab)
   prevSelectedTab = selectedTab;
   selectedTab = tab;
 
-  function updateTab(tab, selTab) 
+  function updateTab(tab, selTab)
   {
     var tab_data = $(tab+'_items');
     var tab_id = $('#tabs a[href='+tab+']');
@@ -289,6 +334,7 @@ function selectTab(tab)
   updateTab('#jsonld', selectedTab);
   updateTab('#turtle', selectedTab);
   updateTab('#rdfa', selectedTab);
+  updateTab('#rdf', selectedTab);
   updateTab('#posh', selectedTab);
   $('#tabs a[href=#src]').hide();
   $('#tabs a[href=#cons]').hide();
@@ -308,7 +354,7 @@ function show_Data(data_error, html_data)
 
   wait_data = $('table.wait').hide();
 
-  function create_err_msg(fmt_name, errors) 
+  function create_err_msg(fmt_name, errors)
   {
     var err_html = "";
     if (errors) {
@@ -316,7 +362,7 @@ function show_Data(data_error, html_data)
       if ($.isArray(errors)) {
         for(var i=0; i<errors.length; i++)
           err_html += "<tr><td>"+errors[i]+"</tr></td>";
-      } 
+      }
       else if (errors.length > 0) {
           err_html += "<tr><td>"+errors+"</tr></td>";
       }
@@ -325,7 +371,7 @@ function show_Data(data_error, html_data)
         err_html = "<table class='docdata table'><tr><td>"+fmt_name
                   +" discovered, but fails syntax checking by parser:</td></tr>"
                   +err_html+"</table>";
-    } 
+    }
     return err_html;
   }
 
@@ -333,10 +379,11 @@ function show_Data(data_error, html_data)
   $('#tabs a[href=#jsonld]').hide();
   $('#tabs a[href=#turtle]').hide();
   $('#tabs a[href=#rdfa]').hide();
+  $('#tabs a[href=#rdf]').hide();
   $('#tabs a[href=#posh]').hide();
 
 
-  if (gData.type === "turtle") 
+  if (gData.type === "turtle")
     {
       $('#turtle_items #docdata_view').remove();
       $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
@@ -347,15 +394,13 @@ function show_Data(data_error, html_data)
         html += html_data;
       }
 
-      if (html.length > 0) {
+      if (html.length > 0)
           $('#turtle_items #docdata_view').append(html);
-          turtle = true;
-      }
 
       $('#tabs a[href=#turtle]').show();
       selectTab('#turtle');
     }
-  else if (gData.type === "jsonld") 
+  else if (gData.type === "jsonld")
     {
       $('#jsonld_items #docdata_view').remove();
       $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
@@ -366,13 +411,28 @@ function show_Data(data_error, html_data)
         html += html_data;
       }
 
-      if (html.length > 0) {
+      if (html.length > 0)
           $('#jsonld_items #docdata_view').append(html);
-          turtle = true;
-      }
 
       $('#tabs a[href=#jsonld]').show();
       selectTab('#jsonld');
+    }
+  else if (gData.type === "rdf")
+    {
+      $('#rdf_items #docdata_view').remove();
+      $('#rdf_items').append("<div id='docdata_view' class='alignleft'/>");
+      html = "";
+      if (data_error) {
+        html += create_err_msg("RDF/XML", data_error);
+      } else {
+        html += html_data;
+      }
+
+      if (html.length > 0)
+          $('#rdf_items #docdata_view').append(html);
+
+      $('#tabs a[href=#rdf]').show();
+      selectTab('#rdf');
     }
 
   gData_showed = true;
@@ -386,10 +446,10 @@ function show_Data(data_error, html_data)
 
 //////////////////////////////////////////////////////////////////////////////
 
-function Import_doc() 
+function Import_doc()
 {
   if (doc_URL!==null) {
-     var _url = createImportUrl(doc_URL);
+     var _url = new Settings().createImportUrl(doc_URL);
      Browser.api.tabs.create({url:_url});
   }
 
@@ -397,10 +457,32 @@ function Import_doc()
 }
 
 
-function Rww_exec() 
+function Rww_exec()
+{
+  function openRww(data)
+  {
+     var _url = new Settings().createRwwUrl(doc_URL, data);
+     Browser.openTab(_url, gData.tab_index);
+  }
+
+  if (doc_URL!==null) {
+     var edit_url = new Settings().getValue('ext.osds.rww.edit.url');
+
+     if (edit_url.indexOf("{data}")!=-1) {
+        save_data("export-rww", "data.txt", "ttl", openRww);
+     } else {
+        openRww(null);
+     }
+  }
+
+  return false;
+}
+
+
+function Sparql_exec()
 {
   if (doc_URL!==null) {
-     var _url = createRwwUrl(doc_URL);
+     var _url = new Settings().createSparqlUrl(doc_URL);
      Browser.api.tabs.create({url:_url});
   }
 
@@ -408,28 +490,17 @@ function Rww_exec()
 }
 
 
-function Sparql_exec() 
-{
-  if (doc_URL!==null) {
-     var _url = createSparqlUrl(doc_URL);
-     Browser.api.tabs.create({url:_url});
-  }
-
-  return false;
-}
-
-
-function Prefs_exec() 
+function Prefs_exec()
 {
   //snow preferenses
-  if (Browser.isFirefoxSDK) 
+  if (Browser.isFirefoxSDK)
      self.port.emit("prefs", "");
 
   return false;
 }
 
 
-function Download_exec() 
+function Download_exec()
 {
   $('#save-action').change(function() {
     var cmd = $('#save-action option:selected').attr('id');
@@ -445,7 +516,7 @@ function Download_exec()
     else
       $('#save-file').hide();
 
-  
+
   var isFileSaverSupported = false;
   try {
     isFileSaverSupported = !!new Blob;
@@ -458,7 +529,6 @@ function Download_exec()
   if (Browser.isEdgeWebExt)
     $('#save-action').prop('disabled', true);
 
-
   var filename = null;
   var fmt = "json";
 
@@ -470,14 +540,26 @@ function Download_exec()
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
+  else if (gData.type == "rdf" && gData.text) {
+    filename = "rdf_data.rdf";
+    fmt = "rdf";
+  }
 
 
   if (filename!==null) {
-    $('#save-filename').val(filename); 
-    $('#'+fmt,'#save-fmt').attr('selected','selected');
+    $('#save-filename').val(filename);
+
+    var cur_fmt = $('#save-fmt option:selected').attr('id');
+    $('#'+cur_fmt,'#save-fmt').removeProp('selected');
+    $('#'+fmt,'#save-fmt').prop('selected',true);
+
+    if (fmt!=="rdf")
+      $('#rdf','#save-fmt').prop('disabled', true);
+    else
+      $('#rdf','#save-fmt').prop('disabled', false);
 
     $( "#save-confirm" ).dialog({
-      resizable: false,
+      resizable: true,
       height:300,
       modal: true,
       buttons: {
@@ -486,10 +568,10 @@ function Download_exec()
           var fmt = $('#save-fmt option:selected').attr('id');
           var fname = $('#save-filename').val().trim();
           save_data(action, fname, fmt);
-          $(this).dialog( "close" );
+          $(this).dialog( "destroy" );
         },
         Cancel: function() {
-          $(this).dialog( "close" );
+          $(this).dialog( "destroy" );
         }
       }
     });
@@ -502,11 +584,14 @@ function Download_exec()
 }
 
 
-function save_data(action, fname, fmt) 
+function save_data(action, fname, fmt, callback)
 {
-  function txt_from(data, error, skipped_error) 
+
+  function out_from(data, error, skipped_error)
   {
+    var retdata = {txt:"", error:""};
     var outdata = [];
+    var errors = [];
 
     if (data) {
       if ($.isArray(data))
@@ -516,30 +601,42 @@ function save_data(action, fname, fmt)
     }
 
     if (error)
-      outdata.push("\n"+error);
+      errors.push("\n"+error);
 
-    if (skipped_error) {
-      outdata.push("\n");
-      outdata = outdata.concat(skipped_error);
+    if (skipped_error && skipped_error.length>0) {
+      errors.push("\n");
+      errors = errors.concat(skipped_error);
     }
 
-    var ret = "";
     for(var i=0; i < outdata.length; i++)
-      ret += outdata[i]+"\n\n";
-    return ret;
+      retdata.txt += outdata[i]+"\n\n";
+
+    for(var i=0; i < errors.length; i++)
+      retdata.error += errors[i]+"\n\n";
+
+    return retdata;
   }
 
-  function exec_action(action, txt_data) 
+  function exec_action(action, retdata)
   {
-    if (action==="filesave") {
-      blob = new Blob([txt_data], {type: "text/plain;charset=utf-8"});
-      saveAs(blob, fname);    
-    } else {
+    if (action==="export-rww") {
+      if (retdata.error.length > 0) {
+        showInfo(retdata.error);
+      } else {
+        if (callback)
+          callback(retdata.txt);
+      }
+    }
+    else if (action==="filesave") {
+      blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
+      saveAs(blob, fname);
+    }
+    else {
       selectTab("#src");
-      $("#src_place").val(txt_data); 
+      $("#src_place").val(retdata.txt + retdata.error);
     }
   }
-  
+
 
   try{
     var data = [];
@@ -553,132 +650,82 @@ function save_data(action, fname, fmt)
       src_fmt = "ttl";
       data = data.concat(gData.text);
     }
+    else if (gData.type==="rdf" && gData.text!==null) {
+      src_fmt = "rdf";
+      data = data.concat(gData.text);
+    }
     else
       return;
 
-    if (src_fmt!==fmt) 
+    if (src_fmt!==fmt)
     {
       if (src_fmt==="ttl") {
-        var handler = new Convert_Turtle2JSON();
-        handler.parse(data, doc_URL,
-          function(error, json_data) {
-            exec_action(action, txt_from(json_data, error, handler.skipped_error));
-          });
+        if (fmt==="json") {
+          var handler = new Convert_Turtle();
+          handler.to_json(data, null, baseURL,
+            function(error, text_data) {
+              exec_action(action, out_from(text_data, error, handler.skipped_error));
+            });
+        } else {
+          showInfo("Conversion to RDF/XML isn't supported");
+        }
+      }
+      else if (src_fmt==="json") {
+        if (fmt==="ttl") {
+          var handler = new Convert_JSONLD();
+          handler.to_ttl(data, baseURL,
+            function(error, text_data)
+            {
+              exec_action(action, out_from(text_data, error, handler.skipped_error));
+            });
+        } else {
+          showInfo("Conversion to RDF/XML isn't supported");
+        }
+      }
+      else if (src_fmt==="rdf") {
+        if (fmt==="ttl") {
+          var conv = new Convert_RDF_XML();
+          conv.to_ttl(data, baseURL,
+            function(error, text_data)
+            {
+              exec_action(action, out_from(text_data, error, conv.skipped_error));
+            });
+        } else if (fmt==="json") {
+          var conv = new Convert_RDF_XML();
+          conv.to_json(data, baseURL,
+            function(error, text_data)
+            {
+              exec_action(action, out_from(text_data, error, conv.skipped_error));
+            });
+        }
       }
       else {
-        var handler = new Handle_JSONLD(true);
-        handler.parse(data, doc_URL, 
-          function(error, json_data) 
-          {
-            exec_action(action, txt_from(json_data, error, handler.skipped_error));
-          });
+        showInfo("Format "+src_fmt+" isn't supported else.");
       }
     } else {
-      exec_action(action, txt_from(data));
+      exec_action(action, out_from(data));
     }
 
   } catch(ex) {
     showInfo(ex);
   }
 
-/***
-  try{
-    if (action==="filesave") {
-      var blob = new Blob([gData.text], {type: "text/plain;charset=utf-8"});
-      saveAs(blob, fname);    
-
-    } else {
-      selectTab("#src");
-      $("#src_place").val(gData.text); 
-    }
-
-  } catch(ex) {
-    showInfo(ex);
-  }
-***/
 }
 
 
 function showInfo(msg)
 {
-  $("#alert-msg").prop("textContent",msg); 
+  $("#alert-msg").prop("textContent",msg);
   $("#alert-dlg" ).dialog({
-    resizable: false,
+    resizable: true,
     height:180,
     modal: true,
     buttons: {
       Cancel: function() {
-        $(this).dialog( "close" );
+        $(this).dialog( "destroy" );
       }
     }
   });
-}
-
-
-function createImportUrl(curUrl) 
-{
-  var setting = new Settings();
-  var handle_url = setting.getValue('ext.osds.import.url');
-  var srv = setting.getValue('ext.osds.import.srv');
-  var docURL = encodeURIComponent(curUrl);
-
-  switch(srv) {
-    case 'about':
-    case 'about-ssl':
-      var result = curUrl.match(/^((\w+):\/)?\/?(.*)$/);
-      if (!result) {
-        throw 'Invalid url:\n' + curUrl;
-        return null;
-      }
-//      var protocol = result[2]=="https"?"http":result[2];
-      var protocol = result[2];
-      docURL = protocol + '/' + result[3];
-      break;
-
-    case 'ode':
-    case 'ode-ssl':
-    case 'describe':
-    case 'describe-ssl':
-    default:
-      break;
-  }
-
-  if (handle_url.indexOf("{url}")!=-1)
-     return handle_url.replace("{url}",docURL);
-  else
-     return handle_url + docURL;
-}
-
-
-function createRwwUrl(curUrl) 
-{
-  var setting = new Settings();
-  var edit_url = setting.getValue('ext.osds.rww.edit.url');
-  var store_url = setting.getValue('ext.osds.rww.store.url');
-  var docURL = encodeURIComponent(curUrl);
-
-  if (store_url!==null && store_url.length>0) {
-    if (edit_url.indexOf("?")!=-1)
-      edit_url += "&uri="+encodeURIComponent(store_url);
-    else
-      edit_url += "?uri="+encodeURIComponent(store_url);
-  }
-
-  if (edit_url.indexOf("{url}")!=-1)
-     return edit_url.replace("{url}",docURL);
-  else
-     return edit_url;
-}
-
-
-function createSparqlUrl(curUrl) 
-{
-  var setting = new Settings();
-  var sparql_url = setting.getValue('ext.osds.sparql.url');
-  var query = setting.getValue('ext.osds.sparql.query');
-
-  var query = encodeURIComponent(query.replace(/{url}/g, curUrl));
-  return sparql_url.replace(/{query}/g, query);
 }
 
 
@@ -706,8 +753,8 @@ function rest_exec() {
 
   if (yasqe.obj) {
     var val = yasqe.obj.getValue();
-    if (val && val.length > 0) 
-       url.addQueryParam("query", encodeURIComponent(val));
+    if (val && val.length > 0)
+       url.addQueryParam("query", val);
   }
 
   var rows = $('#restData>tr');
@@ -716,7 +763,7 @@ function rest_exec() {
     var h = r.find('#h').val();
     var v = r.find('#v').val();
     if (h.length>0)
-       url.addQueryParam(h, encodeURIComponent(v));
+       url.addQueryParam(h, v);
   }
 
   var win_url = url.toString();
@@ -729,7 +776,7 @@ function rest_del(e) {
   //get the row we clicked on
   var row = $(this).parents('tr:first');
 
-  $('#alert-msg').prop('textContent',"Delete row ?"); 
+  $('#alert-msg').prop('textContent',"Delete row ?");
   $( "#alert-dlg" ).dialog({
     resizable: false,
     height:180,
@@ -737,10 +784,10 @@ function rest_del(e) {
     buttons: {
       "Yes": function() {
           $(row).remove();
-          $(this).dialog( "close" );
+          $(this).dialog( "destroy" );
       },
       "No": function() {
-          $(this).dialog( "close" );
+          $(this).dialog( "destroy" );
       }
     }
   });
@@ -768,7 +815,7 @@ function addRestParam(h,v)
   $('#restData').append(createRestRow(h, v));
   $('.rest_del').button({
     icons: { primary: 'ui-icon-minusthick' },
-    text: false          	
+    text: false
   });
   $('.rest_del').click(rest_del);
 }
@@ -809,11 +856,11 @@ function load_restData(doc_url)
     addRestEmpty();
 
   if (yasqe.obj && yasqe.val) {
-    yasqe.obj.setValue(yasqe.val);    
-  } 
+    yasqe.obj.setValue(yasqe.val);
+  }
   else {
+    yasqe.obj.setValue("");
     $(".yasqe").hide();
   }
 }
 // ==== restData  END ====
-

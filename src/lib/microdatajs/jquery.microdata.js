@@ -85,6 +85,19 @@
     });
   }
 
+  function getSubItems(types) {
+    var selector = $.map(splitTokens(types), function(t) {
+      return '[itemtype~="'+t.replace(/"/g, '\\"')+'"]';
+    }).join('') || '*';
+    // filter results to only match top-level items.
+    // because [attr] selector doesn't work in IE we have to
+    // filter the elements. http://dev.jquery.com/ticket/5637
+    return $(this).children(selector).filter(function() {
+      return (this.getAttribute('itemscope') != null &&
+              this.getAttribute('itemprop') == null);
+    });
+  }
+
   // find the furthest ancestor (usually Document)
   function ancestor(node) {
     while (node.parentNode)
@@ -94,29 +107,22 @@
 
   function resolve(elm, attr) {
     // in order to handle <base> and attributes which aren't properly
-    // reflected as URLs, insert a temporary <a> element just before
-    // elm and resolve using its href property. the <a> element must
+    // reflected as URLs, insert a temporary <img> element just before
+    // elm and resolve using its src attribute. the <img> element must
     // be created using the parent document due IE security policy.
     var url = elm.getAttribute(attr);
     if (!url)
       return '';
     var a = ancestor(elm);
     var p = elm.parentNode;
-    var div = (a.createElement ? a : document).createElement('div');
+    var img = (a.createElement ? a : document).createElement('img');
     try {
-      // Setting the href attribute/property on an <a> element
-      // directly doesn't trigger resolution against the base URL in
-      // IE, but creating an <a> element with innerHTML does. We have
-      // to do some acrobatics to avoid having to HTML-escape the URL.
-      // See http://stackoverflow.com/a/22918332/250798
-      div.innerHTML = '<a></a>';
-      div.firstChild.href = url;
-      div.innerHTML = div.innerHTML;
+      img.setAttribute('src', url);
       if (p)
-        p.insertBefore(div, elm);
-      url = div.firstChild.href;
+        p.insertBefore(img, elm);
+      url = img.src;
       if (p)
-        p.removeChild(div);
+        p.removeChild(img);
     } catch (e) {
       // IE>6 throws "TypeError: Access is denied." for mailto:
       // URLs. This is annoying, but harmless to ignore.
@@ -220,18 +226,41 @@
     return $(props);
   }
 
+  // feature detection to use native support where available
+  var t = $('<data itemscope itemtype="type" itemid="id" itemprop="prop" itemref="ref" value="value">')[0];
+
   $.fn.extend({
-    items: getItems,
-    itemScope: function () {
+    items: document.getItems && t.itemType && t.itemType.contains ? function(types) {
+      var doc = this[0];
+      if (doc.getItems)
+        return $(types ? doc.getItems(types) : doc.getItems());
+      return getItems.call(this, types);
+    } : getItems,
+    sub_items: getSubItems,
+    itemScope: t.itemScope ? function() {
+      return this[0].itemScope;
+    } : function () {
       return this[0].getAttribute('itemscope') != null;
     },
-    itemType: tokenList('itemtype'),
-    itemId: function () {
+    itemType: t.itemType && t.itemType.contains ? function() {
+      return this[0].itemType;
+    } : tokenList('itemtype'),
+    itemId: t.itemId == 'id' ? function() {
+      return this[0].itemId;
+    } : function () {
       return resolve(this[0], 'itemid');
     },
-    itemProp: tokenList('itemprop'),
-    itemRef: tokenList('itemref'),
-    itemValue: itemValue,
-    properties: properties
+    itemProp: t.itemProp && t.itemProp.contains ? function() {
+      return this[0].itemProp;
+    } : tokenList('itemprop'),
+    itemRef: t.itemRef && t.itemRef.contains ? function() {
+      return this[0].itemRef;
+    } : tokenList('itemref'),
+    itemValue: t.itemValue == t && t.value == 'value' ? function() {
+      return this[0].itemValue;
+    } : itemValue,
+    properties: t.properties && t.properties.namedItem ? function(name) {
+      return $(name ? this[0].properties.namedItem(name) : this[0].properties);
+    } : properties
   });
 })();

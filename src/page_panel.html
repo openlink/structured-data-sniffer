@@ -33,6 +33,7 @@
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.json.js"></script>
         <script type="text/javascript" src="lib/jsonld.js"></script>
         <script type="text/javascript" src="lib/n3-browser.js"></script>
+        <script type="text/javascript" src="lib/rdflib.js"></script>
         <script type="text/javascript" src="lib/jsuri.js"></script>
         <script type="text/javascript" src="lib/FileSaver.js"></script>
         <script type="text/javascript" src="lib/namespace.js"></script>
@@ -50,13 +51,13 @@
         <link rel="stylesheet" href="psniffer.css" />
 
         <style type="text/css">
-          .popup { font: 62.5% "Trebuchet MS", sans-serif; }
+          .popup { font: 70% "Trebuchet MS", sans-serif; }
         </style>	
 
     </head>
     <body class="sniffer">
       <div class="popup" id="alert-dlg" title="Info">
-        <p id="alert-msg">
+        <p id="alert-msg" style="font-size: 14px;">
         </p>
       </div>
 
@@ -84,6 +85,7 @@
             <SELECT id="save-fmt" style="WIDTH: 100px" >
               <OPTION id="ttl" selected>Turtle</OPTION>
               <OPTION id="json">JSON-LD</OPTION>
+              <OPTION id="rdf">RDF/XML</OPTION>
             </SELECT>
           </td>
          </tr>
@@ -121,6 +123,7 @@
           <li><a href="#jsonld" title="Metadata encoded using JSON-LD Notation">JSON-LD</a></li>
           <li><a href="#turtle" title="Metadata encoded using RDF-Turtle Notation">Turtle</a></li>
           <li><a href="#rdfa" title="Metadata  encoded using RDFa Notation">RDFa</a></li>
+          <li><a href="#rdf" title="Metadata  encoded using RDF/XML Notation">RDF/XML</a></li>
           <li><a href="#posh" title="Metadata encoded using Plain Old Semantic HTML Notation">POSH</a></li>
         </ul>
       </div>
@@ -211,6 +214,15 @@
         </div>
 
         <div id="rdfa_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="rdf_items">
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>

@@ -19,11 +19,11 @@
 -->
     <head>
 	<meta charset="UTF-8">
-        <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />	
-        <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />	
-        <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />	
-        <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />	
-        <link type="text/css" href="lib/css/yasqe.min.css" rel="stylesheet" />	
+        <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/yasqe.min.css" rel="stylesheet" />
 
         <script type="text/javascript" src="lib/jquery-3.1.0.min.js"></script>
         <script type="text/javascript" src="lib/jquery-migrate-3.0.0.min.js"></script>
@@ -33,6 +33,7 @@
         <script type="text/javascript" src="lib/microdatajs/jquery.microdata.json.js"></script>
         <script type="text/javascript" src="lib/jsonld.js"></script>
         <script type="text/javascript" src="lib/n3-browser.js"></script>
+        <script type="text/javascript" src="lib/rdflib.js"></script>
         <script type="text/javascript" src="lib/jsuri.js"></script>
         <script type="text/javascript" src="lib/FileSaver.js"></script>
         <script type="text/javascript" src="lib/namespace.js"></script>
@@ -51,13 +52,13 @@
         <link rel="stylesheet" href="sniffer.css" />
 
         <style type="text/css">
-          .popup { font: 62.5% "Trebuchet MS", sans-serif; }
-        </style>	
+          .popup { font: 70% "Trebuchet MS", sans-serif; }
+        </style>
 
     </head>
     <body class="sniffer">
       <div class="popup" id="alert-dlg" title="Info">
-        <p id="alert-msg">
+        <p id="alert-msg" style="font-size: 14px;">
         </p>
       </div>
 
@@ -85,6 +86,7 @@
             <SELECT id="save-fmt" style="WIDTH: 100px" >
               <OPTION id="ttl" selected>Turtle</OPTION>
               <OPTION id="json">JSON-LD</OPTION>
+              <OPTION id="rdf">RDF/XML</OPTION>
             </SELECT>
           </td>
          </tr>
@@ -122,7 +124,8 @@
           <li><a href="#micro" title="Structured Data encoded using HTML5 Microdata Notation">Microdata</a></li>
           <li><a href="#jsonld" title="Metadata encoded using JSON-LD Notation">JSON-LD</a></li>
           <li><a href="#turtle" title="Metadata encoded using RDF-Turtle Notation">Turtle</a></li>
-          <li><a href="#rdfa" title="Metadata  encoded using RDFa Notation">RDFa</a></li>
+          <li><a href="#rdfa" title="Metadata encoded using RDFa Notation">RDFa</a></li>
+          <li><a href="#rdf" title="Metadata encoded using RDF/XML Notation">RDF/XML</a></li>
           <li><a href="#posh" title="Metadata encoded using Plain Old Semantic HTML Notation">POSH</a></li>
         </ul>
       </div>
@@ -131,7 +134,7 @@
 
         <div id="src_items" style="font-size: 13px;">
           <table style="width: 100%; height: 100%;">
-            <tr> 
+            <tr>
               <td>
                 <button id="src_exit" style="margin:5px; margin-left:10px;">Exit</button>
               </td>
@@ -147,7 +150,7 @@
 
         <div id="cons_items" style="font-size: 13px;">
           <table>
-            <tr> 
+            <tr>
               <td>
                 <button id="rest_exec" style="margin:5px; margin-left:10px;">Run</button>
               </td>
@@ -182,7 +185,7 @@
               <button style="margin:8px; margin-top:2px;" id="rest_add" class="rest_add">Add</button>
             </tr>
           </table>
-        
+
         </div>
 
         <div id="micro_items">
@@ -213,6 +216,15 @@
         </div>
 
         <div id="rdfa_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="rdf_items">
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>

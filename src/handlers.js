@@ -36,28 +36,30 @@ Fix_Nano.prototype = {
     var self = this;
 
     if (this._pos < textData.length) {
-      var lexer = N3.Lexer({ lineMode: false });
       try {
+        var lexer = N3.Lexer({ lineMode: false });
         var ttl_data = textData[self._pos];
 
         lexer.tokenize(ttl_data, function (error, token) {
-          if (token && self._tokens ==0 && 
-              !(token.type==="IRI" 
-                || token.type==="abbreviation" 
+          if (token && self._tokens ==0 &&
+              !(token.type==="IRI"
+                || token.type==="abbreviation"
                 || token.type==="prefixed"
                 || token.type==="prefix"
                 || token.type==="PREFIX"
                 || token.type[0]==="@"
+                || token.type==="["
                ))
             self._bad_data = true;
-          if (token && self._tokens ==1 && 
-              !(token.type==="IRI" 
-                || token.type==="abbreviation" 
+          if (token && self._tokens ==1 &&
+              !(token.type==="IRI"
+                || token.type==="abbreviation"
                 || token.type==="prefixed"
                 || token.type==="prefix"
                 || token.type==="PREFIX"
                 || token.type===","
                 || token.type===";"
+                || token.type==="]"
                ))
             self._bad_data = true;
 
@@ -104,23 +106,22 @@ Handle_Microdata.prototype = {
   parse : function(jsonData, docURL, callback) {
     this.callback = callback;
     var self = this;
-    try 
+    var ret_data = null;
+    var error = null;
+    try
     {
       var conv = new MicrodataJSON_Converter();
       var out_data = conv.transform(jsonData, docURL);
 
-      var ret_data = null;
-
-      if (self._make_ttl) 
+      if (self._make_ttl)
         ret_data = new TTL_Gen(docURL).load(out_data);
       else
         ret_data = new HTML_Gen(docURL).load(out_data);
-        
-      self.callback(null, ret_data);
-    } 
-    catch (ex) {
-      self.callback(ex.toString(), null);
     }
+    catch (ex) {
+      error = ex.toString();
+    }
+    self.callback(error, ret_data);
   }
 
 }
@@ -160,9 +161,9 @@ Handle_Turtle.prototype = {
     var self = this;
 
     if (this._pos < textData.length) {
-      var store = new N3DataConverter();
-      var parser = N3.Parser();
       try {
+        var store = new N3DataConverter();
+        var parser = N3.Parser({documentIRI:self.baseURI});
         var ttl_data = textData[self._pos];
 
         if (this.ns_pref!==null)
@@ -176,7 +177,7 @@ Handle_Turtle.prototype = {
               if (self.ns_pref_size>0) { // fix line in error message
                 try {
                   var m = self._pattern.exec(error);
-                  if (m!==null) 
+                  if (m!==null)
                     error = error.substr(0,m.index)+(parseInt(m[1])-self.ns_pref_size-1);
                 } catch(e) {}
               }
@@ -189,8 +190,8 @@ Handle_Turtle.prototype = {
                   self.parse(textData, docURL, self.callback);
                 else
                   self.callback(null, self._output);
-              } 
-              else 
+              }
+              else
               {
                 self.error = error;
                 self.callback(self.error, null);
@@ -198,29 +199,29 @@ Handle_Turtle.prototype = {
 
             }
             else if (tr) {
-              store.addTriple(self.fixNode(tr.subject), 
-                              self.fixNode(tr.predicate), 
+              store.addTriple(self.fixNode(tr.subject),
+                              self.fixNode(tr.predicate),
                               self.fixNode(tr.object));
             }
             else {
-              
+
               var triples = store.output;
 
               if (self._make_ttl) {
                 if (self._output===null)
                   self._output = [];
-              
+
                 var ttl_data =  new TTL_Gen(docURL).load(triples, self.start_id);
                 self._output.push(ttl_data==null?"":ttl_data);
-              } 
-              else 
+              }
+              else
               {
                 if (self._output===null)
                   self._output = "";
-              
+
                 var html_str =  new HTML_Gen(docURL).load(triples, self.start_id);
                 self._output += (html_str==null?"":html_str);
-              }  
+              }
 
               self._pos++;
 
@@ -243,16 +244,16 @@ Handle_Turtle.prototype = {
   },
 
 
-  fixNode : function (n) 
+  fixNode : function (n)
   {
      if ( n==="")
          return this.baseURI;
      else if (N3.Util.isIRI(n)) {
        if (n==="")
          return this.baseURI;
-       else if (n.substring(0,1)==="#") 
+       else if (n.substring(0,1)==="#")
          return this.baseURI+n;
-       else if (n.substring(0,1)===":") 
+       else if (n.substring(0,1)===":")
          return this.baseURI+n;
        else
          return n;
@@ -284,9 +285,9 @@ Handle_JSONLD.prototype = {
     this.callback = callback;
     var self = this;
 
-    function handle_error(error) 
+    function handle_error(error)
     {
-      if (self.skip_error) 
+      if (self.skip_error)
       {
         self.skipped_error.push(""+error);
         self._pos++;
@@ -295,25 +296,25 @@ Handle_JSONLD.prototype = {
           self.parse(textData, docURL, self.callback);
         else
           self.callback(null, self._output);
-      } 
+      }
       else {
           self.callback(""+error, null);
       }
     }
 
 
-    if (this._pos < textData.length) 
+    if (this._pos < textData.length)
     {
       try {
         jsonld_data = JSON.parse(textData[this._pos]);
         if (jsonld_data != null) {
-          jsonld.expand(jsonld_data, 
+          jsonld.expand(jsonld_data,
             function(error, expanded) {
               if (error) {
                 handle_error(error);
               }
               else {
-                jsonld.toRDF(expanded, {format: 'application/nquads'}, 
+                jsonld.toRDF(expanded, {format: 'application/nquads'},
                   function(error, nquads) {
                     if (error) {
                       handle_error(error);
@@ -333,7 +334,7 @@ Handle_JSONLD.prototype = {
                           self._output += "\n\n";
                           self._pos++;
                           self.start_id += handler.start_id;
- 
+
                           if (self._pos < textData.length)
                             self.parse(textData, docURL, self.callback);
                           else
@@ -396,7 +397,7 @@ function N3DataConverter(options) {
 }
 
 N3DataConverter.prototype = {
-  addTriple: function (subj, pred, obj) 
+  addTriple: function (subj, pred, obj)
   {
       var s = null;
       var o = null;
@@ -412,11 +413,11 @@ N3DataConverter.prototype = {
         this.output.push(s);
       }
 
-      if (s.props === undefined) 
+      if (s.props === undefined)
         s.props = new Object();
-      if (s.props_obj === undefined) 
+      if (s.props_obj === undefined)
         s.props_obj = new Object();
-      
+
       var p = s.props[pred];
       var p_obj = s.props_obj[pred];
       if  (p === undefined) {
@@ -427,7 +428,7 @@ N3DataConverter.prototype = {
       p = s.props[pred];
       p_obj = s.props_obj[pred];
 
-      if (!p_obj[obj]) 
+      if (!p_obj[obj])
       {
         p_obj[obj]=1;
 
@@ -438,8 +439,8 @@ N3DataConverter.prototype = {
           var match = this._LiteralMatcher.exec(obj);
           if (!match) throw new Error('Invalid literal: ' + obj);
           p.push({
-             value:match[1], 
-             type:match[2], 
+             value:match[1],
+             type:match[2],
              lang:match[3]
             });
         }
@@ -460,7 +461,7 @@ function MicrodataJSON_Converter(options) {
 }
 
 MicrodataJSON_Converter.prototype = {
-  transform: function (json, baseURI) 
+  transform: function (json, baseURI)
   {
       this.baseURI = baseURI;
       var self = this;
@@ -484,13 +485,13 @@ MicrodataJSON_Converter.prototype = {
       return out;
   },
 
-  new_bnode : function() 
+  new_bnode : function()
   {
     this.last_Bnode++;
     return "_:bb"+this.last_Bnode;
   },
 
-  expand_item : function(item) 
+  expand_item : function(item)
   {
     var self =this;
     var out = { };
@@ -519,19 +520,19 @@ MicrodataJSON_Converter.prototype = {
     }
 
 
-    $.each(item, function(key, val) 
+    $.each(item, function(key, val)
      {
        if (key==="properties") {
          i_props = val;
        }
-       else if (key==="id") 
+       else if (key==="id")
        {
          if (val.indexOf(':') === -1)
            val = ":"+val;
          out["s"]=val;
          retVal.id = val;
-       } 
-       else if (key==="type") 
+       }
+       else if (key==="type")
        {
          if ($.isArray(val)) {
            for(var i=0; i<val.length; i++) {
@@ -539,17 +540,17 @@ MicrodataJSON_Converter.prototype = {
                val[i] = { "iri" : ":"+val[i], typeid:1};
              else
                val[i] = { "iri" : val[i], typeid:1};
-           } 
-         } 
+           }
+         }
          else {
            if (val.indexOf(':') === -1)
                val = [{ "iri" : ":"+val, typeid:1}];
            else
                val = [{ "iri" : val, typeid:1}];
-         } 
+         }
          props[self.RDF_TYPE] = val;
-       } 
-       else 
+       }
+       else
        {
          if (key.indexOf(':') === -1)
             key = ":"+key;
@@ -562,7 +563,7 @@ MicrodataJSON_Converter.prototype = {
      });
 
 
-      function expand_sub_item(parent, val) 
+      function expand_sub_item(parent, val)
       {
          var rc = self.expand_item(val);
          if (!rc.id) {
@@ -579,10 +580,12 @@ MicrodataJSON_Converter.prototype = {
       function handle_val(v_lst, val)
       {
          if (String(val).indexOf('[object Object]') === 0)
-           expand_sub_item(v_lst, val); 
+           expand_sub_item(v_lst, val);
          else if (val.substring(0,7) ==="http://")
            v_lst.push({ "iri" : val});
          else if (val.substring(0,8) ==="https://")
+           v_lst.push({ "iri" : val});
+         else if (val.substring(0,9) ==="nodeid://")
            v_lst.push({ "iri" : val});
          else
            v_lst.push({ "value" : val}); //??todo parse literal
@@ -591,19 +594,19 @@ MicrodataJSON_Converter.prototype = {
         var match = this._LiteralMatcher.exec(obj);
         if (!match) throw new Error('Invalid literal: ' + obj);
         p.push({
-             value:match[1], 
-             type:match[2], 
+             value:match[1],
+             type:match[2],
              llang:match[3]});
       }
 ****/
       }
 
-    
+
     if (i_props) {
-      $.each(i_props, function(key, val) 
+      $.each(i_props, function(key, val)
       {
         if (key.indexOf(':') === -1) {
-          if (id_ns) 
+          if (id_ns)
             key = id_ns.link+key;
           else
             key = ":"+key;
@@ -618,13 +621,13 @@ MicrodataJSON_Converter.prototype = {
        else {
          for(var i=0; i<val.length; i++) {
            if (String(val[i]).indexOf('[object Object]') === 0) //isArray lenght=1, el == Object
-             expand_sub_item(v, val[i]); 
+             expand_sub_item(v, val[i]);
            else if (val[i].substring(0,7) ==="http://")
              v.push({ "iri" : val[i]});
            else if (val[i].substring(0,8) ==="https://")
              v.push({ "iri" : val[i]});
            else
-             v.push({ "value" : val[i]}); 
+             v.push({ "value" : val[i]});
          }
        }
 **/
@@ -633,17 +636,100 @@ MicrodataJSON_Converter.prototype = {
          for(var i=0; i<val.length; i++)
            handle_val(v, val[i]);
        }
-       else 
+       else
        {
          handle_val(v, val);
        }
 
-       props[key] = v;
-        
+       if (key!==":unnamed")
+         props[key] = v;
+
       });
     }
 
     return retVal;
   }
+
+}
+
+
+Handle_RDF_XML = function (start_id) {
+  this.callback = null;
+  this.baseURI = null;
+  this._pos = 0;
+  this._output = null;
+  this.start_id = 0;
+  if (start_id!==undefined)
+    this.start_id = start_id;
+  this.skip_error = true;
+  this.skipped_error = [];
+};
+
+Handle_RDF_XML.prototype = {
+
+  parse : function(textData, baseURL, callback) {
+    this.callback = callback;
+    this.baseURI = baseURL;
+    var self = this;
+
+
+    function handle_error(error)
+    {
+      if (self.skip_error)
+      {
+        self.skipped_error.push(""+error);
+        self._pos++;
+
+        if (self._pos < textData.length)
+          self.parse(textData, baseURL, self.callback);
+        else
+          self.callback(null, self._output);
+      }
+      else {
+          self.callback(""+error, null);
+      }
+    }
+
+
+    if (this._pos < textData.length) {
+      try {
+        var store=$rdf.graph();
+        var rdf_data = textData[self._pos];
+
+        $rdf.parse(rdf_data, store, baseURL, 'application/rdf+xml');
+
+        var ttl = $rdf.serialize(undefined, store, baseURL, "text/turtle");
+
+        var handler = new Handle_Turtle();
+        handler.skip_error = false;
+        handler.parse([ttl], baseURL, function(error, html_data) {
+          if (error) {
+            handle_error(error.toString());
+          }
+          else {
+            if (self._output===null)
+              self._output = "";
+
+            self._output += html_data;
+            self._output += "\n\n";
+            self._pos++;
+            self.start_id += handler.start_id;
+
+            if (self._pos < textData.length)
+              self.parse(textData, baseURL, self.callback);
+            else
+              self.callback(null, self._output);
+          }
+        });
+
+      } catch (ex) {
+        handle_error(ex.toString());
+      }
+    }
+    else {
+      self.callback(null, self._output);
+    }
+  },
+
 
 }
