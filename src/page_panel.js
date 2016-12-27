@@ -859,6 +859,7 @@ function load_restData(doc_url)
     yasqe.obj.setValue(yasqe.val);
   }
   else {
+    yasqe.obj.setValue("");
     $(".yasqe").hide();
   }
 }

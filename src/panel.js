@@ -29,7 +29,7 @@ var selectedTab = null;
 var gData = {
         micro:{ json_text:null },
         jsonld:{ json_text:null },
-        rdfa:{ text:null },
+        rdfa:{ ttl_text:null },
         turtle:{ ttl_text:null },
         rdf:{ text:null },
         ttl_nano :{ ttl_text:null},
@@ -45,6 +45,7 @@ var yasqe = {
         val : null,
         init: false,
       };
+var g_fix_restURI = null;
 
 
 $(document).ready(function()
@@ -1195,7 +1196,7 @@ function rest_exec() {
     return;
   }
 
-  var _url = new Uri(doc_URL);
+  var _url = (g_fix_restURI)? g_fix_restURI : new Uri(doc_URL);
   _url.setQuery("");
 
   if (yasqe.obj) {
@@ -1278,6 +1279,7 @@ function delRest()
 function load_restData(doc_url)
 {
   yasqe.val = null;
+  g_fix_restURI = null;
 
   delRest();
 
@@ -1287,6 +1289,15 @@ function load_restData(doc_url)
   }
 
   var url = new Uri(doc_url);
+  var anchor = url.anchor();
+  // check for RDF Editor URL
+  if (anchor.lastIndexOf("/editor?", 0) === 0) {
+    var tmp_url = doc_url.replace(/#\/editor\?/g, "%23/editor?");
+    g_fix_restURI = url = new Uri(tmp_url);
+    var tmp_path = url.path().replace(/%23\/editor/g, "#/editor");
+    url.setPath(tmp_path);
+  }
+
   var params = url.queryPairs;
   for(var i=0; i<params.length; i++) {
     var val = params[i][1];
@@ -1304,6 +1315,7 @@ function load_restData(doc_url)
     yasqe.obj.setValue(yasqe.val);
   }
   else {
+    yasqe.obj.setValue("");
     $(".yasqe").hide();
   }
 }
