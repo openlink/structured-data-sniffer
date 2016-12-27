@@ -116,4 +116,14 @@ if (Browser.isChromeAPI)
           }
           else {
             if (v_cancel)
-              Browser.api.tabs.update(d.tabId, { url: 
+              Browser.api.tabs.update(d.tabId, { url: _url });
+            else
+              Browser.openTab(_url);
+            return { "responseHeaders":d.responseHeaders };
+//              return { cancel: false};
+          }
+      }
+  }
+
+
+}
