@@ -19,7 +19,7 @@ Support for additional browsers like
 is under construction.
 
 ## License
-Copyright 2016 [OpenLink Software](mailto:opensource@openlinksw.com)
+Copyright 2015-2017 [OpenLink Software](mailto:opensource@openlinksw.com)
 
 This software is licensed under the GNU General Public License (see
 [COPYING](http://github.com/openlink/structured-data-sniffer/blob/develop/COPYING)).
