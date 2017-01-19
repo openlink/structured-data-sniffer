@@ -27,6 +27,7 @@ var POSH = (function () {
     this.terms = {};
     this.terms["description"] = "schema:description";
     this.terms["describedby"] = "wdrs:describedby";
+    this.facebook_vision = "Image may contain: ";
 
     this.namespace = new Namespace();
 
@@ -160,34 +161,39 @@ var POSH = (function () {
         }
       }
 
-      function addTriple(s, p, o)
+      function addTriple(s, p, o, obj_is_Literal)
       {
         triples += node2str(s)+" "+node2str(p)+" ";
-        o = o.replace(/\\/g,'\\\\').replace(/\"/g,'\\\"');
-        if (o==="<>" || o==="<#this>")
-          triples += o;
-        else if (s_startWith(o, "http://") 
+        if (obj_is_Literal) {
+          triples += '"'+o+'"';
+        }
+        else {
+          o = o.replace(/\\/g,'\\\\').replace(/\"/g,'\\\"');
+          if (o==="<>" || o==="<#this>")
+            triples += o;
+          else if (s_startWith(o, "http://") 
                  || s_startWith(o, "https://")
                  || s_startWith(o, "mailto:")
                 )
-          triples += "<"+o+">";
-        else if (s_startWith(o, "#"))
-          triples += "<"+encodeURI(o)+">";
-        else if (o.lastIndexOf(":")!=-1) 
-        {
-          var arr = o.split(":");
-          var pref_link = self.namespace.ns_list[arr[0]];
-          if (!pref_link) {//unknown prefix
-            triples += '"'+o+'"';
-          } else {
-            var p = self.prefixes[arr[0]];
-            if (!p)
-              self.prefixes[arr[0]] = pref_link;
-            triples += arr[0]+":"+encodeURIComponent(o.substring(arr[0].length+1));
+            triples += "<"+o+">";
+          else if (s_startWith(o, "#"))
+            triples += "<"+encodeURI(o)+">";
+          else if (o.lastIndexOf(":")!=-1) 
+          {
+            var arr = o.split(":");
+            var pref_link = self.namespace.ns_list[arr[0]];
+            if (!pref_link) {//unknown prefix
+              triples += '"'+o+'"';
+            } else {
+              var p = self.prefixes[arr[0]];
+              if (!p)
+                self.prefixes[arr[0]] = pref_link;
+              triples += arr[0]+":"+encodeURIComponent(o.substring(arr[0].length+1));
+            }
           }
+          else
+            triples += '"'+o+'"';
         }
-        else
-          triples += '"'+o+'"';
 
         triples += " .\n";
       } 
@@ -321,11 +327,23 @@ var POSH = (function () {
              }
            }
            else if (name && content) {
-             addTriple("#this", name, content);   
+             addTriple("#this", name, content);
            }
 
          }
       });
+
+      $("img[alt^='"+this.facebook_vision+"']").each(function(i, el){
+           var src = el.getAttribute("src");
+           var alt = el.getAttribute("alt");
+
+           addTriple(src+"#this", "rdf:type", "schema:ImageObject");
+           addTriple(src+"#this", "schema:mainEntityOfPage", src);
+           addTriple(src+"#this", "schema:name", " "+src, true);
+           addTriple(src+"#this", "schema:description", alt.substring(self.facebook_vision.length));
+           addTriple(src+"#this", "schema:url", src);
+      });
+
 
       var s = "";
       $.each(this.prefixes, function(pref, link_url) {
