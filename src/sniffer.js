@@ -603,6 +603,12 @@
     }
 
 
+    function request_open_tab(url, sender) {
+        if (url)
+          window.open(url);
+    }
+
+
     jQuery(document).ready(function () {
 
         try {
@@ -681,6 +687,8 @@
                 Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                     if (request.property == "doc_data")
                         request_doc_data();
+                    else if (request.property == "open_tab")
+                        request_open_tab(request.url, sender)
                     else
                         sendResponse({});  // stop
                 });
