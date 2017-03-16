@@ -373,7 +373,7 @@
                     self.port.emit("content_status", {data_exists: data_found});
                 }
                 else {
-                    Browser.api.runtime.sendMessage(null, {
+                    Browser.api.runtime.sendMessage({
                             property: "status",
                             status: 'ready',
                             data_exists: data_found
@@ -614,21 +614,21 @@
     {
       if (g_super_links==null) {
          $('body').append(
-           '<div class="super_links_modalDialog"> '
-          +' <div>'
-          +' <a href="#close" title="Close" class="super_links_modalDialog_close">&times;</a> '
-          +' <div class="super_links_modalDialog_data" ></div> '
-          +' </div> '
+           '<div class="super_links_popup" >' 
+          +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
+          +' <div class="super_links_popup-content"></div>'
           +'</div> '
          );
       }
 
         var url = "https://linkeddata.uriburner.com/sparql"
+        var iri = new Uri(location.href).setAnchor("").toString();
+
         params = {
             format:'application/json',
             query: ' \n'
                   +'select distinct ?s ?label ?provider ?providerName \n'
-                  +'  from <'+location.href+'> \n'
+                  +'  from <'+iri+'> \n'
                   +' {{?s skos:related ?o.} UNION {?s skos:mentions ?o.} \n'
                   +'?o opl:providedBy ?provider . \n'
                   +'optional {?provider foaf:name ?providerName} . \n'
@@ -651,11 +651,11 @@
 
         jQuery.get(url, params, function(data, status){
           var val = JSON.parse(data);
-          var lst = val.results.bindings;
           g_super_links = val.results.bindings;
           var labels = [];
-          for(var i=0; i < lst.length; i++) {
-            labels.push(lst[i].label.value);
+          for(var i=0; i < g_super_links.length; i++) {
+            labels.push(g_super_links[i].label.value);
+            g_super_links[i]._id = g_super_links[i].label.value.toLowerCase();
           }
 
           mark_strings(labels);
@@ -664,6 +664,113 @@
         });
 
     }
+
+
+/**********************************************/
+    function positionPopupOnPage( evt ) 
+    {
+      var vpWH = [];
+      var vpW, vpH;
+      var intCoordX = evt.clientX;
+      var intCoordY = evt.clientY;
+      var intXOffset = intCoordX;
+      var intYOffset = intCoordY;
+
+      vpWH = getViewPortWidthHeight();
+      vpW = vpWH[0];
+      vpH = vpWH[1];
+      var popup = $(".super_links_popup");
+      popup.css("position","fixed");
+      // if not display: block, .offsetWidth & .offsetHeight === 0
+      popup.css("display","block");
+      popup.css("zIndex","10100");
+
+      if ( intCoordX > vpW/2 ) { intXOffset -= popup.width(); }
+      if ( intCoordY > vpH/2 ) { intYOffset -= popup.height(); }
+      if ( vpW <= 500 ) { intXOffset = ( vpW - popup.width() ) / 2;}
+      if ( vpH <= 500 ) { intYOffset = (vpH - popup.height() ) / 2;}
+    	
+      popup.css("top", intYOffset + 'px');
+      popup.css("left", intXOffset + 'px');
+      popup.css("visibility", 'visible');
+    }
+
+
+    function getViewPortWidthHeight() 
+    {
+      var viewPortWidth;
+      var viewPortHeight;
+
+ 	// the more standards compliant browsers (mozilla/netscape/opera/IE7)
+ 	// use window.innerWidth and window.innerHeight
+      if (typeof window.innerWidth != 'undefined')
+      {
+        viewPortWidth = window.innerWidth;
+        viewPortHeight = window.innerHeight;
+      }
+/**
+	// IE6 in standards compliant mode (i.e. with a valid doctype as the
+	// first line in the document)
+       else if (typeof document.documentElement != 'undefined'
+                && typeof document.documentElement.clientWidth !=
+               'undefined' && document.documentElement.clientWidth != 0)
+      {
+          viewPortWidth = document.documentElement.clientWidth;
+          viewPortHeight = document.documentElement.clientHeight;
+      }
+      // older versions of IE
+      else {
+          viewPortWidth = document.getElementsByTagName('body')[0].clientWidth;
+          viewPortHeight = document.getElementsByTagName('body')[0].clientHeight;
+      }
+**/
+ 	return [viewPortWidth, viewPortHeight];
+      }
+/**********************************************/
+
+
+
+
+    function create_popup_table(lst, ev) 
+    {
+      $('.super_links_popup-content').children().remove();
+
+      if (lst.length > 0) 
+      {
+        var tdata = '';
+        for(var i=0; i < lst.length; i++) 
+        {
+          var v = lst[i];
+          try {
+            var s = v.s?v.s.value:null;
+            var prov = v.provider?v.provider.value:null;
+            if (s && prov) {
+              var label = v.label?v.label.value:s;
+              var provName = v.providerName?v.providerName.value:prov;
+          
+              tdata += '<tr>'
+                +'<td> <a target="_blank" href="'+s+'">'+label+'</a></td>'
+                +'<td> <a target="_blank" href="http://www.w3.org/2004/02/skos/core#:related">skos:related</a> </td>'
+                +'<td> <a target="_blank" href="'+prov+'">'+provName+'</a></td>'
+                +'</tr>';
+            }
+          } catch(e) {}
+        }
+
+        $('.super_links_popup-content')
+           .append('<table class="super_links_table">'
+               +'<thead><tr>'
+               +'<th style="width:190px;">Word</th>'
+               +'<th style="width:97px;">Relation</th>'
+               +'<th style="width:300px;">Source</th>'
+               +'</tr></thead>'
+                +'<tbody>'+tdata+'</tbody>'
+                +'</table>');
+        $('.super_links_popup').show();
+        positionPopupOnPage(ev);
+      }
+    }
+
 
     function mark_strings(keyword) 
     {
@@ -684,44 +791,21 @@
                 $(node).attr("href","");
             },
             "done": function(counter){
-                var tdata = '';
-                for(var i=0; i < g_super_links.length; i++) {
-                  var v = g_super_links[i];
-                  try {
-                    var s = v.s?v.s.value:null;
-                    var prov = v.provider?v.provider.value:null;
-                    if (s && prov) {
-                      var label = v.label?v.label.value:s;
-                      var provName = v.providerName?v.providerName.value:prov;
-                    
-                      tdata += '<tr>'
-                        +'<td> <a target="_blank" href="'+s+'">'+label+'</a></td>'
-                        +'<td> <a target="_blank" href="http://www.w3.org/2004/02/skos/core#:related">skos:related</a> </td>'
-                        +'<td> <a target="_blank" href="'+prov+'">'+provName+'</a></td>'
-                        +'</tr>';
-                    }
-                  } catch(e) {}
-                }
 
-                $('div.super_links_modalDialog_data').children().remove();
-                $('div.super_links_modalDialog_data')
-                   .append('<table class="super_links_table">'
-                           +'<thead><tr>'
-                           +'<th>Word</th>'
-                           +'<th>Relation</th>'
-                           +'<th>Source</th>'
-                           +'</tr></thead>'
-                            +'<tbody>'+tdata+'</tbody>'
-                            +'</table>');
-
-
-                $('.super_links_modalDialog_close').click(function(e){ 
-                    $('.super_links_modalDialog').hide();
+                $('.super_links_popup_close').click(function(e){ 
+                    $('.super_links_popup').hide();
                     return false;
                  });
 
-                $('.super_link_mark').click(function(e){ 
-                    $('.super_links_modalDialog').show();
+                $('.super_link_mark').click(function(ev){ 
+                    var label = ev.target.innerText.toLowerCase();
+                    var lst = [];
+                    for (var i=0; i < g_super_links.length; i++) {
+                      if (g_super_links[i]._id.indexOf(label)!=-1)
+                        lst.push(g_super_links[i]);
+                    }
+
+                    create_popup_table(lst, ev);
                     return false;
                  });
             }
@@ -795,7 +879,7 @@
                     self.port.emit("doc_data", {data: JSON.stringify(docData, undefined, 2)});
                 }
                 else {
-                    Browser.api.runtime.sendMessage(null,
+                    Browser.api.runtime.sendMessage(
                         {
                             property: "doc_data",
                             data: JSON.stringify(docData, undefined, 2)
