@@ -7,36 +7,38 @@ a.super_link_mark {
 /***/
 .super_links_modalDialog {
         display: none; 
-	position: fixed; /* absolute;*/
+	position: fixed; 
 	font-family: Arial, Helvetica, sans-serif;
 	top: 0;
 	right: 0;
 	bottom: 0;
 	left: 0;
-        overflow: auto; /* Enable scroll if needed */
-	background: rgba(0,0,0,0.8);
+        overflow: auto; 
 	z-index: 99999;
-/*	pointer-events: auto;*/
 }
 
 
 
 .super_links_modalDialog:target {
 	opacity:1;
-/*	pointer-events: auto;*/
 }
 
 .super_links_modalDialog > div {
-	width: 800px;
+	width: 600px;
+	height: 430px;
 	position: relative;
 	margin: 10% auto;
-	padding: 5px 20px 13px 20px;
-        overflow: auto; /* Enable scroll if needed */
+	padding: 30px 20px 13px 20px;
 	border-radius: 10px;
 	background: #fff;
-	background: -moz-linear-gradient(#fff, #999);
-	background: -webkit-linear-gradient(#fff, #999);
-	background: -o-linear-gradient(#fff, #999);
+        border: 1px solid #dddddd;
+}
+
+
+.super_links_modalDialog_data  {
+	width: 600px;
+	height: 420px;
+        overflow: auto; /* Enable scroll if needed */
 }
 
 
@@ -71,10 +73,41 @@ a.super_link_mark {
 
 .super_links_modalDialog_close:hover { background: #00d9ff; }
 
+table.super_links_table a { color: blue; text-decoration:underline; }
+table.super_links_table a:link { color: blue; }
+table.super_links_table a:visited { color: purple; }
+table.super_links_table a:hover  { color: blue; }
+table.super_links_table a:active { color: blue; }
+
+/**
+   #link_bar a:link { color:#d0d0d0; background-color:#0000a0; }
+    #link_bar a:visited { color:#c0c0c0; background-color:#0000a0; }
+    #link_bar a:hover { color:#ffffff; background-color:#000060; }
+    #link_bar a:active { color:#f0f0f0; background-color:#00ff00; }
+**/
+
+
+/*table headers*/
+table.super_links_table > thead > tr > th, 
+table.super_links_table > thead > tr > td {
+  background-color: #dce9f9;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(#ebf3fc), to(#dce9f9));
+  background-image: -webkit-linear-gradient(top, #ebf3fc, #dce9f9);
+  background-image: -moz-linear-gradient(top, #ebf3fc, #dce9f9);
+  background-image: -ms-linear-gradient(top, #ebf3fc, #dce9f9);
+  background-image: -o-linear-gradient(top, #ebf3fc, #dce9f9);
+  background-image: linear-gradient(to bottom, #ebf3fc, #dce9f9);
+  -webkit-box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
+  -moz-box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
+  box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
+  border-top: none;
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+}
 
 
 /* Sparql table css based on Bootstrap */
-table.super_links_table {
+table.super_links_table 
+{
   background-color: transparent;
   border: 1px solid #dddddd;
   border-collapse: separate;
@@ -84,7 +117,11 @@ table.super_links_table {
   -moz-border-radius: 4px;
   border-radius: 4px;
   border-spacing: 0;
+  font-family: 'trebuchet MS' , 'Lucida sans' , Arial;
+  font-size: 14px;
+  color: #444;
 }
+
 table.super_links_table th,
 table.super_links_table td {
   padding: 4px 5px;
@@ -99,7 +136,8 @@ table.super_links_table th {
 }
 table.super_links_table tr:hover > td,
 table.super_links_table tr:hover > th {
-  background-color: #f5f5f5;
+  background-color: #fbf8e9;
+/*  background-color: #f5f5f5;*/
 }
 table.super_links_table tbody:first-child tr:first-child th,
 table.super_links_table tbody:first-child tr:first-child td {

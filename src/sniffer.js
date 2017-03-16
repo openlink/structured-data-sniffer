@@ -614,10 +614,9 @@
     {
       if (g_super_links==null) {
          $('body').append(
-           '<div id="super_links_table" class="super_links_modalDialog"> '
-          +' <div> '
+           '<div class="super_links_modalDialog"> '
+          +' <div>'
           +' <a href="#close" title="Close" class="super_links_modalDialog_close">&times;</a> '
-          +' <p/>'
           +' <div class="super_links_modalDialog_data" ></div> '
           +' </div> '
           +'</div> '
@@ -628,11 +627,9 @@
         params = {
             format:'application/json',
             query: ' \n'
-//                  +'define get:soft "soft" \n'
                   +'select distinct ?s ?label ?provider ?providerName \n'
-//                  +'  from <https://www.cnet.com/news/governments-social-media-wpp-leaders-report/> \n'
                   +'  from <'+location.href+'> \n'
-                  +'where {?s skos:related ?o. \n'
+                  +' {{?s skos:related ?o.} UNION {?s skos:mentions ?o.} \n'
                   +'?o opl:providedBy ?provider . \n'
                   +'optional {?provider foaf:name ?providerName} . \n'
                   +'optional {?o rdfs:label ?label} . \n'
@@ -640,21 +637,6 @@
             CXML_redir_for_subjs: 121,
             timeout: 30000000
                   };
-    /***
-        params = {
-            format:'application/json',
-            query: 'define get:soft "soft" \n'
-                  +'select distinct ?s ?label ?provider ?providerName \n'
-                  +'  from <https://www.cnet.com/news/governments-social-media-wpp-leaders-report/> \n'
-                  +'where {?s skos:related ?o. \n'
-                  +'?o opl:providedBy ?provider . \n'
-                  +'optional {?provider foaf:name ?providerName} . \n'
-                  +'optional {?o rdfs:label ?label} . \n'
-                  +'} limit 50 \n',
-            CXML_redir_for_subjs: 121,
-            timeout: 30000000
-                  };
-    ***/
 
         jQuery.ajaxSetup({
            dataType: "text",
@@ -722,7 +704,16 @@
                 }
 
                 $('div.super_links_modalDialog_data').children().remove();
-                $('div.super_links_modalDialog_data').append('<table class="super_links_table">'+tdata+'</table>');
+                $('div.super_links_modalDialog_data')
+                   .append('<table class="super_links_table">'
+                           +'<thead><tr>'
+                           +'<th>Word</th>'
+                           +'<th>Relation</th>'
+                           +'<th>Source</th>'
+                           +'</tr></thead>'
+                            +'<tbody>'+tdata+'</tbody>'
+                            +'</table>');
+
 
                 $('.super_links_modalDialog_close').click(function(e){ 
                     $('.super_links_modalDialog').hide();
@@ -735,6 +726,7 @@
                  });
             }
         };
+
 
       $("body").unmark({
         done: function() {
