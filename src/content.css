@@ -1,3 +1,22 @@
+.super_links_msg {
+        display: none; 
+	position: fixed;
+	border: 2px solid #000;
+	border-radius: 2px;
+	width: 200px;
+	height: 40px;
+	top:4px;
+	left: 4px;
+	background: khaki;
+	color: black;
+/*	background-color: rgba(115, 115, 115, .8);*/
+/*	color: #fff;*/
+ 	z-index: 2147483647;
+	padding: 10px 10px 10px 20px;
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+
 .super_links_popup {
 	position: absolute;
         display: none; 
@@ -9,13 +28,13 @@
 	color: black;
 /*	background-color: rgba(115, 115, 115, .8);*/
 /*	color: #fff;*/
- 	z-index: 10100;
+ 	z-index: 2147483647;
 	padding: 32px 20px 20px 20px;
 	font-family: Arial, Helvetica, sans-serif;
 }
 .super_links_popup-content {
-	width: 590px;
-	height: 140px;
+	width: 620px;
+	height: 200px;
 	overflow-y: auto;
 }
 

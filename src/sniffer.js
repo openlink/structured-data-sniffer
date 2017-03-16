@@ -495,7 +495,8 @@
         return s;
     }
 
-    function get_rdfa_data() {
+    function get_rdfa_data() 
+    {
         var escape = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
         var escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
         var escapeReplacements = {
@@ -612,35 +613,46 @@
 
     function add_super_links(sender) 
     {
-      if (g_super_links==null) {
-         $('body').append(
-           '<div class="super_links_popup" >' 
-          +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
-          +' <div class="super_links_popup-content"></div>'
-          +'</div> '
-         );
-      }
+        if (g_super_links==null) {
+           $('body').append(
+             '<div class="super_links_popup" >' 
+            +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
+            +' <div class="super_links_popup-content"></div>'
+            +'</div> '
+            +'<div class="super_links_msg"> '
+            +'</p> Loading links data...'
+            +'</div> '
+           );
+        }
 
-        var url = "https://linkeddata.uriburner.com/sparql"
+        var url_links = "https://linkeddata.uriburner.com/sparql";
         var iri = new Uri(location.href).setAnchor("").toString();
 
         params = {
             format:'application/json',
             query: ' \n'
-                  +'select distinct ?s ?label ?provider ?providerName \n'
-                  +'  from <'+iri+'> \n'
-                  +' {{?s skos:related ?o.} UNION {?s skos:mentions ?o.} \n'
-                  +'?o opl:providedBy ?provider . \n'
-                  +'optional {?provider foaf:name ?providerName} . \n'
-                  +'optional {?o rdfs:label ?label} . \n'
-                  +'} limit 50 \n',
+                  +'define get:soft "soft" \n'
+                  +'select distinct ?extract ?label ?p as ?relation ?type ?provider ?providerName \n'
+                  +'where { graph <'+iri+'> { \n'
+                  +'  ?extract a ?type ; \n'
+                  +'  <http://www.openlinksw.com/schema/attribution#providedBy> ?provider; \n'
+                  +'   rdfs:label ?label . \n'
+                  +' optional {?type rdfs:label ?typeName} . \n'
+                  +' optional {?provider foaf:name ?providerName} . \n'
+                  +' ?source ?p ?extract . \n'
+                  +' filter (?p in (skos:related, schema:about, schema:mentions)) \n'
+                  +' } \n'
+                  +'} ',
             CXML_redir_for_subjs: 121,
             timeout: 30000000
                   };
 
+        var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
+        var url_about = "https://linkeddata.uriburner.com/about/html/"+result[2]+"/"+result[3]+"?sponger:get=add";
+
         jQuery.ajaxSetup({
            dataType: "text",
-           headers:{'Accept': 'application/json',
+           headers:{'Accept': 'text/html',
                     'Cache-control': 'no-cache'},
            cache: false,
            timeout: 30000,
@@ -649,18 +661,41 @@
            }
         });
 
-        jQuery.get(url, params, function(data, status){
-          var val = JSON.parse(data);
-          g_super_links = val.results.bindings;
-          var labels = [];
-          for(var i=0; i < g_super_links.length; i++) {
-            labels.push(g_super_links[i].label.value);
-            g_super_links[i]._id = g_super_links[i].label.value.toLowerCase();
-          }
+        $(".super_links_msg").css("display","block");
+        jQuery.get(url_about, function(data, status){
+           
+           jQuery.ajaxSetup({
+              dataType: "text",
+              headers:{'Accept': 'application/json',
+                    'Cache-control': 'no-cache'},
+              cache: false,
+              timeout: 30000,
+              xhrFields: {
+                    withCredentials: true
+              }
+           });
 
-          mark_strings(labels);
+           jQuery.get(url_links, params, function(data, status){
+             try {
+               var val = JSON.parse(data);
+               g_super_links = val.results.bindings;
+               var labels = [];
+               for(var i=0; i < g_super_links.length; i++) {
+                 labels.push(g_super_links[i].label.value);
+                 g_super_links[i]._id = g_super_links[i].label.value.toLowerCase();
+               }
+
+               mark_strings(labels);
+             } finally {
+               $(".super_links_msg").css("display","none");
+             }
+           }, "text").fail(function(msg) {
+               $(".super_links_msg").css("display","none");
+               alert("Could not load data from: "+url+"\nError: "+msg.statusText);
+           });
+
         }, "text").fail(function(msg) {
-            alert("Could not load data from: "+url+"\nError: "+msg.statusText);
+           $(".super_links_msg").css("display","none");
         });
 
     }
@@ -742,16 +777,28 @@
         {
           var v = lst[i];
           try {
-            var s = v.s?v.s.value:null;
+            var extract = v.extract?v.extract.value:null;
             var prov = v.provider?v.provider.value:null;
-            if (s && prov) {
+            if (extract && prov) {
               var label = v.label?v.label.value:s;
               var provName = v.providerName?v.providerName.value:prov;
-          
+              var type_iri = v.type.value;
+
+              var rel_iri = v.relation.value;
+              var relName = rel_iri;
+              if (rel_iri === 'http://www.w3.org/2004/02/skos/core#related')
+                relName = 'skos:related';
+              else if (rel_iri === 'http://schema.org/about')
+                relName = 'schema:about';
+              else if (rel_iri === 'http://schema.org/mentions')
+                relName = 'schema:mentions';
+
+
               tdata += '<tr>'
-                +'<td> <a target="_blank" href="'+s+'">'+label+'</a></td>'
-                +'<td> <a target="_blank" href="http://www.w3.org/2004/02/skos/core#:related">skos:related</a> </td>'
+                +'<td> <a target="_blank" href="'+extract+'">'+label+'</a></td>'
+                +'<td> <a target="_blank" href="'+rel_iri+'">'+relName+'</a> </td>'
                 +'<td> <a target="_blank" href="'+prov+'">'+provName+'</a></td>'
+                +'<td> <a target="_blank" href="'+type_iri+'">'+type_iri+'</a></td>'
                 +'</tr>';
             }
           } catch(e) {}
@@ -760,9 +807,10 @@
         $('.super_links_popup-content')
            .append('<table class="super_links_table">'
                +'<thead><tr>'
-               +'<th style="width:190px;">Word</th>'
-               +'<th style="width:97px;">Relation</th>'
-               +'<th style="width:300px;">Source</th>'
+               +'<th style="min-width:190px;">Word</th>'
+               +'<th style="min-width:95px;">Relation</th>'
+               +'<th style="min-width:285px;">Source</th>'
+               +'<th style="min-width:300px;">Type</th>'
                +'</tr></thead>'
                 +'<tbody>'+tdata+'</tbody>'
                 +'</table>');
@@ -780,12 +828,13 @@
             "exclude": ["a"],
             "separateWordSearch": false,
             "acrossElements": true,
-            "accuracy": "complementary", //"complementary", //"exactly",
-            "diacritics": true,
+            "accuracy": "exactly", 
+//!            "diacritics": true,
+            "diacritics": false,
             "iframes": false,
             "iframesTimeout": 5000,
             "caseSensitive": false,
-            "ignoreJoiners": true,
+            "ignoreJoiners": false,
             "each": function(node){
                 // node is the marked DOM element
                 $(node).attr("href","");

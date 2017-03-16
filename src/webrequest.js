@@ -73,6 +73,12 @@ if (Browser.isChromeAPI)
             handle = true;
             type = "turtle";
           }
+          else if (header.value.match(/\/(n-triples)/)) {
+            handle = true;
+            type = "turtle";
+            v_cancel = true;
+            header.value = "text/plain";
+          }
           else if (header.value.match(/\/(json\+ld)/)) {
             handle = true;
             type = "jsonld";
@@ -106,7 +112,7 @@ if (Browser.isChromeAPI)
       }
       else if (!handle && (content_type===null || content_type.match(/(text\/plain)/))) {
         var url_path = new Uri(d.url).path();
-        if (url_path.endsWith(".ntriples") || url_path.endsWith(".ttl")) {
+        if (url_path.endsWith(".ntriples") || url_path.endsWith(".ttl")|| url_path.endsWith(".n3")) {
           handle = true;
           type = "turtle";
         }
