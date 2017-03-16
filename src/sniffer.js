@@ -24,6 +24,7 @@
     window._osds_isTop = true;
     window._osds_frames = {};
 
+    var g_super_links = null;
     var micro_items = 0;
     var json_ld_Text = null;
     var turtle_Text = null;
@@ -609,6 +610,142 @@
     }
 
 
+    function add_super_links(sender) 
+    {
+      if (g_super_links==null) {
+         $('body').append(
+           '<div id="super_links_table" class="super_links_modalDialog"> '
+          +' <div> '
+          +' <a href="#close" title="Close" class="super_links_modalDialog_close">&times;</a> '
+          +' <p/>'
+          +' <div class="super_links_modalDialog_data" ></div> '
+          +' </div> '
+          +'</div> '
+         );
+      }
+
+        var url = "https://linkeddata.uriburner.com/sparql"
+        params = {
+            format:'application/json',
+            query: ' \n'
+//                  +'define get:soft "soft" \n'
+                  +'select distinct ?s ?label ?provider ?providerName \n'
+//                  +'  from <https://www.cnet.com/news/governments-social-media-wpp-leaders-report/> \n'
+                  +'  from <'+location.href+'> \n'
+                  +'where {?s skos:related ?o. \n'
+                  +'?o opl:providedBy ?provider . \n'
+                  +'optional {?provider foaf:name ?providerName} . \n'
+                  +'optional {?o rdfs:label ?label} . \n'
+                  +'} limit 50 \n',
+            CXML_redir_for_subjs: 121,
+            timeout: 30000000
+                  };
+    /***
+        params = {
+            format:'application/json',
+            query: 'define get:soft "soft" \n'
+                  +'select distinct ?s ?label ?provider ?providerName \n'
+                  +'  from <https://www.cnet.com/news/governments-social-media-wpp-leaders-report/> \n'
+                  +'where {?s skos:related ?o. \n'
+                  +'?o opl:providedBy ?provider . \n'
+                  +'optional {?provider foaf:name ?providerName} . \n'
+                  +'optional {?o rdfs:label ?label} . \n'
+                  +'} limit 50 \n',
+            CXML_redir_for_subjs: 121,
+            timeout: 30000000
+                  };
+    ***/
+
+        jQuery.ajaxSetup({
+           dataType: "text",
+           headers:{'Accept': 'application/json',
+                    'Cache-control': 'no-cache'},
+           cache: false,
+           timeout: 30000,
+           xhrFields: {
+                    withCredentials: true
+           }
+        });
+
+        jQuery.get(url, params, function(data, status){
+          var val = JSON.parse(data);
+          var lst = val.results.bindings;
+          g_super_links = val.results.bindings;
+          var labels = [];
+          for(var i=0; i < lst.length; i++) {
+            labels.push(lst[i].label.value);
+          }
+
+          mark_strings(labels);
+        }, "text").fail(function(msg) {
+            alert("Could not load data from: "+url+"\nError: "+msg.statusText);
+        });
+
+    }
+
+    function mark_strings(keyword) 
+    {
+      var options = {
+            "element": "a",  //"a"
+            "className": "super_link_mark",
+            "exclude": ["a"],
+            "separateWordSearch": false,
+            "acrossElements": true,
+            "accuracy": "complementary", //"complementary", //"exactly",
+            "diacritics": true,
+            "iframes": false,
+            "iframesTimeout": 5000,
+            "caseSensitive": false,
+            "ignoreJoiners": true,
+            "each": function(node){
+                // node is the marked DOM element
+                $(node).attr("href","");
+            },
+            "done": function(counter){
+                var tdata = '';
+                for(var i=0; i < g_super_links.length; i++) {
+                  var v = g_super_links[i];
+                  try {
+                    var s = v.s?v.s.value:null;
+                    var prov = v.provider?v.provider.value:null;
+                    if (s && prov) {
+                      var label = v.label?v.label.value:s;
+                      var provName = v.providerName?v.providerName.value:prov;
+                    
+                      tdata += '<tr>'
+                        +'<td> <a target="_blank" href="'+s+'">'+label+'</a></td>'
+                        +'<td> <a target="_blank" href="http://www.w3.org/2004/02/skos/core#:related">skos:related</a> </td>'
+                        +'<td> <a target="_blank" href="'+prov+'">'+provName+'</a></td>'
+                        +'</tr>';
+                    }
+                  } catch(e) {}
+                }
+
+                $('div.super_links_modalDialog_data').children().remove();
+                $('div.super_links_modalDialog_data').append('<table class="super_links_table">'+tdata+'</table>');
+
+                $('.super_links_modalDialog_close').click(function(e){ 
+                    $('.super_links_modalDialog').hide();
+                    return false;
+                 });
+
+                $('.super_link_mark').click(function(e){ 
+                    $('.super_links_modalDialog').show();
+                    return false;
+                 });
+            }
+        };
+
+      $("body").unmark({
+        done: function() {
+          $("body").mark(keyword, options);
+        }
+      });
+    }
+
+
+
+
     jQuery(document).ready(function () {
 
         try {
@@ -689,6 +826,8 @@
                         request_doc_data();
                     else if (request.property == "open_tab")
                         request_open_tab(request.url, sender)
+                    else if (request.property == "super_links")
+                        add_super_links(sender)
                     else
                         sendResponse({});  // stop
                 });

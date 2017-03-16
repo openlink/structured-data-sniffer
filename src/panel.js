@@ -56,6 +56,8 @@ $(document).ready(function()
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
 
+  $('#slink_btn').click(SuperLinks_exec);
+
   $('#import_btn').click(Import_doc);
 
   $('#rww_btn').click(Rww_exec);
@@ -735,7 +737,7 @@ if (Browser.isFirefoxSDK)
   //wait data from extension
   self.port.on("doc_data", function(msg) {
 
-      var dData = $.parseJSON(msg.data);
+      var dData = JSON.parse(msg.data);
       if (!gData_showed)
         parse_Data(dData);
   });
@@ -765,7 +767,7 @@ else
       }
       else if (request.property == "doc_data")
       {
-        var dData = $.parseJSON(request.data);
+        var dData = JSON.parse(request.data);
         try {
           gData.tab_index = sender.tab.index;
         } catch(e){}
@@ -783,6 +785,25 @@ else
 
 }
 
+
+////////////////////////////////////////////////////
+function SuperLinks_exec()
+{
+  if (doc_URL!==null) {
+    Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
+      if (tabs.length > 0) {
+        Browser.api.tabs.sendMessage(tabs[0].id, {
+            property: 'super_links',
+          }, 
+          function(response) {
+          });
+        window.close();
+      }
+    });
+  }
+
+  return false;
+}
 
 
 
@@ -1041,7 +1062,7 @@ function save_data(action, fname, fmt, callback)
     if (selectedTab==="#micro" && data.length > 0)
     {
       var handler = new Handle_Microdata(true);
-      handler.parse($.parseJSON(data[0]), gData.baseURL,
+      handler.parse(JSON.parse(data[0]), gData.baseURL,
         function(error, ttl_data)
         {
           if (error) {
