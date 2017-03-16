@@ -104,6 +104,13 @@ if (Browser.isChromeAPI)
           type = "rdf";
         }
       }
+      else if (!handle && (content_type===null || content_type.match(/(text\/plain)/))) {
+        var url_path = new Uri(d.url).path();
+        if (url_path.endsWith(".ntriples") || url_path.endsWith(".ttl")) {
+          handle = true;
+          type = "turtle";
+        }
+      }
 
       if (handle)  {
           var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
