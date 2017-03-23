@@ -1,5 +1,5 @@
 .super_links_msg {
-        display: none; 
+  display: none;
 	position: fixed;
 	border: 2px solid #000;
 	border-radius: 2px;
@@ -9,8 +9,6 @@
 	left: 4px;
 	background: khaki;
 	color: black;
-/*	background-color: rgba(115, 115, 115, .8);*/
-/*	color: #fff;*/
  	z-index: 2147483647;
 	padding: 10px 10px 10px 20px;
 	font-family: Arial, Helvetica, sans-serif;
@@ -19,21 +17,19 @@
 
 .super_links_popup {
 	position: absolute;
-        display: none; 
+  display: none;
 	border: 2px solid #000;
 	border-radius: 10px;
-	width: 625px;
+	width: 755px;
 	height: 190px;
 	background: #fff;
 	color: black;
-/*	background-color: rgba(115, 115, 115, .8);*/
-/*	color: #fff;*/
  	z-index: 2147483647;
 	padding: 32px 20px 20px 20px;
 	font-family: Arial, Helvetica, sans-serif;
 }
 .super_links_popup-content {
-	width: 620px;
+	width: 750px;
 	height: 200px;
 	overflow-y: auto;
 }
@@ -92,7 +88,7 @@ table.super_links_table a:active { color: blue; }
 
 
 /*table headers*/
-table.super_links_table > thead > tr > th, 
+table.super_links_table > thead > tr > th,
 table.super_links_table > thead > tr > td {
   background-color: #dce9f9;
   background-image: -webkit-gradient(linear, left top, left bottom, from(#ebf3fc), to(#dce9f9));
@@ -110,7 +106,7 @@ table.super_links_table > thead > tr > td {
 
 
 /* Sparql table css based on Bootstrap */
-table.super_links_table 
+table.super_links_table
 {
   background-color: transparent;
   border: 1px solid #dddddd;
@@ -171,5 +167,3 @@ table.super_links_table tbody:last-child tr:last-child > th:last-child {
   -moz-border-radius-bottomright: 4px;
   border-bottom-right-radius: 4px;
 }
-
-

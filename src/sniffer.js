@@ -495,7 +495,7 @@
         return s;
     }
 
-    function get_rdfa_data() 
+    function get_rdfa_data()
     {
         var escape = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
         var escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
@@ -611,15 +611,59 @@
     }
 
 
-    function add_super_links(sender) 
+    function add_super_links(sender)
     {
+        var iri = new Uri(location.href).setAnchor("").toString();
+        var br_lang = navigator.language || navigator.userLanguage;
+        if (br_lang && br_lang.length>0) {
+          var i = br_lang.indexOf('-');
+          if (i!=-1)
+             br_lang = br_lang.substr(0,i);
+        } else {
+          br_lang = 'en';
+        }
+
+        var link_query = ''
+        +'DEFINE get:soft "soft" \n'
+        +'SELECT DISTINCT ?extract ?extractLabel ?type ?p as ?relation ?relationLabel ?typeLabel ?provider ?providerLabel\n'
+        +'WHERE \n'
+        +' { GRAPH <'+iri+'> \n'
+        +'    { \n'
+        +'      ?extract a ?type ;\n'
+        +'      <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ; \n'
+        +'      rdfs:label ?extractLabel . \n'
+        +'\n'
+        +'      OPTIONAL {?provider foaf:name|schema:name ?providerLabel} . \n'
+        +'      ?source ?p ?extract .\n'
+        +'\n'
+        +'      FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+        +'      FILTER (! contains(str(?type),"Tag")) \n'
+        +'    }\n'
+        +'    { SELECT ?p ?relationLabel \n'
+        +'        WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?relationLabel . \n'
+        +'                            FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+        +'                            FILTER (LANG(?relationLabel) = "'+br_lang+'") \n'
+        +'                          } \n'
+        +'              } \n'
+        +'    } \n'
+        +'\n'
+        +'    { SELECT ?type ?typeLabel \n'
+        +'        WHERE { GRAPH ?g2 { ?type rdfs:label|schema:name ?typeLabel . \n'
+        +'                            FILTER (LANG(?typeLabel) = "'+br_lang+'")\n'
+        +'                          } \n'
+        +'              }\n'
+        +'    }\n'
+        +' }';
+
+
         if (g_super_links==null) {
            $('body').append(
-             '<div class="super_links_popup" >' 
+             '<div class="super_links_popup" >'
             +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
             +' <div class="super_links_popup-content"></div>'
             +'</div> '
             +'<div class="super_links_msg"> '
+/*            +'</p> <img src="images/throbber.gif" width="16" /> Loading links data...'*/
             +'</p> Loading links data...'
             +'</div> '
            );
@@ -628,24 +672,22 @@
         var url_links = "https://linkeddata.uriburner.com/sparql";
         var iri = new Uri(location.href).setAnchor("").toString();
 
-        params = {
-            format:'application/json',
-            query: ' \n'
-                  +'define get:soft "soft" \n'
-                  +'select distinct ?extract ?label ?p as ?relation ?type ?provider ?providerName \n'
-                  +'where { graph <'+iri+'> { \n'
-                  +'  ?extract a ?type ; \n'
-                  +'  <http://www.openlinksw.com/schema/attribution#providedBy> ?provider; \n'
-                  +'   rdfs:label ?label . \n'
-                  +' optional {?type rdfs:label ?typeName} . \n'
-                  +' optional {?provider foaf:name ?providerName} . \n'
-                  +' ?source ?p ?extract . \n'
-                  +' filter (?p in (skos:related, schema:about, schema:mentions)) \n'
-                  +' } \n'
-                  +'} ',
-            CXML_redir_for_subjs: 121,
-            timeout: 30000000
-                  };
+/****
+query: ' \n'
+      +'define get:soft "soft" \n'
+      +'select distinct ?extract ?label ?p as ?relation ?type ?provider ?providerName \n'
+      +'where { graph <'+iri+'> { \n'
+      +'  ?extract a ?type ; \n'
+      +'  <http://www.openlinksw.com/schema/attribution#providedBy> ?provider; \n'
+      +'   rdfs:label ?label . \n'
+      +' optional {?type rdfs:label ?typeName} . \n'
+      +' optional {?provider foaf:name ?providerName} . \n'
+      +' ?source ?p ?extract . \n'
+      +' filter (?p in (skos:related, schema:about, schema:mentions)) \n'
+      +' } \n'
+      +'} ',
+
+****/
 
         var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
         var url_about = "https://linkeddata.uriburner.com/about/html/"+result[2]+"/"+result[3]+"?sponger:get=add";
@@ -663,7 +705,7 @@
 
         $(".super_links_msg").css("display","block");
         jQuery.get(url_about, function(data, status){
-           
+
            jQuery.ajaxSetup({
               dataType: "text",
               headers:{'Accept': 'application/json',
@@ -675,14 +717,21 @@
               }
            });
 
+           params = {
+                   format:'application/json',
+                   query: link_query,
+                   CXML_redir_for_subjs: 121,
+                   timeout: 30000000
+                     };
+
            jQuery.get(url_links, params, function(data, status){
              try {
                var val = JSON.parse(data);
                g_super_links = val.results.bindings;
                var labels = [];
                for(var i=0; i < g_super_links.length; i++) {
-                 labels.push(g_super_links[i].label.value);
-                 g_super_links[i]._id = g_super_links[i].label.value.toLowerCase();
+                 labels.push(g_super_links[i].extractLabel.value);
+                 g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
                }
 
                mark_strings(labels);
@@ -691,7 +740,7 @@
              }
            }, "text").fail(function(msg) {
                $(".super_links_msg").css("display","none");
-               alert("Could not load data from: "+url+"\nError: "+msg.statusText);
+               alert("Could not load data from: "+url_links+"\nError: "+msg.statusText);
            });
 
         }, "text").fail(function(msg) {
@@ -702,7 +751,7 @@
 
 
 /**********************************************/
-    function positionPopupOnPage( evt ) 
+    function positionPopupOnPage( evt )
     {
       var vpWH = [];
       var vpW, vpH;
@@ -724,14 +773,14 @@
       if ( intCoordY > vpH/2 ) { intYOffset -= popup.height(); }
       if ( vpW <= 500 ) { intXOffset = ( vpW - popup.width() ) / 2;}
       if ( vpH <= 500 ) { intYOffset = (vpH - popup.height() ) / 2;}
-    	
+
       popup.css("top", intYOffset + 'px');
       popup.css("left", intXOffset + 'px');
       popup.css("visibility", 'visible');
     }
 
 
-    function getViewPortWidthHeight() 
+    function getViewPortWidthHeight()
     {
       var viewPortWidth;
       var viewPortHeight;
@@ -766,39 +815,35 @@
 
 
 
-    function create_popup_table(lst, ev) 
+    function create_popup_table(lst, ev)
     {
       $('.super_links_popup-content').children().remove();
 
-      if (lst.length > 0) 
+      if (lst.length > 0)
       {
         var tdata = '';
-        for(var i=0; i < lst.length; i++) 
+        for(var i=0; i < lst.length; i++)
         {
           var v = lst[i];
+
           try {
             var extract = v.extract?v.extract.value:null;
             var prov = v.provider?v.provider.value:null;
             if (extract && prov) {
-              var label = v.label?v.label.value:s;
-              var provName = v.providerName?v.providerName.value:prov;
+              var extLabel = v.extractLabel?v.extractLabel.value:'';
+              var provName = v.providerLabel?v.providerLabel.value:prov;
               var type_iri = v.type.value;
+              var typeLabel = v.typeLabel?v.typeLabel.value:type_iri;
 
               var rel_iri = v.relation.value;
-              var relName = rel_iri;
-              if (rel_iri === 'http://www.w3.org/2004/02/skos/core#related')
-                relName = 'skos:related';
-              else if (rel_iri === 'http://schema.org/about')
-                relName = 'schema:about';
-              else if (rel_iri === 'http://schema.org/mentions')
-                relName = 'schema:mentions';
+              var relName = v.relationLabel?v.relationLabel.value:rel_iri;
 
 
               tdata += '<tr>'
-                +'<td> <a target="_blank" href="'+extract+'">'+label+'</a></td>'
+                +'<td> <a target="_blank" href="'+extract+'">'+extLabel+'</a></td>'
                 +'<td> <a target="_blank" href="'+rel_iri+'">'+relName+'</a> </td>'
                 +'<td> <a target="_blank" href="'+prov+'">'+provName+'</a></td>'
-                +'<td> <a target="_blank" href="'+type_iri+'">'+type_iri+'</a></td>'
+                +'<td> <a target="_blank" href="'+type_iri+'">'+typeLabel+'</a></td>'
                 +'</tr>';
             }
           } catch(e) {}
@@ -807,10 +852,10 @@
         $('.super_links_popup-content')
            .append('<table class="super_links_table">'
                +'<thead><tr>'
-               +'<th style="min-width:190px;">Word</th>'
-               +'<th style="min-width:95px;">Relation</th>'
-               +'<th style="min-width:285px;">Source</th>'
-               +'<th style="min-width:300px;">Type</th>'
+               +'<th style="max-width:190px;">Word</th>'
+               +'<th style="max-width:95px;">Relation</th>'
+               +'<th style="max-width:285px;">Source</th>'
+               +'<th style="max-width:300px;">Type</th>'
                +'</tr></thead>'
                 +'<tbody>'+tdata+'</tbody>'
                 +'</table>');
@@ -820,7 +865,7 @@
     }
 
 
-    function mark_strings(keyword) 
+    function mark_strings(keyword)
     {
       var options = {
             "element": "a",  //"a"
@@ -828,7 +873,7 @@
             "exclude": ["a"],
             "separateWordSearch": false,
             "acrossElements": true,
-            "accuracy": "exactly", 
+            "accuracy": "exactly",
 //!            "diacritics": true,
             "diacritics": false,
             "iframes": false,
@@ -841,12 +886,12 @@
             },
             "done": function(counter){
 
-                $('.super_links_popup_close').click(function(e){ 
+                $('.super_links_popup_close').click(function(e){
                     $('.super_links_popup').hide();
                     return false;
                  });
 
-                $('.super_link_mark').click(function(ev){ 
+                $('.super_link_mark').click(function(ev){
                     var label = ev.target.innerText.toLowerCase();
                     var lst = [];
                     for (var i=0; i < g_super_links.length; i++) {
