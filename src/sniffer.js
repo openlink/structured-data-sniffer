@@ -625,11 +625,11 @@
 
         var link_query = ''
         +'DEFINE get:soft "soft" \n'
-        +'SELECT DISTINCT ?extract ?extractLabel ?type ?p as ?relation ?relationLabel ?typeLabel ?provider ?providerLabel\n'
+        +'SELECT DISTINCT ?extract ?extractLabel ?entityType ?p as ?association ?associationLabel ?entityTypeLabel ?provider ?providerLabel\n'
         +'WHERE \n'
         +' { GRAPH <'+iri+'> \n'
         +'    { \n'
-        +'      ?extract a ?type ;\n'
+        +'      ?extract a ?entityType ;\n'
         +'      <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ; \n'
         +'      rdfs:label ?extractLabel . \n'
         +'\n'
@@ -637,19 +637,19 @@
         +'      ?source ?p ?extract .\n'
         +'\n'
         +'      FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
-        +'      FILTER (! contains(str(?type),"Tag")) \n'
+        +'      FILTER (! contains(str(?entityType),"Tag")) \n'
         +'    }\n'
-        +'    { SELECT ?p ?relationLabel \n'
-        +'        WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?relationLabel . \n'
+        +'    { SELECT ?p ?associationLabel \n'
+        +'        WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?associationLabel . \n'
         +'                            FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
-        +'                            FILTER (LANG(?relationLabel) = "'+br_lang+'") \n'
+        +'                            FILTER (LANG(?associationLabel) = "'+br_lang+'") \n'
         +'                          } \n'
         +'              } \n'
         +'    } \n'
         +'\n'
-        +'    { SELECT ?type ?typeLabel \n'
-        +'        WHERE { GRAPH ?g2 { ?type rdfs:label|schema:name ?typeLabel . \n'
-        +'                            FILTER (LANG(?typeLabel) = "'+br_lang+'")\n'
+        +'    { SELECT ?entityType ?entityTypeLabel \n'
+        +'        WHERE { GRAPH ?g2 { ?entityType rdfs:label|schema:name ?entityTypeLabel . \n'
+        +'                            FILTER (LANG(?entityTypeLabel) = "'+br_lang+'")\n'
         +'                          } \n'
         +'              }\n'
         +'    }\n'
@@ -664,7 +664,8 @@
             +'</div> '
             +'<div class="super_links_msg"> '
 /*            +'</p> <img src="images/throbber.gif" width="16" /> Loading links data...'*/
-            +'</p> Loading links data...'
+/*            +'</p> Loading links data...' */
+            +'Loading links data...'
             +'</div> '
            );
         }
@@ -672,22 +673,6 @@
         var url_links = "https://linkeddata.uriburner.com/sparql";
         var iri = new Uri(location.href).setAnchor("").toString();
 
-/****
-query: ' \n'
-      +'define get:soft "soft" \n'
-      +'select distinct ?extract ?label ?p as ?relation ?type ?provider ?providerName \n'
-      +'where { graph <'+iri+'> { \n'
-      +'  ?extract a ?type ; \n'
-      +'  <http://www.openlinksw.com/schema/attribution#providedBy> ?provider; \n'
-      +'   rdfs:label ?label . \n'
-      +' optional {?type rdfs:label ?typeName} . \n'
-      +' optional {?provider foaf:name ?providerName} . \n'
-      +' ?source ?p ?extract . \n'
-      +' filter (?p in (skos:related, schema:about, schema:mentions)) \n'
-      +' } \n'
-      +'} ',
-
-****/
 
         var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
         var url_about = "https://linkeddata.uriburner.com/about/html/"+result[2]+"/"+result[3]+"?sponger:get=add";
@@ -764,15 +749,30 @@ query: ' \n'
       vpW = vpWH[0];
       vpH = vpWH[1];
       var popup = $(".super_links_popup");
+
       popup.css("position","fixed");
       // if not display: block, .offsetWidth & .offsetHeight === 0
       popup.css("display","block");
-      popup.css("zIndex","10100");
+      popup.css("zIndex","2147483647");
 
-      if ( intCoordX > vpW/2 ) { intXOffset -= popup.width(); }
-      if ( intCoordY > vpH/2 ) { intYOffset -= popup.height(); }
-      if ( vpW <= 500 ) { intXOffset = ( vpW - popup.width() ) / 2;}
-      if ( vpH <= 500 ) { intYOffset = (vpH - popup.height() ) / 2;}
+      if ( intCoordX > vpW/2 ) 
+        intXOffset -= popup.width(); 
+
+      if ( intCoordY > vpH/2 ) 
+        intYOffset -= popup.height(); 
+
+      if ( vpW <= 500 ) 
+        intXOffset = ( vpW - popup.width() ) / 2;
+
+      if ( vpH <= 500 )
+        intYOffset = (vpH - popup.height() ) / 2;
+
+      var rpos = intXOffset + popup.outerWidth() + 5;
+      if (rpos > vpW)
+        intXOffset -= rpos - vpW;
+
+      if (intXOffset < 0 )
+        intXOffset = 0;
 
       popup.css("top", intYOffset + 'px');
       popup.css("left", intXOffset + 'px');
@@ -832,18 +832,18 @@ query: ' \n'
             if (extract && prov) {
               var extLabel = v.extractLabel?v.extractLabel.value:'';
               var provName = v.providerLabel?v.providerLabel.value:prov;
-              var type_iri = v.type.value;
-              var typeLabel = v.typeLabel?v.typeLabel.value:type_iri;
+              var entityType = v.entityType.value;
+              var entityTypeLabel = v.entityTypeLabel?v.entityTypeLabel.value:type_iri;
 
-              var rel_iri = v.relation.value;
-              var relName = v.relationLabel?v.relationLabel.value:rel_iri;
+              var association = v.association.value;
+              var associationLabel = v.associationLabel?v.associationLabel.value:association;
 
 
               tdata += '<tr>'
                 +'<td> <a target="_blank" href="'+extract+'">'+extLabel+'</a></td>'
-                +'<td> <a target="_blank" href="'+rel_iri+'">'+relName+'</a> </td>'
+                +'<td> <a target="_blank" href="'+association+'">'+associationLabel+'</a> </td>'
                 +'<td> <a target="_blank" href="'+prov+'">'+provName+'</a></td>'
-                +'<td> <a target="_blank" href="'+type_iri+'">'+typeLabel+'</a></td>'
+                +'<td> <a target="_blank" href="'+entityType+'">'+entityTypeLabel+'</a></td>'
                 +'</tr>';
             }
           } catch(e) {}
@@ -853,7 +853,7 @@ query: ' \n'
            .append('<table class="super_links_table">'
                +'<thead><tr>'
                +'<th style="max-width:190px;">Word</th>'
-               +'<th style="max-width:95px;">Relation</th>'
+               +'<th style="max-width:95px;">Association</th>'
                +'<th style="max-width:285px;">Source</th>'
                +'<th style="max-width:300px;">Type</th>'
                +'</tr></thead>'
