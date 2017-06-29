@@ -233,18 +233,25 @@ function load_data_from_url(loc, uri, contType)
     var hdr_accept = "";
 
     if (type==="turtle")
-      hdr_accept = 'text/turtle,text/n3;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
+      hdr_accept = 'text/n3,text/turtle;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
     else if (type==="jsonld")
       hdr_accept = 'application/ld+json;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
     else if (type==="rdf")
       hdr_accept = 'application/rdf+xml;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
 
-
+/***
     jQuery.ajaxSetup({
        dataType: "text",
        headers:{'Accept': hdr_accept,
                 'Cache-control': 'no-cache'},
        cache: false,
+       timeout: 30000
+    });
+***/
+    jQuery.ajaxSetup({
+       dataType: "text",
+       headers:{'Accept': hdr_accept,
+                'Cache-control': 'no-cache'},
        timeout: 30000
     });
 
@@ -282,6 +289,38 @@ function start_parse_data(data_text, data_type, data_url)
 
   if (data_type==="turtle")
     {
+/****************************
+      var store=$rdf.graph();
+      try {
+
+        $rdf.parse(data_text, store, baseURL, "text/turtle");
+        var data = store.statementsMatching(undefined, undefined, undefined);
+        for (var i=0; i < data.length; i++) {
+          var t = data[i]
+          console.log(t);
+        }
+        object.termType = "Literal"
+        object.value = "20"
+        object.dataType.value="http:/..."
+
+        object.termType = "Literal"
+        object.value = "20"
+        object.lang="en"
+
+        object.termType = "NamedNode"
+        object.value = "http://..."
+
+        subject.termType = "BlankNode"
+        subject.id = 0
+
+
+        var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
+        console.log(ttl_data);
+      } catch(ex) {
+        console.log(ex);
+      }
+*******************************/
+
       var handler = new Handle_Turtle();
       var ns = new Namespace();
       handler.ns_pref = ns.get_ns_desc();

@@ -128,7 +128,7 @@ if (Browser.isChromeAPI)
           break;
       }
 
-      if (!handle && (content_type===null || content_type.match(/(application\/xml)/) || content_type.match(/(text\/xml)/))) {
+      if (!handle && (content_type===null || content_type.match(/(application\/xml)/) || content_type.match(/(text\/xml)/) || content_type.match(/(text\/plain)/))) {
         var url_path = new Uri(d.url).path();
         if (url_path.endsWith(".owl") || url_path.endsWith(".rdf")) {
           handle = true;
