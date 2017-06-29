@@ -32,7 +32,8 @@ var selectedTab = null;
 var gData = {
         text: null,
         type: null,
-        url: null
+        url: null,
+        ext: null
       };
 
 var yasqe = {
@@ -216,6 +217,7 @@ function load_data_from_url(loc, uri, contType)
 
     var url;
     var type;
+    var ext;
 
     if (loc) {
       var params = parseUrlQuery(loc);
@@ -224,6 +226,7 @@ function load_data_from_url(loc, uri, contType)
 
       url = decodeURIComponent(params.url);
       type = params.type;
+      ext = params.ext;
     }
     else {
       url = uri;
@@ -256,7 +259,7 @@ function load_data_from_url(loc, uri, contType)
     });
 
     jQuery.get(url, function(data, status){
-        start_parse_data(data, type, url);
+        start_parse_data(data, type, url, ext);
     }, "text").fail(function(msg) {
         alert("Could not load data from: "+url+"\nError: "+msg.statusText);
     });
@@ -272,11 +275,19 @@ function load_data_from_url(loc, uri, contType)
 
 
 
-function start_parse_data(data_text, data_type, data_url)
+function start_parse_data(data_text, data_type, data_url, ext)
 {
+  var test_xml = /^\s*<\?xml/gi;
+    if (data_type === "rdf") {
+    if (test_xml.exec(data_text)===null)
+      data_type = "turtle";
+  }
+
   gData.text = data_text;
   gData.type = data_type;
   gData.url = data_url;
+  gData.ext = ext;
+
   doc_URL = data_url;
 
   var url = new Uri(data_url);
@@ -284,43 +295,10 @@ function start_parse_data(data_text, data_type, data_url)
   url.setQuery("");
   baseURL = url.toString();
 
-
   load_restData(doc_URL);
 
   if (data_type==="turtle")
     {
-/****************************
-      var store=$rdf.graph();
-      try {
-
-        $rdf.parse(data_text, store, baseURL, "text/turtle");
-        var data = store.statementsMatching(undefined, undefined, undefined);
-        for (var i=0; i < data.length; i++) {
-          var t = data[i]
-          console.log(t);
-        }
-        object.termType = "Literal"
-        object.value = "20"
-        object.dataType.value="http:/..."
-
-        object.termType = "Literal"
-        object.value = "20"
-        object.lang="en"
-
-        object.termType = "NamedNode"
-        object.value = "http://..."
-
-        subject.termType = "BlankNode"
-        subject.id = 0
-
-
-        var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
-        console.log(ttl_data);
-      } catch(ex) {
-        console.log(ex);
-      }
-*******************************/
-
       var handler = new Handle_Turtle();
       var ns = new Namespace();
       handler.ns_pref = ns.get_ns_desc();

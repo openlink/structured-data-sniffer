@@ -36,21 +36,40 @@ if (Browser.isChromeAPI)
   function onBeforeRequestLocal(d)
   {
     var handle = false;
-    if (d.url.match(/(.rdf)$/i) || d.url.match(/(.owl)$/i)) {
+    var ext = "";
+    if (d.url.match(/(.rdf)$/i)) {
       handle = true;
       type = "rdf";
+      ext = "rdf";
     }
-    else if (d.url.match(/(.ntriples)$/i) || d.url.match(/(.ttl)$/i) || d.url.match(/(.n3)$/i)) {
+    else if (d.url.match(/(.owl)$/i)) {
+      handle = true;
+      type = "rdf";
+      ext = "owl";
+    }
+    else if (d.url.match(/(.ntriples)$/i)) {
       handle = true;
       type = "turtle";
+      ext = "ntriples";
+    }
+    else if (d.url.match(/(.ttl)$/i)) {
+      handle = true;
+      type = "turtle";
+      ext = "ttl";
+    }
+    else if (d.url.match(/(.n3)$/i)) {
+      handle = true;
+      type = "turtle";
+      ext = "n3";
     }
     else if (d.url.match(/(.jsonld)$/i) ) {
       handle = true;
       type = "jsonld";
+      ext = "jsonld";
     }
 
     if (handle) {
-      var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
+      var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
       Browser.api.tabs.update(d.tabId, { url: _url });
       return { cancel: false };
     }
@@ -84,6 +103,7 @@ if (Browser.isChromeAPI)
     var handle = false;
     var v_cancel = false;
     var type = null;
+    var ext = "";
     var content_type = null;
 
     for (var i in d.responseHeaders) {
@@ -130,21 +150,38 @@ if (Browser.isChromeAPI)
 
       if (!handle && (content_type===null || content_type.match(/(application\/xml)/) || content_type.match(/(text\/xml)/) || content_type.match(/(text\/plain)/))) {
         var url_path = new Uri(d.url).path();
-        if (url_path.endsWith(".owl") || url_path.endsWith(".rdf")) {
+        if (url_path.endsWith(".owl")) {
           handle = true;
           type = "rdf";
+          ext = "owl";
+        }
+        else if (url_path.endsWith(".rdf")) {
+          handle = true;
+          type = "rdf";
+          ext = "rdf";
         }
       }
       else if (!handle && (content_type===null || content_type.match(/(text\/plain)/))) {
         var url_path = new Uri(d.url).path();
-        if (url_path.endsWith(".ntriples") || url_path.endsWith(".ttl")|| url_path.endsWith(".n3")) {
+        if (url_path.endsWith(".ntriples") {
           handle = true;
           type = "turtle";
+          ext = "ntriples";
+        }
+        else if (url_path.endsWith(".ttl")) {
+          handle = true;
+          type = "turtle";
+          ext = "ttl";
+        }
+        else if (url_path.endsWith(".n3")) {
+          handle = true;
+          type = "turtle";
+          ext = "n3";
         }
       }
 
       if (handle)  {
-          var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
+          var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
           if (Browser.isEdgeWebExt) {
             return { redirectUrl: _url };
           }
