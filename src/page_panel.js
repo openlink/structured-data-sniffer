@@ -639,7 +639,7 @@ function save_data(action, fname, fmt, callback)
     }
     else {
       selectTab("#src");
-      src_view.setValue(retdata.txt + retdata.error);
+      src_view.setValue(retdata.txt + retdata.error+"\n");
     }
   }
 
@@ -740,7 +740,7 @@ function show_rest()
   selectTab('#cons');
 //--  $('#tabs a[href=#cons]').show();
   if (yasqe.obj && yasqe.val && !yasqe.init) {
-    yasqe.obj.setValue(yasqe.val);
+    yasqe.obj.setValue(yasqe.val+"\n");
     yasqe.init = true;
   }
 }
@@ -862,10 +862,10 @@ function load_restData(doc_url)
     addRestEmpty();
 
   if (yasqe.obj && yasqe.val) {
-    yasqe.obj.setValue(yasqe.val);
+    yasqe.obj.setValue(yasqe.val+"\n");
   }
   else {
-    yasqe.obj.setValue("");
+    yasqe.obj.setValue("\n");
     $(".yasqe").hide();
   }
 }

@@ -82,8 +82,9 @@
     <div id="tabs" style="WIDTH: 500px">
       <ul>
       <li><a href="#tabs-1">Settings</a></li>
-      <li><a href="#tabs-2">Super Links</a></li>
-	    <li><a href="#tabs-3">About</a></li>
+      <li><a href="#tabs-2">SPARQL Query Service</a></li>
+      <li><a href="#tabs-3">Super Links</a></li>
+	    <li><a href="#tabs-4">About</a></li>
       </ul>
 
         <div id="tabs-1">
@@ -184,7 +185,7 @@
            <tr> <p/> </tr>
            <tr> <hr> </tr>
            <tr> <p/> </tr>
-
+<!--
            <tr>
                SPARQL Query Service
            </tr>
@@ -215,13 +216,46 @@
            <tr>
                <input id="sparql-set-def" value="Revert to Defaults" type="button">
            </tr>
-
+-->
 
           </table>
         </div>
 
-
         <div id="tabs-2">
+          <table>
+            <tr>
+                <table>
+                 <tr>
+                  <td> URL: </td>
+                  <td> <input id="sparql-url" style="WIDTH: 405px"> </td>
+                 </tr>
+
+                 <tr>
+                  <td>Query:</td>
+                  <td>
+                    <SELECT id="sparql-cmd" style="WIDTH: 255px" >
+                      <OPTION id="select" selected>SELECT ...</OPTION>
+                      <OPTION id="describe">DESCRIBE ...</OPTION>
+                      <OPTION id="construct">CONSTRUCT ...</OPTION>
+                    </SELECT>
+                  </td>
+                 </tr>
+                </table>
+            </tr>
+            <tr>
+                <div style="width: 450px; height: 450px">
+                  <textarea id="sparql-query" style="width: 450px; height: 450px">
+                  </textarea>
+              </div>
+            </tr>
+            <tr> <p/> </tr>
+            <tr>
+                <input id="sparql-set-def" value="Revert to Defaults" type="button">
+            </tr>
+          </table>
+        </div>
+
+        <div id="tabs-3">
           <table>
 
            <tr>
@@ -243,7 +277,7 @@
         </div>
 
 
-	<div id="tabs-3">
+	      <div id="tabs-4">
             <IMG alt="" src="images/icon48.png">
             <h3>OpenLink Structured Data Sniffer</h3>
             <p id="ext_ver">Version 0.0.0</p>

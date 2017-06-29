@@ -35,7 +35,7 @@ Settings = function(data) {
                             "               OR CONTAINS(str(?p),'primaryTopic')\n"+
                             "               OR CONTAINS(str(?p),'topic')\n"+
                             "               OR CONTAINS(str(?p),'mentions')) \n"+
-                            "      } LIMIT 100";
+                            "      } LIMIT 100\n";
 
   this.def_sparql_qry_eav = "DEFINE get:soft \"soft\" \n"+
                             "SELECT DISTINCT ?s AS ?entity  ?p AS ?attribute ?o AS ?value \n"+
@@ -45,7 +45,7 @@ Settings = function(data) {
                             "               OR CONTAINS(str(?p),'primaryTopic')\n"+
                             "               OR CONTAINS(str(?p),'topic')\n"+
                             "               OR CONTAINS(str(?p),'mentions')) \n"+
-                            "      } LIMIT 100";
+                            "      } LIMIT 100\n";
 
   this.def_super_links_query = ''
   +'DEFINE get:soft "soft" \n'
@@ -250,8 +250,6 @@ Settings.prototype = {
     else
        return handle_url + docURL;
   }
-
-
 
 
 
