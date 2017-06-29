@@ -107,6 +107,7 @@ $(document).ready(function()
   try{
     yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
         lineNumbers: true,
+        lineWrapping: false,
 	      sparql: { showQueryButton: false },
 	     createShortLink : null,
 	     createShareLink : null,
@@ -254,6 +255,7 @@ function load_data_from_url(loc, uri, contType)
     }, "text").fail(function(msg) {
         alert("Could not load data from: "+url+"\nError: "+msg.statusText);
     });
+
 }
 
 

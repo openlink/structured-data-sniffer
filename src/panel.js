@@ -114,10 +114,11 @@ $(document).ready(function()
   try{
     yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
         lineNumbers: true,
-	sparql: { showQueryButton: false },
-	createShortLink : null,
-	createShareLink : null,
-	persistent: null,
+        lineWrapping: false,
+        sparql: { showQueryButton: false },
+	      createShortLink : null,
+	      createShareLink : null,
+	      persistent: null,
 
     });
     yasqe.obj.setSize("100%", 150);
