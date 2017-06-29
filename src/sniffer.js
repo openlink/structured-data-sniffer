@@ -633,7 +633,7 @@
           +' <div class="super_links_popup-content"></div>'
           +'</div> '
           +'<div class="super_links_msg" style="font-size: 14px;"> '
-          +'<img src="data:image/gif;base64,'+Browser.throbber+'" width="16" /> &nbsp;Loading links data...'
+          +'<img src="data:image/gif;base64,'+Browser.throbber+'" class="super_links_img" /> &nbsp;Loading links data...'
           +'</div> '
          );
       }
