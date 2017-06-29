@@ -41,12 +41,11 @@ var yasqe = {
         init: false,
       };
 
+var src_view = null;
+
 
 $(document).ready(function()
 {
-  if (Browser.isFirefoxWebExt)
-      $("#src_place").css("white-space","pre");
-
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
 
@@ -97,15 +96,20 @@ $(document).ready(function()
       return false;
   });
 
+  try {
+    src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
+        lineNumbers: true
+      });
+    src_view.setSize("100%", "100%");
+  } catch(e) { }
 
   try{
     yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
         lineNumbers: true,
-	sparql: { showQueryButton: false },
-	createShortLink : null,
-	createShareLink : null,
-	persistent: null,
-
+	      sparql: { showQueryButton: false },
+	     createShortLink : null,
+	     createShareLink : null,
+	      persistent: null,
     });
     yasqe.obj.setSize("100%", 150);
   } catch(e) {
@@ -633,7 +637,7 @@ function save_data(action, fname, fmt, callback)
     }
     else {
       selectTab("#src");
-      $("#src_place").val(retdata.txt + retdata.error);
+      src_view.setValue(retdata.txt + retdata.error);
     }
   }
 

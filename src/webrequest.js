@@ -31,6 +31,31 @@ if (Browser.isChromeAPI)
      return str.lastIndexOf(val, 0) === 0;
   }
 
+  Browser.api.webRequest.onBeforeRequest.addListener(onBeforeRequestLocal, {types: ["main_frame"], urls: ["file:///*"]}, ["blocking"]);
+
+  function onBeforeRequestLocal(d)
+  {
+    var handle = false;
+    if (d.url.match(/(.rdf)$/i) || d.url.match(/(.owl)$/i)) {
+      handle = true;
+      type = "rdf";
+    }
+    else if (d.url.match(/(.ntriples)$/i) || d.url.match(/(.ttl)$/i) || d.url.match(/(.n3)$/i)) {
+      handle = true;
+      type = "turtle";
+    }
+    else if (d.url.match(/(.jsonld)$/i) ) {
+      handle = true;
+      type = "jsonld";
+    }
+
+    if (handle) {
+      var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
+      Browser.api.tabs.update(d.tabId, { url: _url });
+      return { cancel: false };
+    }
+  }
+
 
   Browser.api.webRequest.onBeforeSendHeaders.addListener(
         function(details) {

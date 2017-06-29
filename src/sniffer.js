@@ -663,9 +663,7 @@
             +' <div class="super_links_popup-content"></div>'
             +'</div> '
             +'<div class="super_links_msg"> '
-/*            +'</p> <img src="images/throbber.gif" width="16" /> Loading links data...'*/
-/*            +'</p> Loading links data...' */
-            +'Loading links data...'
+            +'<img src="data:image/gif;base64,'+Browser.throbber+'" width="16" /> &nbsp;Loading links data...'
             +'</div> '
            );
         }
