@@ -730,7 +730,7 @@ function parse_Data(dData)
 
 
 
-if (Browser.isFirefoxWebExt) {
+if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
   try {
     Browser.api.browserAction.disable();
   } catch(e) {}
@@ -758,7 +758,7 @@ else
       if (request.property == "status")
       {
         var show_action = request.data_exists;
-        if (Browser.isFirefoxWebExt) {
+        if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
           if (show_action)
             Browser.api.browserAction.enable(sender.tab.id);
           else

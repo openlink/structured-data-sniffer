@@ -307,6 +307,7 @@ function start_parse_data(data_text, data_type, data_url, ext)
   else if (data_type==="rdf")
     {
       var handler = new Handle_RDF_XML();
+      handler.skip_error = false;
       handler.parse([data_text], baseURL,
         function(error, html_data) {
           show_Data(error, html_data);
