@@ -662,7 +662,7 @@
             +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
             +' <div class="super_links_popup-content"></div>'
             +'</div> '
-            +'<div class="super_links_msg"> '
+            +'<div class="super_links_msg" style="font-size: 14px;"> '
             +'<img src="data:image/gif;base64,'+Browser.throbber+'" width="16" /> &nbsp;Loading links data...'
             +'</div> '
            );
@@ -707,7 +707,7 @@
                    timeout: 30000000
                      };
 
-           jQuery.get(url_links, params, function(data, status){
+           jQuery.get(url_links, params, function(data, status, jqXHR){
              try {
                var val = JSON.parse(data);
                g_super_links = val.results.bindings;
@@ -727,6 +727,7 @@
            });
 
         }, "text").fail(function(msg) {
+           console.log(msg);
            $(".super_links_msg").css("display","none");
         });
 
@@ -753,13 +754,13 @@
       popup.css("display","block");
       popup.css("zIndex","2147483647");
 
-      if ( intCoordX > vpW/2 ) 
-        intXOffset -= popup.width(); 
+      if ( intCoordX > vpW/2 )
+        intXOffset -= popup.width();
 
-      if ( intCoordY > vpH/2 ) 
-        intYOffset -= popup.height(); 
+      if ( intCoordY > vpH/2 )
+        intYOffset -= popup.height();
 
-      if ( vpW <= 500 ) 
+      if ( vpW <= 500 )
         intXOffset = ( vpW - popup.width() ) / 2;
 
       if ( vpH <= 500 )
