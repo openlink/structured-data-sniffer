@@ -680,7 +680,7 @@
       } else {
         br_lang = 'en';
       }
-
+/*******
       var link_query = ''
       +'DEFINE get:soft "soft" \n'
       +'SELECT DISTINCT ?extract ?extractLabel ?entityType ?p as ?association ?associationLabel ?entityTypeLabel ?provider ?providerLabel\n'
@@ -712,7 +712,51 @@
       +'              }\n'
       +'    }\n'
       +' }';
-
+*****/
+      var link_query = ''
+      +'DEFINE get:soft "soft" \n'
+      +' \n'
+      +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
+      +' \n'
+      +'SELECT DISTINCT count (?extract) as ?count ?extract ?extractLabel ?entityType ?p as ?association ?associationLabel ?entityTypeLabel ?provider ?providerLabel \n'
+      +'WHERE {  \n'
+      +'           GRAPH <'+iri+'> \n'
+      +'                 { \n'
+      +'                     ?source ( skos:related|schema:about|schema:mentions ) ?extract . \n'
+      +'  \n'
+      +'                     ?extract a ?entityType ; \n'
+      +'                     <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ; \n'
+      +'                     rdfs:label ?extractLabel . \n'
+      +' \n'
+      +'                     OPTIONAL {?provider foaf:name|schema:name ?providerLabel} . \n'
+      +' \n'
+      +'                     # FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+      +'                     FILTER (! contains(str(?entityType),"Tag")) \n'
+      +'                } \n'
+      +' \n'
+      +'            ## Subquery for obtaining relation (statement predicate) labels \n'
+      +' \n'
+      +'           { SELECT ?p ?associationLabel \n'
+      +'             WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?associationLabel .  \n'
+      +'                                     FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+      +'                                 FILTER (LANG(?associationLabel) = "'+br_lang+'") \n'
+      +'                                 } \n'
+      +'                    } \n'
+      +'            } \n'
+      +' \n'
+      +'          ## Subquery for obtaining type-oriented relation (statement predicate) labels \n'
+      +' \n'
+      +'           { SELECT ?entityType ?entityTypeLabel \n'
+      +'              WHERE { GRAPH ?g2 { \n'
+      +'                                      ?entityType rdfs:label|schema:name ?entityTypeLabel .  \n'
+      +'                                    FILTER (LANG(?entityTypeLabel) = "'+br_lang+'") \n'
+      +'                                  } \n'
+      +'                  } \n'
+      +'          } \n'
+      +' \n'
+      +' } \n'
+      +'GROUP BY ?extract ?extractLabel ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?provider ?providerLabel \n'
+      +'ORDER BY DESC (1)';
 
       var url_links = "https://linkeddata.uriburner.com/sparql";
       var iri = new Uri(location.href).setAnchor("").toString();
