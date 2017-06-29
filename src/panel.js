@@ -66,9 +66,7 @@ $(document).ready(function()
 
   $('#download_btn').click(Download_exec);
 
-  if (Browser.isFirefoxSDK) {
-    $('#prefs_btn').click(Prefs_exec);
-  }
+  $('#prefs_btn').click(Prefs_exec);
 
   $('#tabs a[href=#src]').click(function(){
       selectTab(prevSelectedTab);
@@ -863,6 +861,8 @@ function Prefs_exec()
   //snow preferenses
   if (Browser.isFirefoxSDK)
      self.port.emit("prefs", "");
+  else
+     Browser.openTab("options.html")
 
   return false;
 }
