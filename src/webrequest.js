@@ -163,7 +163,7 @@ if (Browser.isChromeAPI)
       }
       else if (!handle && (content_type===null || content_type.match(/(text\/plain)/))) {
         var url_path = new Uri(d.url).path();
-        if (url_path.endsWith(".ntriples") {
+        if (url_path.endsWith(".ntriples")) {
           handle = true;
           type = "turtle";
           ext = "ntriples";
