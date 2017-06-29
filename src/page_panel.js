@@ -263,8 +263,9 @@ function load_data_from_url(loc, uri, contType)
 function start_parse_data(data_text, data_type, data_url, ext)
 {
   var test_xml = /^\s*<\?xml/gi;
+  var test_rdf = /^\s*<rdf:RDF/gi;
     if (data_type === "rdf") {
-    if (test_xml.exec(data_text)===null)
+    if (test_xml.exec(data_text)===null && test_rdf.exec(data_text)===null)
       data_type = "turtle";
   }
 
