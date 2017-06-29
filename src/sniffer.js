@@ -611,128 +611,151 @@
     }
 
 
+    function xhr_new ()
+    {
+      var xhr = null;
+
+      var oXMLHttpRequest = window.XMLHttpRequest;
+      if (oXMLHttpRequest)
+        xhr = new oXMLHttpRequest(); /* gecko */
+      else if (window.ActiveXObject)
+        xhr = new ActiveXObject("Microsoft.XMLHTTP"); /* ie */
+      return xhr;
+    }
+
+
     function add_super_links(sender)
     {
-        var iri = new Uri(location.href).setAnchor("").toString();
-        var br_lang = navigator.language || navigator.userLanguage;
-        if (br_lang && br_lang.length>0) {
-          var i = br_lang.indexOf('-');
-          if (i!=-1)
-             br_lang = br_lang.substr(0,i);
-        } else {
-          br_lang = 'en';
-        }
-
-        var link_query = ''
-        +'DEFINE get:soft "soft" \n'
-        +'SELECT DISTINCT ?extract ?extractLabel ?entityType ?p as ?association ?associationLabel ?entityTypeLabel ?provider ?providerLabel\n'
-        +'WHERE \n'
-        +' { GRAPH <'+iri+'> \n'
-        +'    { \n'
-        +'      ?extract a ?entityType ;\n'
-        +'      <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ; \n'
-        +'      rdfs:label ?extractLabel . \n'
-        +'\n'
-        +'      OPTIONAL {?provider foaf:name|schema:name ?providerLabel} . \n'
-        +'      ?source ?p ?extract .\n'
-        +'\n'
-        +'      FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
-        +'      FILTER (! contains(str(?entityType),"Tag")) \n'
-        +'    }\n'
-        +'    { SELECT ?p ?associationLabel \n'
-        +'        WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?associationLabel . \n'
-        +'                            FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
-        +'                            FILTER (LANG(?associationLabel) = "'+br_lang+'") \n'
-        +'                          } \n'
-        +'              } \n'
-        +'    } \n'
-        +'\n'
-        +'    { SELECT ?entityType ?entityTypeLabel \n'
-        +'        WHERE { GRAPH ?g2 { ?entityType rdfs:label|schema:name ?entityTypeLabel . \n'
-        +'                            FILTER (LANG(?entityTypeLabel) = "'+br_lang+'")\n'
-        +'                          } \n'
-        +'              }\n'
-        +'    }\n'
-        +' }';
-
-
-        if (g_super_links==null) {
-           $('body').append(
-             '<div class="super_links_popup" >'
-            +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
-            +' <div class="super_links_popup-content"></div>'
-            +'</div> '
-            +'<div class="super_links_msg" style="font-size: 14px;"> '
-            +'<img src="data:image/gif;base64,'+Browser.throbber+'" width="16" /> &nbsp;Loading links data...'
-            +'</div> '
-           );
-        }
-
-        var url_links = "https://linkeddata.uriburner.com/sparql";
-        var iri = new Uri(location.href).setAnchor("").toString();
-
+      if (g_super_links==null) {
+         $('body').append(
+           '<div class="super_links_popup" >'
+          +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
+          +' <div class="super_links_popup-content"></div>'
+          +'</div> '
+          +'<div class="super_links_msg" style="font-size: 14px;"> '
+          +'<img src="data:image/gif;base64,'+Browser.throbber+'" width="16" /> &nbsp;Loading links data...'
+          +'</div> '
+         );
+      }
 
         var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
         var url_about = "https://linkeddata.uriburner.com/about/html/"+result[2]+"/"+result[3]+"?sponger:get=add";
 
-        jQuery.ajaxSetup({
-           dataType: "text",
-           headers:{'Accept': 'text/html',
-                    'Cache-control': 'no-cache'},
-           cache: false,
-           timeout: 30000,
-           xhrFields: {
-                    withCredentials: true
-           }
-        });
+        var xhr = xhr_new ();
+        xhr.onreadystatechange = function()
+          {
+            if (xhr.readyState == 4) {
+              if (xhr.status===200) {
+                  if (xhr.responseURL.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
+                    location.href = xhr.responseURL; //console.log("redirected");
+                    return;
+                  }
+                  exec_super_links_query();
+
+              }
+              else {
+                $(".super_links_msg").css("display","none");
+              }
+            }
+          }
 
         $(".super_links_msg").css("display","block");
-        jQuery.get(url_about, function(data, status){
 
-           jQuery.ajaxSetup({
-              dataType: "text",
-              headers:{'Accept': 'application/json',
-                    'Cache-control': 'no-cache'},
-              cache: false,
-              timeout: 30000,
-              xhrFields: {
-                    withCredentials: true
-              }
-           });
-
-           params = {
-                   format:'application/json',
-                   query: link_query,
-                   CXML_redir_for_subjs: 121,
-                   timeout: 30000000
-                     };
-
-           jQuery.get(url_links, params, function(data, status, jqXHR){
-             try {
-               var val = JSON.parse(data);
-               g_super_links = val.results.bindings;
-               var labels = [];
-               for(var i=0; i < g_super_links.length; i++) {
-                 labels.push(g_super_links[i].extractLabel.value);
-                 g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
-               }
-
-               mark_strings(labels);
-             } finally {
-               $(".super_links_msg").css("display","none");
-             }
-           }, "text").fail(function(msg) {
-               $(".super_links_msg").css("display","none");
-               alert("Could not load data from: "+url_links+"\nError: "+msg.statusText);
-           });
-
-        }, "text").fail(function(msg) {
-           console.log(msg);
-           $(".super_links_msg").css("display","none");
-        });
-
+        xhr.withCredentials = true;
+        xhr.timeout = 30000;
+        xhr.open ('GET', url_about, true);
+        xhr.setRequestHeader ('Accept', 'text/html');
+        xhr.setRequestHeader ('Cache-control', 'no-cache');
+        xhr.send (null);
     }
 
+    function exec_super_links_query()
+    {
+      var iri = new Uri(location.href).setAnchor("").toString();
+      var br_lang = navigator.language || navigator.userLanguage;
+      if (br_lang && br_lang.length>0) {
+        var i = br_lang.indexOf('-');
+        if (i!=-1)
+           br_lang = br_lang.substr(0,i);
+      } else {
+        br_lang = 'en';
+      }
+
+      var link_query = ''
+      +'DEFINE get:soft "soft" \n'
+      +'SELECT DISTINCT ?extract ?extractLabel ?entityType ?p as ?association ?associationLabel ?entityTypeLabel ?provider ?providerLabel\n'
+      +'WHERE \n'
+      +' { GRAPH <'+iri+'> \n'
+      +'    { \n'
+      +'      ?extract a ?entityType ;\n'
+      +'      <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ; \n'
+      +'      rdfs:label ?extractLabel . \n'
+      +'\n'
+      +'      OPTIONAL {?provider foaf:name|schema:name ?providerLabel} . \n'
+      +'      ?source ?p ?extract .\n'
+      +'\n'
+      +'      FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+      +'      FILTER (! contains(str(?entityType),"Tag")) \n'
+      +'    }\n'
+      +'    { SELECT ?p ?associationLabel \n'
+      +'        WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?associationLabel . \n'
+      +'                            FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+      +'                            FILTER (LANG(?associationLabel) = "'+br_lang+'") \n'
+      +'                          } \n'
+      +'              } \n'
+      +'    } \n'
+      +'\n'
+      +'    { SELECT ?entityType ?entityTypeLabel \n'
+      +'        WHERE { GRAPH ?g2 { ?entityType rdfs:label|schema:name ?entityTypeLabel . \n'
+      +'                            FILTER (LANG(?entityTypeLabel) = "'+br_lang+'")\n'
+      +'                          } \n'
+      +'              }\n'
+      +'    }\n'
+      +' }';
+
+
+      var url_links = "https://linkeddata.uriburner.com/sparql";
+      var iri = new Uri(location.href).setAnchor("").toString();
+
+      jQuery.ajaxSetup({
+         dataType: "text",
+         headers:{'Accept': 'application/json',
+               'Cache-control': 'no-cache'},
+         cache: false,
+         timeout: 30000,
+         xhrFields: {
+               withCredentials: true
+         }
+      });
+
+      params = {
+              format:'application/json',
+              query: link_query,
+              CXML_redir_for_subjs: 121,
+              timeout: 30000000
+                };
+
+      jQuery.get(url_links, params, function(data, status){
+        try {
+          var val = JSON.parse(data);
+          g_super_links = val.results.bindings;
+          var labels = [];
+          for(var i=0; i < g_super_links.length; i++) {
+            labels.push(g_super_links[i].extractLabel.value);
+            g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
+          }
+
+          mark_strings(labels);
+        } finally {
+          $(".super_links_msg").css("display","none");
+        }
+      }, "text").fail(function(msg) {
+          $(".super_links_msg").css("display","none");
+          alert("Could not load data from: "+url_links+"\nError: "+msg.statusText);
+      });
+
+
+    }
 
 /**********************************************/
     function positionPopupOnPage( evt )

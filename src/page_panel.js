@@ -242,15 +242,6 @@ function load_data_from_url(loc, uri, contType)
     else if (type==="rdf")
       hdr_accept = 'application/rdf+xml;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
 
-/***
-    jQuery.ajaxSetup({
-       dataType: "text",
-       headers:{'Accept': hdr_accept,
-                'Cache-control': 'no-cache'},
-       cache: false,
-       timeout: 30000
-    });
-***/
     jQuery.ajaxSetup({
        dataType: "text",
        headers:{'Accept': hdr_accept,
@@ -263,14 +254,6 @@ function load_data_from_url(loc, uri, contType)
     }, "text").fail(function(msg) {
         alert("Could not load data from: "+url+"\nError: "+msg.statusText);
     });
-
-/**
-    $.get(url, function(data, status){
-       start_parse_data(data, type, url);
-    }, "text").fail(function(msg) {
-       alert("Could not load data from: "+url);
-    });
-**/
 }
 
 
