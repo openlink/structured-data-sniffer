@@ -654,19 +654,23 @@
 
               }
               else {
-                $(".super_links_msg").css("display","none");
+                alert("Sponge error:"+xhr.status+" ["+xhr.statusText+"]");
+                //$(".super_links_msg").css("display","none");
+                exec_super_links_query();
               }
             }
           }
 
         $(".super_links_msg").css("display","block");
 
-        xhr.withCredentials = true;
-        xhr.timeout = 30000;
-        xhr.open ('GET', url_about, true);
-        xhr.setRequestHeader ('Accept', 'text/html');
-        xhr.setRequestHeader ('Cache-control', 'no-cache');
-        xhr.send (null);
+        try {
+          xhr.withCredentials = true;
+          xhr.timeout = 30000;
+          xhr.open ('GET', url_about, true);
+          xhr.setRequestHeader ('Accept', 'text/html');
+          xhr.setRequestHeader ('Cache-control', 'no-cache');
+          xhr.send (null);
+        } catch (e) {}
     }
 
     function exec_super_links_query()
@@ -713,6 +717,7 @@
       +'    }\n'
       +' }';
 *****/
+/**
       var link_query = ''
       +'DEFINE get:soft "soft" \n'
       +' \n'
@@ -757,6 +762,54 @@
       +' } \n'
       +'GROUP BY ?extract ?extractLabel ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?provider ?providerLabel \n'
       +'ORDER BY DESC (1)';
+****/
+
+      var link_query = ''
+      +'DEFINE get:soft "soft" \n'
+      +' \n'
+      +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
+      +' \n'
+      +'SELECT DISTINCT  sample(?extract) as ?sample ?extract ?extractLabel ?associationLabel ?entityTypeLabel ?entityType ?p as ?association ?providerLabel ?provider \n'
+      +'WHERE { \n'
+      +'           GRAPH <'+iri+'> \n'
+      +'                 { \n'
+      +'                     ?source ( skos:related|schema:about|schema:mentions ) ?extract . \n'
+      +'                     # ?source ( skos:related|schema:about) ?extract . \n'
+      +'                     ?extract a ?entityType ; \n'
+      +'                     # ?extract a oplattr:NamedEntity ; \n'
+      +' \n'
+      +'                     <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ; \n'
+      +'                     rdfs:label ?extractLabel . \n'
+      +' \n'
+      +'                     OPTIONAL {?provider foaf:name|schema:name ?providerLabel} . \n'
+      +' \n'
+      +'                     # FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+      +'                     FILTER (! contains(str(?entityType),"Tag")) \n'
+      +'                } \n'
+      +' \n'
+      +'            ## Subquery for obtaining relation (statement predicate) labels \n'
+      +' \n'
+      +'           { SELECT ?p ?associationLabel \n'
+      +'             WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?associationLabel .  \n'
+      +'                                 FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+      +'                                 FILTER (LANG(?associationLabel) = "'+br_lang+'") \n'
+      +'                                 } \n'
+      +'                    } \n'
+      +'            } \n'
+      +' \n'
+      +'          ## Subquery for obtaining type-oriented relation (statement predicate) labels \n'
+      +' \n'
+      +'           { SELECT ?entityType ?entityTypeLabel \n'
+      +'              WHERE { GRAPH ?g2 { \n'
+      +'                          ?entityType rdfs:label|schema:name ?entityTypeLabel .  \n'
+      +'                          FILTER (LANG(?entityTypeLabel) = "'+br_lang+'") \n'
+      +'                                } \n'
+      +'                    } \n'
+      +'           } \n'
+      +' } \n'
+      +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider \n'
+      +'ORDER BY DESC (2) \n';
+
 
       var url_links = "https://linkeddata.uriburner.com/sparql";
       var iri = new Uri(location.href).setAnchor("").toString();
