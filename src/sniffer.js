@@ -633,7 +633,16 @@
           +' <div class="super_links_popup-content"></div>'
           +'</div> '
           +'<div class="super_links_msg" style="font-size: 14px;"> '
-          +'<img src="data:image/gif;base64,'+Browser.throbber+'" class="super_links_img" /> &nbsp;Preparing Super Links'
+          +'<table style="border-style:none">'
+          +'<tr>'
+          +' <td class="super_links_msg_td">'
+          +'  <img src="data:image/gif;base64,'+Browser.throbber+'" class="super_links_img" />'
+          +' </td>'
+          +' <td class="super_links_msg_td">'
+          +'  &nbsp;Preparing&nbsp;Super&nbsp;Links'
+          +' </td>'
+          +'</tr>'
+          +'</table>'
           +'</div> '
          );
       }
