@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2016 OpenLink Software
+ *  Copyright (C) 2015-2017 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -45,16 +45,16 @@ var yasqe = {
         val : null,
         init: false,
       };
+var src_view = null;
 var g_fix_restURI = null;
 
 
 $(document).ready(function()
 {
-  if (Browser.isFirefoxWebExt)
-      $("#src_place").css("white-space","pre");
-
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
+
+  $('#slink_btn').click(SuperLinks_exec);
 
   $('#import_btn').click(Import_doc);
 
@@ -66,9 +66,7 @@ $(document).ready(function()
 
   $('#download_btn').click(Download_exec);
 
-  if (Browser.isFirefoxSDK) {
-    $('#prefs_btn').click(Prefs_exec);
-  }
+  $('#prefs_btn').click(Prefs_exec);
 
   $('#tabs a[href=#src]').click(function(){
       selectTab(prevSelectedTab);
@@ -103,14 +101,22 @@ $(document).ready(function()
       return false;
   });
 
+  try {
+    src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
+        lineNumbers: true
+      });
+    src_view.setSize("100%", "100%");
+  } catch(e) { }
+
 
   try{
     yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
         lineNumbers: true,
-	sparql: { showQueryButton: false },
-	createShortLink : null,
-	createShareLink : null,
-	persistent: null,
+        lineWrapping: false,
+        sparql: { showQueryButton: false },
+	      createShortLink : null,
+	      createShareLink : null,
+	      persistent: null,
 
     });
     yasqe.obj.setSize("100%", 150);
@@ -722,7 +728,7 @@ function parse_Data(dData)
 
 
 
-if (Browser.isFirefoxWebExt) {
+if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
   try {
     Browser.api.browserAction.disable();
   } catch(e) {}
@@ -735,7 +741,7 @@ if (Browser.isFirefoxSDK)
   //wait data from extension
   self.port.on("doc_data", function(msg) {
 
-      var dData = $.parseJSON(msg.data);
+      var dData = JSON.parse(msg.data);
       if (!gData_showed)
         parse_Data(dData);
   });
@@ -750,7 +756,7 @@ else
       if (request.property == "status")
       {
         var show_action = request.data_exists;
-        if (Browser.isFirefoxWebExt) {
+        if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
           if (show_action)
             Browser.api.browserAction.enable(sender.tab.id);
           else
@@ -765,7 +771,7 @@ else
       }
       else if (request.property == "doc_data")
       {
-        var dData = $.parseJSON(request.data);
+        var dData = JSON.parse(request.data);
         try {
           gData.tab_index = sender.tab.index;
         } catch(e){}
@@ -783,6 +789,25 @@ else
 
 }
 
+
+////////////////////////////////////////////////////
+function SuperLinks_exec()
+{
+  if (doc_URL!==null) {
+    Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
+      if (tabs.length > 0) {
+        Browser.api.tabs.sendMessage(tabs[0].id, {
+            property: 'super_links',
+          },
+          function(response) {
+          });
+        window.close();
+      }
+    });
+  }
+
+  return false;
+}
 
 
 
@@ -836,6 +861,8 @@ function Prefs_exec()
   //snow preferenses
   if (Browser.isFirefoxSDK)
      self.port.emit("prefs", "");
+  else
+     Browser.openTab("options.html")
 
   return false;
 }
@@ -985,7 +1012,7 @@ function save_data(action, fname, fmt, callback)
     }
     else {
       selectTab("#src");
-      $("#src_place").val(retdata.txt + retdata.error);
+      src_view.setValue(retdata.txt + retdata.error+"\n");
     }
   }
 
@@ -1041,7 +1068,7 @@ function save_data(action, fname, fmt, callback)
     if (selectedTab==="#micro" && data.length > 0)
     {
       var handler = new Handle_Microdata(true);
-      handler.parse($.parseJSON(data[0]), gData.baseURL,
+      handler.parse(JSON.parse(data[0]), gData.baseURL,
         function(error, ttl_data)
         {
           if (error) {
@@ -1182,7 +1209,7 @@ function show_rest()
   selectTab('#cons');
 //--  $('#tabs a[href=#cons]').show();
   if (yasqe.obj && yasqe.val && !yasqe.init) {
-    yasqe.obj.setValue(yasqe.val);
+    yasqe.obj.setValue(yasqe.val+"\n");
     yasqe.init = true;
   }
 }
@@ -1312,10 +1339,10 @@ function load_restData(doc_url)
     addRestEmpty();
 
   if (yasqe.obj && yasqe.val) {
-    yasqe.obj.setValue(yasqe.val);
+    yasqe.obj.setValue(yasqe.val+"\n");
   }
   else {
-    yasqe.obj.setValue("");
+    yasqe.obj.setValue("\n");
     $(".yasqe").hide();
   }
 }

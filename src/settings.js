@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2016 OpenLink Software
+ *  Copyright (C) 2015-2017 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -32,20 +32,67 @@ Settings = function(data) {
                             "FROM <{url}> \n"+
                             "WHERE { ?s ?p ?o \n"+
                             "       FILTER (CONTAINS(str(?p),'mainEntity') \n"+
-                            "               OR CONTAINS(str(?p),'primaryTopic')\n"+ 
+                            "               OR CONTAINS(str(?p),'primaryTopic')\n"+
                             "               OR CONTAINS(str(?p),'topic')\n"+
                             "               OR CONTAINS(str(?p),'mentions')) \n"+
-                            "      } LIMIT 100";
+                            "      } LIMIT 100\n";
 
   this.def_sparql_qry_eav = "DEFINE get:soft \"soft\" \n"+
                             "SELECT DISTINCT ?s AS ?entity  ?p AS ?attribute ?o AS ?value \n"+
                             "FROM <{url}> \n"+
                             "WHERE { ?s ?p ?o \n"+
                             "       FILTER (CONTAINS(str(?p),'mainEntity') \n"+
-                            "               OR CONTAINS(str(?p),'primaryTopic')\n"+ 
+                            "               OR CONTAINS(str(?p),'primaryTopic')\n"+
                             "               OR CONTAINS(str(?p),'topic')\n"+
                             "               OR CONTAINS(str(?p),'mentions')) \n"+
-                            "      } LIMIT 100";
+                            "      } LIMIT 100\n";
+
+  this.def_super_links_query = ''
+  +'DEFINE get:soft "soft" \n'
+  +' \n'
+  +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
+  +' \n'
+  +'SELECT DISTINCT  sample(?extract) as ?sample ?extract ?extractLabel ?associationLabel ?entityTypeLabel ?entityType ?p as ?association ?providerLabel ?provider \n'
+  +'WHERE { \n'
+  +'           GRAPH <{url}> \n'
+  +'                 { \n'
+  +'                     ?source ( skos:related|schema:about|schema:mentions ) ?extract . \n'
+  +'                     # ?source ( skos:related|schema:about) ?extract . \n'
+  +'                     ?extract a ?entityType ; \n'
+  +'                     # ?extract a oplattr:NamedEntity ; \n'
+  +' \n'
+  +'                     <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ; \n'
+  +'                     rdfs:label ?extractLabel . \n'
+  +' \n'
+  +'                     OPTIONAL {?provider foaf:name|schema:name ?providerLabel} . \n'
+  +' \n'
+  +'                     # FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+  +'                     FILTER (! contains(str(?entityType),"Tag")) \n'
+  +'                } \n'
+  +' \n'
+  +'            ## Subquery for obtaining relation (statement predicate) labels \n'
+  +' \n'
+  +'           { SELECT ?p ?associationLabel \n'
+  +'             WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?associationLabel .  \n'
+  +'                                 FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+  +'                                 FILTER (LANG(?associationLabel) = "{lang}") \n'
+  +'                                 } \n'
+  +'                    } \n'
+  +'            } \n'
+  +' \n'
+  +'          ## Subquery for obtaining type-oriented relation (statement predicate) labels \n'
+  +' \n'
+  +'           { SELECT ?entityType ?entityTypeLabel \n'
+  +'              WHERE { GRAPH ?g2 { \n'
+  +'                          ?entityType rdfs:label|schema:name ?entityTypeLabel .  \n'
+  +'                          FILTER (LANG(?entityTypeLabel) = "{lang}") \n'
+  +'                                } \n'
+  +'                    } \n'
+  +'           } \n'
+  +' } \n'
+  +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider \n'
+  +'ORDER BY DESC (2) \n';
+
 
   this._data = (data!== undefined && data!==null) ? data:null;
 }
@@ -62,7 +109,7 @@ Settings.prototype = {
     else
       return this.def_sparql_qry_spo;
   },
-  
+
   getValue : function(id)
   {
     var val = null;
@@ -95,7 +142,7 @@ Settings.prototype = {
           val = this.def_import_url;
           break;
       case "ext.osds.import.srv":
-          val = this.def_import_srv; 
+          val = this.def_import_srv;
           break;
       case "ext.osds.rww.edit.url":
           val = this.def_rww_edit_url;
@@ -108,6 +155,9 @@ Settings.prototype = {
           break;
       case "ext.osds.sparql.query":
           val = this.getSparqlQueryDefault(null);
+          break;
+      case "ext.osds.super_links.query":
+          val = this.def_super_links_query;
           break;
     }
     return val;
@@ -129,7 +179,7 @@ Settings.prototype = {
     }
   },
 
-  createRwwUrl : function (curUrl, data) 
+  createRwwUrl : function (curUrl, data)
   {
     var edit_url = this.getValue('ext.osds.rww.edit.url');
     var store_url = this.getValue('ext.osds.rww.store.url');
@@ -145,24 +195,30 @@ Settings.prototype = {
     if (edit_url.indexOf("{url}")!=-1)
       edit_url = edit_url.replace("{url}",docURL);
 
-    if (edit_url.indexOf("{data}")!=-1) 
+    if (edit_url.indexOf("{data}")!=-1)
       edit_url = edit_url.replace("{data}", encodeURIComponent(data?data:""));
 
     return edit_url;
   },
 
 
-  createSparqlUrl : function (curUrl) 
+  createSparqlUrl : function (curUrl)
   {
     var sparql_url = this.getValue('ext.osds.sparql.url');
     var query = this.getValue('ext.osds.sparql.query');
 
-    var query = encodeURIComponent(query.replace(/{url}/g, curUrl));
+    query = encodeURIComponent(query.replace(/{url}/g, curUrl));
     return sparql_url.replace(/{query}/g, query);
   },
 
+  createSuperLinksQuery : function (curUrl, lang)
+  {
+    var query = this.getValue('ext.osds.super_links.query');
+    return query.replace(/{url}/g, curUrl).replace(/{lang}/g, lang);
+  },
 
-  createImportUrl : function (curUrl) 
+
+  createImportUrl : function (curUrl)
   {
     var handle_url = this.getValue('ext.osds.import.url');
     var srv = this.getValue('ext.osds.import.srv');
@@ -197,7 +253,4 @@ Settings.prototype = {
 
 
 
-
-
 }
-  

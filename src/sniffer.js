@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2016 OpenLink Software
+ *  Copyright (C) 2015-2017 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -24,6 +24,7 @@
     window._osds_isTop = true;
     window._osds_frames = {};
 
+    var g_super_links = null;
     var micro_items = 0;
     var json_ld_Text = null;
     var turtle_Text = null;
@@ -372,7 +373,7 @@
                     self.port.emit("content_status", {data_exists: data_found});
                 }
                 else {
-                    Browser.api.runtime.sendMessage(null, {
+                    Browser.api.runtime.sendMessage({
                             property: "status",
                             status: 'ready',
                             data_exists: data_found
@@ -494,7 +495,8 @@
         return s;
     }
 
-    function get_rdfa_data() {
+    function get_rdfa_data()
+    {
         var escape = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
         var escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
         var escapeReplacements = {
@@ -603,6 +605,352 @@
     }
 
 
+    function request_open_tab(url, sender) {
+        if (url)
+          window.open(url);
+    }
+
+
+    function xhr_new ()
+    {
+      var xhr = null;
+
+      var oXMLHttpRequest = window.XMLHttpRequest;
+      if (oXMLHttpRequest)
+        xhr = new oXMLHttpRequest(); /* gecko */
+      else if (window.ActiveXObject)
+        xhr = new ActiveXObject("Microsoft.XMLHTTP"); /* ie */
+      return xhr;
+    }
+
+
+    function add_super_links(sender)
+    {
+      if (g_super_links==null) {
+         $('body').append(
+           '<div class="super_links_popup" >'
+          +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
+          +' <div class="super_links_popup-content"></div>'
+          +'</div> '
+          +'<div class="super_links_msg" style="font-size: 14px;"> '
+          +'<table style="border-style:none">'
+          +'<tr>'
+          +' <td class="super_links_msg_td">'
+          +'  <img src="data:image/gif;base64,'+Browser.throbber+'" class="super_links_img" />'
+          +' </td>'
+          +' <td class="super_links_msg_td">'
+          +'  &nbsp;Preparing&nbsp;Super&nbsp;Links'
+          +' </td>'
+          +'</tr>'
+          +'</table>'
+          +'</div> '
+         );
+      }
+
+        var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
+        var url_about = "https://linkeddata.uriburner.com/about/html/"+result[2]+"/"+result[3]+"?sponger:get=add";
+
+        var xhr = xhr_new ();
+        xhr.onreadystatechange = function()
+          {
+            if (xhr.readyState == 4) {
+              if (xhr.status===200) {
+                  if (xhr.responseURL.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
+                    location.href = xhr.responseURL; //console.log("redirected");
+                    return;
+                  }
+                  exec_super_links_query();
+
+              }
+              else {
+                alert("Sponge error:"+xhr.status+" ["+xhr.statusText+"]");
+                //$(".super_links_msg").css("display","none");
+                exec_super_links_query();
+              }
+            }
+          }
+
+        $(".super_links_msg").css("display","block");
+
+        try {
+          xhr.withCredentials = true;
+          xhr.timeout = 30000;
+          xhr.open ('GET', url_about, true);
+          xhr.setRequestHeader ('Accept', 'text/html');
+          xhr.setRequestHeader ('Cache-control', 'no-cache');
+          xhr.send (null);
+        } catch (e) {}
+    }
+
+    function exec_super_links_query()
+    {
+      var iri = new Uri(location.href).setAnchor("").toString();
+      var br_lang = navigator.language || navigator.userLanguage;
+      if (br_lang && br_lang.length>0) {
+        var i = br_lang.indexOf('-');
+        if (i!=-1)
+           br_lang = br_lang.substr(0,i);
+      } else {
+        br_lang = 'en';
+      }
+/*******
+      var link_query = ''
+      +'DEFINE get:soft "soft" \n'
+      +'SELECT DISTINCT ?extract ?extractLabel ?entityType ?p as ?association ?associationLabel ?entityTypeLabel ?provider ?providerLabel\n'
+      +'WHERE \n'
+      +' { GRAPH <'+iri+'> \n'
+      +'    { \n'
+      +'      ?extract a ?entityType ;\n'
+      +'      <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ; \n'
+      +'      rdfs:label ?extractLabel . \n'
+      +'\n'
+      +'      OPTIONAL {?provider foaf:name|schema:name ?providerLabel} . \n'
+      +'      ?source ?p ?extract .\n'
+      +'\n'
+      +'      FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+      +'      FILTER (! contains(str(?entityType),"Tag")) \n'
+      +'    }\n'
+      +'    { SELECT ?p ?associationLabel \n'
+      +'        WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?associationLabel . \n'
+      +'                            FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
+      +'                            FILTER (LANG(?associationLabel) = "'+br_lang+'") \n'
+      +'                          } \n'
+      +'              } \n'
+      +'    } \n'
+      +'\n'
+      +'    { SELECT ?entityType ?entityTypeLabel \n'
+      +'        WHERE { GRAPH ?g2 { ?entityType rdfs:label|schema:name ?entityTypeLabel . \n'
+      +'                            FILTER (LANG(?entityTypeLabel) = "'+br_lang+'")\n'
+      +'                          } \n'
+      +'              }\n'
+      +'    }\n'
+      +' }';
+*****/
+
+      var url_links = "https://linkeddata.uriburner.com/sparql";
+      var link_query = new Settings().createSuperLinksQuery(iri, br_lang);
+
+      jQuery.ajaxSetup({
+         dataType: "text",
+         headers:{'Accept': 'application/json',
+               'Cache-control': 'no-cache'},
+         cache: false,
+         timeout: 30000,
+         xhrFields: {
+               withCredentials: true
+         }
+      });
+
+      params = {
+              format:'application/json',
+              query: link_query,
+              CXML_redir_for_subjs: 121,
+              timeout: 30000000
+                };
+
+      jQuery.get(url_links, params, function(data, status){
+        try {
+          var val = JSON.parse(data);
+          g_super_links = val.results.bindings;
+          var labels = [];
+          for(var i=0; i < g_super_links.length; i++) {
+            labels.push(g_super_links[i].extractLabel.value);
+            g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
+          }
+
+          mark_strings(labels);
+        } finally {
+          $(".super_links_msg").css("display","none");
+        }
+      }, "text").fail(function(msg) {
+          $(".super_links_msg").css("display","none");
+          alert("Could not load data from: "+url_links+"\nError: "+msg.statusText);
+      });
+
+
+    }
+
+/**********************************************/
+    function positionPopupOnPage( evt )
+    {
+      var vpWH = [];
+      var vpW, vpH;
+      var intCoordX = evt.clientX;
+      var intCoordY = evt.clientY;
+      var intXOffset = intCoordX;
+      var intYOffset = intCoordY;
+
+      vpWH = getViewPortWidthHeight();
+      vpW = vpWH[0];
+      vpH = vpWH[1];
+      var popup = $(".super_links_popup");
+
+      popup.css("position","fixed");
+      // if not display: block, .offsetWidth & .offsetHeight === 0
+      popup.css("display","block");
+      popup.css("zIndex","2147483647");
+
+      if ( intCoordX > vpW/2 )
+        intXOffset -= popup.width();
+
+      if ( intCoordY > vpH/2 )
+        intYOffset -= popup.height();
+
+      if ( vpW <= 500 )
+        intXOffset = ( vpW - popup.width() ) / 2;
+
+      if ( vpH <= 500 )
+        intYOffset = (vpH - popup.height() ) / 2;
+
+      var rpos = intXOffset + popup.outerWidth() + 5;
+      if (rpos > vpW)
+        intXOffset -= rpos - vpW;
+
+      if (intXOffset < 0 )
+        intXOffset = 0;
+
+      popup.css("top", intYOffset + 'px');
+      popup.css("left", intXOffset + 'px');
+      popup.css("visibility", 'visible');
+    }
+
+
+    function getViewPortWidthHeight()
+    {
+      var viewPortWidth;
+      var viewPortHeight;
+
+ 	// the more standards compliant browsers (mozilla/netscape/opera/IE7)
+ 	// use window.innerWidth and window.innerHeight
+      if (typeof window.innerWidth != 'undefined')
+      {
+        viewPortWidth = window.innerWidth;
+        viewPortHeight = window.innerHeight;
+      }
+/**
+	// IE6 in standards compliant mode (i.e. with a valid doctype as the
+	// first line in the document)
+       else if (typeof document.documentElement != 'undefined'
+                && typeof document.documentElement.clientWidth !=
+               'undefined' && document.documentElement.clientWidth != 0)
+      {
+          viewPortWidth = document.documentElement.clientWidth;
+          viewPortHeight = document.documentElement.clientHeight;
+      }
+      // older versions of IE
+      else {
+          viewPortWidth = document.getElementsByTagName('body')[0].clientWidth;
+          viewPortHeight = document.getElementsByTagName('body')[0].clientHeight;
+      }
+**/
+ 	return [viewPortWidth, viewPortHeight];
+      }
+/**********************************************/
+
+
+
+
+    function create_popup_table(lst, ev)
+    {
+      $('.super_links_popup-content').children().remove();
+
+      if (lst.length > 0)
+      {
+        var tdata = '';
+        for(var i=0; i < lst.length; i++)
+        {
+          var v = lst[i];
+
+          try {
+            var extract = v.extract?v.extract.value:null;
+            var prov = v.provider?v.provider.value:null;
+            if (extract && prov) {
+              var extLabel = v.extractLabel?v.extractLabel.value:'';
+              var provName = v.providerLabel?v.providerLabel.value:prov;
+              var entityType = v.entityType.value;
+              var entityTypeLabel = v.entityTypeLabel?v.entityTypeLabel.value:type_iri;
+
+              var association = v.association.value;
+              var associationLabel = v.associationLabel?v.associationLabel.value:association;
+
+
+              tdata += '<tr>'
+                +'<td> <a target="_blank" href="'+extract+'">'+extLabel+'</a></td>'
+                +'<td> <a target="_blank" href="'+association+'">'+associationLabel+'</a> </td>'
+                +'<td> <a target="_blank" href="'+prov+'">'+provName+'</a></td>'
+                +'<td> <a target="_blank" href="'+entityType+'">'+entityTypeLabel+'</a></td>'
+                +'</tr>';
+            }
+          } catch(e) {}
+        }
+
+        $('.super_links_popup-content')
+           .append('<table class="super_links_table">'
+               +'<thead><tr>'
+               +'<th style="max-width:190px;">Word</th>'
+               +'<th style="max-width:95px;">Association</th>'
+               +'<th style="max-width:285px;">Source</th>'
+               +'<th style="max-width:300px;">Type</th>'
+               +'</tr></thead>'
+                +'<tbody>'+tdata+'</tbody>'
+                +'</table>');
+        $('.super_links_popup').show();
+        positionPopupOnPage(ev);
+      }
+    }
+
+
+    function mark_strings(keyword)
+    {
+      var options = {
+            "element": "a",  //"a"
+            "className": "super_link_mark",
+            "exclude": ["a"],
+            "separateWordSearch": false,
+            "acrossElements": true,
+            "accuracy": "exactly",
+//!            "diacritics": true,
+            "diacritics": false,
+            "iframes": false,
+            "iframesTimeout": 5000,
+            "caseSensitive": false,
+            "ignoreJoiners": false,
+            "each": function(node){
+                // node is the marked DOM element
+                $(node).attr("href","");
+            },
+            "done": function(counter){
+
+                $('.super_links_popup_close').click(function(e){
+                    $('.super_links_popup').hide();
+                    return false;
+                 });
+
+                $('.super_link_mark').click(function(ev){
+                    var label = ev.target.innerText.toLowerCase();
+                    var lst = [];
+                    for (var i=0; i < g_super_links.length; i++) {
+                      if (g_super_links[i]._id.indexOf(label)!=-1)
+                        lst.push(g_super_links[i]);
+                    }
+
+                    create_popup_table(lst, ev);
+                    return false;
+                 });
+            }
+        };
+
+
+      $("body").unmark({
+        done: function() {
+          $("body").mark(keyword, options);
+        }
+      });
+    }
+
+
+
+
     jQuery(document).ready(function () {
 
         try {
@@ -660,7 +1008,7 @@
                     self.port.emit("doc_data", {data: JSON.stringify(docData, undefined, 2)});
                 }
                 else {
-                    Browser.api.runtime.sendMessage(null,
+                    Browser.api.runtime.sendMessage(
                         {
                             property: "doc_data",
                             data: JSON.stringify(docData, undefined, 2)
@@ -681,6 +1029,10 @@
                 Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                     if (request.property == "doc_data")
                         request_doc_data();
+                    else if (request.property == "open_tab")
+                        request_open_tab(request.url, sender)
+                    else if (request.property == "super_links")
+                        add_super_links(sender)
                     else
                         sendResponse({});  // stop
                 });

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2016 OpenLink Software
+ *  Copyright (C) 2015-2017 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -32,7 +32,8 @@ var selectedTab = null;
 var gData = {
         text: null,
         type: null,
-        url: null
+        url: null,
+        ext: null
       };
 
 var yasqe = {
@@ -41,12 +42,11 @@ var yasqe = {
         init: false,
       };
 
+var src_view = null;
+
 
 $(document).ready(function()
 {
-  if (Browser.isFirefoxWebExt)
-      $("#src_place").css("white-space","pre");
-
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
 
@@ -97,15 +97,21 @@ $(document).ready(function()
       return false;
   });
 
+  try {
+    src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
+        lineNumbers: true
+      });
+    src_view.setSize("100%", "100%");
+  } catch(e) { }
 
   try{
     yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
         lineNumbers: true,
-	sparql: { showQueryButton: false },
-	createShortLink : null,
-	createShareLink : null,
-	persistent: null,
-
+        lineWrapping: false,
+	      sparql: { showQueryButton: false },
+	     createShortLink : null,
+	     createShareLink : null,
+	      persistent: null,
     });
     yasqe.obj.setSize("100%", 150);
   } catch(e) {
@@ -212,6 +218,7 @@ function load_data_from_url(loc, uri, contType)
 
     var url;
     var type;
+    var ext;
 
     if (loc) {
       var params = parseUrlQuery(loc);
@@ -220,6 +227,7 @@ function load_data_from_url(loc, uri, contType)
 
       url = decodeURIComponent(params.url);
       type = params.type;
+      ext = params.ext;
     }
     else {
       url = uri;
@@ -229,50 +237,49 @@ function load_data_from_url(loc, uri, contType)
     var hdr_accept = "";
 
     if (type==="turtle")
-      hdr_accept = 'text/turtle,text/n3;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
+      hdr_accept = 'text/n3,text/turtle;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
     else if (type==="jsonld")
       hdr_accept = 'application/ld+json;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
     else if (type==="rdf")
       hdr_accept = 'application/rdf+xml;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
 
-
     jQuery.ajaxSetup({
        dataType: "text",
        headers:{'Accept': hdr_accept,
                 'Cache-control': 'no-cache'},
-       cache: false,
        timeout: 30000
     });
 
     jQuery.get(url, function(data, status){
-        start_parse_data(data, type, url);
+        start_parse_data(data, type, url, ext);
     }, "text").fail(function(msg) {
         alert("Could not load data from: "+url+"\nError: "+msg.statusText);
     });
 
-/**
-    $.get(url, function(data, status){
-       start_parse_data(data, type, url);
-    }, "text").fail(function(msg) {
-       alert("Could not load data from: "+url);
-    });
-**/
 }
 
 
 
-function start_parse_data(data_text, data_type, data_url)
+function start_parse_data(data_text, data_type, data_url, ext)
 {
+  var test_xml = /^\s*<\?xml/gi;
+  var test_rdf = /^\s*<rdf:RDF/gi;
+    if (data_type === "rdf") {
+    if (test_xml.exec(data_text)===null && test_rdf.exec(data_text)===null)
+      data_type = "turtle";
+  }
+
   gData.text = data_text;
   gData.type = data_type;
   gData.url = data_url;
+  gData.ext = ext;
+
   doc_URL = data_url;
 
   var url = new Uri(data_url);
   url.setAnchor("");
   url.setQuery("");
   baseURL = url.toString();
-
 
   load_restData(doc_URL);
 
@@ -300,6 +307,7 @@ function start_parse_data(data_text, data_type, data_url)
   else if (data_type==="rdf")
     {
       var handler = new Handle_RDF_XML();
+      handler.skip_error = false;
       handler.parse([data_text], baseURL,
         function(error, html_data) {
           show_Data(error, html_data);
@@ -633,7 +641,7 @@ function save_data(action, fname, fmt, callback)
     }
     else {
       selectTab("#src");
-      $("#src_place").val(retdata.txt + retdata.error);
+      src_view.setValue(retdata.txt + retdata.error+"\n");
     }
   }
 
@@ -734,7 +742,7 @@ function show_rest()
   selectTab('#cons');
 //--  $('#tabs a[href=#cons]').show();
   if (yasqe.obj && yasqe.val && !yasqe.init) {
-    yasqe.obj.setValue(yasqe.val);
+    yasqe.obj.setValue(yasqe.val+"\n");
     yasqe.init = true;
   }
 }
@@ -856,10 +864,10 @@ function load_restData(doc_url)
     addRestEmpty();
 
   if (yasqe.obj && yasqe.val) {
-    yasqe.obj.setValue(yasqe.val);
+    yasqe.obj.setValue(yasqe.val+"\n");
   }
   else {
-    yasqe.obj.setValue("");
+    yasqe.obj.setValue("\n");
     $(".yasqe").hide();
   }
 }

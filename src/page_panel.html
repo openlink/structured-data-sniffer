@@ -2,7 +2,7 @@
 <!--
     This file is part of the OpenLink Structured Data Sniffer
 
-    Copyright (C) 2015-2016 OpenLink Software
+    Copyright (C) 2015-2017 OpenLink Software
 
     This project is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -19,11 +19,11 @@
 -->
     <head>
 	<meta charset="UTF-8">
-        <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />	
-        <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />	
-        <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />	
-        <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />	
-        <link type="text/css" href="lib/css/yasqe.min.css" rel="stylesheet" />	
+        <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/yasqe.min.css" rel="stylesheet" />
 
         <script type="text/javascript" src="lib/jquery-3.1.0.min.js"></script>
         <script type="text/javascript" src="lib/jquery-migrate-3.0.0.min.js"></script>
@@ -52,7 +52,7 @@
 
         <style type="text/css">
           .popup { font: 70% "Trebuchet MS", sans-serif; }
-        </style>	
+        </style>
 
     </head>
     <body class="sniffer">
@@ -131,24 +131,22 @@
       <div class="content">
 
         <div id="src_items" style="font-size: 13px;">
-          <table style="width: 100%; height: 100%;">
-            <tr> 
+          <table style="width: 100%;height:40px;">
+            <tr>
               <td>
                 <button id="src_exit" style="margin:5px; margin-left:10px;">Exit</button>
               </td>
             </tr>
-            <tr>
-              <td style="height: 100%;">
-                <textarea id="src_place" style="width: 100%; height: 100%; white-space:nowrap">
-                </textarea>
-              </td>
-            </tr>
           </table>
+          <div style="width: 100%; height: calc(100% - 40px);">
+                <textarea id="src_place" style="white-space:nowrap">
+                </textarea>
+          </div>
         </div>
 
         <div id="cons_items" style="font-size: 13px;">
           <table>
-            <tr> 
+            <tr>
               <td>
                 <button id="rest_exec" style="margin:5px; margin-left:10px;">Run</button>
               </td>
@@ -183,7 +181,7 @@
               <button style="margin:8px; margin-top:2px;" id="rest_add" class="rest_add">Add</button>
             </tr>
           </table>
-        
+
         </div>
 
         <div id="micro_items">
@@ -251,7 +249,7 @@
 
       <table class="copyright_right">
         <tr>
-          <td>Copyright &copy; 2015-2016 <a href="http://www.openlinksw.com"> OpenLink Software </a></td>
+          <td>Copyright &copy; 2015-2017 <a href="http://www.openlinksw.com"> OpenLink Software </a></td>
         </tr>
       </table>
     </body>

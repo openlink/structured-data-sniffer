@@ -2,7 +2,8 @@
   "name": "OpenLink Structured Data Sniffer",
   "short_name": "OSD Sniffer",
   "author":"OpenLink Software",
-  "version": "2.14.0",
+  "homepage_url": "http://osds.openlinksw.com/",
+  "version": "2.15.0",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
@@ -23,7 +24,8 @@
   "content_scripts": [
     {
       "matches": ["file:///*/*","*://*/*"],
-      "js": ["lib/jquery-3.1.0.min.js", "lib/jquery-migrate-3.0.0.min.js", "lib/jsonld.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", "lib/namespace.js", "lib/posh.js", "browser.js", "sniffer.js"],
+      "js": ["lib/jquery-3.1.0.min.js", "lib/jquery-migrate-3.0.0.min.js", "lib/jsonld.js", "lib/jsuri.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", "lib/jquery.mark.js", "lib/namespace.js", "lib/posh.js", "browser.js", "settings.js", "sniffer.js"],
+      "css": ["content.css"],
       "run_at": "document_idle"
     },
     {

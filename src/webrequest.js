@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2016 OpenLink Software
+ *  Copyright (C) 2015-2017 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -29,6 +29,50 @@ if (Browser.isChromeAPI)
   function s_startWith(str, val)
   {
      return str.lastIndexOf(val, 0) === 0;
+  }
+
+  Browser.api.webRequest.onBeforeRequest.addListener(onBeforeRequestLocal, {types: ["main_frame"], urls: ["file:///*"]}, ["blocking"]);
+
+  function onBeforeRequestLocal(d)
+  {
+    var handle = false;
+    var ext = "";
+    if (d.url.match(/(.rdf)$/i)) {
+      handle = true;
+      type = "rdf";
+      ext = "rdf";
+    }
+    else if (d.url.match(/(.owl)$/i)) {
+      handle = true;
+      type = "rdf";
+      ext = "owl";
+    }
+    else if (d.url.match(/(.ntriples)$/i)) {
+      handle = true;
+      type = "turtle";
+      ext = "ntriples";
+    }
+    else if (d.url.match(/(.ttl)$/i)) {
+      handle = true;
+      type = "turtle";
+      ext = "ttl";
+    }
+    else if (d.url.match(/(.n3)$/i)) {
+      handle = true;
+      type = "turtle";
+      ext = "n3";
+    }
+    else if (d.url.match(/(.jsonld)$/i) ) {
+      handle = true;
+      type = "jsonld";
+      ext = "jsonld";
+    }
+
+    if (handle) {
+      var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
+      Browser.api.tabs.update(d.tabId, { url: _url });
+      return { cancel: false };
+    }
   }
 
 
@@ -59,6 +103,7 @@ if (Browser.isChromeAPI)
     var handle = false;
     var v_cancel = false;
     var type = null;
+    var ext = "";
     var content_type = null;
 
     for (var i in d.responseHeaders) {
@@ -72,6 +117,12 @@ if (Browser.isChromeAPI)
           else if (header.value.match(/\/(n3)/)) {
             handle = true;
             type = "turtle";
+          }
+          else if (header.value.match(/\/(n-triples)/)) {
+            handle = true;
+            type = "turtle";
+            v_cancel = true;
+            header.value = "text/plain";
           }
           else if (header.value.match(/\/(json\+ld)/)) {
             handle = true;
@@ -97,15 +148,40 @@ if (Browser.isChromeAPI)
           break;
       }
 
-      if (!handle && (content_type===null || content_type.match(/(application\/xml)/))) {
-        if (d.url.endsWith(".owl") || d.url.endsWith(".rdf")) {
+      if (!handle && (content_type===null || content_type.match(/(application\/xml)/) || content_type.match(/(text\/xml)/) || content_type.match(/(text\/plain)/))) {
+        var url_path = new Uri(d.url).path();
+        if (url_path.endsWith(".owl")) {
           handle = true;
           type = "rdf";
+          ext = "owl";
+        }
+        else if (url_path.endsWith(".rdf")) {
+          handle = true;
+          type = "rdf";
+          ext = "rdf";
+        }
+      }
+      else if (!handle && (content_type===null || content_type.match(/(text\/plain)/))) {
+        var url_path = new Uri(d.url).path();
+        if (url_path.endsWith(".ntriples")) {
+          handle = true;
+          type = "turtle";
+          ext = "ntriples";
+        }
+        else if (url_path.endsWith(".ttl")) {
+          handle = true;
+          type = "turtle";
+          ext = "ttl";
+        }
+        else if (url_path.endsWith(".n3")) {
+          handle = true;
+          type = "turtle";
+          ext = "n3";
         }
       }
 
       if (handle)  {
-          var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type);
+          var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
           if (Browser.isEdgeWebExt) {
             return { redirectUrl: _url };
           }

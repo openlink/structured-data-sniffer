@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2016 OpenLink Software
+ *  Copyright (C) 2015-2017 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -201,17 +201,18 @@
     
     check_link : function (val, is_key) 
     {
-      if ( String(val).match(/^http(s)?:\/\//) ) {
-        if ( String(val).match(/\.(jpg|png|gif)$/) ) {
+      var s_val = String(val);
+      if ( s_val.match(/^http(s)?:\/\//) ) {
+        if ( s_val.match(/\.(jpg|png|gif)$/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
-          val = '<a href="' + val + '" title="' + val + '"><img src="' + val + '" style="max-width:'+width+'px;" /></a>';
-        } else {
-          val = '<a href="' + val + '">' + val + '</a>';
-        }
-      } else if ( String(val).match(/^mailto:/) ) {
-        val = '<a href="' + val + '">' + val + '</a>';
-      } else {
-        val = this.pre(val);
+          return '<a href="' + val + '" title="' + val + '"><img src="' + val + '" style="max-width:'+width+'px;" /></a>';
+        } if ( s_val.match(/\.(jpg|png|gif)[?#].*/) ) {
+          var width = (is_key!==undefined && is_key)?200:300;
+          return '<a href="' + val + '" title="' + val + '"><img src="' + val + '" style="max-width:'+width+'px;" /></a>';
+        } 
+        return '<a href="' + val + '">' + val + '</a>';
+      } else if ( s_val.match(/^mailto:/) ) {
+        return '<a href="' + val + '">' + val + '</a>';
       }
       return val;
     },

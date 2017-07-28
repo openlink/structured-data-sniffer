@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2016 OpenLink Software
+ *  Copyright (C) 2015-2017 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -65,13 +65,13 @@ table.docdata > tbody > tr > td.major {
 
 table.docdata > tbody > tr > td.typeid {
   font-weight: bold;
-  background-color: #f1f0ee; 
+  background-color: #f1f0ee;
 }
 
 
 
 body.sniffer {
-    width: 670px;
+    width: 690px;
     height: 580px;
 }
 
@@ -83,7 +83,7 @@ body.psniffer {
 
 div.content {
     overflow: auto;
-    width: 665px;
+    width: 685px;
     height: 530px;
     border: 1px solid lightgray;
 }
@@ -136,35 +136,35 @@ div#header {
 }
 
 
-ul#tabs { 
-    font-size: 12px; 
-    list-style-type: none; 
-    margin: 10px 0 0 0; 
-    padding: 0 0 0.3em 0; 
+ul#tabs {
+    font-size: 12px;
+    list-style-type: none;
+    margin: 10px 0 0 0;
+    padding: 0 0 0.3em 0;
 }
 
-ul#tabs li { 
-    display: inline; 
+ul#tabs li {
+    display: inline;
 }
 
-ul#tabs li a { 
-    color: #42454a; 
-    background-color: #dedbde; 
-    border: 1px solid #c9c3ba; 
-    border-bottom: none; 
-    padding: 0.5em 0.5em 0 0.5em; 
-    text-decoration: none; 
+ul#tabs li a {
+    color: #42454a;
+    background-color: #dedbde;
+    border: 1px solid #c9c3ba;
+    border-bottom: none;
+    padding: 0.5em 0.5em 0 0.5em;
+    text-decoration: none;
 }
 
-ul#tabs li a:hover { 
-    background-color: #f1f0ee; 
+ul#tabs li a:hover {
+    background-color: #f1f0ee;
 }
 
-ul#tabs li a.selected { 
-    color: blue; 
-    background-color: #f1f0ee; 
-    font-weight: bold; 
-    padding: 0.7em 0.5em 0 0.5em; 
+ul#tabs li a.selected {
+    color: blue;
+    background-color: #f1f0ee;
+    font-weight: bold;
+    padding: 0.7em 0.5em 0 0.5em;
 }
 
 /**
