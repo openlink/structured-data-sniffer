@@ -199,6 +199,7 @@ function setSuperLinksDefaults()
       modal: true,
       buttons: {
         "OK": function() {
+          $('#super-links-timeout').val(gPref.def_super_links_timeout);
           yasqe_slinks.setValue(gPref.def_super_links_query);
           $(this).dialog( "close" );
         },
@@ -277,6 +278,9 @@ function loadPref()
 
     yasqe_srv.setValue(gPref.getValue("ext.osds.sparql.query")+"\n");
     yasqe_slinks.setValue(gPref.getValue("ext.osds.super_links.query")+"\n");
+
+    var super_timeout = gPref.getValue("ext.osds.super_links.timeout");
+    $('#super-links-timeout').val(super_timeout);
 }
 
 
@@ -309,7 +313,10 @@ function savePref()
 
    gPref.setValue("ext.osds.sparql.query", yasqe_srv.getValue());
 
-	 gPref.setValue("ext.osds.super_links.query", yasqe_slinks.getValue());
+   gPref.setValue("ext.osds.super_links.query", yasqe_slinks.getValue());
+
+   var timeout = $('#super-links-timeout').val().trim();
+   gPref.setValue("ext.osds.super_links.timeout", parseInt(timeout, 10));
 
    if (Browser.isFirefoxSDK)
      self.port.emit("close", {osds_pref_user:pref_user});

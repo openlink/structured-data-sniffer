@@ -624,7 +624,7 @@
     }
 
 
-    function add_super_links(sender)
+    function add_super_links(sender, links_query, links_timeout)
     {
       if (g_super_links==null) {
          $('body').append(
@@ -659,13 +659,13 @@
                     location.href = xhr.responseURL; //console.log("redirected");
                     return;
                   }
-                  exec_super_links_query();
+                  exec_super_links_query(links_query, links_timeout);
 
               }
               else {
                 alert("Sponge error:"+xhr.status+" ["+xhr.statusText+"]");
                 //$(".super_links_msg").css("display","none");
-                exec_super_links_query();
+                exec_super_links_query(links_query, links_timeout);
               }
             }
           }
@@ -682,7 +682,7 @@
         } catch (e) {}
     }
 
-    function exec_super_links_query()
+    function exec_super_links_query(links_query, links_timeout)
     {
       var iri = new Uri(location.href).setAnchor("").toString();
       var br_lang = navigator.language || navigator.userLanguage;
@@ -693,49 +693,16 @@
       } else {
         br_lang = 'en';
       }
-/*******
-      var link_query = ''
-      +'DEFINE get:soft "soft" \n'
-      +'SELECT DISTINCT ?extract ?extractLabel ?entityType ?p as ?association ?associationLabel ?entityTypeLabel ?provider ?providerLabel\n'
-      +'WHERE \n'
-      +' { GRAPH <'+iri+'> \n'
-      +'    { \n'
-      +'      ?extract a ?entityType ;\n'
-      +'      <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ; \n'
-      +'      rdfs:label ?extractLabel . \n'
-      +'\n'
-      +'      OPTIONAL {?provider foaf:name|schema:name ?providerLabel} . \n'
-      +'      ?source ?p ?extract .\n'
-      +'\n'
-      +'      FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
-      +'      FILTER (! contains(str(?entityType),"Tag")) \n'
-      +'    }\n'
-      +'    { SELECT ?p ?associationLabel \n'
-      +'        WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?associationLabel . \n'
-      +'                            FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
-      +'                            FILTER (LANG(?associationLabel) = "'+br_lang+'") \n'
-      +'                          } \n'
-      +'              } \n'
-      +'    } \n'
-      +'\n'
-      +'    { SELECT ?entityType ?entityTypeLabel \n'
-      +'        WHERE { GRAPH ?g2 { ?entityType rdfs:label|schema:name ?entityTypeLabel . \n'
-      +'                            FILTER (LANG(?entityTypeLabel) = "'+br_lang+'")\n'
-      +'                          } \n'
-      +'              }\n'
-      +'    }\n'
-      +' }';
-*****/
 
       var url_links = "https://linkeddata.uriburner.com/sparql";
-      var link_query = new Settings().createSuperLinksQuery(iri, br_lang);
+      var links_sparql_query = new Settings().createSuperLinksQuery(links_query, iri, br_lang);
 
       jQuery.ajaxSetup({
          dataType: "text",
          headers:{'Accept': 'application/json',
                'Cache-control': 'no-cache'},
          cache: false,
-         timeout: 30000,
+         timeout: links_timeout,
          xhrFields: {
                withCredentials: true
          }
@@ -743,9 +710,9 @@
 
       params = {
               format:'application/json',
-              query: link_query,
+              query: links_sparql_query,
               CXML_redir_for_subjs: 121,
-              timeout: 30000000
+              timeout: links_timeout
                 };
 
       jQuery.get(url_links, params, function(data, status){
@@ -1032,7 +999,7 @@
                     else if (request.property == "open_tab")
                         request_open_tab(request.url, sender)
                     else if (request.property == "super_links")
-                        add_super_links(sender)
+                        add_super_links(sender, request.query, request.timeout)
                     else
                         sendResponse({});  // stop
                 });

@@ -794,10 +794,16 @@ else
 function SuperLinks_exec()
 {
   if (doc_URL!==null) {
+    var setting = new Settings();
+    var link_query =   setting.getValue("ext.osds.super_links.query");
+    var link_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
+
     Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         Browser.api.tabs.sendMessage(tabs[0].id, {
             property: 'super_links',
+            query : link_query,
+            timeout: link_timeout
           },
           function(response) {
           });
