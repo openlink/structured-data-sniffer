@@ -869,6 +869,7 @@
 
     function mark_strings(keyword)
     {
+      var terms = {};
       var options = {
             "element": "a",  //"a"
             "className": "super_link_mark",
@@ -882,6 +883,20 @@
             "iframesTimeout": 5000,
             "caseSensitive": false,
             "ignoreJoiners": false,
+            "filter": function(textNode, foundTerm, totalCounter){
+                      // textNode is the text node which contains the found term
+                      // foundTerm is the found search term
+                      // totalCounter is a counter indicating the total number of all marks
+                      // at the time of the function call
+                 var count = terms[foundTerm];
+                 if (count===undefined) {
+                    terms[foundTerm]=1;
+                    return true;
+                 } else {
+                    terms[foundTerm]=count+1;
+                    return (count >= 1)? false: true;
+                 } 
+            },
             "each": function(node){
                 // node is the marked DOM element
                 $(node).attr("href","");
