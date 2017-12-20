@@ -179,7 +179,7 @@ if (Browser.isChromeAPI)
           ext = "n3";
         }
       }
-      else if (!handle && (content_type===null || content_type.match(/(application\/octet-stream)/)) {
+      else if (!handle && (content_type===null || content_type.match(/(application\/octet-stream)/))) {
         var url_path = new Uri(d.url).path();
         if (url_path.endsWith(".owl")) {
           handle = true;

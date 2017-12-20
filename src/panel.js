@@ -145,18 +145,9 @@ $(document).ready(function()
 
   gData_showed = false;
 
-  if (Browser.isFirefoxSDK)
-  {
-    jQuery('#ext_ver').text('ver: '+ self.options.ver);
+  jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
 
-    //req data from extension
-    self.port.emit("doc_data", "");
-  }
-  else
-  {
-    jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
-
-    Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
+  Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
         Browser.api.tabs.sendMessage(tabs[0].id, {
@@ -165,8 +156,7 @@ $(document).ready(function()
           function(response) {
           });
       }
-    });
-  }
+  });
 
 });
 
@@ -744,6 +734,15 @@ if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
       if (request.property == "status")
       {
         var show_action = request.data_exists;
+
+        if (!show_action) {
+          var setting = new Settings();
+          var action_for_params =  setting.getValue("ext.osds.pref.show_action");
+
+          if (action_for_params && request.url_parama_exists)
+            show_action = true;
+        }
+
         if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
           if (show_action)
             Browser.api.browserAction.enable(sender.tab.id);
@@ -853,10 +852,7 @@ function Sparql_exec()
 function Prefs_exec()
 {
   //snow preferenses
-  if (Browser.isFirefoxSDK)
-     self.port.emit("prefs", "");
-  else
-     Browser.openTab("options.html")
+  Browser.openTab("options.html")
 
   return false;
 }

@@ -285,6 +285,7 @@
 
     function is_data_exist() {
         var path_pattern = /\/sparql\/?$/gmi;
+        var url_params = false;
         try {
 
             scan_frames();
@@ -293,6 +294,7 @@
             var loc  = document.location;
             if (path_pattern.test(loc.pathname) && loc.search.length>0 && loc.search[0]==="?")
               data_found = true;
+
 
             var items = jQuery('[itemscope]').not(jQuery('[itemscope] [itemscope]'));
             if (items && items.length > 0)
@@ -366,21 +368,22 @@
             }
 
 
-            if (data_found) {
+            if (!data_found) {
+               var url = new Uri(document.location.href);
+               url_params = url.queryPairs.length>0;
+            }
+
+            if (data_found || url_params) {
                 // Tell the chrome extension that we're ready to receive messages
                 //send data_exists flag to extension
-                if (Browser.isFirefoxSDK) {
-                    self.port.emit("content_status", {data_exists: data_found});
-                }
-                else {
-                    Browser.api.runtime.sendMessage({
+                Browser.api.runtime.sendMessage({
                             property: "status",
                             status: 'ready',
-                            data_exists: data_found
+                            data_exists: data_found,
+                            url_parama_exists: url_params
                         },
                         function (response) {
                         });
-                }
             }
 
         } catch (e) {
@@ -986,10 +989,6 @@
                 docData.posh.text = posh_Text;
 
                 //send data to extension
-                if (Browser.isFirefoxSDK) {
-                    self.port.emit("doc_data", {data: JSON.stringify(docData, undefined, 2)});
-                }
-                else {
                     Browser.api.runtime.sendMessage(
                         {
                             property: "doc_data",
@@ -997,17 +996,10 @@
                         },
                         function (response) {
                         });
-                }
             }
 
 
             // wait data req from extension
-            if (Browser.isFirefoxSDK) {
-                self.port.on("doc_data", function (msg) {
-                    request_doc_data()
-                });
-            }
-            else {
                 Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                     if (request.property == "doc_data")
                         request_doc_data();
@@ -1018,7 +1010,6 @@
                     else
                         sendResponse({});  // stop
                 });
-            }
 
 
         } catch (e) {

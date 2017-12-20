@@ -60,10 +60,6 @@ $(document).ready(function()
 
   $('#download_btn').click(Download_exec);
 
-  if (Browser.isFirefoxSDK) {
-    $('#prefs_btn').click(Prefs_exec);
-  }
-
   $('#tabs a[href=#src]').click(function(){
       selectTab(prevSelectedTab);
       return false;
@@ -137,16 +133,7 @@ $(document).ready(function()
 
   selectTab('#micro');
 
-  if (Browser.isFirefoxSDK)
-  {
-//--    jQuery('#ext_ver').text('ver: '+ self.options.ver);
-    load_data_from_url(null, self.options.url, self.options.type);
-  }
-  else
-  {
-//--    jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
-    load_data_from_url(document.location);
-  }
+  load_data_from_url(document.location);
 
 
 });
@@ -201,7 +188,7 @@ $(document).on('click', 'a', function(e) {
 });
 
 
-function load_data_from_url(loc, uri, contType)
+function load_data_from_url(loc)
 {
     function parseUrlQuery(loc)
     {
@@ -216,23 +203,13 @@ function load_data_from_url(loc, uri, contType)
       return data;
     }
 
-    var url;
-    var type;
-    var ext;
+    var params = parseUrlQuery(loc);
+    if (!params["url"])
+      return;
 
-    if (loc) {
-      var params = parseUrlQuery(loc);
-      if (!params["url"])
-        return;
-
-      url = decodeURIComponent(params.url);
-      type = params.type;
-      ext = params.ext;
-    }
-    else {
-      url = uri;
-      type = contType;
-    }
+    var url = decodeURIComponent(params.url);
+    var type = params.type;
+    var ext = params.ext;
 
     var hdr_accept = "";
 
@@ -493,16 +470,6 @@ function Sparql_exec()
      var _url = new Settings().createSparqlUrl(doc_URL);
      Browser.api.tabs.create({url:_url});
   }
-
-  return false;
-}
-
-
-function Prefs_exec()
-{
-  //snow preferenses
-  if (Browser.isFirefoxSDK)
-     self.port.emit("prefs", "");
 
   return false;
 }
