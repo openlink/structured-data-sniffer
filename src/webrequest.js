@@ -179,6 +179,25 @@ if (Browser.isChromeAPI)
           ext = "n3";
         }
       }
+      else if (!handle && (content_type===null || content_type.match(/(application\/octet-stream)/)) {
+        var url_path = new Uri(d.url).path();
+        if (url_path.endsWith(".owl")) {
+          handle = true;
+          type = "rdf";
+          ext = "owl";
+        }
+        else if (url_path.endsWith(".rdf")) {
+          handle = true;
+          type = "rdf";
+          ext = "rdf";
+        }
+        else if (url_path.endsWith(".ttl")) {
+          handle = true;
+          type = "turtle";
+          ext = "ttl";
+        }
+      }
+
 
       if (handle)  {
           var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
