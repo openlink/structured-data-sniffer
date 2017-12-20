@@ -735,19 +735,7 @@ if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
 }
 
 
-if (Browser.isFirefoxSDK)
-{
-  //Firefox SDK
-  //wait data from extension
-  self.port.on("doc_data", function(msg) {
 
-      var dData = JSON.parse(msg.data);
-      if (!gData_showed)
-        parse_Data(dData);
-  });
-}
-else
-{
   //Chrome API
   //wait data from extension
   Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
@@ -787,7 +775,7 @@ else
 
   });
 
-}
+
 
 
 ////////////////////////////////////////////////////
@@ -1234,7 +1222,7 @@ function rest_exec() {
 
   if (yasqe.obj) {
     var val = yasqe.obj.getValue();
-    if (val && val.length > 0)
+    if (val && (val.replace(/[\r\n ]/g, '')).length > 0)
        _url.addQueryParam("query", val);
   }
 

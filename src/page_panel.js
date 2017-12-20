@@ -761,7 +761,7 @@ function rest_exec() {
 
   if (yasqe.obj) {
     var val = yasqe.obj.getValue();
-    if (val && val.length > 0)
+    if (val && (val.replace(/[\r\n ]/g, '')).length > 0)
        url.addQueryParam("query", val);
   }
 
