@@ -17,7 +17,7 @@
     "default_popup": "panel.html"
   },
   "background": {
-    "page": "panel.html"
+    "page": "background.html"
   },
   "options_ui": {
     "page": "options.html",

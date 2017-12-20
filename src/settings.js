@@ -136,6 +136,9 @@ Settings.prototype = {
       case "ext.osds.pref.user.chk":
           val = "1";
           break;
+      case "ext.osds.pref.show_action":
+          val = "1";
+          break;
       case "ext.osds.uiterm.mode":
           val = "ui-eav"
           break;

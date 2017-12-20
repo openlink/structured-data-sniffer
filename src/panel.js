@@ -22,6 +22,7 @@
 
 var items;
 var $ = jQuery;
+var gData_exists = false;
 var gData_showed = false;
 var doc_URL = null;
 var prevSelectedTab = null;
@@ -127,7 +128,8 @@ $(document).ready(function()
 
   $('#rest_exec').click(rest_exec);
   $('#rest_exit').click(function(){
-      selectTab(prevSelectedTab);
+      if (prevSelectedTab)
+        selectTab(prevSelectedTab);
       return false;
   });
   $('#rest_add').button({
@@ -150,6 +152,8 @@ $(document).ready(function()
   Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
+        doc_URL = tabs[0].url;
+        load_restData(doc_URL);
         Browser.api.tabs.sendMessage(tabs[0].id, {
             property: 'doc_data'
           },
@@ -704,7 +708,7 @@ function parse_Data(dData)
   dData.rdf.error = null;
   dData.rdf_nano.expanded = null;
   dData.rdf_nano.error = null;
-  doc_URL = dData.docURL;
+  doc_URL = dData.doc_URL;
 
   var url = new Uri(doc_URL);
   url.setAnchor("");
@@ -718,61 +722,43 @@ function parse_Data(dData)
 
 
 
-if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
+//Chrome API
+//wait data from extension
+Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+{
   try {
-    Browser.api.browserAction.disable();
-  } catch(e) {}
-}
-
-
-
-  //Chrome API
-  //wait data from extension
-  Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
-  {
-    try {
-      if (request.property == "status")
+    if (request.property == "doc_data")
+    {
+      var dData = JSON.parse(request.data);
+      try {
+        gData.tab_index = sender.tab.index;
+      } catch(e){}
+      if (request.is_data_exists)
       {
-        var show_action = request.data_exists;
-
-        if (!show_action) {
-          var setting = new Settings();
-          var action_for_params =  setting.getValue("ext.osds.pref.show_action");
-
-          if (action_for_params && request.url_parama_exists)
-            show_action = true;
-        }
-
-        if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
-          if (show_action)
-            Browser.api.browserAction.enable(sender.tab.id);
-          else
-            Browser.api.browserAction.disable(sender.tab.id);
-        }
-        else {
-          if (show_action)
-            Browser.api.pageAction.show(sender.tab.id);
-          else
-            Browser.api.pageAction.hide(sender.tab.id);
-        }
-      }
-      else if (request.property == "doc_data")
-      {
-        var dData = JSON.parse(request.data);
-        try {
-          gData.tab_index = sender.tab.index;
-        } catch(e){}
         parse_Data(dData);
       }
       else
       {
-        sendResponse({}); /* stop */
-      }
-    } catch(e) {
-      console.log("OSDS: onMsg="+e);
-    }
+        $('#tabs a[href=#micro]').hide();
+        $('#tabs a[href=#jsonld]').hide();
+        $('#tabs a[href=#turtle]').hide();
+        $('#tabs a[href=#rdfa]').hide();
+        $('#tabs a[href=#rdf]').hide();
+        $('#tabs a[href=#posh]').hide();
+        selectedTab = null;
 
-  });
+        show_rest();
+      } 
+    }
+    else
+    {
+      sendResponse({}); /* stop */
+    }
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
 
 
 
@@ -1218,8 +1204,10 @@ function rest_exec() {
 
   if (yasqe.obj) {
     var val = yasqe.obj.getValue();
-    if (val && (val.replace(/[\r\n ]/g, '')).length > 0)
-       _url.addQueryParam("query", val);
+    var name = $("#query_id").val();
+    if (val && (val.replace(/[\r\n ]/g, '')).length > 0) {
+       _url.addQueryParam(name, val);
+    }
   }
 
   var rows = $('#restData>tr');
@@ -1319,8 +1307,10 @@ function load_restData(doc_url)
   for(var i=0; i<params.length; i++) {
     var val = params[i][1];
     var key = params[i][0];
-    if (key === "query")
+    if (key === "query" || key === "qtxt") {
       yasqe.val = val;
+      $("#query_id").val(key);
+    }
     else
       addRestParam(params[i][0], val);
   }

@@ -728,8 +728,10 @@ function rest_exec() {
 
   if (yasqe.obj) {
     var val = yasqe.obj.getValue();
-    if (val && (val.replace(/[\r\n ]/g, '')).length > 0)
-       url.addQueryParam("query", val);
+    var name = $("#query_id").val();
+    if (val && (val.replace(/[\r\n ]/g, '')).length > 0) {
+       url.addQueryParam(name, val);
+    }
   }
 
   var rows = $('#restData>tr');
@@ -821,8 +823,10 @@ function load_restData(doc_url)
   for(var i=0; i<params.length; i++) {
     var val = params[i][1];
     var key = params[i][0];
-    if (key === "query")
+    if (key === "query" || key ==="qtxt") {
       yasqe.val = val;
+      $("#query_id").val(key);
+    }
     else
       addRestParam(params[i][0], val);
   }

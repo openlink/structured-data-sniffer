@@ -284,17 +284,10 @@
 
 
     function is_data_exist() {
-        var path_pattern = /\/sparql\/?$/gmi;
-        var url_params = false;
         try {
 
             scan_frames();
             data_found = false;
-
-            var loc  = document.location;
-            if (path_pattern.test(loc.pathname) && loc.search.length>0 && loc.search[0]==="?")
-              data_found = true;
-
 
             var items = jQuery('[itemscope]').not(jQuery('[itemscope] [itemscope]'));
             if (items && items.length > 0)
@@ -368,23 +361,16 @@
             }
 
 
-            if (!data_found) {
-               var url = new Uri(document.location.href);
-               url_params = url.queryPairs.length>0;
-            }
-
-            if (data_found || url_params) {
-                // Tell the chrome extension that we're ready to receive messages
-                //send data_exists flag to extension
-                Browser.api.runtime.sendMessage({
-                            property: "status",
-                            status: 'ready',
-                            data_exists: data_found,
-                            url_parama_exists: url_params
-                        },
-                        function (response) {
-                        });
-            }
+            // Tell the chrome extension that we're ready to receive messages
+            //send data_exists flag to extension
+            Browser.api.runtime.sendMessage({
+                        property: "status",
+                        status: 'ready',
+                        data_exists: data_found,
+                        doc_URL: document.location.href
+                    },
+                    function (response) {
+                    });
 
         } catch (e) {
             console.log("OSDS:" + e);
@@ -959,8 +945,9 @@
 
 
             function send_doc_data() {
+                var data_exists = false;
                 var docData = {
-                    docURL: document.location.href,
+                    doc_URL: document.location.href,
                     micro: {data: null},
                     jsonld: {text: null},
                     rdfa: {data: null, ttl: null},
@@ -988,28 +975,41 @@
                 docData.rdf_nano.text = rdf_nano_Text;
                 docData.posh.text = posh_Text;
 
+                if ((microdata.items && microdata.items.length > 0)
+                    || (json_ld_Text && json_ld_Text.length > 0)
+                    || (turtle_Text  && turtle_Text.length > 0)
+                    || (rdf_Text     && rdf_Text.length > 0)
+                    || (rdfa         && rdfa.length > 0)
+                    || (ttl_nano_Text && ttl_nano_Text.length > 0)
+                    || (json_nano_Text && json_nano_Text.length > 0)
+                    || (rdf_nano_Text && rdf_nano_Text.length > 0)
+                    || (posh_Text    && posh_Text.length > 0)
+                   )
+                  data_exists = true;
+
                 //send data to extension
-                    Browser.api.runtime.sendMessage(
-                        {
-                            property: "doc_data",
-                            data: JSON.stringify(docData, undefined, 2)
-                        },
-                        function (response) {
-                        });
+                Browser.api.runtime.sendMessage(
+                    {
+                        property: "doc_data",
+                        data: JSON.stringify(docData, undefined, 2),
+                        is_data_exists: data_exists
+                    },
+                    function (response) {
+                    });
             }
 
 
             // wait data req from extension
-                Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-                    if (request.property == "doc_data")
-                        request_doc_data();
-                    else if (request.property == "open_tab")
-                        request_open_tab(request.url, sender)
-                    else if (request.property == "super_links")
-                        add_super_links(sender, request.query, request.timeout)
-                    else
-                        sendResponse({});  // stop
-                });
+            Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+                if (request.property == "doc_data")
+                    request_doc_data();
+                else if (request.property == "open_tab")
+                    request_open_tab(request.url, sender)
+                else if (request.property == "super_links")
+                    add_super_links(sender, request.query, request.timeout)
+                else
+                    sendResponse({});  // stop
+            });
 
 
         } catch (e) {
