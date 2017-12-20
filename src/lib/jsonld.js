@@ -3402,13 +3402,18 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
           'Invalid JSON-LD syntax; the value of "@base" in a ' +
           '@context must be a string or null.',
           'jsonld.SyntaxError', {code: 'invalid base IRI', context: ctx});
-      } else if(base !== '' && !_isAbsoluteIri(base)) {
+      } else if(base !== '' && !_isAbsoluteIri(base) && base!='#') {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; the value of "@base" in a ' +
           '@context must be an absolute IRI or the empty string.',
           'jsonld.SyntaxError', {code: 'invalid base IRI', context: ctx});
       }
 
+//??
+/**
+      if (base === '#' && options.base && _isAbsoluteIri(options.base))
+        base = options.base + base;
+**/
       if(base !== null) {
         base = jsonld.url.parse(base || '');
       }
