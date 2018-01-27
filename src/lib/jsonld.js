@@ -2095,7 +2095,6 @@ jsonld.hasValue = function(subject, property, value) {
  *          if not (default: false).
  *        [allowDuplicate] true to allow duplicates, false not to (uses a
  *          simple shallow comparison of subject ID or value) (default: true).
-//??##
  */
 jsonld.addValue = function(subject, property, value, options) {
   options = options || {};
@@ -2725,7 +2724,7 @@ Processor.prototype.expand = function(
     }
 
     // expand property
-    var expandedProperty = _expandIri(activeCtx, key, {vocab: true});
+    var expandedProperty = _expandIri(activeCtx, key, {vocab: true, base: true});
 
     // drop non-absolute IRI keys that aren't keywords
     if(expandedProperty === null ||
@@ -3409,14 +3408,13 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
           'jsonld.SyntaxError', {code: 'invalid base IRI', context: ctx});
       }
 
-//??
-/**
-      if (base === '#' && options.base && _isAbsoluteIri(options.base))
-        base = options.base + base;
-**/
+      if (!_isAbsoluteIri(base) && options.base && _isAbsoluteIri(options.base))
+        base = jsonld.prependBase(options.base, base);
+
       if(base !== null) {
         base = jsonld.url.parse(base || '');
       }
+
       rval['@base'] = base;
       defined['@base'] = true;
     }
@@ -5985,6 +5983,11 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     var mapping = activeCtx.mappings[prefix];
     if(mapping) {
       return mapping['@id'] + suffix;
+    } else if (prefix ==="") {
+      throw new JsonLdError(
+       'Invalid JSON-LD syntax; the empty prefix is used, but it was not defined.', 
+       'jsonld.SyntaxError',
+       {code: 'empty prefix was not defined', value: value});
     }
 
     // already absolute IRI

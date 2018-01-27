@@ -253,8 +253,11 @@ Handle_Turtle.prototype = {
          return this.baseURI;
        else if (n.substring(0,1)==="#")
          return this.baseURI+n;
+//??
+/***
        else if (n.substring(0,1)===":")
          return this.baseURI+'/'+n.substring(1);
+***/
        else
          return n;
      } else {
