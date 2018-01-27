@@ -60,10 +60,6 @@ $(document).ready(function()
 
   $('#download_btn').click(Download_exec);
 
-  if (Browser.isFirefoxSDK) {
-    $('#prefs_btn').click(Prefs_exec);
-  }
-
   $('#tabs a[href=#src]').click(function(){
       selectTab(prevSelectedTab);
       return false;
@@ -137,16 +133,7 @@ $(document).ready(function()
 
   selectTab('#micro');
 
-  if (Browser.isFirefoxSDK)
-  {
-//--    jQuery('#ext_ver').text('ver: '+ self.options.ver);
-    load_data_from_url(null, self.options.url, self.options.type);
-  }
-  else
-  {
-//--    jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
-    load_data_from_url(document.location);
-  }
+  load_data_from_url(document.location);
 
 
 });
@@ -201,7 +188,7 @@ $(document).on('click', 'a', function(e) {
 });
 
 
-function load_data_from_url(loc, uri, contType)
+function load_data_from_url(loc)
 {
     function parseUrlQuery(loc)
     {
@@ -216,23 +203,13 @@ function load_data_from_url(loc, uri, contType)
       return data;
     }
 
-    var url;
-    var type;
-    var ext;
+    var params = parseUrlQuery(loc);
+    if (!params["url"])
+      return;
 
-    if (loc) {
-      var params = parseUrlQuery(loc);
-      if (!params["url"])
-        return;
-
-      url = decodeURIComponent(params.url);
-      type = params.type;
-      ext = params.ext;
-    }
-    else {
-      url = uri;
-      type = contType;
-    }
+    var url = decodeURIComponent(params.url);
+    var type = params.type;
+    var ext = params.ext;
 
     var hdr_accept = "";
 
@@ -498,16 +475,6 @@ function Sparql_exec()
 }
 
 
-function Prefs_exec()
-{
-  //snow preferenses
-  if (Browser.isFirefoxSDK)
-     self.port.emit("prefs", "");
-
-  return false;
-}
-
-
 function Download_exec()
 {
   $('#save-action').change(function() {
@@ -761,8 +728,10 @@ function rest_exec() {
 
   if (yasqe.obj) {
     var val = yasqe.obj.getValue();
-    if (val && val.length > 0)
-       url.addQueryParam("query", val);
+    var name = $("#query_id").val();
+    if (val && (val.replace(/[\r\n ]/g, '')).length > 0) {
+       url.addQueryParam(name, val);
+    }
   }
 
   var rows = $('#restData>tr');
@@ -854,8 +823,10 @@ function load_restData(doc_url)
   for(var i=0; i<params.length; i++) {
     var val = params[i][1];
     var key = params[i][0];
-    if (key === "query")
+    if (key === "query" || key ==="qtxt") {
       yasqe.val = val;
+      $("#query_id").val(key);
+    }
     else
       addRestParam(params[i][0], val);
   }

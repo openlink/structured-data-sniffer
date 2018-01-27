@@ -284,15 +284,10 @@
 
 
     function is_data_exist() {
-        var path_pattern = /\/sparql\/?$/gmi;
         try {
 
             scan_frames();
             data_found = false;
-
-            var loc  = document.location;
-            if (path_pattern.test(loc.pathname) && loc.search.length>0 && loc.search[0]==="?")
-              data_found = true;
 
             var items = jQuery('[itemscope]').not(jQuery('[itemscope] [itemscope]'));
             if (items && items.length > 0)
@@ -366,27 +361,24 @@
             }
 
 
-            if (data_found) {
-                // Tell the chrome extension that we're ready to receive messages
-                //send data_exists flag to extension
-                if (Browser.isFirefoxSDK) {
-                    self.port.emit("content_status", {data_exists: data_found});
-                }
-                else {
-                    Browser.api.runtime.sendMessage({
-                            property: "status",
-                            status: 'ready',
-                            data_exists: data_found
-                        },
-                        function (response) {
-                        });
-                }
-            }
+            // Tell the chrome extension that we're ready to receive messages
+            //send data_exists flag to extension
+            Browser.api.runtime.sendMessage({
+                        property: "status",
+                        status: 'ready',
+                        data_exists: data_found,
+                        doc_URL: document.location.href
+                    },
+                    function (response) {
+                    });
 
         } catch (e) {
             console.log("OSDS:" + e);
         }
 
+        if (!data_found) {
+            setTimeout(is_data_exist, 6000);
+        }
     }
 
 
@@ -624,7 +616,7 @@
     }
 
 
-    function add_super_links(sender)
+    function add_super_links(sender, links_query, links_timeout)
     {
       if (g_super_links==null) {
          $('body').append(
@@ -659,13 +651,13 @@
                     location.href = xhr.responseURL; //console.log("redirected");
                     return;
                   }
-                  exec_super_links_query();
+                  exec_super_links_query(links_query, links_timeout);
 
               }
               else {
                 alert("Sponge error:"+xhr.status+" ["+xhr.statusText+"]");
                 //$(".super_links_msg").css("display","none");
-                exec_super_links_query();
+                exec_super_links_query(links_query, links_timeout);
               }
             }
           }
@@ -682,7 +674,7 @@
         } catch (e) {}
     }
 
-    function exec_super_links_query()
+    function exec_super_links_query(links_query, links_timeout)
     {
       var iri = new Uri(location.href).setAnchor("").toString();
       var br_lang = navigator.language || navigator.userLanguage;
@@ -693,49 +685,16 @@
       } else {
         br_lang = 'en';
       }
-/*******
-      var link_query = ''
-      +'DEFINE get:soft "soft" \n'
-      +'SELECT DISTINCT ?extract ?extractLabel ?entityType ?p as ?association ?associationLabel ?entityTypeLabel ?provider ?providerLabel\n'
-      +'WHERE \n'
-      +' { GRAPH <'+iri+'> \n'
-      +'    { \n'
-      +'      ?extract a ?entityType ;\n'
-      +'      <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ; \n'
-      +'      rdfs:label ?extractLabel . \n'
-      +'\n'
-      +'      OPTIONAL {?provider foaf:name|schema:name ?providerLabel} . \n'
-      +'      ?source ?p ?extract .\n'
-      +'\n'
-      +'      FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
-      +'      FILTER (! contains(str(?entityType),"Tag")) \n'
-      +'    }\n'
-      +'    { SELECT ?p ?associationLabel \n'
-      +'        WHERE { GRAPH ?g1 { ?p rdfs:label|schema:name ?associationLabel . \n'
-      +'                            FILTER (?p in (skos:related, schema:about, schema:mentions)) \n'
-      +'                            FILTER (LANG(?associationLabel) = "'+br_lang+'") \n'
-      +'                          } \n'
-      +'              } \n'
-      +'    } \n'
-      +'\n'
-      +'    { SELECT ?entityType ?entityTypeLabel \n'
-      +'        WHERE { GRAPH ?g2 { ?entityType rdfs:label|schema:name ?entityTypeLabel . \n'
-      +'                            FILTER (LANG(?entityTypeLabel) = "'+br_lang+'")\n'
-      +'                          } \n'
-      +'              }\n'
-      +'    }\n'
-      +' }';
-*****/
 
       var url_links = "https://linkeddata.uriburner.com/sparql";
-      var link_query = new Settings().createSuperLinksQuery(iri, br_lang);
+      var links_sparql_query = new Settings().createSuperLinksQuery(links_query, iri, br_lang);
 
       jQuery.ajaxSetup({
          dataType: "text",
          headers:{'Accept': 'application/json',
                'Cache-control': 'no-cache'},
          cache: false,
-         timeout: 30000,
+         timeout: links_timeout,
          xhrFields: {
                withCredentials: true
          }
@@ -743,9 +702,9 @@
 
       params = {
               format:'application/json',
-              query: link_query,
+              query: links_sparql_query,
               CXML_redir_for_subjs: 121,
-              timeout: 30000000
+              timeout: links_timeout
                 };
 
       jQuery.get(url_links, params, function(data, status){
@@ -902,6 +861,7 @@
 
     function mark_strings(keyword)
     {
+      var terms = {};
       var options = {
             "element": "a",  //"a"
             "className": "super_link_mark",
@@ -915,6 +875,20 @@
             "iframesTimeout": 5000,
             "caseSensitive": false,
             "ignoreJoiners": false,
+            "filter": function(textNode, foundTerm, totalCounter){
+                      // textNode is the text node which contains the found term
+                      // foundTerm is the found search term
+                      // totalCounter is a counter indicating the total number of all marks
+                      // at the time of the function call
+                 var count = terms[foundTerm];
+                 if (count===undefined) {
+                    terms[foundTerm]=1;
+                    return true;
+                 } else {
+                    terms[foundTerm]=count+1;
+                    return (count >= 1)? false: true;
+                 } 
+            },
             "each": function(node){
                 // node is the marked DOM element
                 $(node).attr("href","");
@@ -974,8 +948,9 @@
 
 
             function send_doc_data() {
+                var data_exists = false;
                 var docData = {
-                    docURL: document.location.href,
+                    doc_URL: document.location.href,
                     micro: {data: null},
                     jsonld: {text: null},
                     rdfa: {data: null, ttl: null},
@@ -1003,40 +978,41 @@
                 docData.rdf_nano.text = rdf_nano_Text;
                 docData.posh.text = posh_Text;
 
+                if ((microdata.items && microdata.items.length > 0)
+                    || (json_ld_Text && json_ld_Text.length > 0)
+                    || (turtle_Text  && turtle_Text.length > 0)
+                    || (rdf_Text     && rdf_Text.length > 0)
+                    || (rdfa         && rdfa.length > 0)
+                    || (ttl_nano_Text && ttl_nano_Text.length > 0)
+                    || (json_nano_Text && json_nano_Text.length > 0)
+                    || (rdf_nano_Text && rdf_nano_Text.length > 0)
+                    || (posh_Text    && posh_Text.length > 0)
+                   )
+                  data_exists = true;
+
                 //send data to extension
-                if (Browser.isFirefoxSDK) {
-                    self.port.emit("doc_data", {data: JSON.stringify(docData, undefined, 2)});
-                }
-                else {
-                    Browser.api.runtime.sendMessage(
-                        {
-                            property: "doc_data",
-                            data: JSON.stringify(docData, undefined, 2)
-                        },
-                        function (response) {
-                        });
-                }
+                Browser.api.runtime.sendMessage(
+                    {
+                        property: "doc_data",
+                        data: JSON.stringify(docData, undefined, 2),
+                        is_data_exists: data_exists
+                    },
+                    function (response) {
+                    });
             }
 
 
             // wait data req from extension
-            if (Browser.isFirefoxSDK) {
-                self.port.on("doc_data", function (msg) {
-                    request_doc_data()
-                });
-            }
-            else {
-                Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-                    if (request.property == "doc_data")
-                        request_doc_data();
-                    else if (request.property == "open_tab")
-                        request_open_tab(request.url, sender)
-                    else if (request.property == "super_links")
-                        add_super_links(sender)
-                    else
-                        sendResponse({});  // stop
-                });
-            }
+            Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+                if (request.property == "doc_data")
+                    request_doc_data();
+                else if (request.property == "open_tab")
+                    request_open_tab(request.url, sender)
+                else if (request.property == "super_links")
+                    add_super_links(sender, request.query, request.timeout)
+                else
+                    sendResponse({});  // stop
+            });
 
 
         } catch (e) {

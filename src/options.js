@@ -102,10 +102,7 @@ $(function(){
 
 	enableCtrls();
 
-	if (Browser.isFirefoxSDK)
-		jQuery('#ext_ver').text('Version: '+ self.options.ver);
-	else
-		$('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
+	$('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
 
 });
 
@@ -117,8 +114,6 @@ function closeOptions()
         Browser.api.tabs.remove(tab.id);
       });
     } else {
-      if (Browser.isFirefoxSDK)
-        self.port.emit("close", "");
       window.close();
     }
 }
@@ -199,6 +194,7 @@ function setSuperLinksDefaults()
       modal: true,
       buttons: {
         "OK": function() {
+          $('#super-links-timeout').val(gPref.def_super_links_timeout);
           yasqe_slinks.setValue(gPref.def_super_links_query);
           $(this).dialog( "close" );
         },
@@ -253,6 +249,10 @@ function loadPref()
 
     load_pref_user();
 
+    var chk_action = gPref.getValue("ext.osds.pref.show_action");
+    if (chk_action && chk_action==="1")
+      $("#chk_show_action_for_url_with_params").attr('checked','checked');
+
     var import_url = gPref.getValue("ext.osds.import.url");
     var import_srv = gPref.getValue("ext.osds.import.srv");
 
@@ -277,6 +277,9 @@ function loadPref()
 
     yasqe_srv.setValue(gPref.getValue("ext.osds.sparql.query")+"\n");
     yasqe_slinks.setValue(gPref.getValue("ext.osds.super_links.query")+"\n");
+
+    var super_timeout = gPref.getValue("ext.osds.super_links.timeout");
+    $('#super-links-timeout').val(super_timeout);
 }
 
 
@@ -287,6 +290,8 @@ function savePref()
    gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
 
    gPref.setValue("ext.osds.pref.user.chk", $('#chk_pref_user').is(':checked')?"1":"0");
+
+   gPref.setValue("ext.osds.pref.show_action", $('#chk_show_action_for_url_with_params').is(':checked')?"1":"0");
 
 //   gPref.setValue("ext.osds.pref.user", $('#pref_user').val().trim());
 
@@ -309,10 +314,10 @@ function savePref()
 
    gPref.setValue("ext.osds.sparql.query", yasqe_srv.getValue());
 
-	 gPref.setValue("ext.osds.super_links.query", yasqe_slinks.getValue());
+   gPref.setValue("ext.osds.super_links.query", yasqe_slinks.getValue());
 
-   if (Browser.isFirefoxSDK)
-     self.port.emit("close", {osds_pref_user:pref_user});
+   var timeout = $('#super-links-timeout').val().trim();
+   gPref.setValue("ext.osds.super_links.timeout", parseInt(timeout, 10));
 
    closeOptions();
 }

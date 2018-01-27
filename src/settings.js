@@ -47,6 +47,7 @@ Settings = function(data) {
                             "               OR CONTAINS(str(?p),'mentions')) \n"+
                             "      } LIMIT 100\n";
 
+  this.def_super_links_timeout = 30000000;
   this.def_super_links_query = ''
   +'DEFINE get:soft "soft" \n'
   +' \n'
@@ -135,6 +136,9 @@ Settings.prototype = {
       case "ext.osds.pref.user.chk":
           val = "1";
           break;
+      case "ext.osds.pref.show_action":
+          val = "1";
+          break;
       case "ext.osds.uiterm.mode":
           val = "ui-eav"
           break;
@@ -158,6 +162,9 @@ Settings.prototype = {
           break;
       case "ext.osds.super_links.query":
           val = this.def_super_links_query;
+          break;
+      case "ext.osds.super_links.timeout":
+          val = this.def_super_links_timeout;
           break;
     }
     return val;
@@ -211,9 +218,9 @@ Settings.prototype = {
     return sparql_url.replace(/{query}/g, query);
   },
 
-  createSuperLinksQuery : function (curUrl, lang)
+  createSuperLinksQuery : function (query, curUrl, lang)
   {
-    var query = this.getValue('ext.osds.super_links.query');
+//    var query = this.getValue('ext.osds.super_links.query');
     return query.replace(/{url}/g, curUrl).replace(/{lang}/g, lang);
   },
 
