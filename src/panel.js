@@ -710,10 +710,14 @@ function parse_Data(dData)
   dData.rdf_nano.error = null;
   doc_URL = dData.doc_URL;
 
+//??
+/**/
   var url = new Uri(doc_URL);
   url.setAnchor("");
   url.setQuery("");
   gData.baseURL = url.toString();
+/**/
+//  gData.baseURL = doc_URL;
 
   load_restData(doc_URL);
 

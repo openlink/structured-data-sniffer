@@ -150,7 +150,9 @@ if (Browser.isChromeAPI)
 
       if (!handle && (content_type===null || content_type.match(/(application\/xml)/) 
                                           || content_type.match(/(text\/xml)/) 
-                                          || content_type.match(/(text\/plain)/))) {
+                                          || content_type.match(/(text\/plain)/)
+                                          || content_type.match(/(application\/octet-stream)/)
+                     )) {
         var url_path = new Uri(d.url).path();
         if (url_path.endsWith(".owl")) {
           handle = true;
@@ -178,25 +180,14 @@ if (Browser.isChromeAPI)
           ext = "n3";
         }
       }
-      else if (!handle && (content_type===null || content_type.match(/(application\/octet-stream)/))) {
-        var url_path = new Uri(d.url).path();
-        if (url_path.endsWith(".owl")) {
-          handle = true;
-          type = "rdf";
-          ext = "owl";
-        }
-        else if (url_path.endsWith(".rdf")) {
-          handle = true;
-          type = "rdf";
-          ext = "rdf";
-        }
-        else if (url_path.endsWith(".ttl")) {
-          handle = true;
-          type = "turtle";
-          ext = "ttl";
-        }
-      }
 
+      if (!handle && content_type!==null && (content_type.match(/(application\/xml)/) 
+                      || content_type.match(/(text\/xml)/) )) 
+      {
+          handle = true;
+          type = "xml";
+          v_cancel = true;
+      }
 
       if (handle)  {
           var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
