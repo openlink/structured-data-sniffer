@@ -291,7 +291,7 @@ function show_Data(dData)
   $('#micro_items #docdata_view').remove();
   $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.micro.expanded!==null && dData.micro.expanded.length > 0) {
+  if (dData.micro.expanded!==null && dData.micro.expanded.trim().length > 0) {
       html += dData.micro.expanded;
       gData.tabs.push("#micro");
   }
@@ -311,7 +311,7 @@ function show_Data(dData)
   $('#jsonld_items #docdata_view').remove();
   $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.jsonld.expanded!==null && dData.jsonld.expanded.length > 0) {
+  if (dData.jsonld.expanded!==null && dData.jsonld.expanded.trim().length > 0) {
       html += dData.jsonld.expanded;
       gData.tabs.push("#jsonld");
   }
@@ -332,7 +332,7 @@ function show_Data(dData)
   $('#turtle_items #docdata_view').remove();
   $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.turtle.expanded!==null && dData.turtle.expanded.length > 0) {
+  if (dData.turtle.expanded!==null && dData.turtle.expanded.trim().length > 0) {
       html += dData.turtle.expanded;
       gData.tabs.push("#turtle");
   }
@@ -352,7 +352,7 @@ function show_Data(dData)
   $('#rdfa_items #docdata_view').remove();
   $('#rdfa_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.rdfa.expanded!==null && dData.rdfa.expanded.length > 0) {
+  if (dData.rdfa.expanded!==null && dData.rdfa.expanded.trim().length > 0) {
       html += dData.rdfa.expanded;
       gData.tabs.push("#rdfa");
   }
@@ -373,7 +373,7 @@ function show_Data(dData)
   $('#rdf_items #docdata_view').remove();
   $('#rdf_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.rdf.expanded!==null && dData.rdf.expanded.length > 0) {
+  if (dData.rdf.expanded!==null && dData.rdf.expanded.trim().length > 0) {
       html += dData.rdf.expanded;
       gData.tabs.push("#rdf");
   }
@@ -393,7 +393,7 @@ function show_Data(dData)
   $('#posh_items #docdata_view').remove();
   $('#posh_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.posh.expanded!==null && dData.posh.expanded.length > 0) {
+  if (dData.posh.expanded!==null && dData.posh.expanded.trim().length > 0) {
       html += dData.posh.expanded;
       gData.tabs.push("#posh");
   }
