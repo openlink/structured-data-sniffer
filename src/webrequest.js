@@ -148,7 +148,9 @@ if (Browser.isChromeAPI)
           break;
       }
 
-      if (!handle && (content_type===null || content_type.match(/(application\/xml)/) || content_type.match(/(text\/xml)/) || content_type.match(/(text\/plain)/))) {
+      if (!handle && (content_type===null || content_type.match(/(application\/xml)/) 
+                                          || content_type.match(/(text\/xml)/) 
+                                          || content_type.match(/(text\/plain)/))) {
         var url_path = new Uri(d.url).path();
         if (url_path.endsWith(".owl")) {
           handle = true;
@@ -160,10 +162,7 @@ if (Browser.isChromeAPI)
           type = "rdf";
           ext = "rdf";
         }
-      }
-      else if (!handle && (content_type===null || content_type.match(/(text\/plain)/))) {
-        var url_path = new Uri(d.url).path();
-        if (url_path.endsWith(".ntriples")) {
+        else if (url_path.endsWith(".ntriples")) {
           handle = true;
           type = "turtle";
           ext = "ntriples";

@@ -376,6 +376,9 @@
             console.log("OSDS:" + e);
         }
 
+        if (!data_found) {
+            setTimeout(is_data_exist, 6000);
+        }
     }
 
 
