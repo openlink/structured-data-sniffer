@@ -241,10 +241,17 @@ function start_parse_data(data_text, data_type, data_url, ext)
 {
   var test_xml = /^\s*<\?xml/gi;
   var test_rdf = /^\s*<rdf:RDF/gi;
-    if (data_type === "rdf") {
+  var test_rdf1 = /^\s*<\?xml[\s\S]*>\s*<rdf:RDF/gi;
+
+  if (data_type === "rdf") {
     if (test_xml.exec(data_text)===null && test_rdf.exec(data_text)===null)
       data_type = "turtle";
+  } 
+  else if (data_type === "xml") {
+    if (test_rdf.exec(data_text)!==null || test_rdf1.exec(data_text)!==null)
+      data_type = "rdf";
   }
+
 
   gData.text = data_text;
   gData.type = data_type;
@@ -289,6 +296,11 @@ function start_parse_data(data_text, data_type, data_url, ext)
         function(error, html_data) {
           show_Data(error, html_data);
       });
+    }
+  else
+    {
+      var source = data_text.replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
+      document.body.innerHTML = "<pre>"+source+"</pre>";
     }
 
 }
