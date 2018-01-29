@@ -22,7 +22,7 @@ is under construction.
 Copyright 2015-2018 [OpenLink Software](mailto:opensource@openlinksw.com)
 
 This software is licensed under the GNU General Public License (see
-[COPYING](http://github.com/openlink/structured-data-sniffer/blob/develop/COPYING)).
+[COPYING](https://github.com/OpenLinkSoftware/OSDS_extension/blob/develop/COPYING)).
 
 **Note**: that the only valid version of the GPL license as far as this project is concerned is the
 original GNU General Public License Version 2, dated June 1991.
