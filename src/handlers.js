@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2017 OpenLink Software
+ *  Copyright (C) 2015-2018 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -253,8 +253,11 @@ Handle_Turtle.prototype = {
          return this.baseURI;
        else if (n.substring(0,1)==="#")
          return this.baseURI+n;
+//??
+/***
        else if (n.substring(0,1)===":")
-         return this.baseURI+n;
+         return this.baseURI+'/'+n.substring(1);
+***/
        else
          return n;
      } else {
@@ -308,13 +311,13 @@ Handle_JSONLD.prototype = {
       try {
         jsonld_data = JSON.parse(textData[this._pos]);
         if (jsonld_data != null) {
-          jsonld.expand(jsonld_data,
+          jsonld.expand(jsonld_data, {base:docURL},
             function(error, expanded) {
               if (error) {
                 handle_error(error);
               }
               else {
-                jsonld.toRDF(expanded, {format: 'application/nquads'},
+                jsonld.toRDF(expanded, {base:docURL, format: 'application/nquads'},
                   function(error, nquads) {
                     if (error) {
                       handle_error(error);

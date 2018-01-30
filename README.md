@@ -19,10 +19,10 @@ Support for additional browsers like
 is under construction.
 
 ## License
-Copyright 2015-2017 [OpenLink Software](mailto:opensource@openlinksw.com)
+Copyright 2015-2018 [OpenLink Software](mailto:opensource@openlinksw.com)
 
 This software is licensed under the GNU General Public License (see
-[COPYING](http://github.com/openlink/structured-data-sniffer/blob/develop/COPYING)).
+[COPYING](https://github.com/OpenLinkSoftware/OSDS_extension/blob/develop/COPYING)).
 
 **Note**: that the only valid version of the GPL license as far as this project is concerned is the
 original GNU General Public License Version 2, dated June 1991.
@@ -37,19 +37,20 @@ the same system.
 Clone the sources from github using the following commands:
 ```shell
 $ cd src
-$ git clone https://github.com/openlink/structured-data-sniffer
+$ git clone https://github.com/OpenLinkSoftware/OSDS_extension
+
 ```
 which will automatically download the latest develop branch.
 
 ### Download a source archive
 Download and extract a .tar.gz or .zip from either one of the
-[stable releases](https://github.com/openlink/structured-data-sniffer/releases/latest)
+[stable releases](https://github.com/OpenLinkSoftware/OSDS_extension/releases/latest)
 or directly from one of the following links:
 
-- [latest stable .tar.gz](https://github.com/openlink/structured-data-sniffer/archive/master.tar.gz)
-- [latest stable .zip](https://github.com/openlink/structured-data-sniffer/archive/master.zip)
-- [latest development .tar.gz](https://github.com/openlink/structured-data-sniffer/archive/develop.tar.gz)
-- [latest development .zip](https://github.com/openlink/structured-data-sniffer/archive/develop.zip)
+- [latest stable .tar.gz](https://github.com/OpenLinkSoftware/OSDS_extension/archive/master.tar.gz)
+- [latest stable .zip](https://github.com/OpenLinkSoftware/OSDS_extension/archive/master.zip)
+- [latest development .tar.gz](https://github.com/OpenLinkSoftware/OSDS_extension/archive/develop.tar.gz)
+- [latest development .zip](https://github.com/OpenLinkSoftware/OSDS_extension/archive/develop.zip)
 
 
 ### Install the extension in Chrome
@@ -74,7 +75,7 @@ To install this extension manually use the following steps:
 - Press the **Select** button
 
 ### Install the extension in Firefox
-Download the [Firefox OSDS .zip](https://github.com/openlink/structured-data-sniffer/releases/download/v2.15/OSDS_FF.zip)
+Download the [Firefox OSDS .zip](https://github.com/OpenLinkSoftware/OSDS_extension/releases/download/v2.16.1/OSDS_FF.zip)
 file and extract the .xpi file.
 
 To install this extension manually in Firefox v28+, use the following steps:

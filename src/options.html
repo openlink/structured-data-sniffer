@@ -3,7 +3,7 @@
 <!--
     This file is part of the OpenLink Structured Data Sniffer
 
-    Copyright (C) 2015-2017 OpenLink Software
+    Copyright (C) 2015-2018 OpenLink Software
 
     This project is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -114,6 +114,13 @@
               </tr>
 
              </table>
+             <table>
+              <tr>
+               <td><input id="chk_show_action_for_url_with_params" type="checkbox"></td>
+               <td>Activate&nbsp;OSDS&nbsp;icon&nbsp;for&nbsp;all&nbsp;URLs&nbsp;with&nbsp;query&nbsp;segment/parameters</td>
+              <tr>
+             </table>
+
            </tr>
 
            <tr> <p/> </tr>
@@ -259,6 +266,17 @@
           <table>
 
            <tr>
+                <table>
+                 <tr>
+                  <td>Query&nbspTimeout: </td>
+                  <td> <input id="super-links-timeout" style="WIDTH: 70px"> </td>
+                  <td> milliseconds (values less than 1000 are ignored)</td>
+                 </tr>
+
+                </table>
+           </tr>
+
+           <tr>
                SPARQL query:
            </tr>
            <tr>
@@ -267,11 +285,11 @@
                </textarea>
              </div>
            </tr>
+
            <tr> <p/> </tr>
            <tr>
                <input id="super-links-set-def" value="Revert to Defaults" type="button">
            </tr>
-
 
           </table>
         </div>
@@ -289,7 +307,7 @@
               as the World Wide Web and Linked Open Data Cloud.
             </p>
             <p>Visit OpenLink Structured Data Sniffer <a href="http://osds.openlinksw.com" target="_blank">homepage</a> for additional product information.</p>
-            <p>Copyright 2015-2017 <a href="http://www.openlinksw.com" target="_blank">OpenLink Software</a></p>
+            <p>Copyright 2015-2018 <a href="http://www.openlinksw.com" target="_blank">OpenLink Software</a></p>
         </div>
     </div>
     <p/>

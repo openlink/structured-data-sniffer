@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2017 OpenLink Software
+ *  Copyright (C) 2015-2018 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -148,7 +148,11 @@ if (Browser.isChromeAPI)
           break;
       }
 
-      if (!handle && (content_type===null || content_type.match(/(application\/xml)/) || content_type.match(/(text\/xml)/) || content_type.match(/(text\/plain)/))) {
+      if (!handle && (content_type===null || content_type.match(/(application\/xml)/) 
+                                          || content_type.match(/(text\/xml)/) 
+                                          || content_type.match(/(text\/plain)/)
+                                          || content_type.match(/(application\/octet-stream)/)
+                     )) {
         var url_path = new Uri(d.url).path();
         if (url_path.endsWith(".owl")) {
           handle = true;
@@ -160,10 +164,7 @@ if (Browser.isChromeAPI)
           type = "rdf";
           ext = "rdf";
         }
-      }
-      else if (!handle && (content_type===null || content_type.match(/(text\/plain)/))) {
-        var url_path = new Uri(d.url).path();
-        if (url_path.endsWith(".ntriples")) {
+        else if (url_path.endsWith(".ntriples")) {
           handle = true;
           type = "turtle";
           ext = "ntriples";
@@ -178,6 +179,14 @@ if (Browser.isChromeAPI)
           type = "turtle";
           ext = "n3";
         }
+      }
+
+      if (!handle && content_type!==null && (content_type.match(/(application\/xml)/) 
+                      || content_type.match(/(text\/xml)/) )) 
+      {
+          handle = true;
+          type = "xml";
+          v_cancel = true;
       }
 
       if (handle)  {

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2017 OpenLink Software
+ *  Copyright (C) 2015-2018 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -22,6 +22,7 @@
 
 var items;
 var $ = jQuery;
+var gData_exists = false;
 var gData_showed = false;
 var doc_URL = null;
 var prevSelectedTab = null;
@@ -127,7 +128,8 @@ $(document).ready(function()
 
   $('#rest_exec').click(rest_exec);
   $('#rest_exit').click(function(){
-      selectTab(prevSelectedTab);
+      if (prevSelectedTab)
+        selectTab(prevSelectedTab);
       return false;
   });
   $('#rest_add').button({
@@ -145,28 +147,20 @@ $(document).ready(function()
 
   gData_showed = false;
 
-  if (Browser.isFirefoxSDK)
-  {
-    jQuery('#ext_ver').text('ver: '+ self.options.ver);
+  jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
 
-    //req data from extension
-    self.port.emit("doc_data", "");
-  }
-  else
-  {
-    jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
-
-    Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
+  Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
+        doc_URL = tabs[0].url;
+        load_restData(doc_URL);
         Browser.api.tabs.sendMessage(tabs[0].id, {
             property: 'doc_data'
           },
           function(response) {
           });
       }
-    });
-  }
+  });
 
 });
 
@@ -297,7 +291,7 @@ function show_Data(dData)
   $('#micro_items #docdata_view').remove();
   $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.micro.expanded!==null && dData.micro.expanded.length > 0) {
+  if (dData.micro.expanded!==null && dData.micro.expanded.trim().length > 0) {
       html += dData.micro.expanded;
       gData.tabs.push("#micro");
   }
@@ -317,7 +311,7 @@ function show_Data(dData)
   $('#jsonld_items #docdata_view').remove();
   $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.jsonld.expanded!==null && dData.jsonld.expanded.length > 0) {
+  if (dData.jsonld.expanded!==null && dData.jsonld.expanded.trim().length > 0) {
       html += dData.jsonld.expanded;
       gData.tabs.push("#jsonld");
   }
@@ -338,7 +332,7 @@ function show_Data(dData)
   $('#turtle_items #docdata_view').remove();
   $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.turtle.expanded!==null && dData.turtle.expanded.length > 0) {
+  if (dData.turtle.expanded!==null && dData.turtle.expanded.trim().length > 0) {
       html += dData.turtle.expanded;
       gData.tabs.push("#turtle");
   }
@@ -358,7 +352,7 @@ function show_Data(dData)
   $('#rdfa_items #docdata_view').remove();
   $('#rdfa_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.rdfa.expanded!==null && dData.rdfa.expanded.length > 0) {
+  if (dData.rdfa.expanded!==null && dData.rdfa.expanded.trim().length > 0) {
       html += dData.rdfa.expanded;
       gData.tabs.push("#rdfa");
   }
@@ -379,7 +373,7 @@ function show_Data(dData)
   $('#rdf_items #docdata_view').remove();
   $('#rdf_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.rdf.expanded!==null && dData.rdf.expanded.length > 0) {
+  if (dData.rdf.expanded!==null && dData.rdf.expanded.trim().length > 0) {
       html += dData.rdf.expanded;
       gData.tabs.push("#rdf");
   }
@@ -399,7 +393,7 @@ function show_Data(dData)
   $('#posh_items #docdata_view').remove();
   $('#posh_items').append("<div id='docdata_view' class='alignleft'/>");
   html = "";
-  if (dData.posh.expanded!==null && dData.posh.expanded.length > 0) {
+  if (dData.posh.expanded!==null && dData.posh.expanded.trim().length > 0) {
       html += dData.posh.expanded;
       gData.tabs.push("#posh");
   }
@@ -714,12 +708,16 @@ function parse_Data(dData)
   dData.rdf.error = null;
   dData.rdf_nano.expanded = null;
   dData.rdf_nano.error = null;
-  doc_URL = dData.docURL;
+  doc_URL = dData.doc_URL;
 
+//??
+/**/
   var url = new Uri(doc_URL);
   url.setAnchor("");
   url.setQuery("");
   gData.baseURL = url.toString();
+/**/
+//  gData.baseURL = doc_URL;
 
   load_restData(doc_URL);
 
@@ -728,76 +726,61 @@ function parse_Data(dData)
 
 
 
-if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
+//Chrome API
+//wait data from extension
+Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+{
   try {
-    Browser.api.browserAction.disable();
-  } catch(e) {}
-}
-
-
-if (Browser.isFirefoxSDK)
-{
-  //Firefox SDK
-  //wait data from extension
-  self.port.on("doc_data", function(msg) {
-
-      var dData = JSON.parse(msg.data);
-      if (!gData_showed)
-        parse_Data(dData);
-  });
-}
-else
-{
-  //Chrome API
-  //wait data from extension
-  Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
-  {
-    try {
-      if (request.property == "status")
+    if (request.property == "doc_data")
+    {
+      var dData = JSON.parse(request.data);
+      try {
+        gData.tab_index = sender.tab.index;
+      } catch(e){}
+      if (request.is_data_exists)
       {
-        var show_action = request.data_exists;
-        if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
-          if (show_action)
-            Browser.api.browserAction.enable(sender.tab.id);
-          else
-            Browser.api.browserAction.disable(sender.tab.id);
-        }
-        else {
-          if (show_action)
-            Browser.api.pageAction.show(sender.tab.id);
-          else
-            Browser.api.pageAction.hide(sender.tab.id);
-        }
-      }
-      else if (request.property == "doc_data")
-      {
-        var dData = JSON.parse(request.data);
-        try {
-          gData.tab_index = sender.tab.index;
-        } catch(e){}
         parse_Data(dData);
       }
       else
       {
-        sendResponse({}); /* stop */
-      }
-    } catch(e) {
-      console.log("OSDS: onMsg="+e);
+        $('#tabs a[href=#micro]').hide();
+        $('#tabs a[href=#jsonld]').hide();
+        $('#tabs a[href=#turtle]').hide();
+        $('#tabs a[href=#rdfa]').hide();
+        $('#tabs a[href=#rdf]').hide();
+        $('#tabs a[href=#posh]').hide();
+        selectedTab = null;
+
+        show_rest();
+      } 
     }
+    else
+    {
+      sendResponse({}); /* stop */
+    }
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
 
-  });
+});
 
-}
+
 
 
 ////////////////////////////////////////////////////
 function SuperLinks_exec()
 {
   if (doc_URL!==null) {
+    var setting = new Settings();
+    var link_query =   setting.getValue("ext.osds.super_links.query");
+    var link_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
+
     Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         Browser.api.tabs.sendMessage(tabs[0].id, {
             property: 'super_links',
+            query : link_query,
+            timeout: link_timeout
           },
           function(response) {
           });
@@ -859,10 +842,7 @@ function Sparql_exec()
 function Prefs_exec()
 {
   //snow preferenses
-  if (Browser.isFirefoxSDK)
-     self.port.emit("prefs", "");
-  else
-     Browser.openTab("options.html")
+  Browser.openTab("options.html")
 
   return false;
 }
@@ -1228,8 +1208,10 @@ function rest_exec() {
 
   if (yasqe.obj) {
     var val = yasqe.obj.getValue();
-    if (val && val.length > 0)
-       _url.addQueryParam("query", val);
+    var name = $("#query_id").val();
+    if (val && (val.replace(/[\r\n ]/g, '')).length > 0) {
+       _url.addQueryParam(name, val);
+    }
   }
 
   var rows = $('#restData>tr');
@@ -1329,8 +1311,10 @@ function load_restData(doc_url)
   for(var i=0; i<params.length; i++) {
     var val = params[i][1];
     var key = params[i][0];
-    if (key === "query")
+    if (key === "query" || key === "qtxt") {
       yasqe.val = val;
+      $("#query_id").val(key);
+    }
     else
       addRestParam(params[i][0], val);
   }
