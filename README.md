@@ -75,7 +75,7 @@ To install this extension manually use the following steps:
 - Press the **Select** button
 
 ### Install the extension in Firefox
-Download the [Firefox OSDS .zip](https://github.com/OpenLinkSoftware/OSDS_extension/releases/download/v2.15/OSDS_FF.zip)
+Download the [Firefox OSDS .zip](https://github.com/OpenLinkSoftware/OSDS_extension/releases/download/v2.16.1/OSDS_FF.zip)
 file and extract the .xpi file.
 
 To install this extension manually in Firefox v28+, use the following steps:
