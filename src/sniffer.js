@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2017 OpenLink Software
+ *  Copyright (C) 2015-2018 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -640,7 +640,7 @@
       }
 
         var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
-        var url_about = "https://linkeddata.uriburner.com/about/html/"+result[2]+"/"+result[3]+"?sponger:get=add";
+        var url_about = "https://linkeddata.uriburner.com/about/html/http/"+result[3]+"?sponger:get=add";
 
         var xhr = xhr_new ();
         xhr.onreadystatechange = function()
