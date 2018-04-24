@@ -1760,7 +1760,8 @@ Namespace = function() {
         "wde": "http://www.wikidata.org/entity/",
         "iiif": "http://iiif.io/api/image/2#",
         "dio": "https://w3id.org/dio#",
-        "fire": "http://tldp.org/HOWTO/XML-RPC-HOWTO/xmlrpc-howto-java.html#"
+        "fire": "http://tldp.org/HOWTO/XML-RPC-HOWTO/xmlrpc-howto-java.html#",
+        "solid": "http://www.w3.org/ns/solid/terms#"
   };
 /**
  bif	 bif:

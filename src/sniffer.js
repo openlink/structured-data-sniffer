@@ -674,7 +674,10 @@
 
     function exec_super_links_query(links_query, links_timeout)
     {
-      var iri = new Uri(location.href).setAnchor("").toString();
+      var url = new URL(location.href);
+      url.hash = '';
+      var iri = url.toString();
+
       var br_lang = navigator.language || navigator.userLanguage;
       if (br_lang && br_lang.length>0) {
         var i = br_lang.indexOf('-');

@@ -20,15 +20,15 @@ SRC_DIR=$EXT_SRC
 DST_DIR=$EXT_DIRNAME
 
 #copy common files
-for I_DIR in background.html background.js frame.js handlers.js converters.js ttl_gen.js html_gen.js options.js panel.js settings.js sniffer.css sniffer.js page_panel.js psniffer.css content.css; do
+for I_DIR in background.html background.js frame.js handlers.js converters.js ttl_gen.js html_gen.js options.js panel.js settings.js sniffer.css sniffer.js page_panel.js utils.js psniffer.css content.css; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-#copy Firefox related files
 for I_DIR in webrequest.js browser.js options.html panel.html page_panel.html; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
+#copy Edge related files
 cp -va $SRC_DIR/manifest.json.edge $DST_DIR/manifest.json
 cp -va $SRC_DIR/browser_edge.js $DST_DIR/browser.js
 

@@ -37,11 +37,11 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       var doc_URL = request.doc_URL;
       var show_action = request.data_exists;
       var sparql_pattern = /\/sparql\/?$/gmi;
-      var url = new Uri(doc_URL);
+      var url = new URL(doc_URL);
       var setting = new Settings();
       var action_for_params =  setting.getValue("ext.osds.pref.show_action");
 
-      if (doc_URL && url.queryPairs.length>0
+      if (doc_URL && url.search.length>0
           && (sparql_pattern.test(doc_URL) || action_for_params) )
       {
         show_action = true;

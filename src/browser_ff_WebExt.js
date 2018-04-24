@@ -19,9 +19,6 @@
  */
 
 var Browser = {
-    isChromeAPI: true,
-    isFirefoxSDK: false,
-
     isChromeWebExt: false,
     isFirefoxWebExt: true,
     isEdgeWebExt: false,

@@ -36,13 +36,8 @@ var gData = {
         ext: null
       };
 
-var yasqe = {
-        obj : null,
-        val : null,
-        init: false,
-      };
-
 var src_view = null;
+var g_RestCons = new Rest_Cons();
 
 
 $(document).ready(function()
@@ -56,7 +51,10 @@ $(document).ready(function()
 
   $('#sparql_btn').click(Sparql_exec);
 
-  $('#rest_btn').click(show_rest);
+  $('#rest_btn').click(function() {
+    selectTab('#cons');
+    g_RestCons.show();
+  });
 
   $('#download_btn').click(Download_exec);
 
@@ -101,7 +99,7 @@ $(document).ready(function()
   } catch(e) { }
 
   try{
-    yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
+    g_RestCons.yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
         lineNumbers: true,
         lineWrapping: false,
 	      sparql: { showQueryButton: false },
@@ -109,13 +107,15 @@ $(document).ready(function()
 	     createShareLink : null,
 	      persistent: null,
     });
-    yasqe.obj.setSize("100%", 150);
+    g_RestCons.yasqe.obj.setSize("100%", 150);
   } catch(e) {
   }
   $("#query_place").hide();
 
 
-  $('#rest_exec').click(rest_exec);
+  $('#rest_exec').click(function() {
+     g_RestCons.exec(doc_URL);
+  });
   $('#rest_exit').click(function(){
       selectTab(prevSelectedTab);
       return false;
@@ -124,7 +124,9 @@ $(document).ready(function()
     icons: { primary: 'ui-icon-plusthick' },
     text: false
   });
-  $('#rest_add').click(addRestEmpty);
+  $('#rest_add').click(function() {
+    g_RestCons.add_empty_row();
+  });
 
   $('#src_exit').click(function(){
       selectTab(prevSelectedTab);
@@ -140,18 +142,6 @@ $(document).ready(function()
 
 
 // Trap any link clicks and open them in the current tab.
-/**
-$('a').live('click', function(e) {
-  var url = new Uri(document.baseURI).setAnchor("");
-  var href = e.currentTarget.href;
-  if (href.lastIndexOf(url+"#sc", 0) === 0) {
-    return true;
-  } else {
-    window.open(href);
-    return false;
-  }
-});
-**/
 $(document).on('click', 'a', function(e) {
   function check_URI(uri) {
     if (doc_URL[doc_URL.length-1]==="#")
@@ -168,7 +158,10 @@ $(document).on('click', 'a', function(e) {
   if (hashPos!=-1 && hashPos!=href.length-1)
     hashName = href.substring(hashPos+1);
 
-  var url = new Uri(document.baseURI).setAnchor("");
+  var url = new URL(document.baseURI);
+  url.hash = '';
+  url = url.toString();
+
   if (href.lastIndexOf(url+"#sc", 0) === 0) {
     return true;
   }
@@ -260,12 +253,12 @@ function start_parse_data(data_text, data_type, data_url, ext)
 
   doc_URL = data_url;
 
-  var url = new Uri(data_url);
-  url.setAnchor("");
-  url.setQuery("");
+  var url = new URL(doc_URL);
+  url.hash ='';
+  url.search = '';
   baseURL = url.toString();
 
-  load_restData(doc_URL);
+  g_RestCons.load(doc_URL);
 
   if (data_type==="turtle")
     {
@@ -702,156 +695,18 @@ function save_data(action, fname, fmt, callback)
 
 function showInfo(msg)
 {
-  $("#alert-msg").prop("textContent",msg);
-  $("#alert-dlg" ).dialog({
+  $('#alert-msg').prop('textContent',msg);
+  $('#alert-dlg').dialog({
     resizable: true,
     height:180,
     modal: true,
     buttons: {
       Cancel: function() {
-        $(this).dialog( "destroy" );
+        $(this).dialog('destroy');
       }
     }
   });
 }
 
 
-function show_rest()
-{
-  selectTab('#cons');
-//--  $('#tabs a[href=#cons]').show();
-  if (yasqe.obj && yasqe.val && !yasqe.init) {
-    yasqe.obj.setValue(yasqe.val+"\n");
-    yasqe.init = true;
-  }
-}
 
-
-
-
-// ==== restData ====
-function rest_exec() {
-  if (!doc_URL) {
-    return;
-  }
-
-  var url = new Uri(doc_URL);
-  url.setQuery("");
-
-  if (yasqe.obj) {
-    var val = yasqe.obj.getValue();
-    var name = $("#query_id").val();
-    if (val && (val.replace(/[\r\n ]/g, '')).length > 0) {
-       url.addQueryParam(name, val);
-    }
-  }
-
-  var rows = $('#restData>tr');
-  for(var i=0; i < rows.length; i++) {
-    var r = $(rows[i]);
-    var h = r.find('#h').val();
-    var v = r.find('#v').val();
-    if (h.length>0)
-       url.addQueryParam(h, v);
-  }
-
-  var win_url = url.toString();
-
-  Browser.api.tabs.create({url:win_url});
-}
-
-
-function rest_del(e) {
-  //get the row we clicked on
-  var row = $(this).parents('tr:first');
-
-  $('#alert-msg').prop('textContent',"Delete row ?");
-  $( "#alert-dlg" ).dialog({
-    resizable: false,
-    height:180,
-    modal: true,
-    buttons: {
-      "Yes": function() {
-          $(row).remove();
-          $(this).dialog( "destroy" );
-      },
-      "No": function() {
-          $(this).dialog( "destroy" );
-      }
-    }
-  });
-  return true;
-}
-
-
-
-function createRestRow(h,v)
-{
-  var del = '<button id="rest_del" class="rest_del">Del</button>';
-  return '<tr><td width="12px">'+del+'</td>'
-            +'<td><input id="h" style="WIDTH: 100%" value="'+h+'"></td>'
-            +'<td><input id="v" style="WIDTH: 100%" value="'+v+'"></td></tr>';
-}
-
-
-function addRestEmpty()
-{
-  addRestParam("","");
-}
-
-function addRestParam(h,v)
-{
-  $('#restData').append(createRestRow(h, v));
-  $('.rest_del').button({
-    icons: { primary: 'ui-icon-minusthick' },
-    text: false
-  });
-  $('.rest_del').click(rest_del);
-}
-
-function delRest()
-{
-  var data = $('#users_data>tr');
-  var data = $('#restData>tr');
-  for(var i=0; i < data.length; i++) {
-    $(data[i]).remove();
-  }
-}
-
-
-function load_restData(doc_url)
-{
-  yasqe.val = null;
-
-  delRest();
-
-  if (!doc_url) {
-    addRestEmpty();
-    return;
-  }
-
-  var url = new Uri(doc_url);
-  var params = url.queryPairs;
-  for(var i=0; i<params.length; i++) {
-    var val = params[i][1];
-    var key = params[i][0];
-    if (key === "query" || key ==="qtxt") {
-      yasqe.val = val;
-      $("#query_id").val(key);
-    }
-    else
-      addRestParam(params[i][0], val);
-  }
-
-  if (params.length == 0)
-    addRestEmpty();
-
-  if (yasqe.obj && yasqe.val) {
-    yasqe.obj.setValue(yasqe.val+"\n");
-  }
-  else {
-    yasqe.obj.setValue("\n");
-    $(".yasqe").hide();
-  }
-}
-// ==== restData  END ====

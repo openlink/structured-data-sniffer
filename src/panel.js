@@ -41,13 +41,8 @@ var gData = {
         tabs:[],
         baseURL: null
       };
-var yasqe = {
-        obj : null,
-        val : null,
-        init: false,
-      };
 var src_view = null;
-var g_fix_restURI = null;
+var g_RestCons = new Rest_Cons();
 
 
 $(document).ready(function()
@@ -63,7 +58,10 @@ $(document).ready(function()
 
   $('#sparql_btn').click(Sparql_exec);
 
-  $('#rest_btn').click(show_rest);
+  $('#rest_btn').click(function() {
+    selectTab('#cons');
+    g_RestCons.show();
+  });
 
   $('#download_btn').click(Download_exec);
 
@@ -111,7 +109,7 @@ $(document).ready(function()
 
 
   try{
-    yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
+    g_RestCons.yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
         lineNumbers: true,
         lineWrapping: false,
         sparql: { showQueryButton: false },
@@ -120,13 +118,15 @@ $(document).ready(function()
 	      persistent: null,
 
     });
-    yasqe.obj.setSize("100%", 150);
+    g_RestCons.yasqe.obj.setSize("100%", 150);
   } catch(e) {
   }
   $("#query_place").hide();
 
 
-  $('#rest_exec').click(rest_exec);
+  $('#rest_exec').click(function() {
+     g_RestCons.exec(doc_URL, gData.tab_index);
+  });
   $('#rest_exit').click(function(){
       if (prevSelectedTab)
         selectTab(prevSelectedTab);
@@ -136,7 +136,9 @@ $(document).ready(function()
     icons: { primary: 'ui-icon-plusthick' },
     text: false
   });
-  $('#rest_add').click(addRestEmpty);
+  $('#rest_add').click(function() {
+    g_RestCons.add_empty_row();
+  });
 
   $('#src_exit').click(function(){
       selectTab(prevSelectedTab);
@@ -149,36 +151,38 @@ $(document).ready(function()
 
   jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
 
-  Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
+//##!!
+  if (Browser.isFirefoxWebExt) {
+    Browser.api.tabs.query({active:true, currentWindow:true})
+      .then((tabs) => {
+        if (tabs.length > 0) {
+          //?? Request the microdata items in JSON format from the client (foreground) tab.
+          doc_URL = tabs[0].url;
+          g_RestCons.load(doc_URL);
+
+          Browser.api.tabs.sendMessage(tabs[0].id, { property: 'doc_data' });
+        }
+      });
+  } else {
+    Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
       if (tabs.length > 0) {
         //?? Request the microdata items in JSON format from the client (foreground) tab.
         doc_URL = tabs[0].url;
-        load_restData(doc_URL);
+        g_RestCons.load(doc_URL);
+
         Browser.api.tabs.sendMessage(tabs[0].id, {
             property: 'doc_data'
           },
           function(response) {
           });
       }
-  });
+    });
+  }
 
 });
 
 
 // Trap any link clicks and open them in the current tab.
-/***
-$(document).on('click', 'a', function(e) {
-  var href = e.currentTarget.href;
-
-  var url = new Uri(document.baseURI).setAnchor("");
-  if (href.lastIndexOf(url+"#sc", 0) === 0) {
-    return true;
-  } else {
-    Browser.openTab(href, gData.tab_index);
-    return false;
-  }
-});
-***/
 $(document).on('click', 'a', function(e) {
   function check_URI(uri) {
     if (doc_URL[doc_URL.length-1]==="#")
@@ -195,7 +199,10 @@ $(document).on('click', 'a', function(e) {
   if (hashPos!=-1 && hashPos!=href.length-1)
     hashName = href.substring(hashPos+1);
 
-  var url = new Uri(document.baseURI).setAnchor("");
+  var url = new URL(document.baseURI);
+  url.hash = '';
+  url = url.toString();
+
   if (href.lastIndexOf(url+"#sc", 0) === 0) {
     return true;
   }
@@ -434,257 +441,273 @@ function show_Data(dData)
 
 
 
-function check_Microdata(dData)
+function check_Microdata(val)
 {
-  if (dData.micro.data)
-  {
-    var handler = new Handle_Microdata();
-    gData.micro.json_text = [JSON.stringify(dData.micro.data, undefined, 2)];
-    handler.parse(dData.micro.data, gData.baseURL,
-      function(error, html_data)
-      {
-        if (error)
-          dData.micro.error = error.toString();
-        else
-          dData.micro.expanded = html_data;
+  return new Promise(function(resolve, reject) {
+    if (val.d.micro.data)
+    {
+      var handler = new Handle_Microdata();
+      gData.micro.json_text = [JSON.stringify(val.d.micro.data, undefined, 2)];
+      handler.parse(val.d.micro.data, gData.baseURL,
+        function(error, html_data)
+        {
+          if (error)
+            val.d.micro.error = error.toString();
+          else
+            val.d.micro.expanded = html_data;
 
-        check_JSON_LD(dData);
+          resolve({d:val.d, start_id:0});
+        });
+    }
+    else
+      resolve({d:val.d, start_id:0});
+  });
+}
+
+
+
+
+function check_JSON_LD(val)
+{
+  return new Promise(function(resolve, reject) {
+    if (val.d.jsonld.text!==null && val.d.jsonld.text.length > 0)
+    {
+      var handler = new Handle_JSONLD();
+      handler.parse(val.d.jsonld.text, gData.baseURL,
+        function(error, html_data) {
+          gData.jsonld.json_text = val.d.jsonld.text;
+          if (error)
+            val.d.jsonld.error.push(error);
+
+          if (html_data)
+            val.d.jsonld.expanded = html_data;
+
+          if (handler.skipped_error.length>0)
+            val.d.jsonld.error = val.d.jsonld.error.concat(handler.skipped_error);
+
+          resolve({d:val.d, start_id:handler.start_id});
       });
-  }
-  else
-  {
-    check_JSON_LD(dData);
-  }
+    }
+    else
+    {
+      resolve({d:val.d, start_id:0});
+    }
+  });
+}
+
+
+function check_Json_Nano(val)
+{
+  return new Promise(function(resolve, reject) {
+    if (val.d.json_nano.text!==null && val.d.json_nano.text.length > 0)
+    {
+      var handler = new Handle_JSONLD();
+      handler.start_id = val.start_id;
+      handler.parse(val.d.json_nano.text, gData.baseURL,
+        function(error, html_data) {
+          gData.json_nano.json_text = val.d.json_nano.text;
+          if (error)
+            val.d.jsonld.error.push(error);
+
+          if (html_data)
+            val.d.jsonld.expanded = html_data;
+
+          if (handler.skipped_error.length>0)
+            val.d.jsonld.error = val.d.jsonld.error.concat(handler.skipped_error);
+
+          resolve({d:val.d, start_id:0});
+      });
+    }
+    else
+    {
+      resolve({d:val.d, start_id:0});
+    }
+  });
 }
 
 
 
-
-function check_JSON_LD(dData)
+function check_Turtle(val)
 {
-  if (dData.jsonld.text!==null && dData.jsonld.text.length > 0)
-  {
-    var handler = new Handle_JSONLD();
-    handler.parse(dData.jsonld.text, gData.baseURL,
-      function(error, html_data) {
-        gData.jsonld.json_text = dData.jsonld.text;
-        if (error)
-          dData.jsonld.error.push(error);
+  return new Promise(function(resolve, reject) {
+    if (val.d.turtle.text!==null && val.d.turtle.text.length > 0)
+    {
+      var handler = new Handle_Turtle();
+      handler.parse(val.d.turtle.text, gData.baseURL,
+        function(error, html_data) {
+          gData.turtle.ttl_text = val.d.turtle.text;
+          if (error)
+            val.d.turtle.error.push(error);
 
-        if (html_data)
-          dData.jsonld.expanded = html_data;
+          if (html_data)
+            val.d.turtle.expanded = html_data;
 
-        if (handler.skipped_error.length>0)
-          dData.jsonld.error = dData.jsonld.error.concat(handler.skipped_error);
+          if (handler.skipped_error.length>0)
+            val.d.turtle.error = val.d.turtle.error.concat(handler.skipped_error);
 
-        check_Json_Nano(dData, handler.start_id);
-    });
-  }
-  else
-  {
-    check_Json_Nano(dData, 0);
-  }
+          resolve({d:val.d, start_id:handler.start_id});
+      });
+    }
+    else
+    {
+      resolve({d:val.d, start_id:0});
+    }
+  });
 }
 
 
-function check_Json_Nano(dData, start_id)
+function check_Turtle_Nano(val)
 {
-  if (dData.json_nano.text!==null && dData.json_nano.text.length > 0)
-  {
-    var handler = new Handle_JSONLD();
-    handler.start_id = start_id;
-    handler.parse(dData.json_nano.text, gData.baseURL,
-      function(error, html_data) {
-        gData.json_nano.json_text = dData.json_nano.text;
-        if (error)
-          dData.jsonld.error.push(error);
+  return new Promise(function(resolve, reject) {
+    if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0)
+    {
+      new Fix_Nano().parse(val.d.ttl_nano.text,
+        function(output){
+          val.d.ttl_nano.text = output;
 
-        if (html_data)
-          dData.jsonld.expanded = html_data;
+          if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0) {
+            var handler = new Handle_Turtle(val.start_id);
+            handler.parse_nano(val.d.ttl_nano.text, gData.baseURL,
+              function(error, html_data) {
+                gData.ttl_nano.ttl_text = val.d.ttl_nano.text;
+                if (error)
+                  val.d.turtle.error.push(error);
 
-        if (handler.skipped_error.length>0)
-          dData.jsonld.error = dData.jsonld.error.concat(handler.skipped_error);
+                if (html_data)
+                  val.d.turtle.expanded = html_data;
 
-        check_Turtle(dData);
-    });
-  }
-  else
-  {
-    check_Turtle(dData);
-  }
-}
+                if (handler.skipped_error.length>0)
+                  val.d.turtle.error = val.d.turtle.error.concat(handler.skipped_error);
 
-
-
-function check_Turtle(dData)
-{
-  if (dData.turtle.text!==null && dData.turtle.text.length > 0)
-  {
-    var handler = new Handle_Turtle();
-    handler.parse(dData.turtle.text, gData.baseURL,
-      function(error, html_data) {
-        gData.turtle.ttl_text = dData.turtle.text;
-        if (error)
-          dData.turtle.error.push(error);
-
-        if (html_data)
-          dData.turtle.expanded = html_data;
-
-        if (handler.skipped_error.length>0)
-          dData.turtle.error = dData.turtle.error.concat(handler.skipped_error);
-
-        check_Turtle_Nano(dData, handler.start_id);
-    });
-  }
-  else
-  {
-    check_Turtle_Nano(dData, 0);
-  }
-}
-
-
-function check_Turtle_Nano(dData, start_id)
-{
-  if (dData.ttl_nano.text!==null && dData.ttl_nano.text.length > 0)
-  {
-    new Fix_Nano().parse(dData.ttl_nano.text,
-      function(output){
-        dData.ttl_nano.text = output;
-
-        if (dData.ttl_nano.text!==null && dData.ttl_nano.text.length > 0) {
-          var handler = new Handle_Turtle(start_id);
-          handler.parse_nano(dData.ttl_nano.text, gData.baseURL,
-            function(error, html_data) {
-              gData.ttl_nano.ttl_text = dData.ttl_nano.text;
-              if (error)
-                dData.turtle.error.push(error);
-
-              if (html_data)
-                dData.turtle.expanded = html_data;
-
-              if (handler.skipped_error.length>0)
-                dData.turtle.error = dData.turtle.error.concat(handler.skipped_error);
-
-              check_POSH(dData);
-          });
-        }
-        else {
-          check_POSH(dData);
-        }
-    });
-  }
-  else
-  {
-    check_POSH(dData);
-  }
+                resolve({d:val.d, start_id:0});
+            });
+          }
+          else {
+            resolve({d:val.d, start_id:0});
+          }
+      });
+    }
+    else
+    {
+      resolve({d:val.d, start_id:0});
+    }
+  });
 }
 
 
 
-function check_POSH(dData)
+function check_POSH(val)
 {
-  if (dData.posh.text!==null && dData.posh.text.length > 0)
-  {
-    var handler = new Handle_Turtle();
-    handler.parse([dData.posh.text], gData.baseURL,
-      function(error, html_data) {
-        gData.posh.ttl_text = dData.posh.text;
-        if (error)
-          dData.posh.error.push(error);
+  return new Promise(function(resolve, reject) {
+    if (val.d.posh.text!==null && val.d.posh.text.length > 0)
+    {
+      var handler = new Handle_Turtle();
+      handler.parse([val.d.posh.text], gData.baseURL,
+        function(error, html_data) {
+          gData.posh.ttl_text = val.d.posh.text;
+          if (error)
+            val.d.posh.error.push(error);
 
-        if (html_data)
-          dData.posh.expanded = html_data;
+          if (html_data)
+            val.d.posh.expanded = html_data;
 
-        if (handler.skipped_error.length>0)
-          dData.posh.error = dData.posh.error.concat(handler.skipped_error);
+          if (handler.skipped_error.length>0)
+            val.d.posh.error = val.d.posh.error.concat(handler.skipped_error);
 
-        check_RDFa(dData);
-    });
-  }
-  else
-  {
-    check_RDFa(dData);
-  }
+            resolve({d:val.d, start_id:0});
+      });
+    }
+    else
+    {
+      resolve({d:val.d, start_id:0});
+    }
+  });
 }
 
 
 
-function check_RDFa(dData)
+function check_RDFa(val)
 {
-  if (dData.rdfa.data)
-  {
-    var handler = new Handle_RDFa();
-    handler.parse(dData.rdfa.data, gData.baseURL,
-      function(error, html_data) {
-        if (error)
-          dData.rdfa.error = error;
-        else {
-          dData.rdfa.expanded = html_data;
-          gData.rdfa.ttl_text = [dData.rdfa.ttl];
-        }
+  return new Promise(function(resolve, reject) {
+    if (val.d.rdfa.data)
+    {
+      var handler = new Handle_RDFa();
+      handler.parse(val.d.rdfa.data, gData.baseURL,
+        function(error, html_data) {
+          if (error)
+            val.d.rdfa.error = error;
+          else {
+            val.d.rdfa.expanded = html_data;
+            gData.rdfa.ttl_text = [val.d.rdfa.ttl];
+          }
 
-        check_RDF_XML(dData);
-    });
-  }
-  else
-  {
-    check_RDF_XML(dData);
-  }
+          resolve({d:val.d, start_id:0});
+      });
+    }
+    else
+    {
+      resolve({d:val.d, start_id:0});
+    }
+  });
 }
 
 
 
-function check_RDF_XML(dData)
+function check_RDF_XML(val)
 {
-  if (dData.rdf.text && dData.rdf.text.length > 0)
-  {
-    var handler = new Handle_RDF_XML();
-    handler.parse(dData.rdf.text, gData.baseURL,
-      function(error, html_data) {
-        gData.rdf.text = dData.rdf.text;
-        if (error)
-          dData.rdf.error.push(error);
+  return new Promise(function(resolve, reject) {
+    if (val.d.rdf.text && val.d.rdf.text.length > 0)
+    {
+      var handler = new Handle_RDF_XML();
+      handler.parse(val.d.rdf.text, gData.baseURL,
+        function(error, html_data) {
+          gData.rdf.text = val.d.rdf.text;
+          if (error)
+            val.d.rdf.error.push(error);
 
-        if (html_data)
-          dData.rdf.expanded = html_data;
+          if (html_data)
+            val.d.rdf.expanded = html_data;
 
-        if (handler.skipped_error.length>0)
-          dData.rdf.error = dData.rdf.error.concat(handler.skipped_error);
+          if (handler.skipped_error.length>0)
+            val.d.rdf.error = val.d.rdf.error.concat(handler.skipped_error);
 
-        check_RDF_XML_Nano(dData);
-    });
-  }
-  else
-  {
-    check_RDF_XML_Nano(dData);
-  }
+          resolve({d:val.d, start_id:0});
+      });
+    }
+    else
+    {
+      resolve({d:val.d, start_id:0});
+    }
+  });
 }
 
 
-function check_RDF_XML_Nano(dData)
+function check_RDF_XML_Nano(val)
 {
-  if (dData.rdf_nano.text!==null && dData.rdf_nano.text.length > 0)
-  {
-    var handler = new Handle_RDF_XML();
-    handler.parse(dData.rdf_nano.text, gData.baseURL,
-      function(error, html_data) {
-        gData.rdf_nano.rdf_text = dData.rdf_nano.text;
-        if (error)
-          dData.rdf.error.push(error);
+  return new Promise(function(resolve, reject) {
+    if (val.d.rdf_nano.text!==null && val.d.rdf_nano.text.length > 0)
+    {
+      var handler = new Handle_RDF_XML();
+      handler.parse(val.d.rdf_nano.text, gData.baseURL,
+        function(error, html_data) {
+          gData.rdf_nano.rdf_text = val.d.rdf_nano.text;
+          if (error)
+            val.d.rdf.error.push(error);
 
-        if (html_data)
-          dData.rdf.expanded = html_data;
+          if (html_data)
+            val.d.rdf.expanded = html_data;
 
-        if (handler.skipped_error.length>0)
-          dData.rdf.error = dData.rdf.error.concat(handler.skipped_error);
+          if (handler.skipped_error.length>0)
+            val.d.rdf.error = val.d.rdf.error.concat(handler.skipped_error);
 
-        show_Data(dData);
-    });
-  }
-  else
-  {
-    show_Data(dData);
-  }
+          resolve({d:val.d, start_id:0});
+      });
+    }
+    else
+    {
+      resolve({d:val.d, start_id:0});
+    }
+  });
 }
 
 
@@ -712,16 +735,48 @@ function parse_Data(dData)
 
 //??
 /**/
-  var url = new Uri(doc_URL);
-  url.setAnchor("");
-  url.setQuery("");
+  var url = new URL(doc_URL);
+  url.hash ='';
+  url.search = '';
   gData.baseURL = url.toString();
 /**/
 //  gData.baseURL = doc_URL;
 
-  load_restData(doc_URL);
+  g_RestCons.load(doc_URL);
 
-  check_Microdata(dData);
+  return new Promise(function resolver(resolve, reject) {
+    Promise.resolve({d:dData, start_id:0})
+    .then(function (val) {
+       return check_Microdata(val);
+    })
+    .then(function (val) {
+       return check_JSON_LD(val);
+    })
+    .then(function (val) {
+       return check_Json_Nano(val);
+    })
+    .then(function (val) {
+       return check_Turtle(val);
+    })
+    .then(function (val) {
+       return check_Turtle_Nano(val);
+    })
+    .then(function (val) {
+       return check_POSH(val);
+    })
+    .then(function (val) {
+       return check_RDFa(val);
+    })
+    .then(function (val) {
+       return check_RDF_XML(val);
+    })
+    .then(function (val) {
+       return check_RDF_XML_Nano(val);
+    })
+    .then(function(val){
+      return resolve(val.d);
+    });
+  });
 }
 
 
@@ -739,7 +794,20 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       } catch(e){}
       if (request.is_data_exists)
       {
-        parse_Data(dData);
+        parse_Data(dData)
+        .then(function(dData){
+          show_Data(dData);
+        })
+        .catch(function(e) {
+          console.log("OSDS: Error="+e);
+          $('#tabs a[href=#micro]').hide();
+          $('#tabs a[href=#jsonld]').hide();
+          $('#tabs a[href=#turtle]').hide();
+          $('#tabs a[href=#rdfa]').hide();
+          $('#tabs a[href=#rdf]').hide();
+          $('#tabs a[href=#posh]').hide();
+          selectedTab = null;
+        });
       }
       else
       {
@@ -772,21 +840,39 @@ function SuperLinks_exec()
 {
   if (doc_URL!==null) {
     var setting = new Settings();
-    var link_query =   setting.getValue("ext.osds.super_links.query");
+    var link_query = setting.getValue("ext.osds.super_links.query");
     var link_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
 
-    Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
-      if (tabs.length > 0) {
-        Browser.api.tabs.sendMessage(tabs[0].id, {
-            property: 'super_links',
-            query : link_query,
-            timeout: link_timeout
-          },
-          function(response) {
-          });
-        window.close();
-      }
-    });
+//##!!
+    if (Browser.isFirefoxWebExt) {
+      Browser.api.tabs.query({active:true, currentWindow:true})
+        .then((tabs) => {
+          if (tabs.length > 0) {
+            Browser.api.tabs.sendMessage(tabs[0].id, 
+              {
+                property: 'super_links',
+                query : link_query,
+                timeout: link_timeout
+              });
+            window.close();
+          }
+        });
+    } else {
+
+      Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
+        if (tabs.length > 0) {
+          Browser.api.tabs.sendMessage(tabs[0].id, 
+            {
+              property: 'super_links',
+              query : link_query,
+              timeout: link_timeout
+            },
+            function(response) {
+            });
+          window.close();
+        }
+      });
+    }
   }
 
   return false;
@@ -1170,164 +1256,20 @@ function save_data(action, fname, fmt, callback)
 
 function showInfo(msg)
 {
-  $("#alert-msg").prop("textContent",msg);
-  $("#alert-dlg" ).dialog({
+  $('#alert-msg').prop('textContent',msg);
+  $('#alert-dlg').dialog({
     resizable: true,
     height:180,
     modal: true,
     buttons: {
       Cancel: function() {
-        $(this).dialog( "destroy" );
+        $(this).dialog('destroy');
       }
     }
   });
 }
 
 
-function show_rest()
-{
-  selectTab('#cons');
-//--  $('#tabs a[href=#cons]').show();
-  if (yasqe.obj && yasqe.val && !yasqe.init) {
-    yasqe.obj.setValue(yasqe.val+"\n");
-    yasqe.init = true;
-  }
-}
 
 
 
-
-// ==== restData ====
-function rest_exec() {
-  if (!doc_URL) {
-    return;
-  }
-
-  var _url = (g_fix_restURI)? g_fix_restURI : new Uri(doc_URL);
-  _url.setQuery("");
-
-  if (yasqe.obj) {
-    var val = yasqe.obj.getValue();
-    var name = $("#query_id").val();
-    if (val && (val.replace(/[\r\n ]/g, '')).length > 0) {
-       _url.addQueryParam(name, val);
-    }
-  }
-
-  var rows = $('#restData>tr');
-  for(var i=0; i < rows.length; i++) {
-    var r = $(rows[i]);
-    var h = r.find('#h').val();
-    var v = r.find('#v').val();
-    if (h.length>0)
-       _url.addQueryParam(h, v);
-  }
-
-  Browser.openTab(_url.toString(), gData.tab_index);
-}
-
-
-function rest_del(e) {
-  //get the row we clicked on
-  var row = $(this).parents('tr:first');
-
-  $('#alert-msg').prop('textContent',"Delete row ?");
-  $( "#alert-dlg" ).dialog({
-    resizable: false,
-    height:180,
-    modal: true,
-    buttons: {
-      "Yes": function() {
-          $(row).remove();
-          $(this).dialog( "destroy" );
-      },
-      "No": function() {
-          $(this).dialog( "destroy" );
-      }
-    }
-  });
-  return true;
-}
-
-
-
-function createRestRow(h,v)
-{
-  var del = '<button id="rest_del" class="rest_del">Del</button>';
-  return '<tr><td width="12px">'+del+'</td>'
-            +'<td><input id="h" style="WIDTH: 100%" value="'+h+'"></td>'
-            +'<td><input id="v" style="WIDTH: 100%" value="'+v+'"></td></tr>';
-}
-
-
-function addRestEmpty()
-{
-  addRestParam("","");
-}
-
-function addRestParam(h,v)
-{
-  $('#restData').append(createRestRow(h, v));
-  $('.rest_del').button({
-    icons: { primary: 'ui-icon-minusthick' },
-    text: false
-  });
-  $('.rest_del').click(rest_del);
-}
-
-function delRest()
-{
-  var data = $('#users_data>tr');
-  var data = $('#restData>tr');
-  for(var i=0; i < data.length; i++) {
-    $(data[i]).remove();
-  }
-}
-
-
-function load_restData(doc_url)
-{
-  yasqe.val = null;
-  g_fix_restURI = null;
-
-  delRest();
-
-  if (!doc_url) {
-    addRestEmpty();
-    return;
-  }
-
-  var url = new Uri(doc_url);
-  var anchor = url.anchor();
-  // check for RDF Editor URL
-  if (anchor.lastIndexOf("/editor?", 0) === 0) {
-    var tmp_url = doc_url.replace(/#\/editor\?/g, "%23/editor?");
-    g_fix_restURI = url = new Uri(tmp_url);
-    var tmp_path = url.path().replace(/%23\/editor/g, "#/editor");
-    url.setPath(tmp_path);
-  }
-
-  var params = url.queryPairs;
-  for(var i=0; i<params.length; i++) {
-    var val = params[i][1];
-    var key = params[i][0];
-    if (key === "query" || key === "qtxt") {
-      yasqe.val = val;
-      $("#query_id").val(key);
-    }
-    else
-      addRestParam(params[i][0], val);
-  }
-
-  if (params.length == 0)
-    addRestEmpty();
-
-  if (yasqe.obj && yasqe.val) {
-    yasqe.obj.setValue(yasqe.val+"\n");
-  }
-  else {
-    yasqe.obj.setValue("\n");
-    $(".yasqe").hide();
-  }
-}
-// ==== restData  END ====
