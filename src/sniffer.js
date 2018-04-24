@@ -982,7 +982,7 @@
                     || (json_ld_Text && json_ld_Text.length > 0)
                     || (turtle_Text  && turtle_Text.length > 0)
                     || (rdf_Text     && rdf_Text.length > 0)
-                    || (rdfa         && rdfa.length > 0)
+                    || (rdfa.data    && rdfa.data.length > 0)
                     || (ttl_nano_Text && ttl_nano_Text.length > 0)
                     || (json_nano_Text && json_nano_Text.length > 0)
                     || (rdf_nano_Text && rdf_nano_Text.length > 0)
