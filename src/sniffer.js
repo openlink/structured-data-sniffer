@@ -365,11 +365,9 @@
             //send data_exists flag to extension
             Browser.api.runtime.sendMessage({
                         property: "status",
-                        status: 'ready',
+                        status: "ready",
                         data_exists: data_found,
                         doc_URL: document.location.href
-                    },
-                    function (response) {
                     });
 
         } catch (e) {
@@ -996,8 +994,6 @@
                         property: "doc_data",
                         data: JSON.stringify(docData, undefined, 2),
                         is_data_exists: data_exists
-                    },
-                    function (response) {
                     });
             }
 

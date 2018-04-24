@@ -196,16 +196,19 @@ if (Browser.isChromeAPI)
           }
           else if (Browser.isFirefoxWebExt) {
             Browser.api.tabs.update(d.tabId, { url: _url });
-//don't show save dialog      return { cancel: true };
-            return { cancel: false };
+//don't show save dialog      
+            return { cancel: true };
           }
           else {
+            Browser.api.tabs.update(d.tabId, { url: _url });
+            return { cancel: true };
+/**
             if (v_cancel)
               Browser.api.tabs.update(d.tabId, { url: _url });
             else
               Browser.openTab(_url);
             return { "responseHeaders":d.responseHeaders };
-//              return { cancel: false};
+**/
           }
       }
   }
