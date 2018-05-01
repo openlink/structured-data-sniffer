@@ -149,7 +149,7 @@ $(document).ready(function()
 
   gData_showed = false;
 
-  jQuery('#ext_ver').text('ver: '+ Browser.api.runtime.getManifest().version);
+  jQuery('#ext_ver').text('\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version);
 
 //##!!
   if (Browser.isFirefoxWebExt) {

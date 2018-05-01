@@ -292,7 +292,7 @@ function start_parse_data(data_text, data_type, data_url, ext)
     }
   else
     {
-      var source = data_text.replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
+      var source = sanitize_str(data_text);
       document.body.innerHTML = "<pre>"+source+"</pre>";
     }
 

@@ -39,8 +39,18 @@ Fix_Nano.prototype = {
       try {
         var lexer = N3.Lexer({ lineMode: false });
         var ttl_data = textData[self._pos];
+        var tok0;
+        var tok1;
 
         lexer.tokenize(ttl_data, function (error, token) {
+          if (token) {
+            if (self._tokens ==0) {
+              tok0 = token;
+            } else if (self._tokens ==1) {
+              tok1 = token;
+            }
+          }
+
           if (token && self._tokens ==0 &&
               !(token.type==="IRI"
                 || token.type==="abbreviation"
@@ -49,8 +59,9 @@ Fix_Nano.prototype = {
                 || token.type==="PREFIX"
                 || token.type[0]==="@"
                 || token.type==="["
-               ))
+               )) {
             self._bad_data = true;
+          }
           if (token && self._tokens ==1 &&
               !(token.type==="IRI"
                 || token.type==="abbreviation"
@@ -60,8 +71,25 @@ Fix_Nano.prototype = {
                 || token.type===","
                 || token.type===";"
                 || token.type==="]"
-               ))
+               )) {
             self._bad_data = true;
+          }
+
+          if (self._tokens==1) {
+            if ( (tok0.type === "prefixed" 
+                 || tok0.type==="IRI" 
+                 || tok0.type==="abbreviation"
+                 )
+                && 
+                 (tok1.type==="," 
+                 || tok1.type===";" 
+                 || tok1.type==="]" 
+                 || tok1.type==="PREFIX"
+                 || tok1.type==="prefix"
+                 )) {
+              self._bad_data = true;
+            }
+          }
 
           if (self._tokens==2 && !self._bad_data) {
               if (self._output === null)
@@ -173,7 +201,7 @@ Handle_Turtle.prototype = {
           function (error, tr, prefixes) {
             if (error) {
               error = ""+error;
-              error = error.replace("<","&lt;").replace(">","&gt;");
+              error = sanitize_str(error);
               if (self.ns_pref_size>0) { // fix line in error message
                 try {
                   var m = self._pattern.exec(error);
