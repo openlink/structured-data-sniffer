@@ -77,8 +77,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var store = __webpack_require__(37)('wks');
-var uid = __webpack_require__(19);
+var store = __webpack_require__(38)('wks');
+var uid = __webpack_require__(20);
 var Symbol = __webpack_require__(1).Symbol;
 var USE_SYMBOL = typeof Symbol == 'function';
 
@@ -117,9 +117,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 var graphTypes = __webpack_require__(5);
-var types = __webpack_require__(3);
+var types = __webpack_require__(4);
 // TODO: move `IdentifierIssuer` to its own package
-var IdentifierIssuer = __webpack_require__(44).IdentifierIssuer;
+var IdentifierIssuer = __webpack_require__(45).IdentifierIssuer;
 var JsonLdError = __webpack_require__(6);
 
 // constants
@@ -482,7 +482,7 @@ api.compareValues = function (v1, v2) {
  * @param a the first string.
  * @param b the second string.
  *
- * @return -1 if a < b, 1 if a > b, 0 if a == b.
+ * @return -1 if a < b, 1 if a > b, 0 if a === b.
  */
 api.compareShortestLeast = function (a, b) {
   if (a.length < b.length) {
@@ -649,6 +649,14 @@ function _labelBlankNodes(issuer, element) {
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports) {
+
+var core = module.exports = { version: '2.5.5' };
+if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -758,14 +766,6 @@ api.isUndefined = function (v) {
 };
 
 /***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-var core = module.exports = { version: '2.5.3' };
-if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
-
-
-/***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -775,7 +775,7 @@ if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
  */
 
 
-var types = __webpack_require__(3);
+var types = __webpack_require__(4);
 
 var api = {};
 module.exports = api;
@@ -848,6 +848,21 @@ api.isList = function (v) {
 };
 
 /**
+ * Returns true if the given value is a @graph.
+ *
+ * @return true if the value is a @graph, false if not.
+ */
+api.isGraph = function (v) {
+  // Note: A value is a graph if all of these hold true:
+  // 1. It is an object.
+  // 2. It has an `@graph` key.
+  // 3. It may have '@id' or '@index'
+  return types.isObject(v) && '@graph' in v && Object.keys(v).filter(function (key) {
+    return key !== '@id' && key !== '@index';
+  }).length === 1;
+};
+
+/**
  * Returns true if the given value is a simple @graph.
  *
  * @return true if the value is a simple @graph, false if not.
@@ -857,11 +872,7 @@ api.isSimpleGraph = function (v) {
   // 1. It is an object.
   // 2. It has an `@graph` key.
   // 3. It has only 1 key or 2 keys where one of them is `@index`.
-  if (!types.isObject(v)) {
-    return false;
-  }
-  var keyLength = Object.keys(v).length;
-  return '@graph' in v && (keyLength === 1 || keyLength === 2 && '@index' in v);
+  return api.isGraph(v) && !('@id' in v);
 };
 
 /**
@@ -933,29 +944,8 @@ module.exports = function (_Error) {
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__(12);
-module.exports = function (it) {
-  if (!isObject(it)) throw TypeError(it + ' is not an object!');
-  return it;
-};
-
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports) {
-
-var hasOwnProperty = {}.hasOwnProperty;
-module.exports = function (it, key) {
-  return hasOwnProperty.call(it, key);
-};
-
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
 var global = __webpack_require__(1);
-var core = __webpack_require__(4);
+var core = __webpack_require__(3);
 var hide = __webpack_require__(10);
 var redefine = __webpack_require__(16);
 var ctx = __webpack_require__(27);
@@ -1000,12 +990,32 @@ module.exports = $export;
 
 
 /***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(9);
+module.exports = function (it) {
+  if (!isObject(it)) throw TypeError(it + ' is not an object!');
+  return it;
+};
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports) {
+
+module.exports = function (it) {
+  return typeof it === 'object' ? it !== null : typeof it === 'function';
+};
+
+
+/***/ }),
 /* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var dP = __webpack_require__(11);
 var createDesc = __webpack_require__(26);
-module.exports = __webpack_require__(13) ? function (object, key, value) {
+module.exports = __webpack_require__(12) ? function (object, key, value) {
   return dP.f(object, key, createDesc(1, value));
 } : function (object, key, value) {
   object[key] = value;
@@ -1017,12 +1027,12 @@ module.exports = __webpack_require__(13) ? function (object, key, value) {
 /* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(7);
-var IE8_DOM_DEFINE = __webpack_require__(50);
-var toPrimitive = __webpack_require__(34);
+var anObject = __webpack_require__(8);
+var IE8_DOM_DEFINE = __webpack_require__(51);
+var toPrimitive = __webpack_require__(35);
 var dP = Object.defineProperty;
 
-exports.f = __webpack_require__(13) ? Object.defineProperty : function defineProperty(O, P, Attributes) {
+exports.f = __webpack_require__(12) ? Object.defineProperty : function defineProperty(O, P, Attributes) {
   anObject(O);
   P = toPrimitive(P, true);
   anObject(Attributes);
@@ -1037,21 +1047,22 @@ exports.f = __webpack_require__(13) ? Object.defineProperty : function definePro
 
 /***/ }),
 /* 12 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = function (it) {
-  return typeof it === 'object' ? it !== null : typeof it === 'function';
-};
+// Thank's IE8 for his funny defineProperty
+module.exports = !__webpack_require__(19)(function () {
+  return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
+});
 
 
 /***/ }),
 /* 13 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-// Thank's IE8 for his funny defineProperty
-module.exports = !__webpack_require__(18)(function () {
-  return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
-});
+var hasOwnProperty = {}.hasOwnProperty;
+module.exports = function (it, key) {
+  return hasOwnProperty.call(it, key);
+};
 
 
 /***/ }),
@@ -1416,10 +1427,10 @@ var _retrieveContextUrls = function () {
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 var util = __webpack_require__(2);
-var ActiveContextCache = __webpack_require__(125);
+var ActiveContextCache = __webpack_require__(131);
 var JsonLdError = __webpack_require__(6);
 
-var _require = __webpack_require__(3),
+var _require = __webpack_require__(4),
     _isArray = _require.isArray,
     _isObject = _require.isObject,
     _isString = _require.isString,
@@ -1506,7 +1517,7 @@ api.process = function (_ref) {
       if (ctx['@version'] !== 1.1) {
         throw new JsonLdError('Unsupported JSON-LD version: ' + ctx['@version'], 'jsonld.UnsupportedVersion', { code: 'invalid @version value', context: ctx });
       }
-      if (activeCtx.processingMode && activeCtx.processingMode.indexOf('json-ld-1.1') !== 0) {
+      if (activeCtx.processingMode && activeCtx.processingMode === 'json-ld-1.0') {
         throw new JsonLdError('@version: ' + ctx['@version'] + ' not compatible with ' + activeCtx.processingMode, 'jsonld.ProcessingModeConflict', { code: 'processing mode conflict', context: ctx });
       }
       rval.processingMode = 'json-ld-1.1';
@@ -1623,7 +1634,9 @@ api.createTermDefinition = function (activeCtx, localCtx, term, defined) {
   }
 
   // convert short-hand value to object w/@id
+  var simpleTerm = false;
   if (_isString(value)) {
+    simpleTerm = true;
     value = { '@id': value };
   }
 
@@ -1638,15 +1651,28 @@ api.createTermDefinition = function (activeCtx, localCtx, term, defined) {
   // make sure term definition only has expected keywords
   var validKeys = ['@container', '@id', '@language', '@reverse', '@type'];
 
+  // JSON-LD 1.1 support
+  if (api.processingMode(activeCtx, 1.1)) {
+    validKeys.push('@context', '@nest', '@prefix');
+  }
+
   for (var kw in value) {
     if (!validKeys.includes(kw)) {
       throw new JsonLdError('Invalid JSON-LD syntax; a term definition must not contain ' + kw, 'jsonld.SyntaxError', { code: 'invalid term definition', context: localCtx });
     }
   }
 
+  // always compute whether term has a colon as an optimization for
+  // _compactIri
+  var colon = term.indexOf(':');
+  mapping._termHasColon = colon !== -1;
+
   if ('@reverse' in value) {
     if ('@id' in value) {
       throw new JsonLdError('Invalid JSON-LD syntax; a @reverse term definition must not ' + 'contain @id.', 'jsonld.SyntaxError', { code: 'invalid reverse property', context: localCtx });
+    }
+    if ('@nest' in value) {
+      throw new JsonLdError('Invalid JSON-LD syntax; a @reverse term definition must not ' + 'contain @nest.', 'jsonld.SyntaxError', { code: 'invalid reverse property', context: localCtx });
     }
     var reverse = value['@reverse'];
     if (!_isString(reverse)) {
@@ -1672,13 +1698,10 @@ api.createTermDefinition = function (activeCtx, localCtx, term, defined) {
         throw new JsonLdError('Invalid JSON-LD syntax; a @context @id value must be an ' + 'absolute IRI, a blank node identifier, or a keyword.', 'jsonld.SyntaxError', { code: 'invalid IRI mapping', context: localCtx });
       }
       mapping['@id'] = _id2;
+      // indicate if this term may be used as a compact IRI prefix
+      mapping._prefix = !mapping._termHasColon && _id2.match(/[:\/\?#\[\]@]$/) && (simpleTerm || api.processingMode(activeCtx, 1.0));
     }
   }
-
-  // always compute whether term has a colon as an optimization for
-  // _compactIri
-  var colon = term.indexOf(':');
-  mapping._termHasColon = colon !== -1;
 
   if (!('@id' in mapping)) {
     // see if the term has a prefix
@@ -1739,12 +1762,24 @@ api.createTermDefinition = function (activeCtx, localCtx, term, defined) {
     var hasSet = container.includes('@set');
 
     // JSON-LD 1.1 support
-    if (activeCtx.processingMode && activeCtx.processingMode.indexOf('json-ld-1.1') === 0) {
-      // TODO: @id and @type
-      validContainers.push('@graph');
+    if (api.processingMode(activeCtx, 1.1)) {
+      validContainers.push('@graph', '@id', '@type');
 
       // check container length
-      isValid &= container.length <= (hasSet ? 2 : 1);
+      if (container.includes('@list')) {
+        if (container.length !== 1) {
+          throw new JsonLdError('Invalid JSON-LD syntax; @context @container with @list must have no other values', 'jsonld.SyntaxError', { code: 'invalid container mapping', context: localCtx });
+        }
+      } else if (container.includes('@graph')) {
+        if (container.some(function (key) {
+          return key !== '@graph' && key !== '@id' && key !== '@index' && key !== '@set';
+        })) {
+          throw new JsonLdError('Invalid JSON-LD syntax; @context @container with @graph must have no other values ' + 'other than @id, @index, and @set', 'jsonld.SyntaxError', { code: 'invalid container mapping', context: localCtx });
+        }
+      } else {
+        // otherwise, container may also include @set
+        isValid &= container.length <= (hasSet ? 2 : 1);
+      }
     } else {
       // in JSON-LD 1.0, container must not be an array (it must be a string, which is one of the validContainers)
       isValid &= !_isArray(value['@container']);
@@ -1775,6 +1810,11 @@ api.createTermDefinition = function (activeCtx, localCtx, term, defined) {
     mapping['@container'] = container;
   }
 
+  // scoped contexts
+  if ('@context' in value) {
+    mapping['@context'] = value['@context'];
+  }
+
   if ('@language' in value && !('@type' in value)) {
     var language = value['@language'];
     if (language !== null && !_isString(language)) {
@@ -1786,6 +1826,26 @@ api.createTermDefinition = function (activeCtx, localCtx, term, defined) {
       language = language.toLowerCase();
     }
     mapping['@language'] = language;
+  }
+
+  // term may be used as a prefix
+  if ('@prefix' in value) {
+    if (mapping._termHasColon) {
+      throw new JsonLdError('Invalid JSON-LD syntax; @context @prefix used on a compact IRI term', 'jsonld.SyntaxError', { code: 'invalid term definition', context: localCtx });
+    }
+    if (typeof value['@prefix'] === 'boolean') {
+      mapping._prefix = value['@prefix'] === true;
+    } else {
+      throw new JsonLdError('Invalid JSON-LD syntax; @context value for @prefix must be boolean', 'jsonld.SyntaxError', { code: 'invalid @prefix value', context: localCtx });
+    }
+  }
+
+  if ('@nest' in value) {
+    var nest = value['@nest'];
+    if (!_isString(nest) || nest !== '@nest' && nest.indexOf('@') === 0) {
+      throw new JsonLdError('Invalid JSON-LD syntax; @context @nest value must be ' + 'a string which is not a keyword other than @nest.', 'jsonld.SyntaxError', { code: 'invalid @nest value', context: localCtx });
+    }
+    mapping['@nest'] = nest;
   }
 
   // disallow aliasing @context and @preserve
@@ -1814,12 +1874,9 @@ api.createTermDefinition = function (activeCtx, localCtx, term, defined) {
  */
 api.expandIri = function (activeCtx, value, relativeTo, localCtx, defined) {
   // already expanded
-  if (value === null || api.isKeyword(value)) {
+  if (value === null || !_isString(value) || api.isKeyword(value)) {
     return value;
   }
-
-  // ensure value is interpreted as a string
-  value = String(value);
 
   // define term dependency if not defined
   if (localCtx && value in localCtx && defined[value] !== true) {
@@ -2146,6 +2203,22 @@ api.getAllContexts = function () {
 }();
 
 /**
+ * Processing Mode check.
+ *
+ * @param activeCtx the current active context.
+ * @param version the string or numeric version to check.
+ *
+ * @return boolean.
+ */
+api.processingMode = function (activeCtx, version) {
+  if (version.toString() >= '1.1') {
+    return activeCtx.processingMode && activeCtx.processingMode >= 'json-ld-' + version.toString();
+  } else {
+    return !activeCtx.processingMode || activeCtx.processingMode === 'json-ld-1.0';
+  }
+};
+
+/**
  * Returns whether or not the given value is a keyword.
  *
  * @param v the value to check.
@@ -2168,7 +2241,10 @@ api.isKeyword = function (v) {
     case '@index':
     case '@language':
     case '@list':
+    case '@nest':
+    case '@none':
     case '@omitDefault':
+    case '@prefix':
     case '@preserve':
     case '@requireAll':
     case '@reverse':
@@ -2229,6 +2305,13 @@ function _findContextUrls(input, urls, replace, base) {
             // @context URL found
             urls[_ctx] = false;
           }
+        } else {
+          // look for scoped context
+          for (var _key2 in _ctx) {
+            if (_isObject(_ctx[_key2])) {
+              _findContextUrls(_ctx[_key2], urls, replace, base);
+            }
+          }
         }
       }
     } else if (_isString(ctx)) {
@@ -2243,6 +2326,13 @@ function _findContextUrls(input, urls, replace, base) {
         // @context URL found
         urls[ctx] = false;
       }
+    } else {
+      // look for scoped context
+      for (var _key3 in ctx) {
+        if (_isObject(ctx[_key3])) {
+          _findContextUrls(ctx[_key3], urls, replace, base);
+        }
+      }
     }
   }
 }
@@ -2253,13 +2343,13 @@ function _findContextUrls(input, urls, replace, base) {
 
 var global = __webpack_require__(1);
 var hide = __webpack_require__(10);
-var has = __webpack_require__(8);
-var SRC = __webpack_require__(19)('src');
+var has = __webpack_require__(13);
+var SRC = __webpack_require__(20)('src');
 var TO_STRING = 'toString';
 var $toString = Function[TO_STRING];
 var TPL = ('' + $toString).split(TO_STRING);
 
-__webpack_require__(4).inspectSource = function (it) {
+__webpack_require__(3).inspectSource = function (it) {
   return $toString.call(it);
 };
 
@@ -2289,8 +2379,8 @@ __webpack_require__(4).inspectSource = function (it) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // to indexed object, toObject with fallback for non-array-like ES3 strings
-var IObject = __webpack_require__(52);
-var defined = __webpack_require__(35);
+var IObject = __webpack_require__(53);
+var defined = __webpack_require__(29);
 module.exports = function (it) {
   return IObject(defined(it));
 };
@@ -2298,6 +2388,17 @@ module.exports = function (it) {
 
 /***/ }),
 /* 18 */
+/***/ (function(module, exports) {
+
+var toString = {}.toString;
+
+module.exports = function (it) {
+  return toString.call(it).slice(8, -1);
+};
+
+
+/***/ }),
+/* 19 */
 /***/ (function(module, exports) {
 
 module.exports = function (exec) {
@@ -2310,7 +2411,7 @@ module.exports = function (exec) {
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports) {
 
 var id = 0;
@@ -2321,23 +2422,12 @@ module.exports = function (key) {
 
 
 /***/ }),
-/* 20 */
-/***/ (function(module, exports) {
-
-var toString = {}.toString;
-
-module.exports = function (it) {
-  return toString.call(it).slice(8, -1);
-};
-
-
-/***/ }),
 /* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.14 / 15.2.3.14 Object.keys(O)
 var $keys = __webpack_require__(55);
-var enumBugKeys = __webpack_require__(39);
+var enumBugKeys = __webpack_require__(40);
 
 module.exports = Object.keys || function keys(O) {
   return $keys(O, enumBugKeys);
@@ -2414,7 +2504,7 @@ module.exports = {
  */
 
 
-var types = __webpack_require__(3);
+var types = __webpack_require__(4);
 
 var api = {};
 module.exports = api;
@@ -2761,22 +2851,33 @@ module.exports = function (it) {
 /* 29 */
 /***/ (function(module, exports) {
 
-exports.f = {}.propertyIsEnumerable;
+// 7.2.1 RequireObjectCoercible(argument)
+module.exports = function (it) {
+  if (it == undefined) throw TypeError("Can't call method on  " + it);
+  return it;
+};
 
 
 /***/ }),
 /* 30 */
 /***/ (function(module, exports) {
 
-module.exports = false;
+exports.f = {}.propertyIsEnumerable;
 
 
 /***/ }),
 /* 31 */
+/***/ (function(module, exports) {
+
+module.exports = false;
+
+
+/***/ }),
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var def = __webpack_require__(11).f;
-var has = __webpack_require__(8);
+var has = __webpack_require__(13);
 var TAG = __webpack_require__(0)('toStringTag');
 
 module.exports = function (it, tag, stat) {
@@ -2785,7 +2886,7 @@ module.exports = function (it, tag, stat) {
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2798,7 +2899,7 @@ var _require = __webpack_require__(15),
     isKeyword = _require.isKeyword;
 
 var graphTypes = __webpack_require__(5);
-var types = __webpack_require__(3);
+var types = __webpack_require__(4);
 var util = __webpack_require__(2);
 var JsonLdError = __webpack_require__(6);
 
@@ -2930,8 +3031,7 @@ api.createNodeMap = function (input, graphs, graph, issuer, name, list) {
       if (!(name in graphs)) {
         graphs[name] = {};
       }
-      var g = graph === '@merged' ? graph : name;
-      api.createNodeMap(input[property], graphs, g, issuer);
+      api.createNodeMap(input[property], graphs, name, issuer);
       continue;
     }
 
@@ -2988,6 +3088,124 @@ api.createNodeMap = function (input, graphs, graph, issuer, name, list) {
   }
 };
 
+/**
+ * Merge separate named graphs into a single merged graph including
+ * all nodes from the default graph and named graphs.
+ *
+ * @param graphs a map of graph name to subject map.
+ *
+ * @return the merged graph map.
+ */
+api.mergeNodeMapGraphs = function (graphs) {
+  var merged = {};
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = Object.keys(graphs).sort()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var name = _step.value;
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = Object.keys(graphs[name]).sort()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var id = _step2.value;
+
+          var node = graphs[name][id];
+          if (!(id in merged)) {
+            merged[id] = { '@id': id };
+          }
+          var mergedNode = merged[id];
+
+          var _iteratorNormalCompletion3 = true;
+          var _didIteratorError3 = false;
+          var _iteratorError3 = undefined;
+
+          try {
+            for (var _iterator3 = Object.keys(node).sort()[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+              var property = _step3.value;
+
+              if (isKeyword(property)) {
+                // copy keywords
+                mergedNode[property] = util.clone(node[property]);
+              } else {
+                // merge objects
+                var _iteratorNormalCompletion4 = true;
+                var _didIteratorError4 = false;
+                var _iteratorError4 = undefined;
+
+                try {
+                  for (var _iterator4 = node[property][Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+                    var value = _step4.value;
+
+                    util.addValue(mergedNode, property, util.clone(value), { propertyIsArray: true, allowDuplicate: false });
+                  }
+                } catch (err) {
+                  _didIteratorError4 = true;
+                  _iteratorError4 = err;
+                } finally {
+                  try {
+                    if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                      _iterator4.return();
+                    }
+                  } finally {
+                    if (_didIteratorError4) {
+                      throw _iteratorError4;
+                    }
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            _didIteratorError3 = true;
+            _iteratorError3 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                _iterator3.return();
+              }
+            } finally {
+              if (_didIteratorError3) {
+                throw _iteratorError3;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  return merged;
+};
+
 api.mergeNodeMaps = function (graphs) {
   // add all non-default graphs to default graph
   var defaultGraph = graphs['@default'];
@@ -3021,10 +3239,10 @@ api.mergeNodeMaps = function (graphs) {
 };
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__(12);
+var isObject = __webpack_require__(9);
 var document = __webpack_require__(1).document;
 // typeof document.createElement is 'object' in old IE
 var is = isObject(document) && isObject(document.createElement);
@@ -3034,11 +3252,11 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.1 ToPrimitive(input [, PreferredType])
-var isObject = __webpack_require__(12);
+var isObject = __webpack_require__(9);
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
 // and the second argument - flag - preferred type is a string
 module.exports = function (it, S) {
@@ -3052,18 +3270,19 @@ module.exports = function (it, S) {
 
 
 /***/ }),
-/* 35 */
-/***/ (function(module, exports) {
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
 
-// 7.2.1 RequireObjectCoercible(argument)
+// 7.1.15 ToLength
+var toInteger = __webpack_require__(37);
+var min = Math.min;
 module.exports = function (it) {
-  if (it == undefined) throw TypeError("Can't call method on  " + it);
-  return it;
+  return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
 };
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports) {
 
 // 7.1.4 ToInteger
@@ -3075,7 +3294,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var global = __webpack_require__(1);
@@ -3087,18 +3306,18 @@ module.exports = function (key) {
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var shared = __webpack_require__(37)('keys');
-var uid = __webpack_require__(19);
+var shared = __webpack_require__(38)('keys');
+var uid = __webpack_require__(20);
 module.exports = function (key) {
   return shared[key] || (shared[key] = uid(key));
 };
 
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports) {
 
 // IE 8- don't enum bug keys
@@ -3108,18 +3327,18 @@ module.exports = (
 
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports) {
 
 exports.f = Object.getOwnPropertySymbols;
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // getting tag from 19.1.3.6 Object.prototype.toString()
-var cof = __webpack_require__(20);
+var cof = __webpack_require__(18);
 var TAG = __webpack_require__(0)('toStringTag');
 // ES3 wrong here
 var ARG = cof(function () { return arguments; }()) == 'Arguments';
@@ -3144,7 +3363,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3169,12 +3388,12 @@ module.exports.f = function (C) {
 
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var global = __webpack_require__(1);
-var core = __webpack_require__(4);
-var LIBRARY = __webpack_require__(30);
+var core = __webpack_require__(3);
+var LIBRARY = __webpack_require__(31);
 var wksExt = __webpack_require__(65);
 var defineProperty = __webpack_require__(11).f;
 module.exports = function (name) {
@@ -3184,7 +3403,7 @@ module.exports = function (name) {
 
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3228,21 +3447,21 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 var util = __webpack_require__(14);
 var URDNA2015 = __webpack_require__(68);
-var URGNA2012 = __webpack_require__(119);
+var URGNA2012 = __webpack_require__(125);
 var URDNA2015Sync = __webpack_require__(72);
-var URGNA2012Sync = __webpack_require__(120);
+var URGNA2012Sync = __webpack_require__(126);
 
 var URDNA2015Native = void 0;
 try {
-  URDNA2015Native = __webpack_require__(121)('urdna2015');
+  URDNA2015Native = __webpack_require__(127)('urdna2015');
 } catch (e) {}
 
 var api = {};
 module.exports = api;
 
 // expose helpers
-api.NQuads = __webpack_require__(47);
-api.IdentifierIssuer = __webpack_require__(45);
+api.NQuads = __webpack_require__(48);
+api.IdentifierIssuer = __webpack_require__(46);
 
 /**
  * Asynchronously canonizes an RDF dataset.
@@ -3359,7 +3578,7 @@ api.canonizeSync = function (dataset, options) {
 };
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3455,7 +3674,7 @@ module.exports = function () {
 }();
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -3472,7 +3691,7 @@ forge.md.algorithms = forge.md.algorithms || {};
 
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3485,7 +3704,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var util = __webpack_require__(116);
+var util = __webpack_require__(122);
 
 var TERMS = ['subject', 'predicate', 'object', 'graph'];
 var RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
@@ -3873,7 +4092,7 @@ function _compareTriples(t1, t2) {
 }
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3881,7 +4100,7 @@ function _compareTriples(t1, t2) {
 
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3977,22 +4196,22 @@ module.exports = function () {
 }();
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = !__webpack_require__(13) && !__webpack_require__(18)(function () {
-  return Object.defineProperty(__webpack_require__(33)('div'), 'a', { get: function () { return 7; } }).a != 7;
+module.exports = !__webpack_require__(12) && !__webpack_require__(19)(function () {
+  return Object.defineProperty(__webpack_require__(34)('div'), 'a', { get: function () { return 7; } }).a != 7;
 });
 
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // false -> Array#indexOf
 // true  -> Array#includes
 var toIObject = __webpack_require__(17);
-var toLength = __webpack_require__(53);
+var toLength = __webpack_require__(36);
 var toAbsoluteIndex = __webpack_require__(77);
 module.exports = function (IS_INCLUDES) {
   return function ($this, el, fromIndex) {
@@ -4015,26 +4234,14 @@ module.exports = function (IS_INCLUDES) {
 
 
 /***/ }),
-/* 52 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// fallback for non-array-like ES3 and non-enumerable old V8 strings
-var cof = __webpack_require__(20);
-// eslint-disable-next-line no-prototype-builtins
-module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
-  return cof(it) == 'String' ? it.split('') : Object(it);
-};
-
-
-/***/ }),
 /* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// 7.1.15 ToLength
-var toInteger = __webpack_require__(36);
-var min = Math.min;
-module.exports = function (it) {
-  return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
+// fallback for non-array-like ES3 and non-enumerable old V8 strings
+var cof = __webpack_require__(18);
+// eslint-disable-next-line no-prototype-builtins
+module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
+  return cof(it) == 'String' ? it.split('') : Object(it);
 };
 
 
@@ -4055,10 +4262,10 @@ module.exports = function (key) {
 /* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var has = __webpack_require__(8);
+var has = __webpack_require__(13);
 var toIObject = __webpack_require__(17);
-var arrayIndexOf = __webpack_require__(51)(false);
-var IE_PROTO = __webpack_require__(38)('IE_PROTO');
+var arrayIndexOf = __webpack_require__(52)(false);
+var IE_PROTO = __webpack_require__(39)('IE_PROTO');
 
 module.exports = function (object, names) {
   var O = toIObject(object);
@@ -4079,7 +4286,7 @@ module.exports = function (object, names) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.13 ToObject(argument)
-var defined = __webpack_require__(35);
+var defined = __webpack_require__(29);
 module.exports = function (it) {
   return Object(defined(it));
 };
@@ -4092,7 +4299,7 @@ module.exports = function (it) {
 "use strict";
 
 // 19.1.3.6 Object.prototype.toString()
-var classof = __webpack_require__(41);
+var classof = __webpack_require__(42);
 var test = {};
 test[__webpack_require__(0)('toStringTag')] = 'z';
 if (test + '' != '[object z]') {
@@ -4108,14 +4315,13 @@ if (test + '' != '[object z]') {
 
 "use strict";
 
-var LIBRARY = __webpack_require__(30);
-var $export = __webpack_require__(9);
+var LIBRARY = __webpack_require__(31);
+var $export = __webpack_require__(7);
 var redefine = __webpack_require__(16);
 var hide = __webpack_require__(10);
-var has = __webpack_require__(8);
 var Iterators = __webpack_require__(22);
 var $iterCreate = __webpack_require__(84);
-var setToStringTag = __webpack_require__(31);
+var setToStringTag = __webpack_require__(32);
 var getPrototypeOf = __webpack_require__(86);
 var ITERATOR = __webpack_require__(0)('iterator');
 var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
@@ -4139,7 +4345,7 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
   var VALUES_BUG = false;
   var proto = Base.prototype;
   var $native = proto[ITERATOR] || proto[FF_ITERATOR] || DEFAULT && proto[DEFAULT];
-  var $default = (!BUGGY && $native) || getMethod(DEFAULT);
+  var $default = $native || getMethod(DEFAULT);
   var $entries = DEFAULT ? !DEF_VALUES ? $default : getMethod('entries') : undefined;
   var $anyNative = NAME == 'Array' ? proto.entries || $native : $native;
   var methods, key, IteratorPrototype;
@@ -4150,7 +4356,7 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
       // Set @@toStringTag to native iterators
       setToStringTag(IteratorPrototype, TAG, true);
       // fix for some old engines
-      if (!LIBRARY && !has(IteratorPrototype, ITERATOR)) hide(IteratorPrototype, ITERATOR, returnThis);
+      if (!LIBRARY && typeof IteratorPrototype[ITERATOR] != 'function') hide(IteratorPrototype, ITERATOR, returnThis);
     }
   }
   // fix Array#{values, @@iterator}.name in V8 / FF
@@ -4184,17 +4390,17 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
-var anObject = __webpack_require__(7);
+var anObject = __webpack_require__(8);
 var dPs = __webpack_require__(85);
-var enumBugKeys = __webpack_require__(39);
-var IE_PROTO = __webpack_require__(38)('IE_PROTO');
+var enumBugKeys = __webpack_require__(40);
+var IE_PROTO = __webpack_require__(39)('IE_PROTO');
 var Empty = function () { /* empty */ };
 var PROTOTYPE = 'prototype';
 
 // Create object with fake `null` prototype: use iframe Object with cleared prototype
 var createDict = function () {
   // Thrash, waste and sodomy: IE GC bug
-  var iframe = __webpack_require__(33)('iframe');
+  var iframe = __webpack_require__(34)('iframe');
   var i = enumBugKeys.length;
   var lt = '<';
   var gt = '>';
@@ -4239,7 +4445,7 @@ module.exports = document && document.documentElement;
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.3.20 SpeciesConstructor(O, defaultConstructor)
-var anObject = __webpack_require__(7);
+var anObject = __webpack_require__(8);
 var aFunction = __webpack_require__(28);
 var SPECIES = __webpack_require__(0)('species');
 module.exports = function (O, D) {
@@ -4256,7 +4462,7 @@ module.exports = function (O, D) {
 var ctx = __webpack_require__(27);
 var invoke = __webpack_require__(96);
 var html = __webpack_require__(60);
-var cel = __webpack_require__(33);
+var cel = __webpack_require__(34);
 var global = __webpack_require__(1);
 var process = global.process;
 var setTask = global.setImmediate;
@@ -4296,7 +4502,7 @@ if (!setTask || !clearTask) {
     delete queue[id];
   };
   // Node.js 0.8-
-  if (__webpack_require__(20)(process) == 'process') {
+  if (__webpack_require__(18)(process) == 'process') {
     defer = function (id) {
       process.nextTick(ctx(run, id, 1));
     };
@@ -4356,9 +4562,9 @@ module.exports = function (exec) {
 /* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(7);
-var isObject = __webpack_require__(12);
-var newPromiseCapability = __webpack_require__(42);
+var anObject = __webpack_require__(8);
+var isObject = __webpack_require__(9);
+var newPromiseCapability = __webpack_require__(43);
 
 module.exports = function (C, x) {
   anObject(C);
@@ -4383,7 +4589,7 @@ exports.f = __webpack_require__(0);
 
 // 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
 var $keys = __webpack_require__(55);
-var hiddenKeys = __webpack_require__(39).concat('length', 'prototype');
+var hiddenKeys = __webpack_require__(40).concat('length', 'prototype');
 
 exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
   return $keys(O, hiddenKeys);
@@ -4435,11 +4641,11 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var AsyncAlgorithm = __webpack_require__(113);
-var IdentifierIssuer = __webpack_require__(45);
+var AsyncAlgorithm = __webpack_require__(118);
+var IdentifierIssuer = __webpack_require__(46);
 var MessageDigest = __webpack_require__(69);
 var Permutator = __webpack_require__(71);
-var NQuads = __webpack_require__(47);
+var NQuads = __webpack_require__(48);
 var util = __webpack_require__(14);
 
 var POSITIONS = { 'subject': 's', 'object': 'o', 'graph': 'g' };
@@ -5028,9 +5234,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var forge = __webpack_require__(23);
-__webpack_require__(46);
-__webpack_require__(114);
-__webpack_require__(115);
+__webpack_require__(47);
+__webpack_require__(119);
+__webpack_require__(121);
 
 module.exports = function () {
   /**
@@ -5068,9 +5274,10 @@ module.exports = function () {
  *
  * @author Dave Longley
  *
- * Copyright (c) 2010-2014 Digital Bazaar, Inc.
+ * Copyright (c) 2010-2018 Digital Bazaar, Inc.
  */
 var forge = __webpack_require__(23);
+var baseN = __webpack_require__(120);
 
 /* Utilities API */
 var util = module.exports = forge.util = forge.util || {};
@@ -5224,14 +5431,18 @@ function ByteStringBuffer(b) {
   if(typeof b === 'string') {
     this.data = b;
   } else if(util.isArrayBuffer(b) || util.isArrayBufferView(b)) {
-    // convert native buffer to forge buffer
-    // FIXME: support native buffers internally instead
-    var arr = new Uint8Array(b);
-    try {
-      this.data = String.fromCharCode.apply(null, arr);
-    } catch(e) {
-      for(var i = 0; i < arr.length; ++i) {
-        this.putByte(arr[i]);
+    if(typeof Buffer !== 'undefined' && b instanceof Buffer) {
+      this.data = b.toString('binary');
+    } else {
+      // convert native buffer to forge buffer
+      // FIXME: support native buffers internally instead
+      var arr = new Uint8Array(b);
+      try {
+        this.data = String.fromCharCode.apply(null, arr);
+      } catch(e) {
+        for(var i = 0; i < arr.length; ++i) {
+          this.putByte(arr[i]);
+        }
       }
     }
   } else if(b instanceof ByteStringBuffer ||
@@ -6606,6 +6817,9 @@ var _base64Idx = [
    39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
 ];
 
+// base58 characters (Bitcoin alphabet)
+var _base58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
 /**
  * Base64 encodes a 'binary' encoded string of bytes.
  *
@@ -6711,7 +6925,12 @@ util.decodeUtf8 = function(str) {
 util.binary = {
   raw: {},
   hex: {},
-  base64: {}
+  base64: {},
+  base58: {},
+  baseN : {
+    encode: baseN.encode,
+    decode: baseN.decode
+  }
 };
 
 /**
@@ -6868,9 +7087,15 @@ util.binary.base64.decode = function(input, output, offset) {
   }
 
   // make sure result is the exact decoded length
-  return output ?
-         (j - offset) :
-         out.subarray(0, j);
+  return output ? (j - offset) : out.subarray(0, j);
+};
+
+// add support for base58 encoding/decoding with Bitcoin alphabet
+util.binary.base58.encode = function(input, maxline) {
+  return util.binary.baseN.encode(input, _base58, maxline);
+};
+util.binary.base58.decode = function(input, maxline) {
+  return util.binary.baseN.decode(input, _base58, maxline);
 };
 
 // text encoding/decoding tools
@@ -8142,10 +8367,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var IdentifierIssuer = __webpack_require__(45);
+var IdentifierIssuer = __webpack_require__(46);
 var MessageDigest = __webpack_require__(69);
 var Permutator = __webpack_require__(71);
-var NQuads = __webpack_require__(47);
+var NQuads = __webpack_require__(48);
 var util = __webpack_require__(14);
 
 var POSITIONS = { 'subject': 's', 'object': 'o', 'graph': 'g' };
@@ -8696,7 +8921,8 @@ __webpack_require__(75);
 __webpack_require__(78);
 __webpack_require__(81);
 __webpack_require__(103);
-module.exports = __webpack_require__(112);
+__webpack_require__(108);
+module.exports = __webpack_require__(117);
 
 
 /***/ }),
@@ -9437,7 +9663,7 @@ module.exports = __webpack_require__(112);
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(76);
-module.exports = __webpack_require__(4).Array.includes;
+module.exports = __webpack_require__(3).Array.includes;
 
 
 /***/ }),
@@ -9447,8 +9673,8 @@ module.exports = __webpack_require__(4).Array.includes;
 "use strict";
 
 // https://github.com/tc39/Array.prototype.includes
-var $export = __webpack_require__(9);
-var $includes = __webpack_require__(51)(true);
+var $export = __webpack_require__(7);
+var $includes = __webpack_require__(52)(true);
 
 $export($export.P, 'Array', {
   includes: function includes(el /* , fromIndex = 0 */) {
@@ -9463,7 +9689,7 @@ __webpack_require__(54)('includes');
 /* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(36);
+var toInteger = __webpack_require__(37);
 var max = Math.max;
 var min = Math.min;
 module.exports = function (index, length) {
@@ -9477,7 +9703,7 @@ module.exports = function (index, length) {
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(79);
-module.exports = __webpack_require__(4).Object.assign;
+module.exports = __webpack_require__(3).Object.assign;
 
 
 /***/ }),
@@ -9485,7 +9711,7 @@ module.exports = __webpack_require__(4).Object.assign;
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.3.1 Object.assign(target, source)
-var $export = __webpack_require__(9);
+var $export = __webpack_require__(7);
 
 $export($export.S + $export.F, 'Object', { assign: __webpack_require__(80) });
 
@@ -9498,14 +9724,14 @@ $export($export.S + $export.F, 'Object', { assign: __webpack_require__(80) });
 
 // 19.1.2.1 Object.assign(target, source, ...)
 var getKeys = __webpack_require__(21);
-var gOPS = __webpack_require__(40);
-var pIE = __webpack_require__(29);
+var gOPS = __webpack_require__(41);
+var pIE = __webpack_require__(30);
 var toObject = __webpack_require__(56);
-var IObject = __webpack_require__(52);
+var IObject = __webpack_require__(53);
 var $assign = Object.assign;
 
 // should work with symbols and should have deterministic property order (V8 bug)
-module.exports = !$assign || __webpack_require__(18)(function () {
+module.exports = !$assign || __webpack_require__(19)(function () {
   var A = {};
   var B = {};
   // eslint-disable-next-line no-undef
@@ -9541,7 +9767,7 @@ __webpack_require__(87);
 __webpack_require__(90);
 __webpack_require__(101);
 __webpack_require__(102);
-module.exports = __webpack_require__(4).Promise;
+module.exports = __webpack_require__(3).Promise;
 
 
 /***/ }),
@@ -9572,8 +9798,8 @@ __webpack_require__(58)(String, 'String', function (iterated) {
 /* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(36);
-var defined = __webpack_require__(35);
+var toInteger = __webpack_require__(37);
+var defined = __webpack_require__(29);
 // true  -> String#at
 // false -> String#codePointAt
 module.exports = function (TO_STRING) {
@@ -9599,7 +9825,7 @@ module.exports = function (TO_STRING) {
 
 var create = __webpack_require__(59);
 var descriptor = __webpack_require__(26);
-var setToStringTag = __webpack_require__(31);
+var setToStringTag = __webpack_require__(32);
 var IteratorPrototype = {};
 
 // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
@@ -9616,10 +9842,10 @@ module.exports = function (Constructor, NAME, next) {
 /***/ (function(module, exports, __webpack_require__) {
 
 var dP = __webpack_require__(11);
-var anObject = __webpack_require__(7);
+var anObject = __webpack_require__(8);
 var getKeys = __webpack_require__(21);
 
-module.exports = __webpack_require__(13) ? Object.defineProperties : function defineProperties(O, Properties) {
+module.exports = __webpack_require__(12) ? Object.defineProperties : function defineProperties(O, Properties) {
   anObject(O);
   var keys = getKeys(Properties);
   var length = keys.length;
@@ -9635,9 +9861,9 @@ module.exports = __webpack_require__(13) ? Object.defineProperties : function de
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
-var has = __webpack_require__(8);
+var has = __webpack_require__(13);
 var toObject = __webpack_require__(56);
-var IE_PROTO = __webpack_require__(38)('IE_PROTO');
+var IE_PROTO = __webpack_require__(39)('IE_PROTO');
 var ObjectProto = Object.prototype;
 
 module.exports = Object.getPrototypeOf || function (O) {
@@ -9769,19 +9995,19 @@ module.exports = function (done, value) {
 
 "use strict";
 
-var LIBRARY = __webpack_require__(30);
+var LIBRARY = __webpack_require__(31);
 var global = __webpack_require__(1);
 var ctx = __webpack_require__(27);
-var classof = __webpack_require__(41);
-var $export = __webpack_require__(9);
-var isObject = __webpack_require__(12);
+var classof = __webpack_require__(42);
+var $export = __webpack_require__(7);
+var isObject = __webpack_require__(9);
 var aFunction = __webpack_require__(28);
 var anInstance = __webpack_require__(91);
 var forOf = __webpack_require__(92);
 var speciesConstructor = __webpack_require__(61);
 var task = __webpack_require__(62).set;
 var microtask = __webpack_require__(97)();
-var newPromiseCapabilityModule = __webpack_require__(42);
+var newPromiseCapabilityModule = __webpack_require__(43);
 var perform = __webpack_require__(63);
 var promiseResolve = __webpack_require__(64);
 var PROMISE = 'Promise';
@@ -9823,7 +10049,7 @@ var notify = function (promise, isReject) {
       var resolve = reaction.resolve;
       var reject = reaction.reject;
       var domain = reaction.domain;
-      var result, then;
+      var result, then, exited;
       try {
         if (handler) {
           if (!ok) {
@@ -9833,8 +10059,11 @@ var notify = function (promise, isReject) {
           if (handler === true) result = value;
           else {
             if (domain) domain.enter();
-            result = handler(value);
-            if (domain) domain.exit();
+            result = handler(value); // may throw
+            if (domain) {
+              domain.exit();
+              exited = true;
+            }
           }
           if (result === reaction.promise) {
             reject(TypeError('Promise-chain cycle'));
@@ -9843,6 +10072,7 @@ var notify = function (promise, isReject) {
           } else resolve(result);
         } else reject(value);
       } catch (e) {
+        if (domain && !exited) domain.exit();
         reject(e);
       }
     };
@@ -9977,9 +10207,9 @@ if (!USE_NATIVE) {
 }
 
 $export($export.G + $export.W + $export.F * !USE_NATIVE, { Promise: $Promise });
-__webpack_require__(31)($Promise, PROMISE);
+__webpack_require__(32)($Promise, PROMISE);
 __webpack_require__(99)(PROMISE);
-Wrapper = __webpack_require__(4)[PROMISE];
+Wrapper = __webpack_require__(3)[PROMISE];
 
 // statics
 $export($export.S + $export.F * !USE_NATIVE, PROMISE, {
@@ -10061,8 +10291,8 @@ module.exports = function (it, Constructor, name, forbiddenField) {
 var ctx = __webpack_require__(27);
 var call = __webpack_require__(93);
 var isArrayIter = __webpack_require__(94);
-var anObject = __webpack_require__(7);
-var toLength = __webpack_require__(53);
+var anObject = __webpack_require__(8);
+var toLength = __webpack_require__(36);
 var getIterFn = __webpack_require__(95);
 var BREAK = {};
 var RETURN = {};
@@ -10090,7 +10320,7 @@ exports.RETURN = RETURN;
 /***/ (function(module, exports, __webpack_require__) {
 
 // call something on iterator step with safe closing on error
-var anObject = __webpack_require__(7);
+var anObject = __webpack_require__(8);
 module.exports = function (iterator, fn, value, entries) {
   try {
     return entries ? fn(anObject(value)[0], value[1]) : fn(value);
@@ -10121,10 +10351,10 @@ module.exports = function (it) {
 /* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var classof = __webpack_require__(41);
+var classof = __webpack_require__(42);
 var ITERATOR = __webpack_require__(0)('iterator');
 var Iterators = __webpack_require__(22);
-module.exports = __webpack_require__(4).getIteratorMethod = function (it) {
+module.exports = __webpack_require__(3).getIteratorMethod = function (it) {
   if (it != undefined) return it[ITERATOR]
     || it['@@iterator']
     || Iterators[classof(it)];
@@ -10162,7 +10392,7 @@ var macrotask = __webpack_require__(62).set;
 var Observer = global.MutationObserver || global.WebKitMutationObserver;
 var process = global.process;
 var Promise = global.Promise;
-var isNode = __webpack_require__(20)(process) == 'process';
+var isNode = __webpack_require__(18)(process) == 'process';
 
 module.exports = function () {
   var head, last, notify;
@@ -10246,7 +10476,7 @@ module.exports = function (target, src, safe) {
 
 var global = __webpack_require__(1);
 var dP = __webpack_require__(11);
-var DESCRIPTORS = __webpack_require__(13);
+var DESCRIPTORS = __webpack_require__(12);
 var SPECIES = __webpack_require__(0)('species');
 
 module.exports = function (KEY) {
@@ -10293,8 +10523,8 @@ module.exports = function (exec, skipClosing) {
 "use strict";
 // https://github.com/tc39/proposal-promise-finally
 
-var $export = __webpack_require__(9);
-var core = __webpack_require__(4);
+var $export = __webpack_require__(7);
+var core = __webpack_require__(3);
 var global = __webpack_require__(1);
 var speciesConstructor = __webpack_require__(61);
 var promiseResolve = __webpack_require__(64);
@@ -10320,8 +10550,8 @@ $export($export.P + $export.R, 'Promise', { 'finally': function (onFinally) {
 "use strict";
 
 // https://github.com/tc39/proposal-promise-try
-var $export = __webpack_require__(9);
-var newPromiseCapability = __webpack_require__(42);
+var $export = __webpack_require__(7);
+var newPromiseCapability = __webpack_require__(43);
 var perform = __webpack_require__(63);
 
 $export($export.S, 'Promise', { 'try': function (callbackfn) {
@@ -10337,10 +10567,7 @@ $export($export.S, 'Promise', { 'try': function (callbackfn) {
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(104);
-__webpack_require__(57);
-__webpack_require__(110);
-__webpack_require__(111);
-module.exports = __webpack_require__(4).Symbol;
+module.exports = __webpack_require__(3).String.startsWith;
 
 
 /***/ }),
@@ -10348,31 +10575,113 @@ module.exports = __webpack_require__(4).Symbol;
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+// 21.1.3.18 String.prototype.startsWith(searchString [, position ])
+
+var $export = __webpack_require__(7);
+var toLength = __webpack_require__(36);
+var context = __webpack_require__(105);
+var STARTS_WITH = 'startsWith';
+var $startsWith = ''[STARTS_WITH];
+
+$export($export.P + $export.F * __webpack_require__(107)(STARTS_WITH), 'String', {
+  startsWith: function startsWith(searchString /* , position = 0 */) {
+    var that = context(this, searchString, STARTS_WITH);
+    var index = toLength(Math.min(arguments.length > 1 ? arguments[1] : undefined, that.length));
+    var search = String(searchString);
+    return $startsWith
+      ? $startsWith.call(that, search, index)
+      : that.slice(index, index + search.length) === search;
+  }
+});
+
+
+/***/ }),
+/* 105 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// helper for String#{startsWith, endsWith, includes}
+var isRegExp = __webpack_require__(106);
+var defined = __webpack_require__(29);
+
+module.exports = function (that, searchString, NAME) {
+  if (isRegExp(searchString)) throw TypeError('String#' + NAME + " doesn't accept regex!");
+  return String(defined(that));
+};
+
+
+/***/ }),
+/* 106 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 7.2.8 IsRegExp(argument)
+var isObject = __webpack_require__(9);
+var cof = __webpack_require__(18);
+var MATCH = __webpack_require__(0)('match');
+module.exports = function (it) {
+  var isRegExp;
+  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : cof(it) == 'RegExp');
+};
+
+
+/***/ }),
+/* 107 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var MATCH = __webpack_require__(0)('match');
+module.exports = function (KEY) {
+  var re = /./;
+  try {
+    '/./'[KEY](re);
+  } catch (e) {
+    try {
+      re[MATCH] = false;
+      return !'/./'[KEY](re);
+    } catch (f) { /* empty */ }
+  } return true;
+};
+
+
+/***/ }),
+/* 108 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(109);
+__webpack_require__(57);
+__webpack_require__(115);
+__webpack_require__(116);
+module.exports = __webpack_require__(3).Symbol;
+
+
+/***/ }),
+/* 109 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 
 // ECMAScript 6 symbols shim
 var global = __webpack_require__(1);
-var has = __webpack_require__(8);
-var DESCRIPTORS = __webpack_require__(13);
-var $export = __webpack_require__(9);
+var has = __webpack_require__(13);
+var DESCRIPTORS = __webpack_require__(12);
+var $export = __webpack_require__(7);
 var redefine = __webpack_require__(16);
-var META = __webpack_require__(105).KEY;
-var $fails = __webpack_require__(18);
-var shared = __webpack_require__(37);
-var setToStringTag = __webpack_require__(31);
-var uid = __webpack_require__(19);
+var META = __webpack_require__(110).KEY;
+var $fails = __webpack_require__(19);
+var shared = __webpack_require__(38);
+var setToStringTag = __webpack_require__(32);
+var uid = __webpack_require__(20);
 var wks = __webpack_require__(0);
 var wksExt = __webpack_require__(65);
-var wksDefine = __webpack_require__(43);
-var enumKeys = __webpack_require__(106);
-var isArray = __webpack_require__(107);
-var anObject = __webpack_require__(7);
-var isObject = __webpack_require__(12);
+var wksDefine = __webpack_require__(44);
+var enumKeys = __webpack_require__(111);
+var isArray = __webpack_require__(112);
+var anObject = __webpack_require__(8);
+var isObject = __webpack_require__(9);
 var toIObject = __webpack_require__(17);
-var toPrimitive = __webpack_require__(34);
+var toPrimitive = __webpack_require__(35);
 var createDesc = __webpack_require__(26);
 var _create = __webpack_require__(59);
-var gOPNExt = __webpack_require__(108);
-var $GOPD = __webpack_require__(109);
+var gOPNExt = __webpack_require__(113);
+var $GOPD = __webpack_require__(114);
 var $DP = __webpack_require__(11);
 var $keys = __webpack_require__(21);
 var gOPD = $GOPD.f;
@@ -10498,10 +10807,10 @@ if (!USE_NATIVE) {
   $GOPD.f = $getOwnPropertyDescriptor;
   $DP.f = $defineProperty;
   __webpack_require__(66).f = gOPNExt.f = $getOwnPropertyNames;
-  __webpack_require__(29).f = $propertyIsEnumerable;
-  __webpack_require__(40).f = $getOwnPropertySymbols;
+  __webpack_require__(30).f = $propertyIsEnumerable;
+  __webpack_require__(41).f = $getOwnPropertySymbols;
 
-  if (DESCRIPTORS && !__webpack_require__(30)) {
+  if (DESCRIPTORS && !__webpack_require__(31)) {
     redefine(ObjectProto, 'propertyIsEnumerable', $propertyIsEnumerable, true);
   }
 
@@ -10585,18 +10894,18 @@ setToStringTag(global.JSON, 'JSON', true);
 
 
 /***/ }),
-/* 105 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var META = __webpack_require__(19)('meta');
-var isObject = __webpack_require__(12);
-var has = __webpack_require__(8);
+var META = __webpack_require__(20)('meta');
+var isObject = __webpack_require__(9);
+var has = __webpack_require__(13);
 var setDesc = __webpack_require__(11).f;
 var id = 0;
 var isExtensible = Object.isExtensible || function () {
   return true;
 };
-var FREEZE = !__webpack_require__(18)(function () {
+var FREEZE = !__webpack_require__(19)(function () {
   return isExtensible(Object.preventExtensions({}));
 });
 var setMeta = function (it) {
@@ -10644,13 +10953,13 @@ var meta = module.exports = {
 
 
 /***/ }),
-/* 106 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // all enumerable object keys, includes symbols
 var getKeys = __webpack_require__(21);
-var gOPS = __webpack_require__(40);
-var pIE = __webpack_require__(29);
+var gOPS = __webpack_require__(41);
+var pIE = __webpack_require__(30);
 module.exports = function (it) {
   var result = getKeys(it);
   var getSymbols = gOPS.f;
@@ -10665,18 +10974,18 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 107 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.2.2 IsArray(argument)
-var cof = __webpack_require__(20);
+var cof = __webpack_require__(18);
 module.exports = Array.isArray || function isArray(arg) {
   return cof(arg) == 'Array';
 };
 
 
 /***/ }),
-/* 108 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
@@ -10701,18 +11010,18 @@ module.exports.f = function getOwnPropertyNames(it) {
 
 
 /***/ }),
-/* 109 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var pIE = __webpack_require__(29);
+var pIE = __webpack_require__(30);
 var createDesc = __webpack_require__(26);
 var toIObject = __webpack_require__(17);
-var toPrimitive = __webpack_require__(34);
-var has = __webpack_require__(8);
-var IE8_DOM_DEFINE = __webpack_require__(50);
+var toPrimitive = __webpack_require__(35);
+var has = __webpack_require__(13);
+var IE8_DOM_DEFINE = __webpack_require__(51);
 var gOPD = Object.getOwnPropertyDescriptor;
 
-exports.f = __webpack_require__(13) ? gOPD : function getOwnPropertyDescriptor(O, P) {
+exports.f = __webpack_require__(12) ? gOPD : function getOwnPropertyDescriptor(O, P) {
   O = toIObject(O);
   P = toPrimitive(P, true);
   if (IE8_DOM_DEFINE) try {
@@ -10723,21 +11032,21 @@ exports.f = __webpack_require__(13) ? gOPD : function getOwnPropertyDescriptor(O
 
 
 /***/ }),
-/* 110 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(43)('asyncIterator');
+__webpack_require__(44)('asyncIterator');
 
 
 /***/ }),
-/* 111 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(43)('observable');
+__webpack_require__(44)('observable');
 
 
 /***/ }),
-/* 112 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10784,29 +11093,29 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
  */
 (function () {
 
-  var canonize = __webpack_require__(44);
+  var canonize = __webpack_require__(45);
   var util = __webpack_require__(2);
   var IdentifierIssuer = util.IdentifierIssuer;
   var JsonLdError = __webpack_require__(6);
-  var NQuads = __webpack_require__(122);
-  var Rdfa = __webpack_require__(123);
+  var NQuads = __webpack_require__(128);
+  var Rdfa = __webpack_require__(129);
 
-  var _require = __webpack_require__(124),
+  var _require = __webpack_require__(130),
       _expand = _require.expand;
 
-  var _require2 = __webpack_require__(126),
+  var _require2 = __webpack_require__(132),
       _flatten = _require2.flatten;
 
-  var _require3 = __webpack_require__(127),
-      _frameMerged = _require3.frameMerged;
+  var _require3 = __webpack_require__(133),
+      _fromRDF = _require3.fromRDF;
 
-  var _require4 = __webpack_require__(128),
-      _fromRDF = _require4.fromRDF;
+  var _require4 = __webpack_require__(134),
+      _toRDF = _require4.toRDF;
 
-  var _require5 = __webpack_require__(129),
-      _toRDF = _require5.toRDF;
+  var _require5 = __webpack_require__(135),
+      _frameMergedOrDefault = _require5.frameMergedOrDefault;
 
-  var _require6 = __webpack_require__(3),
+  var _require6 = __webpack_require__(4),
       _isArray = _require6.isArray,
       _isObject = _require6.isObject,
       _isString = _require6.isString;
@@ -10817,14 +11126,15 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
   var _require8 = __webpack_require__(15),
       _getInitialContext = _require8.getInitialContext,
       _processContext = _require8.process,
-      _getAllContexts = _require8.getAllContexts;
+      _getAllContexts = _require8.getAllContexts,
+      _expandIri = _require8.expandIri;
 
-  var _require9 = __webpack_require__(130),
+  var _require9 = __webpack_require__(136),
       _compact = _require9.compact,
       _compactIri = _require9.compactIri,
       _removePreserve = _require9.removePreserve;
 
-  var _require10 = __webpack_require__(32),
+  var _require10 = __webpack_require__(33),
       _createNodeMap = _require10.createNodeMap,
       _createMergedNodeMap = _require10.createMergedNodeMap,
       _mergeNodeMaps = _require10.mergeNodeMaps;
@@ -10850,6 +11160,8 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
      *          [base] the base IRI to use.
      *          [compactArrays] true to compact arrays to single values when
      *            appropriate, false not to (default: true).
+     *          [compactToRelative] true to compact IRIs to be relative to document base,
+     *            false to keep absolute (default: true)
      *          [graph] true to always output a top-level graph (default: false).
      *          [expandContext] a context to expand with.
      *          [skipExpansion] true to assume the input is expanded and skip
@@ -10916,40 +11228,45 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
                 options = _setDefaults(options, {
                   base: _isString(input) ? input : '',
                   compactArrays: true,
+                  compactToRelative: true,
                   graph: false,
                   skipExpansion: false,
-                  link: false
+                  link: false,
+                  issuer: new IdentifierIssuer('_:b')
                 });
                 if (options.link) {
                   // force skip expansion when linking, "link" is not part of the public
                   // API, it should only be called from framing
                   options.skipExpansion = true;
                 }
+                if (!options.compactToRelative) {
+                  delete options.base;
+                }
 
                 // expand input
                 expanded = void 0;
 
                 if (!options.skipExpansion) {
-                  _context.next = 13;
+                  _context.next = 14;
                   break;
                 }
 
                 expanded = input;
-                _context.next = 16;
+                _context.next = 17;
                 break;
 
-              case 13:
-                _context.next = 15;
+              case 14:
+                _context.next = 16;
                 return jsonld.expand(input, options);
 
-              case 15:
+              case 16:
                 expanded = _context.sent;
 
-              case 16:
-                _context.next = 18;
+              case 17:
+                _context.next = 19;
                 return jsonld.processContext(_getInitialContext(options), ctx, options);
 
-              case 18:
+              case 19:
                 activeCtx = _context.sent;
 
 
@@ -11035,7 +11352,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
                 return _context.abrupt('return', compacted);
 
-              case 32:
+              case 33:
               case 'end':
                 return _context.stop();
             }
@@ -11335,7 +11652,9 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
                   embed: '@last',
                   explicit: false,
                   requireAll: true,
-                  omitDefault: false
+                  omitDefault: false,
+                  pruneBlankNodeIdentifiers: true,
+                  bnodesToClear: []
                 });
 
                 // if frame is a string, attempt to dereference remote document
@@ -11391,24 +11710,28 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
                 expandedFrame = _context4.sent;
 
 
-                // do merged framing
-                framed = _frameMerged(expanded, expandedFrame, opts);
+                // if the unexpanded frame includes a key expanding to @graph, frame the default graph, otherwise, the merged graph
+                framed = void 0;
+                // FIXME should look for aliases of @graph
+
+                opts.merged = !('@graph' in frame);
+                // do framing
+                framed = _frameMergedOrDefault(expanded, expandedFrame, opts);
 
                 // compact result (force @graph option to true, skip expansion,
                 // check for linked embeds)
-
                 opts.graph = true;
                 opts.skipExpansion = true;
                 opts.link = {};
                 opts.framing = true;
-                _context4.next = 26;
+                _context4.next = 28;
                 return jsonld.compact(framed, frameContext, opts);
 
-              case 26:
+              case 28:
                 compacted = _context4.sent;
                 return _context4.abrupt('return', compacted);
 
-              case 28:
+              case 30:
               case 'end':
                 return _context4.stop();
             }
@@ -11662,7 +11985,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
                 // back-compat with old parsers that produced legacy dataset format
                 if (!Array.isArray(parsedDataset)) {
-                  parsedDataset = NQuads.legacyDatasetToQuads(dataset);
+                  parsedDataset = NQuads.legacyDatasetToQuads(parsedDataset);
                 }
 
                 return _context7.abrupt('return', _fromRDF(parsedDataset, options));
@@ -11716,7 +12039,8 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
                 // set default options
                 options = _setDefaults(options, {
-                  base: _isString(input) ? input : ''
+                  base: _isString(input) ? input : '',
+                  includeRelativeUrls: false
                 });
 
                 // TODO: support toRDF custom map?
@@ -12217,8 +12541,8 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
      * Document loaders.
      */
     jsonld.documentLoaders = {};
-    jsonld.documentLoaders.node = __webpack_require__(131);
-    jsonld.documentLoaders.xhr = __webpack_require__(132);
+    jsonld.documentLoaders.node = __webpack_require__(137);
+    jsonld.documentLoaders.xhr = __webpack_require__(138);
 
     /**
      * Assigns the default document loader for external document URLs to a built-in
@@ -12292,10 +12616,10 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
     jsonld.promises = jsonld;
 
     // backwards compatibility
-    jsonld.RequestQueue = __webpack_require__(49);
+    jsonld.RequestQueue = __webpack_require__(50);
 
     /* WebIDL API */
-    jsonld.JsonLdProcessor = __webpack_require__(133)(jsonld);
+    jsonld.JsonLdProcessor = __webpack_require__(139)(jsonld);
 
     // setup browser global JsonLdProcessor
     if (_browser && typeof global.JsonLdProcessor === 'undefined') {
@@ -12341,7 +12665,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
     });
   };
 
-  if (!_nodejs && "function" === 'function' && __webpack_require__(134)) {
+  if (!_nodejs && "function" === 'function' && __webpack_require__(140)) {
     // export AMD API
     !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = (function () {
       // now that module is defined, wrap main jsonld API instance
@@ -12373,7 +12697,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(67)))
 
 /***/ }),
-/* 113 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12533,7 +12857,7 @@ module.exports = function () {
 }();
 
 /***/ }),
-/* 114 */
+/* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -12544,7 +12868,7 @@ module.exports = function () {
  * Copyright (c) 2010-2015 Digital Bazaar, Inc.
  */
 var forge = __webpack_require__(23);
-__webpack_require__(46);
+__webpack_require__(47);
 __webpack_require__(70);
 
 var sha1 = module.exports = forge.sha1 = forge.sha1 || {};
@@ -12858,7 +13182,199 @@ function _update(s, w, bytes) {
 
 
 /***/ }),
-/* 115 */
+/* 120 */
+/***/ (function(module, exports) {
+
+/**
+ * Base-N/Base-X encoding/decoding functions.
+ *
+ * Original implementation from base-x:
+ * https://github.com/cryptocoinjs/base-x
+ *
+ * Which is MIT licensed:
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright base-x contributors (c) 2016
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+var api = {};
+module.exports = api;
+
+// baseN alphabet indexes
+var _reverseAlphabets = {};
+
+/**
+ * BaseN-encodes a Uint8Array using the given alphabet.
+ *
+ * @param input the Uint8Array to encode.
+ * @param maxline the maximum number of encoded characters per line to use,
+ *          defaults to none.
+ *
+ * @return the baseN-encoded output string.
+ */
+api.encode = function(input, alphabet, maxline) {
+  if(typeof alphabet !== 'string') {
+    throw new TypeError('"alphabet" must be a string.');
+  }
+  if(maxline !== undefined && typeof maxline !== 'number') {
+    throw new TypeError('"maxline" must be a number.');
+  }
+
+  var output = '';
+
+  if(!(input instanceof Uint8Array)) {
+    // assume forge byte buffer
+    output = _encodeWithByteBuffer(input, alphabet);
+  } else {
+    var i = 0;
+    var base = alphabet.length;
+    var first = alphabet.charAt(0);
+    var digits = [0];
+    for(i = 0; i < input.length; ++i) {
+      for(var j = 0, carry = input[i]; j < digits.length; ++j) {
+        carry += digits[j] << 8;
+        digits[j] = carry % base;
+        carry = (carry / base) | 0;
+      }
+
+      while(carry > 0) {
+        digits.push(carry % base);
+        carry = (carry / base) | 0;
+      }
+    }
+
+    // deal with leading zeros
+    for(i = 0; input[i] === 0 && i < input.length - 1; ++i) {
+      output += first;
+    }
+    // convert digits to a string
+    for(i = digits.length - 1; i >= 0; --i) {
+      output += alphabet[digits[i]];
+    }
+  }
+
+  if(maxline) {
+    var regex = new RegExp('.{1,' + maxline + '}', 'g');
+    output = output.match(regex).join('\r\n');
+  }
+
+  return output;
+};
+
+/**
+ * Decodes a baseN-encoded (using the given alphabet) string to a
+ * Uint8Array.
+ *
+ * @param input the baseN-encoded input string.
+ *
+ * @return the Uint8Array.
+ */
+api.decode = function(input, alphabet) {
+  if(typeof input !== 'string') {
+    throw new TypeError('"input" must be a string.');
+  }
+  if(typeof alphabet !== 'string') {
+    throw new TypeError('"alphabet" must be a string.');
+  }
+
+  var table = _reverseAlphabets[alphabet];
+  if(!table) {
+    // compute reverse alphabet
+    table = _reverseAlphabets[alphabet] = [];
+    for(var i = 0; i < alphabet.length; ++i) {
+      table[alphabet.charCodeAt(i)] = i;
+    }
+  }
+
+  // remove whitespace characters
+  input = input.replace(/\s/g, '');
+
+  var base = alphabet.length;
+  var first = alphabet.charAt(0);
+  var bytes = [0];
+  for(var i = 0; i < input.length; i++) {
+    var value = table[input.charCodeAt(i)];
+    if(value === undefined) {
+      return;
+    }
+
+    for(var j = 0, carry = value; j < bytes.length; ++j) {
+      carry += bytes[j] * base;
+      bytes[j] = carry & 0xff;
+      carry >>= 8;
+    }
+
+    while(carry > 0) {
+      bytes.push(carry & 0xff);
+      carry >>= 8;
+    }
+  }
+
+  // deal with leading zeros
+  for(var k = 0; input[k] === first && k < input.length - 1; ++k) {
+    bytes.push(0);
+  }
+
+  if(typeof Buffer !== 'undefined') {
+    return Buffer.from(bytes.reverse());
+  }
+
+  return new Uint8Array(bytes.reverse());
+};
+
+function _encodeWithByteBuffer(input, alphabet) {
+  var i = 0;
+  var base = alphabet.length;
+  var first = alphabet.charAt(0);
+  var digits = [0];
+  for(i = 0; i < input.length(); ++i) {
+    for(var j = 0, carry = input.at(i); j < digits.length; ++j) {
+      carry += digits[j] << 8;
+      digits[j] = carry % base;
+      carry = (carry / base) | 0;
+    }
+
+    while(carry > 0) {
+      digits.push(carry % base);
+      carry = (carry / base) | 0;
+    }
+  }
+
+  var output = '';
+
+  // deal with leading zeros
+  for(i = 0; input.at(i) === 0 && i < input.length() - 1; ++i) {
+    output += first;
+  }
+  // convert digits to a string
+  for(i = digits.length - 1; i >= 0; --i) {
+    output += alphabet[digits[i]];
+  }
+
+  return output;
+}
+
+
+/***/ }),
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -12871,7 +13387,7 @@ function _update(s, w, bytes) {
  * Copyright (c) 2010-2015 Digital Bazaar, Inc.
  */
 var forge = __webpack_require__(23);
-__webpack_require__(46);
+__webpack_require__(47);
 __webpack_require__(70);
 
 var sha256 = module.exports = forge.sha256 = forge.sha256 || {};
@@ -13191,7 +13707,7 @@ function _update(s, w, bytes) {
 
 
 /***/ }),
-/* 116 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {// Copyright Joyent, Inc. and other Node contributors.
@@ -13719,7 +14235,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(117);
+exports.isBuffer = __webpack_require__(123);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -13763,7 +14279,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(118);
+exports.inherits = __webpack_require__(124);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -13784,7 +14300,7 @@ function hasOwnProperty(obj, prop) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(67)))
 
 /***/ }),
-/* 117 */
+/* 123 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -13795,7 +14311,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 118 */
+/* 124 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -13824,7 +14340,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 119 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13944,7 +14460,7 @@ module.exports = function (_URDNA) {
 }(URDNA2015);
 
 /***/ }),
-/* 120 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14060,13 +14576,13 @@ module.exports = function (_URDNA2015Sync) {
 }(URDNA2015Sync);
 
 /***/ }),
-/* 121 */
+/* 127 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 122 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14077,10 +14593,10 @@ module.exports = function (_URDNA2015Sync) {
 
 // TODO: move `NQuads` to its own package
 
-module.exports = __webpack_require__(44).NQuads;
+module.exports = __webpack_require__(45).NQuads;
 
 /***/ }),
-/* 123 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14233,13 +14749,13 @@ module.exports = function () {
 
 function getXMLSerializerClass() {
   if (typeof XMLSerializer === 'undefined') {
-    return __webpack_require__(48).XMLSerializer;
+    return __webpack_require__(49).XMLSerializer;
   }
   return XMLSerializer;
 }
 
 /***/ }),
-/* 124 */
+/* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14252,14 +14768,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var JsonLdError = __webpack_require__(6);
 
-var _require = __webpack_require__(3),
+var _require = __webpack_require__(4),
     _isArray = _require.isArray,
     _isObject = _require.isObject,
+    _isEmptyObject = _require.isEmptyObject,
     _isString = _require.isString;
 
 var _require2 = __webpack_require__(5),
     _isList = _require2.isList,
-    _isValue = _require2.isValue;
+    _isValue = _require2.isValue,
+    _isGraph = _require2.isGraph,
+    _isSimpleGraph = _require2.isSimpleGraph;
 
 var _require3 = __webpack_require__(15),
     _expandIri = _require3.expandIri,
@@ -14272,7 +14791,8 @@ var _require4 = __webpack_require__(25),
 
 var _require5 = __webpack_require__(2),
     _addValue = _require5.addValue,
-    _validateTypeValue = _require5.validateTypeValue;
+    _validateTypeValue = _require5.validateTypeValue,
+    _getValues = _require5.getValues;
 
 var api = {};
 module.exports = api;
@@ -14311,6 +14831,11 @@ api.expand = function (_ref) {
   // nothing to expand
   if (element === null || element === undefined) {
     return null;
+  }
+
+  // disable framing if activeProperty is @default
+  if (activeProperty === '@default') {
+    options = Object.assign({}, options, { isFrame: false });
   }
 
   if (!_isArray(element) && !_isObject(element)) {
@@ -14386,241 +14911,79 @@ api.expand = function (_ref) {
     activeCtx = _processContext({ activeCtx: activeCtx, localCtx: element['@context'], options: options });
   }
 
-  // expand the active property
+  // look for scoped context on @type
+  var keys = Object.keys(element).sort();
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = keys[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var key = _step.value;
+
+      var expandedProperty = _expandIri(activeCtx, key, { vocab: true });
+      if (expandedProperty === '@type') {
+        // set scopped contexts from @type
+        var _types = [].concat(element[key]);
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
+
+        try {
+          for (var _iterator2 = _types[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var type = _step2.value;
+
+            var ctx = _getContextValue(activeCtx, type, '@context');
+            if (ctx) {
+              activeCtx = _processContext({ activeCtx: activeCtx, localCtx: ctx, options: options });
+            }
+          }
+        } catch (err) {
+          _didIteratorError2 = true;
+          _iteratorError2 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+              _iterator2.return();
+            }
+          } finally {
+            if (_didIteratorError2) {
+              throw _iteratorError2;
+            }
+          }
+        }
+      }
+    }
+
+    // expand the active property
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
   var expandedActiveProperty = _expandIri(activeCtx, activeProperty, { vocab: true });
 
+  // process each key and value in element, ignoring @nest content
   var rval = {};
-  var keys = Object.keys(element).sort();
-  for (var ki = 0; ki < keys.length; ++ki) {
-    var key = keys[ki];
-    var value = element[key];
-    var expandedValue = void 0;
-
-    // skip @context
-    if (key === '@context') {
-      continue;
-    }
-
-    // expand property
-    var expandedProperty = _expandIri(activeCtx, key, { vocab: true });
-
-    // drop non-absolute IRI keys that aren't keywords unless custom mapped
-    if (expandedProperty === null || !(_isAbsoluteIri(expandedProperty) || _isKeyword(expandedProperty))) {
-      // TODO: use `await` to support async
-      expandedProperty = expansionMap({
-        unmappedProperty: key,
-        activeCtx: activeCtx,
-        activeProperty: activeProperty,
-        parent: element,
-        options: options,
-        insideList: insideList,
-        value: value,
-        expandedParent: rval
-      });
-      if (expandedProperty === undefined) {
-        continue;
-      }
-    }
-
-    if (_isKeyword(expandedProperty)) {
-      if (expandedActiveProperty === '@reverse') {
-        throw new JsonLdError('Invalid JSON-LD syntax; a keyword cannot be used as a @reverse ' + 'property.', 'jsonld.SyntaxError', { code: 'invalid reverse property map', value: value });
-      }
-      if (expandedProperty in rval) {
-        throw new JsonLdError('Invalid JSON-LD syntax; colliding keywords detected.', 'jsonld.SyntaxError', { code: 'colliding keywords', keyword: expandedProperty });
-      }
-    }
-
-    // syntax error if @id is not a string
-    if (expandedProperty === '@id' && !_isString(value)) {
-      if (!options.isFrame) {
-        throw new JsonLdError('Invalid JSON-LD syntax; "@id" value must a string.', 'jsonld.SyntaxError', { code: 'invalid @id value', value: value });
-      }
-      if (!_isObject(value)) {
-        throw new JsonLdError('Invalid JSON-LD syntax; "@id" value must be a string or an ' + 'object.', 'jsonld.SyntaxError', { code: 'invalid @id value', value: value });
-      }
-    }
-
-    if (expandedProperty === '@type') {
-      _validateTypeValue(value);
-    }
-
-    // @graph must be an array or an object
-    if (expandedProperty === '@graph' && !(_isObject(value) || _isArray(value))) {
-      throw new JsonLdError('Invalid JSON-LD syntax; "@graph" value must not be an ' + 'object or an array.', 'jsonld.SyntaxError', { code: 'invalid @graph value', value: value });
-    }
-
-    // @value must not be an object or an array
-    if (expandedProperty === '@value' && (_isObject(value) || _isArray(value))) {
-      throw new JsonLdError('Invalid JSON-LD syntax; "@value" value must not be an ' + 'object or an array.', 'jsonld.SyntaxError', { code: 'invalid value object value', value: value });
-    }
-
-    // @language must be a string
-    if (expandedProperty === '@language') {
-      if (value === null) {
-        // drop null @language values, they expand as if they didn't exist
-        continue;
-      }
-      if (!_isString(value)) {
-        throw new JsonLdError('Invalid JSON-LD syntax; "@language" value must be a string.', 'jsonld.SyntaxError', { code: 'invalid language-tagged string', value: value });
-      }
-      // ensure language value is lowercase
-      value = value.toLowerCase();
-    }
-
-    // @index must be a string
-    if (expandedProperty === '@index') {
-      if (!_isString(value)) {
-        throw new JsonLdError('Invalid JSON-LD syntax; "@index" value must be a string.', 'jsonld.SyntaxError', { code: 'invalid @index value', value: value });
-      }
-    }
-
-    // @reverse must be an object
-    if (expandedProperty === '@reverse') {
-      if (!_isObject(value)) {
-        throw new JsonLdError('Invalid JSON-LD syntax; "@reverse" value must be an object.', 'jsonld.SyntaxError', { code: 'invalid @reverse value', value: value });
-      }
-
-      expandedValue = api.expand({
-        activeCtx: activeCtx,
-        activeProperty: '@reverse',
-        element: value,
-        options: options,
-        expansionMap: expansionMap
-      });
-
-      // properties double-reversed
-      if ('@reverse' in expandedValue) {
-        for (var property in expandedValue['@reverse']) {
-          _addValue(rval, property, expandedValue['@reverse'][property], { propertyIsArray: true });
-        }
-      }
-
-      // FIXME: can this be merged with code below to simplify?
-      // merge in all reversed properties
-      var reverseMap = rval['@reverse'] || null;
-      for (var _property in expandedValue) {
-        if (_property === '@reverse') {
-          continue;
-        }
-        if (reverseMap === null) {
-          reverseMap = rval['@reverse'] = {};
-        }
-        _addValue(reverseMap, _property, [], { propertyIsArray: true });
-        var items = expandedValue[_property];
-        for (var ii = 0; ii < items.length; ++ii) {
-          var item = items[ii];
-          if (_isValue(item) || _isList(item)) {
-            throw new JsonLdError('Invalid JSON-LD syntax; "@reverse" value must not be a ' + '@value or an @list.', 'jsonld.SyntaxError', { code: 'invalid reverse property value', value: expandedValue });
-          }
-          _addValue(reverseMap, _property, item, { propertyIsArray: true });
-        }
-      }
-
-      continue;
-    }
-
-    var _container = _getContextValue(activeCtx, key, '@container') || [];
-
-    if (_container.includes('@language') && _isObject(value)) {
-      // handle language map container (skip if value is not an object)
-      expandedValue = _expandLanguageMap(value);
-    } else if (_container.includes('@index') && _isObject(value)) {
-      // handle index container (skip if value is not an object)
-      expandedValue = _expandIndexMap({
-        activeCtx: activeCtx,
-        options: options,
-        activeProperty: key,
-        value: value,
-        expansionMap: expansionMap
-      });
-    } else {
-      // recurse into @list or @set
-      var isList = expandedProperty === '@list';
-      if (isList || expandedProperty === '@set') {
-        var nextActiveProperty = activeProperty;
-        if (isList && expandedActiveProperty === '@graph') {
-          nextActiveProperty = null;
-        }
-        expandedValue = api.expand({
-          activeCtx: activeCtx,
-          activeProperty: nextActiveProperty,
-          element: value,
-          options: options,
-          insideList: isList,
-          expansionMap: expansionMap
-        });
-        if (isList && _isList(expandedValue)) {
-          throw new JsonLdError('Invalid JSON-LD syntax; lists of lists are not permitted.', 'jsonld.SyntaxError', { code: 'list of lists' });
-        }
-      } else {
-        // recursively expand value with key as new active property
-        expandedValue = api.expand({
-          activeCtx: activeCtx,
-          activeProperty: key,
-          element: value,
-          options: options,
-          insideList: false,
-          expansionMap: expansionMap
-        });
-      }
-    }
-
-    // drop null values if property is not @value
-    if (expandedValue === null && expandedProperty !== '@value') {
-      // TODO: use `await` to support async
-      expandedValue = expansionMap({
-        unmappedValue: value,
-        expandedProperty: expandedProperty,
-        activeCtx: activeCtx,
-        activeProperty: activeProperty,
-        parent: element,
-        options: options,
-        insideList: insideList,
-        key: key,
-        expandedParent: rval
-      });
-      if (expandedValue === undefined) {
-        continue;
-      }
-    }
-
-    // convert expanded value to @list if container specifies it
-    if (expandedProperty !== '@list' && !_isList(expandedValue) && _container.includes('@list')) {
-      // ensure expanded value is an array
-      expandedValue = _isArray(expandedValue) ? expandedValue : [expandedValue];
-      expandedValue = { '@list': expandedValue };
-    }
-
-    // convert expanded value to @graph if container specifies it
-    if (_container.includes('@graph')) {
-      // ensure expanded value is an array
-      expandedValue = [].concat(expandedValue);
-      expandedValue = { '@graph': expandedValue };
-    }
-
-    // FIXME: can this be merged with code above to simplify?
-    // merge in reverse properties
-    if (activeCtx.mappings[key] && activeCtx.mappings[key].reverse) {
-      var _reverseMap = rval['@reverse'] = rval['@reverse'] || {};
-      if (!_isArray(expandedValue)) {
-        expandedValue = [expandedValue];
-      }
-      for (var _ii = 0; _ii < expandedValue.length; ++_ii) {
-        var _item = expandedValue[_ii];
-        if (_isValue(_item) || _isList(_item)) {
-          throw new JsonLdError('Invalid JSON-LD syntax; "@reverse" value must not be a ' + '@value or an @list.', 'jsonld.SyntaxError', { code: 'invalid reverse property value', value: expandedValue });
-        }
-        _addValue(_reverseMap, expandedProperty, _item, { propertyIsArray: true });
-      }
-      continue;
-    }
-
-    // add value for property
-    // use an array except for certain keywords
-    var useArray = !['@index', '@id', '@type', '@value', '@language'].includes(expandedProperty);
-    _addValue(rval, expandedProperty, expandedValue, { propertyIsArray: useArray });
-  }
+  _expandObject({
+    activeCtx: activeCtx,
+    activeProperty: activeProperty,
+    expandedActiveProperty: expandedActiveProperty,
+    element: element,
+    expandedParent: rval,
+    options: options,
+    insideList: insideList,
+    expansionMap: expansionMap });
 
   // get property count on expanded output
   keys = Object.keys(rval);
@@ -14644,8 +15007,11 @@ api.expand = function (_ref) {
     if (validCount !== 0) {
       throw new JsonLdError('Invalid JSON-LD syntax; an element containing "@value" may only ' + 'have an "@index" property and at most one other property ' + 'which can be "@type" or "@language".', 'jsonld.SyntaxError', { code: 'invalid value object', element: rval });
     }
+    var values = rval['@value'] === null ? [] : [].concat(rval['@value']);
+    var types = _getValues(rval, '@type');
+
     // drop null @values unless custom mapped
-    if (rval['@value'] === null) {
+    if (values.length === 0) {
       // TODO: use `await` to support async
       var _mapped = expansionMap({
         unmappedValue: rval,
@@ -14660,10 +15026,14 @@ api.expand = function (_ref) {
       } else {
         rval = null;
       }
-    } else if ('@language' in rval && !_isString(rval['@value'])) {
+    } else if (!values.every(function (v) {
+      return _isString(v) || _isEmptyObject(v);
+    }) && '@language' in rval) {
       // if @language is present, @value must be a string
       throw new JsonLdError('Invalid JSON-LD syntax; only strings may be language-tagged.', 'jsonld.SyntaxError', { code: 'invalid language-tagged value', element: rval });
-    } else if ('@type' in rval && (!_isAbsoluteIri(rval['@type']) || rval['@type'].indexOf('_:') === 0)) {
+    } else if (!types.every(function (t) {
+      return _isAbsoluteIri(t) && !(_isString(t) && t.indexOf('_:') === 0) || _isEmptyObject(t);
+    })) {
       throw new JsonLdError('Invalid JSON-LD syntax; an element containing "@value" and "@type" ' + 'must have an absolute IRI for the value of "@type".', 'jsonld.SyntaxError', { code: 'invalid typed value', element: rval });
     }
   } else if ('@type' in rval && !_isArray(rval['@type'])) {
@@ -14724,6 +15094,426 @@ api.expand = function (_ref) {
 };
 
 /**
+ * Expand each key and value of element adding to result
+ *
+ * @param activeCtx the context to use.
+ * @param activeProperty the property for the element.
+ * @param expandedActiveProperty the expansion of activeProperty
+ * @param element the element to expand.
+ * @param expandedParent the expanded result into which to add values.
+ * @param options the expansion options.
+ * @param insideList true if the element is a list, false if not.
+ * @param expansionMap(info) a function that can be used to custom map
+ *          unmappable values (or to throw an error when they are detected);
+ *          if this function returns `undefined` then the default behavior
+ *          will be used.
+ */
+function _expandObject(_ref2) {
+  var activeCtx = _ref2.activeCtx,
+      activeProperty = _ref2.activeProperty,
+      expandedActiveProperty = _ref2.expandedActiveProperty,
+      element = _ref2.element,
+      expandedParent = _ref2.expandedParent,
+      _ref2$options = _ref2.options,
+      options = _ref2$options === undefined ? {} : _ref2$options,
+      insideList = _ref2.insideList,
+      expansionMap = _ref2.expansionMap;
+
+  var keys = Object.keys(element).sort();
+  var nests = [];
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
+
+  try {
+    for (var _iterator3 = keys[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var key = _step3.value;
+
+      var value = element[key];
+      var expandedValue = void 0;
+
+      // skip @context
+      if (key === '@context') {
+        continue;
+      }
+
+      // expand property
+      var expandedProperty = _expandIri(activeCtx, key, { vocab: true });
+
+      // drop non-absolute IRI keys that aren't keywords unless custom mapped
+      if (expandedProperty === null || !(_isAbsoluteIri(expandedProperty) || _isKeyword(expandedProperty))) {
+        // TODO: use `await` to support async
+        expandedProperty = expansionMap({
+          unmappedProperty: key,
+          activeCtx: activeCtx,
+          activeProperty: activeProperty,
+          parent: element,
+          options: options,
+          insideList: insideList,
+          value: value,
+          expandedParent: expandedParent
+        });
+        if (expandedProperty === undefined) {
+          continue;
+        }
+      }
+
+      if (_isKeyword(expandedProperty)) {
+        if (expandedActiveProperty === '@reverse') {
+          throw new JsonLdError('Invalid JSON-LD syntax; a keyword cannot be used as a @reverse ' + 'property.', 'jsonld.SyntaxError', { code: 'invalid reverse property map', value: value });
+        }
+        if (expandedProperty in expandedParent) {
+          throw new JsonLdError('Invalid JSON-LD syntax; colliding keywords detected.', 'jsonld.SyntaxError', { code: 'colliding keywords', keyword: expandedProperty });
+        }
+      }
+
+      // syntax error if @id is not a string
+      if (expandedProperty === '@id') {
+        if (!_isString(value)) {
+          if (!options.isFrame) {
+            throw new JsonLdError('Invalid JSON-LD syntax; "@id" value must a string.', 'jsonld.SyntaxError', { code: 'invalid @id value', value: value });
+          }
+          if (_isObject(value)) {
+            // empty object is a wildcard
+            if (!_isEmptyObject(value)) {
+              throw new JsonLdError('Invalid JSON-LD syntax; "@id" value an empty object or array of strings, if framing', 'jsonld.SyntaxError', { code: 'invalid @id value', value: value });
+            }
+          } else if (_isArray(value)) {
+            if (!value.every(function (v) {
+              return _isString(v);
+            })) {
+              throw new JsonLdError('Invalid JSON-LD syntax; "@id" value an empty object or array of strings, if framing', 'jsonld.SyntaxError', { code: 'invalid @id value', value: value });
+            }
+          } else {
+            throw new JsonLdError('Invalid JSON-LD syntax; "@id" value an empty object or array of strings, if framing', 'jsonld.SyntaxError', { code: 'invalid @id value', value: value });
+          }
+        }
+
+        _addValue(expandedParent, '@id', [].concat(value).map(function (v) {
+          return _isString(v) ? _expandIri(activeCtx, v, { base: true }) : v;
+        }), { propertyIsArray: options.isFrame });
+        continue;
+      }
+
+      if (expandedProperty === '@type') {
+        _validateTypeValue(value);
+        _addValue(expandedParent, '@type', [].concat(value).map(function (v) {
+          return _isString(v) ? _expandIri(activeCtx, v, { base: true, vocab: true }) : v;
+        }), { propertyIsArray: options.isFrame });
+        continue;
+      }
+
+      // @graph must be an array or an object
+      if (expandedProperty === '@graph' && !(_isObject(value) || _isArray(value))) {
+        throw new JsonLdError('Invalid JSON-LD syntax; "@graph" value must not be an ' + 'object or an array.', 'jsonld.SyntaxError', { code: 'invalid @graph value', value: value });
+      }
+
+      // @value must not be an object or an array (unless framing)
+      if (expandedProperty === '@value') {
+        if ((_isObject(value) || _isArray(value)) && !options.isFrame) {
+          throw new JsonLdError('Invalid JSON-LD syntax; "@value" value must not be an ' + 'object or an array.', 'jsonld.SyntaxError', { code: 'invalid value object value', value: value });
+        }
+
+        _addValue(expandedParent, '@value', value, { propertyIsArray: options.isFrame });
+        continue;
+      }
+
+      // @language must be a string
+      if (expandedProperty === '@language') {
+        if (value === null) {
+          // drop null @language values, they expand as if they didn't exist
+          continue;
+        }
+        if (!_isString(value) && !options.isFrame) {
+          throw new JsonLdError('Invalid JSON-LD syntax; "@language" value must be a string.', 'jsonld.SyntaxError', { code: 'invalid language-tagged string', value: value });
+        }
+        // ensure language value is lowercase
+        value = [].concat(value).map(function (v) {
+          return _isString(v) ? v.toLowerCase() : v;
+        });
+
+        _addValue(expandedParent, '@language', value, { propertyIsArray: options.isFrame });
+        continue;
+      }
+
+      // @index must be a string
+      if (expandedProperty === '@index') {
+        if (!_isString(value)) {
+          throw new JsonLdError('Invalid JSON-LD syntax; "@index" value must be a string.', 'jsonld.SyntaxError', { code: 'invalid @index value', value: value });
+        }
+        _addValue(expandedParent, '@index', value);
+        continue;
+      }
+
+      // @reverse must be an object
+      if (expandedProperty === '@reverse') {
+        if (!_isObject(value)) {
+          throw new JsonLdError('Invalid JSON-LD syntax; "@reverse" value must be an object.', 'jsonld.SyntaxError', { code: 'invalid @reverse value', value: value });
+        }
+
+        expandedValue = api.expand({
+          activeCtx: activeCtx,
+          activeProperty: '@reverse',
+          element: value,
+          options: options,
+          expansionMap: expansionMap
+        });
+        // properties double-reversed
+        if ('@reverse' in expandedValue) {
+          for (var property in expandedValue['@reverse']) {
+            _addValue(expandedParent, property, expandedValue['@reverse'][property], { propertyIsArray: true });
+          }
+        }
+
+        // FIXME: can this be merged with code below to simplify?
+        // merge in all reversed properties
+        var reverseMap = expandedParent['@reverse'] || null;
+        for (var _property in expandedValue) {
+          if (_property === '@reverse') {
+            continue;
+          }
+          if (reverseMap === null) {
+            reverseMap = expandedParent['@reverse'] = {};
+          }
+          _addValue(reverseMap, _property, [], { propertyIsArray: true });
+          var items = expandedValue[_property];
+          for (var ii = 0; ii < items.length; ++ii) {
+            var item = items[ii];
+            if (_isValue(item) || _isList(item)) {
+              throw new JsonLdError('Invalid JSON-LD syntax; "@reverse" value must not be a ' + '@value or an @list.', 'jsonld.SyntaxError', { code: 'invalid reverse property value', value: expandedValue });
+            }
+            _addValue(reverseMap, _property, item, { propertyIsArray: true });
+          }
+        }
+
+        continue;
+      }
+
+      // nested keys
+      if (expandedProperty === '@nest') {
+        nests.push(key);
+        continue;
+      }
+
+      // use potential scoped context for key
+      var termCtx = activeCtx;
+      var ctx = _getContextValue(activeCtx, key, '@context');
+      if (ctx) {
+        termCtx = _processContext({ activeCtx: activeCtx, localCtx: ctx, options: options });
+      }
+
+      var container = _getContextValue(termCtx, key, '@container') || [];
+
+      if (container.includes('@language') && _isObject(value)) {
+        // handle language map container (skip if value is not an object)
+        expandedValue = _expandLanguageMap(termCtx, value);
+      } else if (container.includes('@index') && _isObject(value)) {
+        // handle index container (skip if value is not an object)
+        var asGraph = container.includes('@graph');
+        expandedValue = _expandIndexMap({
+          activeCtx: termCtx,
+          options: options,
+          activeProperty: key,
+          value: value,
+          expansionMap: expansionMap,
+          asGraph: asGraph,
+          indexKey: '@index'
+        });
+      } else if (container.includes('@id') && _isObject(value)) {
+        // handle id container (skip if value is not an object)
+        var _asGraph = container.includes('@graph');
+        expandedValue = _expandIndexMap({
+          activeCtx: termCtx,
+          options: options,
+          activeProperty: key,
+          value: value,
+          expansionMap: expansionMap,
+          asGraph: _asGraph,
+          indexKey: '@id'
+        });
+      } else if (container.includes('@type') && _isObject(value)) {
+        // handle type container (skip if value is not an object)
+        expandedValue = _expandIndexMap({
+          activeCtx: termCtx,
+          options: options,
+          activeProperty: key,
+          value: value,
+          expansionMap: expansionMap,
+          asGraph: false,
+          indexKey: '@type'
+        });
+      } else {
+        // recurse into @list or @set
+        var isList = expandedProperty === '@list';
+        if (isList || expandedProperty === '@set') {
+          var nextActiveProperty = activeProperty;
+          if (isList && expandedActiveProperty === '@graph') {
+            nextActiveProperty = null;
+          }
+          expandedValue = api.expand({
+            activeCtx: termCtx,
+            activeProperty: nextActiveProperty,
+            element: value,
+            options: options,
+            insideList: isList,
+            expansionMap: expansionMap
+          });
+          if (isList && _isList(expandedValue)) {
+            throw new JsonLdError('Invalid JSON-LD syntax; lists of lists are not permitted.', 'jsonld.SyntaxError', { code: 'list of lists' });
+          }
+        } else {
+          // recursively expand value with key as new active property
+          expandedValue = api.expand({
+            activeCtx: termCtx,
+            activeProperty: key,
+            element: value,
+            options: options,
+            insideList: false,
+            expansionMap: expansionMap
+          });
+        }
+      }
+
+      // drop null values if property is not @value
+      if (expandedValue === null && expandedProperty !== '@value') {
+        // TODO: use `await` to support async
+        expandedValue = expansionMap({
+          unmappedValue: value,
+          expandedProperty: expandedProperty,
+          activeCtx: termCtx,
+          activeProperty: activeProperty,
+          parent: element,
+          options: options,
+          insideList: insideList,
+          key: key,
+          expandedParent: expandedParent
+        });
+        if (expandedValue === undefined) {
+          continue;
+        }
+      }
+
+      // convert expanded value to @list if container specifies it
+      if (expandedProperty !== '@list' && !_isList(expandedValue) && container.includes('@list')) {
+        // ensure expanded value is an array
+        expandedValue = _isArray(expandedValue) ? expandedValue : [expandedValue];
+        expandedValue = { '@list': expandedValue };
+      }
+
+      // convert expanded value to @graph if container specifies it
+      // and value is not, itself, a graph
+      // index cases handled above
+      if (container.includes('@graph') && !container.some(function (key) {
+        return key === '@id' || key === '@index';
+      }) && !_isGraph(expandedValue)) {
+        // ensure expanded value is an array
+        expandedValue = [].concat(expandedValue);
+        expandedValue = { '@graph': expandedValue };
+      }
+
+      // FIXME: can this be merged with code above to simplify?
+      // merge in reverse properties
+      if (termCtx.mappings[key] && termCtx.mappings[key].reverse) {
+        var _reverseMap = expandedParent['@reverse'] = expandedParent['@reverse'] || {};
+        if (!_isArray(expandedValue)) {
+          expandedValue = [expandedValue];
+        }
+        for (var _ii = 0; _ii < expandedValue.length; ++_ii) {
+          var _item = expandedValue[_ii];
+          if (_isValue(_item) || _isList(_item)) {
+            throw new JsonLdError('Invalid JSON-LD syntax; "@reverse" value must not be a ' + '@value or an @list.', 'jsonld.SyntaxError', { code: 'invalid reverse property value', value: expandedValue });
+          }
+          _addValue(_reverseMap, expandedProperty, _item, { propertyIsArray: true });
+        }
+        continue;
+      }
+
+      // add value for property
+      // use an array except for certain keywords
+      var useArray = !['@index', '@id', '@type', '@value', '@language'].includes(expandedProperty);
+      _addValue(expandedParent, expandedProperty, expandedValue, { propertyIsArray: useArray });
+    }
+
+    // expand each nested key
+  } catch (err) {
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
+      }
+    } finally {
+      if (_didIteratorError3) {
+        throw _iteratorError3;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion4 = true;
+  var _didIteratorError4 = false;
+  var _iteratorError4 = undefined;
+
+  try {
+    for (var _iterator4 = nests[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+      var _key = _step4.value;
+
+      var nestedValues = _isArray(element[_key]) ? element[_key] : [element[_key]];
+      var _iteratorNormalCompletion5 = true;
+      var _didIteratorError5 = false;
+      var _iteratorError5 = undefined;
+
+      try {
+        for (var _iterator5 = nestedValues[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+          var nv = _step5.value;
+
+          if (!_isObject(nv) || Object.keys(nv).some(function (k) {
+            return _expandIri(activeCtx, k, { vocab: true }) === '@value';
+          })) {
+            throw new JsonLdError('Invalid JSON-LD syntax; nested value must be a node object.', 'jsonld.SyntaxError', { code: 'invalid @nest value', value: nv });
+          }
+          _expandObject({
+            activeCtx: activeCtx,
+            activeProperty: activeProperty,
+            expandedActiveProperty: expandedActiveProperty,
+            element: nv,
+            expandedParent: expandedParent,
+            options: options,
+            insideList: insideList,
+            expansionMap: expansionMap });
+        }
+      } catch (err) {
+        _didIteratorError5 = true;
+        _iteratorError5 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion5 && _iterator5.return) {
+            _iterator5.return();
+          }
+        } finally {
+          if (_didIteratorError5) {
+            throw _iteratorError5;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    _didIteratorError4 = true;
+    _iteratorError4 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion4 && _iterator4.return) {
+        _iterator4.return();
+      }
+    } finally {
+      if (_didIteratorError4) {
+        throw _iteratorError4;
+      }
+    }
+  }
+}
+
+/**
  * Expands the given value by using the coercion and keyword rules in the
  * given context.
  *
@@ -14733,10 +15523,10 @@ api.expand = function (_ref) {
  *
  * @return the expanded value.
  */
-function _expandValue(_ref2) {
-  var activeCtx = _ref2.activeCtx,
-      activeProperty = _ref2.activeProperty,
-      value = _ref2.value;
+function _expandValue(_ref3) {
+  var activeCtx = _ref3.activeCtx,
+      activeProperty = _ref3.activeProperty,
+      value = _ref3.value;
 
   // nothing to expand
   if (value === null || value === undefined) {
@@ -14792,73 +15582,188 @@ function _expandValue(_ref2) {
 /**
  * Expands a language map.
  *
+ * @param activeCtx the active context to use.
  * @param languageMap the language map to expand.
  *
  * @return the expanded language map.
  */
-function _expandLanguageMap(languageMap) {
+function _expandLanguageMap(activeCtx, languageMap) {
   var rval = [];
   var keys = Object.keys(languageMap).sort();
-  for (var ki = 0; ki < keys.length; ++ki) {
-    var key = keys[ki];
-    var val = languageMap[key];
-    if (!_isArray(val)) {
-      val = [val];
+  var _iteratorNormalCompletion6 = true;
+  var _didIteratorError6 = false;
+  var _iteratorError6 = undefined;
+
+  try {
+    for (var _iterator6 = keys[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+      var key = _step6.value;
+
+      var expandedKey = _expandIri(activeCtx, key, { vocab: true });
+      var val = languageMap[key];
+      if (!_isArray(val)) {
+        val = [val];
+      }
+      var _iteratorNormalCompletion7 = true;
+      var _didIteratorError7 = false;
+      var _iteratorError7 = undefined;
+
+      try {
+        for (var _iterator7 = val[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+          var item = _step7.value;
+
+          if (item === null) {
+            // null values are allowed (8.5) but ignored (3.1)
+            continue;
+          }
+          if (!_isString(item)) {
+            throw new JsonLdError('Invalid JSON-LD syntax; language map values must be strings.', 'jsonld.SyntaxError', { code: 'invalid language map value', languageMap: languageMap });
+          }
+          var _val = { '@value': item };
+          if (expandedKey !== '@none') {
+            _val['@language'] = key.toLowerCase();
+          }
+          rval.push(_val);
+        }
+      } catch (err) {
+        _didIteratorError7 = true;
+        _iteratorError7 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion7 && _iterator7.return) {
+            _iterator7.return();
+          }
+        } finally {
+          if (_didIteratorError7) {
+            throw _iteratorError7;
+          }
+        }
+      }
     }
-    for (var vi = 0; vi < val.length; ++vi) {
-      var item = val[vi];
-      if (item === null) {
-        // null values are allowed (8.5) but ignored (3.1)
-        continue;
+  } catch (err) {
+    _didIteratorError6 = true;
+    _iteratorError6 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion6 && _iterator6.return) {
+        _iterator6.return();
       }
-      if (!_isString(item)) {
-        throw new JsonLdError('Invalid JSON-LD syntax; language map values must be strings.', 'jsonld.SyntaxError', { code: 'invalid language map value', languageMap: languageMap });
+    } finally {
+      if (_didIteratorError6) {
+        throw _iteratorError6;
       }
-      rval.push({
-        '@value': item,
-        '@language': key.toLowerCase()
-      });
     }
   }
+
   return rval;
 }
 
-function _expandIndexMap(_ref3) {
-  var activeCtx = _ref3.activeCtx,
-      options = _ref3.options,
-      activeProperty = _ref3.activeProperty,
-      value = _ref3.value,
-      expansionMap = _ref3.expansionMap;
+function _expandIndexMap(_ref4) {
+  var activeCtx = _ref4.activeCtx,
+      options = _ref4.options,
+      activeProperty = _ref4.activeProperty,
+      value = _ref4.value,
+      expansionMap = _ref4.expansionMap,
+      asGraph = _ref4.asGraph,
+      indexKey = _ref4.indexKey;
 
   var rval = [];
   var keys = Object.keys(value).sort();
-  for (var ki = 0; ki < keys.length; ++ki) {
-    var key = keys[ki];
-    var val = value[key];
-    if (!_isArray(val)) {
-      val = [val];
-    }
-    val = api.expand({
-      activeCtx: activeCtx,
-      activeProperty: activeProperty,
-      element: val,
-      options: options,
-      insideList: false,
-      expansionMap: expansionMap
-    });
-    for (var vi = 0; vi < val.length; ++vi) {
-      var item = val[vi];
-      if (!('@index' in item)) {
-        item['@index'] = key;
+  var _iteratorNormalCompletion8 = true;
+  var _didIteratorError8 = false;
+  var _iteratorError8 = undefined;
+
+  try {
+    for (var _iterator8 = keys[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+      var key = _step8.value;
+
+      // if indexKey is @type, there may be a context defined for it
+      var ctx = _getContextValue(activeCtx, key, '@context');
+      if (ctx) {
+        activeCtx = _processContext({ activeCtx: activeCtx, localCtx: ctx, options: options });
       }
-      rval.push(item);
+
+      var val = value[key];
+      if (!_isArray(val)) {
+        val = [val];
+      }
+
+      // expand for @type, but also for @none
+      var expandedKey = _expandIri(activeCtx, key, { vocab: true });
+      if (indexKey === '@id') {
+        // expand document relative
+        key = _expandIri(activeCtx, key, { base: true });
+      } else if (indexKey === '@type') {
+        key = expandedKey;
+      }
+
+      val = api.expand({
+        activeCtx: activeCtx,
+        activeProperty: activeProperty,
+        element: val,
+        options: options,
+        insideList: false,
+        expansionMap: expansionMap
+      });
+      var _iteratorNormalCompletion9 = true;
+      var _didIteratorError9 = false;
+      var _iteratorError9 = undefined;
+
+      try {
+        for (var _iterator9 = val[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+          var item = _step9.value;
+
+          // If this is also a @graph container, turn items into graphs
+          if (asGraph && !_isGraph(item)) {
+            item = { '@graph': [item] };
+          }
+          if (indexKey === '@type') {
+            if (expandedKey === '@none') {
+              // ignore @none
+            } else if (item['@type']) {
+              item['@type'] = [key].concat(item['@type']);
+            } else {
+              item['@type'] = [key];
+            }
+          } else if (expandedKey !== '@none' && !(indexKey in item)) {
+            item[indexKey] = key;
+          }
+          rval.push(item);
+        }
+      } catch (err) {
+        _didIteratorError9 = true;
+        _iteratorError9 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion9 && _iterator9.return) {
+            _iterator9.return();
+          }
+        } finally {
+          if (_didIteratorError9) {
+            throw _iteratorError9;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    _didIteratorError8 = true;
+    _iteratorError8 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion8 && _iterator8.return) {
+        _iterator8.return();
+      }
+    } finally {
+      if (_didIteratorError8) {
+        throw _iteratorError8;
+      }
     }
   }
+
   return rval;
 }
 
 /***/ }),
-/* 125 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14922,7 +15827,7 @@ module.exports = function () {
 }();
 
 /***/ }),
-/* 126 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14934,7 +15839,7 @@ module.exports = function () {
 var _require = __webpack_require__(5),
     _isSubjectReference = _require.isSubjectReference;
 
-var _require2 = __webpack_require__(32),
+var _require2 = __webpack_require__(33),
     _createMergedNodeMap = _require2.createMergedNodeMap;
 
 var api = {};
@@ -14964,452 +15869,7 @@ api.flatten = function (input) {
 };
 
 /***/ }),
-/* 127 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/*
- * Copyright (c) 2017 Digital Bazaar, Inc. All rights reserved.
- */
-
-
-var _require = __webpack_require__(15),
-    isKeyword = _require.isKeyword;
-
-var graphTypes = __webpack_require__(5);
-var types = __webpack_require__(3);
-var util = __webpack_require__(2);
-var JsonLdError = __webpack_require__(6);
-
-var _require2 = __webpack_require__(32),
-    _createNodeMap = _require2.createNodeMap;
-
-var api = {};
-module.exports = api;
-
-/**
- * Performs JSON-LD `merged` framing.
- *
- * @param input the expanded JSON-LD to frame.
- * @param frame the expanded JSON-LD frame to use.
- * @param options the framing options.
- *
- * @return the framed output.
- */
-api.frameMerged = function (input, frame, options) {
-  // create framing state
-  var state = {
-    options: options,
-    graphs: { '@default': {}, '@merged': {} },
-    subjectStack: [],
-    link: {}
-  };
-
-  // produce a map of all graphs and name each bnode
-  // FIXME: currently uses subjects from @merged graph only
-  var issuer = new util.IdentifierIssuer('_:b');
-  _createNodeMap(input, state.graphs, '@merged', issuer);
-  state.subjects = state.graphs['@merged'];
-
-  // frame the subjects
-  var framed = [];
-  api.frame(state, Object.keys(state.subjects).sort(), frame, framed);
-  return framed;
-};
-
-/**
- * Frames subjects according to the given frame.
- *
- * @param state the current framing state.
- * @param subjects the subjects to filter.
- * @param frame the frame.
- * @param parent the parent subject or top-level array.
- * @param property the parent property, initialized to null.
- */
-api.frame = function (state, subjects, frame, parent) {
-  var property = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
-
-  // validate the frame
-  _validateFrame(frame);
-  frame = frame[0];
-
-  // get flags for current frame
-  var options = state.options;
-  var flags = {
-    embed: _getFrameFlag(frame, options, 'embed'),
-    explicit: _getFrameFlag(frame, options, 'explicit'),
-    requireAll: _getFrameFlag(frame, options, 'requireAll')
-  };
-
-  // filter out subjects that match the frame
-  var matches = _filterSubjects(state, subjects, frame, flags);
-
-  // add matches to output
-  var ids = Object.keys(matches).sort();
-  for (var idx = 0; idx < ids.length; ++idx) {
-    var id = ids[idx];
-    var subject = matches[id];
-
-    if (flags.embed === '@link' && id in state.link) {
-      // TODO: may want to also match an existing linked subject against
-      // the current frame ... so different frames could produce different
-      // subjects that are only shared in-memory when the frames are the same
-
-      // add existing linked subject
-      _addFrameOutput(parent, property, state.link[id]);
-      continue;
-    }
-
-    /* Note: In order to treat each top-level match as a compartmentalized
-    result, clear the unique embedded subjects map when the property is null,
-    which only occurs at the top-level. */
-    if (property === null) {
-      state.uniqueEmbeds = {};
-    }
-
-    // start output for subject
-    var output = {};
-    output['@id'] = id;
-    state.link[id] = output;
-
-    // if embed is @never or if a circular reference would be created by an
-    // embed, the subject cannot be embedded, just add the reference;
-    // note that a circular reference won't occur when the embed flag is
-    // `@link` as the above check will short-circuit before reaching this point
-    if (flags.embed === '@never' || _createsCircularReference(subject, state.subjectStack)) {
-      _addFrameOutput(parent, property, output);
-      continue;
-    }
-
-    // if only the last match should be embedded
-    if (flags.embed === '@last') {
-      // remove any existing embed
-      if (id in state.uniqueEmbeds) {
-        _removeEmbed(state, id);
-      }
-      state.uniqueEmbeds[id] = { parent: parent, property: property };
-    }
-
-    // push matching subject onto stack to enable circular embed checks
-    state.subjectStack.push(subject);
-
-    // iterate over subject properties
-    var props = Object.keys(subject).sort();
-    for (var i = 0; i < props.length; i++) {
-      var prop = props[i];
-
-      // copy keywords to output
-      if (isKeyword(prop)) {
-        output[prop] = util.clone(subject[prop]);
-        continue;
-      }
-
-      // explicit is on and property isn't in the frame, skip processing
-      if (flags.explicit && !(prop in frame)) {
-        continue;
-      }
-
-      // add objects
-      var objects = subject[prop];
-      for (var oi = 0; oi < objects.length; ++oi) {
-        var o = objects[oi];
-
-        // recurse into list
-        if (graphTypes.isList(o)) {
-          // add empty list
-          var list = { '@list': [] };
-          _addFrameOutput(output, prop, list);
-
-          // add list objects
-          var src = o['@list'];
-          for (var n in src) {
-            o = src[n];
-            if (graphTypes.isSubjectReference(o)) {
-              var subframe = prop in frame ? frame[prop][0]['@list'] : _createImplicitFrame(flags);
-              // recurse into subject reference
-              api.frame(state, [o['@id']], subframe, list, '@list');
-            } else {
-              // include other values automatically
-              _addFrameOutput(list, '@list', util.clone(o));
-            }
-          }
-          continue;
-        }
-
-        if (graphTypes.isSubjectReference(o)) {
-          // recurse into subject reference
-          var _subframe = prop in frame ? frame[prop] : _createImplicitFrame(flags);
-          api.frame(state, [o['@id']], _subframe, output, prop);
-        } else {
-          // include other values automatically
-          _addFrameOutput(output, prop, util.clone(o));
-        }
-      }
-    }
-
-    // handle defaults
-    props = Object.keys(frame).sort();
-    for (var _i = 0; _i < props.length; ++_i) {
-      var _prop = props[_i];
-
-      // skip keywords
-      if (isKeyword(_prop)) {
-        continue;
-      }
-
-      // if omit default is off, then include default values for properties
-      // that appear in the next frame but are not in the matching subject
-      var next = frame[_prop][0];
-      var omitDefaultOn = _getFrameFlag(next, options, 'omitDefault');
-      if (!omitDefaultOn && !(_prop in output)) {
-        var preserve = '@null';
-        if ('@default' in next) {
-          preserve = util.clone(next['@default']);
-        }
-        if (!types.isArray(preserve)) {
-          preserve = [preserve];
-        }
-        output[_prop] = [{ '@preserve': preserve }];
-      }
-    }
-
-    // add output to parent
-    _addFrameOutput(parent, property, output);
-
-    // pop matching subject from circular ref-checking stack
-    state.subjectStack.pop();
-  }
-};
-
-/**
- * Creates an implicit frame when recursing through subject matches. If
- * a frame doesn't have an explicit frame for a particular property, then
- * a wildcard child frame will be created that uses the same flags that the
- * parent frame used.
- *
- * @param flags the current framing flags.
- *
- * @return the implicit frame.
- */
-function _createImplicitFrame(flags) {
-  var frame = {};
-  for (var key in flags) {
-    if (flags[key] !== undefined) {
-      frame['@' + key] = [flags[key]];
-    }
-  }
-  return [frame];
-}
-
-/**
- * Checks the current subject stack to see if embedding the given subject
- * would cause a circular reference.
- *
- * @param subjectToEmbed the subject to embed.
- * @param subjectStack the current stack of subjects.
- *
- * @return true if a circular reference would be created, false if not.
- */
-function _createsCircularReference(subjectToEmbed, subjectStack) {
-  for (var i = subjectStack.length - 1; i >= 0; --i) {
-    if (subjectStack[i]['@id'] === subjectToEmbed['@id']) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Gets the frame flag value for the given flag name.
- *
- * @param frame the frame.
- * @param options the framing options.
- * @param name the flag name.
- *
- * @return the flag value.
- */
-function _getFrameFlag(frame, options, name) {
-  var flag = '@' + name;
-  var rval = flag in frame ? frame[flag][0] : options[name];
-  if (name === 'embed') {
-    // default is "@last"
-    // backwards-compatibility support for "embed" maps:
-    // true => "@last"
-    // false => "@never"
-    if (rval === true) {
-      rval = '@last';
-    } else if (rval === false) {
-      rval = '@never';
-    } else if (rval !== '@always' && rval !== '@never' && rval !== '@link') {
-      rval = '@last';
-    }
-  }
-  return rval;
-}
-
-/**
- * Validates a JSON-LD frame, throwing an exception if the frame is invalid.
- *
- * @param frame the frame to validate.
- */
-function _validateFrame(frame) {
-  if (!types.isArray(frame) || frame.length !== 1 || !types.isObject(frame[0])) {
-    throw new JsonLdError('Invalid JSON-LD syntax; a JSON-LD frame must be a single object.', 'jsonld.SyntaxError', { frame: frame });
-  }
-}
-
-/**
- * Returns a map of all of the subjects that match a parsed frame.
- *
- * @param state the current framing state.
- * @param subjects the set of subjects to filter.
- * @param frame the parsed frame.
- * @param flags the frame flags.
- *
- * @return all of the matched subjects.
- */
-function _filterSubjects(state, subjects, frame, flags) {
-  // filter subjects in @id order
-  var rval = {};
-  for (var i = 0; i < subjects.length; ++i) {
-    var id = subjects[i];
-    var subject = state.subjects[id];
-    if (_filterSubject(subject, frame, flags)) {
-      rval[id] = subject;
-    }
-  }
-  return rval;
-}
-
-/**
- * Returns true if the given subject matches the given frame.
- *
- * @param subject the subject to check.
- * @param frame the frame to check.
- * @param flags the frame flags.
- *
- * @return true if the subject matches, false if not.
- */
-function _filterSubject(subject, frame, flags) {
-  // check @type (object value means 'any' type, fall through to ducktyping)
-  if ('@type' in frame && !(frame['@type'].length === 1 && types.isObject(frame['@type'][0]))) {
-    var nodeTypes = frame['@type'];
-    for (var i = 0; i < nodeTypes.length; ++i) {
-      // any matching @type is a match
-      if (util.hasValue(subject, '@type', nodeTypes[i])) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // check ducktype
-  var wildcard = true;
-  var matchesSome = false;
-  for (var key in frame) {
-    if (isKeyword(key)) {
-      // skip non-@id and non-@type
-      if (key !== '@id' && key !== '@type') {
-        continue;
-      }
-      wildcard = false;
-
-      // check @id for a specific @id value
-      if (key === '@id' && types.isString(frame[key])) {
-        if (subject[key] !== frame[key]) {
-          return false;
-        }
-        matchesSome = true;
-        continue;
-      }
-    }
-
-    wildcard = false;
-
-    if (key in subject) {
-      // frame[key] === [] means do not match if property is present
-      if (types.isArray(frame[key]) && frame[key].length === 0 && subject[key] !== undefined) {
-        return false;
-      }
-      matchesSome = true;
-      continue;
-    }
-
-    // all properties must match to be a duck unless a @default is specified
-    var hasDefault = types.isArray(frame[key]) && types.isObject(frame[key][0]) && '@default' in frame[key][0];
-    if (flags.requireAll && !hasDefault) {
-      return false;
-    }
-  }
-
-  // return true if wildcard or subject matches some properties
-  return wildcard || matchesSome;
-}
-
-/**
- * Removes an existing embed.
- *
- * @param state the current framing state.
- * @param id the @id of the embed to remove.
- */
-function _removeEmbed(state, id) {
-  // get existing embed
-  var embeds = state.uniqueEmbeds;
-  var embed = embeds[id];
-  var parent = embed.parent;
-  var property = embed.property;
-
-  // create reference to replace embed
-  var subject = { '@id': id };
-
-  // remove existing embed
-  if (types.isArray(parent)) {
-    // replace subject with reference
-    for (var i = 0; i < parent.length; ++i) {
-      if (util.compareValues(parent[i], subject)) {
-        parent[i] = subject;
-        break;
-      }
-    }
-  } else {
-    // replace subject with reference
-    var useArray = types.isArray(parent[property]);
-    util.removeValue(parent, property, subject, { propertyIsArray: useArray });
-    util.addValue(parent, property, subject, { propertyIsArray: useArray });
-  }
-
-  // recursively remove dependent dangling embeds
-  var removeDependents = function removeDependents(id) {
-    // get embed keys as a separate array to enable deleting keys in map
-    var ids = Object.keys(embeds);
-    for (var _i2 = 0; _i2 < ids.length; ++_i2) {
-      var next = ids[_i2];
-      if (next in embeds && types.isObject(embeds[next].parent) && embeds[next].parent['@id'] === id) {
-        delete embeds[next];
-        removeDependents(next);
-      }
-    }
-  };
-  removeDependents(id);
-}
-
-/**
- * Adds framing output to the given parent.
- *
- * @param parent the parent to add to.
- * @param property the parent property.
- * @param output the output to add.
- */
-function _addFrameOutput(parent, property, output) {
-  if (types.isObject(parent)) {
-    util.addValue(parent, property, output, { propertyIsArray: true });
-  } else {
-    parent.push(output);
-  }
-}
-
-/***/ }),
-/* 128 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15421,7 +15881,7 @@ function _addFrameOutput(parent, property, output) {
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 var graphTypes = __webpack_require__(5);
-var types = __webpack_require__(3);
+var types = __webpack_require__(4);
 var util = __webpack_require__(2);
 
 // constants
@@ -15986,7 +16446,7 @@ function _RDFToObject(o, useNativeTypes) {
 }
 
 /***/ }),
-/* 129 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15995,14 +16455,14 @@ function _RDFToObject(o, useNativeTypes) {
  */
 
 
-var _require = __webpack_require__(32),
+var _require = __webpack_require__(33),
     createNodeMap = _require.createNodeMap;
 
 var _require2 = __webpack_require__(15),
     isKeyword = _require2.isKeyword;
 
 var graphTypes = __webpack_require__(5);
-var types = __webpack_require__(3);
+var types = __webpack_require__(4);
 var util = __webpack_require__(2);
 
 var _require3 = __webpack_require__(24),
@@ -16062,7 +16522,7 @@ api.toRDF = function (input, options) {
           graphTerm = { termType: 'NamedNode' };
         }
         graphTerm.value = graphName;
-      } else {
+      } else if (!options.includeRelativeUrls) {
         // skip relative IRIs (not valid RDF)
         continue;
       }
@@ -16133,7 +16593,7 @@ function _graphToRDF(dataset, graph, graphTerm, issuer, options) {
             };
 
             // skip relative IRI subjects (not valid RDF)
-            if (!_isAbsoluteIri(id)) {
+            if (!_isAbsoluteIri(id) && !options.includeRelativeUrls) {
               continue;
             }
 
@@ -16144,7 +16604,7 @@ function _graphToRDF(dataset, graph, graphTerm, issuer, options) {
             };
 
             // skip relative IRI predicates (not valid RDF)
-            if (!_isAbsoluteIri(property)) {
+            if (!_isAbsoluteIri(property) && !options.includeRelativeUrls) {
               continue;
             }
 
@@ -16160,7 +16620,7 @@ function _graphToRDF(dataset, graph, graphTerm, issuer, options) {
               // convert value or node object to triple
               var object = _objectToRDF(item);
               // skip null objects (they are relative IRIs)
-              if (object) {
+              if (options.includeRelativeUrls || object) {
                 dataset.push({
                   subject: subject,
                   predicate: predicate,
@@ -16332,7 +16792,7 @@ function _objectToRDF(item) {
 }
 
 /***/ }),
-/* 130 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16341,11 +16801,914 @@ function _objectToRDF(item) {
  */
 
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var _require = __webpack_require__(15),
+    isKeyword = _require.isKeyword;
+
+var graphTypes = __webpack_require__(5);
+var types = __webpack_require__(4);
+var util = __webpack_require__(2);
+var JsonLdError = __webpack_require__(6);
+
+var _require2 = __webpack_require__(33),
+    _createNodeMap = _require2.createNodeMap,
+    _mergeNodeMapGraphs = _require2.mergeNodeMapGraphs;
+
+var api = {};
+module.exports = api;
+
+/**
+ * Performs JSON-LD `merged` framing.
+ *
+ * @param input the expanded JSON-LD to frame.
+ * @param frame the expanded JSON-LD frame to use.
+ * @param options the framing options.
+ *
+ * @return the framed output.
+ */
+api.frameMergedOrDefault = function (input, frame, options) {
+  // create framing state
+  var state = {
+    options: options,
+    graph: '@default',
+    graphMap: { '@default': {} },
+    graphStack: [],
+    subjectStack: [],
+    link: {},
+    bnodeMap: {}
+  };
+
+  // produce a map of all graphs and name each bnode
+  // FIXME: currently uses subjects from @merged graph only
+  var issuer = new util.IdentifierIssuer('_:b');
+  _createNodeMap(input, state.graphMap, '@default', issuer);
+  if (options.merged) {
+    state.graphMap['@merged'] = _mergeNodeMapGraphs(state.graphMap);
+    state.graph = '@merged';
+  }
+  state.subjects = state.graphMap[state.graph];
+
+  // frame the subjects
+  var framed = [];
+  api.frame(state, Object.keys(state.subjects).sort(), frame, framed);
+
+  // If pruning blank nodes, find those to prune
+  if (options.pruneBlankNodeIdentifiers) {
+    // remove all blank nodes appearing only once, done in compaction
+    options.bnodesToClear = Object.keys(state.bnodeMap).filter(function (id) {
+      return state.bnodeMap[id].length === 1;
+    });
+  }
+
+  return framed;
+};
+
+/**
+ * Frames subjects according to the given frame.
+ *
+ * @param state the current framing state.
+ * @param subjects the subjects to filter.
+ * @param frame the frame.
+ * @param parent the parent subject or top-level array.
+ * @param property the parent property, initialized to null.
+ */
+api.frame = function (state, subjects, frame, parent) {
+  var property = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+
+  // validate the frame
+  _validateFrame(frame);
+  frame = frame[0];
+
+  // get flags for current frame
+  var options = state.options;
+  var flags = {
+    embed: _getFrameFlag(frame, options, 'embed'),
+    explicit: _getFrameFlag(frame, options, 'explicit'),
+    requireAll: _getFrameFlag(frame, options, 'requireAll')
+  };
+
+  // filter out subjects that match the frame
+  var matches = _filterSubjects(state, subjects, frame, flags);
+
+  // add matches to output
+  var ids = Object.keys(matches).sort();
+
+  var _loop = function _loop(id) {
+    var subject = matches[id];
+
+    if (flags.embed === '@link' && id in state.link) {
+      // TODO: may want to also match an existing linked subject against
+      // the current frame ... so different frames could produce different
+      // subjects that are only shared in-memory when the frames are the same
+
+      // add existing linked subject
+      _addFrameOutput(parent, property, state.link[id]);
+      return 'continue';
+    }
+
+    /* Note: In order to treat each top-level match as a compartmentalized
+    result, clear the unique embedded subjects map when the property is null,
+    which only occurs at the top-level. */
+    if (property === null) {
+      state.uniqueEmbeds = _defineProperty({}, state.graph, {});
+    } else {
+      state.uniqueEmbeds[state.graph] = state.uniqueEmbeds[state.graph] || {};
+    }
+
+    // start output for subject
+    var output = {};
+    output['@id'] = id;
+    if (id.indexOf('_:') === 0) {
+      util.addValue(state.bnodeMap, id, output, { propertyIsArray: true });
+    }
+    state.link[id] = output;
+
+    // if embed is @never or if a circular reference would be created by an
+    // embed, the subject cannot be embedded, just add the reference;
+    // note that a circular reference won't occur when the embed flag is
+    // `@link` as the above check will short-circuit before reaching this point
+    if (flags.embed === '@never' || _createsCircularReference(subject, state.graph, state.subjectStack)) {
+      _addFrameOutput(parent, property, output);
+      return 'continue';
+    }
+
+    // if only the last match should be embedded
+    if (flags.embed === '@last') {
+      // remove any existing embed
+      if (id in state.uniqueEmbeds[state.graph]) {
+        _removeEmbed(state, id);
+      }
+      state.uniqueEmbeds[state.graph][id] = { parent: parent, property: property };
+    }
+
+    // push matching subject onto stack to enable circular embed checks
+    state.subjectStack.push({ subject: subject, graph: state.graph });
+
+    // subject is also the name of a graph
+    if (id in state.graphMap) {
+      var recurse = false;
+      var subframe = null;
+      if (!('@graph' in frame)) {
+        recurse = state.graph !== '@merged';
+        subframe = {};
+      } else {
+        subframe = frame['@graph'][0];
+        if (!types.isObject(subframe)) {
+          subframe = {};
+        }
+        recurse = !(id === '@merged' || id === '@default');
+      }
+
+      if (recurse) {
+        state.graphStack.push(state.graph);
+        state.graph = id;
+        // recurse into graph
+        api.frame(state, Object.keys(state.graphMap[id]).sort(), [subframe], output, '@graph');
+        state.graph = state.graphStack.pop;
+      }
+    }
+
+    // iterate over subject properties
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+      for (var _iterator2 = Object.keys(subject).sort()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        var prop = _step2.value;
+
+        // copy keywords to output
+        if (isKeyword(prop)) {
+          output[prop] = util.clone(subject[prop]);
+
+          if (prop === '@type') {
+            // count bnode values of @type
+            var _iteratorNormalCompletion6 = true;
+            var _didIteratorError6 = false;
+            var _iteratorError6 = undefined;
+
+            try {
+              for (var _iterator6 = subject['@type'][Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                var type = _step6.value;
+
+                if (type.indexOf('_:') === 0) {
+                  util.addValue(state.bnodeMap, type, output, { propertyIsArray: true });
+                }
+              }
+            } catch (err) {
+              _didIteratorError6 = true;
+              _iteratorError6 = err;
+            } finally {
+              try {
+                if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                  _iterator6.return();
+                }
+              } finally {
+                if (_didIteratorError6) {
+                  throw _iteratorError6;
+                }
+              }
+            }
+          }
+          continue;
+        }
+
+        // explicit is on and property isn't in the frame, skip processing
+        if (flags.explicit && !(prop in frame)) {
+          continue;
+        }
+
+        // add objects
+        var _iteratorNormalCompletion7 = true;
+        var _didIteratorError7 = false;
+        var _iteratorError7 = undefined;
+
+        try {
+          for (var _iterator7 = subject[prop][Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+            var o = _step7.value;
+
+            var _subframe2 = prop in frame ? frame[prop] : _createImplicitFrame(flags);
+
+            // recurse into list
+            if (graphTypes.isList(o)) {
+              // add empty list
+              var list = { '@list': [] };
+              _addFrameOutput(output, prop, list);
+
+              // add list objects
+              var src = o['@list'];
+              for (var n in src) {
+                o = src[n];
+                if (graphTypes.isSubjectReference(o)) {
+                  var _subframe3 = prop in frame ? frame[prop][0]['@list'] : _createImplicitFrame(flags);
+                  // recurse into subject reference
+                  api.frame(state, [o['@id']], _subframe3, list, '@list');
+                } else {
+                  // include other values automatically
+                  _addFrameOutput(list, '@list', util.clone(o));
+                }
+              }
+              continue;
+            }
+
+            if (graphTypes.isSubjectReference(o)) {
+              // recurse into subject reference
+              api.frame(state, [o['@id']], _subframe2, output, prop);
+            } else if (_valueMatch(_subframe2[0], o)) {
+              // include other values, if they match
+              _addFrameOutput(output, prop, util.clone(o));
+            }
+          }
+        } catch (err) {
+          _didIteratorError7 = true;
+          _iteratorError7 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion7 && _iterator7.return) {
+              _iterator7.return();
+            }
+          } finally {
+            if (_didIteratorError7) {
+              throw _iteratorError7;
+            }
+          }
+        }
+      }
+
+      // handle defaults
+    } catch (err) {
+      _didIteratorError2 = true;
+      _iteratorError2 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion2 && _iterator2.return) {
+          _iterator2.return();
+        }
+      } finally {
+        if (_didIteratorError2) {
+          throw _iteratorError2;
+        }
+      }
+    }
+
+    var _iteratorNormalCompletion3 = true;
+    var _didIteratorError3 = false;
+    var _iteratorError3 = undefined;
+
+    try {
+      for (var _iterator3 = Object.keys(frame).sort()[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+        var _prop = _step3.value;
+
+        // skip keywords
+        if (isKeyword(_prop)) {
+          continue;
+        }
+
+        // if omit default is off, then include default values for properties
+        // that appear in the next frame but are not in the matching subject
+        var next = frame[_prop][0] || {};
+        var omitDefaultOn = _getFrameFlag(next, options, 'omitDefault');
+        if (!omitDefaultOn && !(_prop in output)) {
+          var preserve = '@null';
+          if ('@default' in next) {
+            preserve = util.clone(next['@default']);
+          }
+          if (!types.isArray(preserve)) {
+            preserve = [preserve];
+          }
+          output[_prop] = [{ '@preserve': preserve }];
+        }
+      }
+
+      // if embed reverse values by finding nodes having this subject as a value of the associated property
+    } catch (err) {
+      _didIteratorError3 = true;
+      _iteratorError3 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion3 && _iterator3.return) {
+          _iterator3.return();
+        }
+      } finally {
+        if (_didIteratorError3) {
+          throw _iteratorError3;
+        }
+      }
+    }
+
+    if ('@reverse' in frame) {
+      var _iteratorNormalCompletion4 = true;
+      var _didIteratorError4 = false;
+      var _iteratorError4 = undefined;
+
+      try {
+        for (var _iterator4 = Object.keys(frame['@reverse']).sort()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+          var reverseProp = _step4.value;
+
+          var _subframe = frame['@reverse'][reverseProp];
+          var _iteratorNormalCompletion5 = true;
+          var _didIteratorError5 = false;
+          var _iteratorError5 = undefined;
+
+          try {
+            for (var _iterator5 = Object.keys(state.subjects)[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+              var _subject = _step5.value;
+
+              var nodeValues = util.getValues(state.subjects[_subject], reverseProp);
+              if (nodeValues.some(function (v) {
+                return v['@id'] === id;
+              })) {
+                // node has property referencing this subject, recurse
+                output['@reverse'] = output['@reverse'] || {};
+                util.addValue(output['@reverse'], reverseProp, [], { propertyIsArray: true });
+                api.frame(state, [_subject], _subframe, output['@reverse'][reverseProp], property);
+              }
+            }
+          } catch (err) {
+            _didIteratorError5 = true;
+            _iteratorError5 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                _iterator5.return();
+              }
+            } finally {
+              if (_didIteratorError5) {
+                throw _iteratorError5;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        _didIteratorError4 = true;
+        _iteratorError4 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion4 && _iterator4.return) {
+            _iterator4.return();
+          }
+        } finally {
+          if (_didIteratorError4) {
+            throw _iteratorError4;
+          }
+        }
+      }
+    }
+
+    // add output to parent
+    _addFrameOutput(parent, property, output);
+
+    // pop matching subject from circular ref-checking stack
+    state.subjectStack.pop();
+  };
+
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = ids[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var id = _step.value;
+
+      var _ret = _loop(id);
+
+      if (_ret === 'continue') continue;
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+};
+
+/**
+ * Creates an implicit frame when recursing through subject matches. If
+ * a frame doesn't have an explicit frame for a particular property, then
+ * a wildcard child frame will be created that uses the same flags that the
+ * parent frame used.
+ *
+ * @param flags the current framing flags.
+ *
+ * @return the implicit frame.
+ */
+function _createImplicitFrame(flags) {
+  var frame = {};
+  for (var key in flags) {
+    if (flags[key] !== undefined) {
+      frame['@' + key] = [flags[key]];
+    }
+  }
+  return [frame];
+}
+
+/**
+ * Checks the current subject stack to see if embedding the given subject
+ * would cause a circular reference.
+ *
+ * @param subjectToEmbed the subject to embed.
+ * @param graph the graph the subject to embed is in.
+ * @param subjectStack the current stack of subjects.
+ *
+ * @return true if a circular reference would be created, false if not.
+ */
+function _createsCircularReference(subjectToEmbed, graph, subjectStack) {
+  for (var i = subjectStack.length - 1; i >= 0; --i) {
+    var _subject2 = subjectStack[i];
+    if (_subject2.graph === graph && _subject2.subject['@id'] === subjectToEmbed['@id']) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Gets the frame flag value for the given flag name.
+ *
+ * @param frame the frame.
+ * @param options the framing options.
+ * @param name the flag name.
+ *
+ * @return the flag value.
+ */
+function _getFrameFlag(frame, options, name) {
+  var flag = '@' + name;
+  var rval = flag in frame ? frame[flag][0] : options[name];
+  if (name === 'embed') {
+    // default is "@last"
+    // backwards-compatibility support for "embed" maps:
+    // true => "@last"
+    // false => "@never"
+    if (rval === true) {
+      rval = '@last';
+    } else if (rval === false) {
+      rval = '@never';
+    } else if (rval !== '@always' && rval !== '@never' && rval !== '@link') {
+      rval = '@last';
+    }
+  }
+  return rval;
+}
+
+/**
+ * Validates a JSON-LD frame, throwing an exception if the frame is invalid.
+ *
+ * @param frame the frame to validate.
+ */
+function _validateFrame(frame) {
+  if (!types.isArray(frame) || frame.length !== 1 || !types.isObject(frame[0])) {
+    throw new JsonLdError('Invalid JSON-LD syntax; a JSON-LD frame must be a single object.', 'jsonld.SyntaxError', { frame: frame });
+  }
+}
+
+/**
+ * Returns a map of all of the subjects that match a parsed frame.
+ *
+ * @param state the current framing state.
+ * @param subjects the set of subjects to filter.
+ * @param frame the parsed frame.
+ * @param flags the frame flags.
+ *
+ * @return all of the matched subjects.
+ */
+function _filterSubjects(state, subjects, frame, flags) {
+  // filter subjects in @id order
+  var rval = {};
+  var _iteratorNormalCompletion8 = true;
+  var _didIteratorError8 = false;
+  var _iteratorError8 = undefined;
+
+  try {
+    for (var _iterator8 = subjects[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+      var id = _step8.value;
+
+      var _subject3 = state.graphMap[state.graph][id];
+      if (_filterSubject(state, _subject3, frame, flags)) {
+        rval[id] = _subject3;
+      }
+    }
+  } catch (err) {
+    _didIteratorError8 = true;
+    _iteratorError8 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion8 && _iterator8.return) {
+        _iterator8.return();
+      }
+    } finally {
+      if (_didIteratorError8) {
+        throw _iteratorError8;
+      }
+    }
+  }
+
+  return rval;
+}
+
+/**
+ * Returns true if the given subject matches the given frame.
+ *
+ * Matches either based on explicit type inclusion where the node has any
+ * type listed in the frame. If the frame has empty types defined matches
+ * nodes not having a @type. If the frame has a type of {} defined matches
+ * nodes having any type defined.
+ *
+ * Otherwise, does duck typing, where the node must have all of the
+ * properties defined in the frame.
+ *
+ * @param state the current framing state.
+ * @param subject the subject to check.
+ * @param frame the frame to check.
+ * @param flags the frame flags.
+ *
+ * @return true if the subject matches, false if not.
+ */
+function _filterSubject(state, subject, frame, flags) {
+  // check ducktype
+  var wildcard = true;
+  var matchesSome = false;
+
+  var _loop2 = function _loop2(key) {
+    var matchThis = false;
+    var nodeValues = util.getValues(subject, key);
+    var isEmpty = util.getValues(frame, key).length === 0;
+
+    if (isKeyword(key)) {
+      // skip non-@id and non-@type
+      if (key !== '@id' && key !== '@type') {
+        return 'continue';
+      }
+      wildcard = false;
+
+      // check @id for a specific @id value
+      if (key === '@id') {
+        // if @id is not a wildcard and is not empty, then match or not on specific value
+        if (frame['@id'].length >= 0 && !types.isEmptyObject(frame['@id'][0])) {
+          return {
+            v: frame['@id'].includes(nodeValues[0])
+          };
+        }
+        matchThis = true;
+        return 'continue';
+      }
+
+      // check @type (object value means 'any' type, fall through to ducktyping)
+      if ('@type' in frame) {
+        if (isEmpty) {
+          if (nodeValues.length > 0) {
+            // don't match on no @type
+            return {
+              v: false
+            };
+          }
+          matchThis = true;
+        } else if (frame['@type'].length === 1 && types.isEmptyObject(frame['@type'][0])) {
+          // match on wildcard @type
+          matchThis = nodeValues.length > 0;
+        } else {
+          var _loop3 = function _loop3(type) {
+            if (nodeValues.some(function (tt) {
+              return tt === type;
+            })) {
+              return {
+                v: {
+                  v: true
+                }
+              };
+            }
+          };
+
+          // match on a specific @type
+          var _iteratorNormalCompletion9 = true;
+          var _didIteratorError9 = false;
+          var _iteratorError9 = undefined;
+
+          try {
+            for (var _iterator9 = frame['@type'][Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+              var type = _step9.value;
+
+              var _ret3 = _loop3(type);
+
+              if ((typeof _ret3 === 'undefined' ? 'undefined' : _typeof(_ret3)) === "object") return _ret3.v;
+            }
+          } catch (err) {
+            _didIteratorError9 = true;
+            _iteratorError9 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion9 && _iterator9.return) {
+                _iterator9.return();
+              }
+            } finally {
+              if (_didIteratorError9) {
+                throw _iteratorError9;
+              }
+            }
+          }
+
+          return {
+            v: false
+          };
+        }
+      }
+    }
+
+    // Forc a copy of this frame entry so it can be manipulated
+    var thisFrame = util.getValues(frame, key)[0];
+    var hasDefault = false;
+    if (thisFrame) {
+      _validateFrame([thisFrame]);
+      hasDefault = '@default' in thisFrame;
+    }
+
+    // no longer a wildcard pattern if frame has any non-keyword properties
+    wildcard = false;
+
+    // skip, but allow match if node has no value for property, and frame has a default value
+    if (nodeValues.length === 0 && hasDefault) {
+      return 'continue';
+    }
+
+    // if frame value is empty, don't match if subject has any value
+    if (nodeValues.length > 0 && isEmpty) {
+      return {
+        v: false
+      };
+    }
+
+    if (thisFrame === undefined) {
+      // node does not match if values is not empty and the value of property in frame is match none.
+      if (nodeValues.length > 0) {
+        return {
+          v: false
+        };
+      }
+      matchThis = true;
+    } else if (types.isObject(thisFrame)) {
+      // node matches if values is not empty and the value of property in frame is wildcard
+      matchThis = nodeValues.length > 0;
+    } else {
+      if (graphTypes.isValue(thisFrame)) {
+        // match on any matching value
+        matchThis = nodeValues.some(function (nv) {
+          return _valueMatch(thisFrame, nv);
+        });
+      } else if (graphTypes.isSubject(thisFrame) || graphTypes.isSubjectReference(thisFrame)) {
+        matchThis = nodeValues.some(function (nv) {
+          return _nodeMatch(state, thisFrame, nv, flags);
+        });
+      } else if (graphTypes.isList(thisFrame)) {
+        var listValue = thisFrame['@list'][0];
+        if (graphTypes.isList(nodeValues[0])) {
+          var nodeListValues = nodeValues[0]['@list'];
+
+          if (graphTypes.isValue(listValue)) {
+            // match on any matching value
+            matchThis = nodeListValues.some(function (lv) {
+              return _valueMatch(listValue, lv);
+            });
+          } else if (graphTypes.isSubject(listValue) || graphTypes.isSubjectReference(listValue)) {
+            matchThis = nodeListValues.some(function (lv) {
+              return _nodeMatch(state, listValue, lv, flags);
+            });
+          }
+        } else {
+          // value must be a list to match
+          matchThis = false;
+        }
+      }
+    }
+
+    // all non-defaulted values must match if requireAll is set
+    if (!matchThis && flags.requireAll) {
+      return {
+        v: false
+      };
+    }
+
+    matchesSome = matchesSome || matchThis;
+  };
+
+  for (var key in frame) {
+    var _ret2 = _loop2(key);
+
+    switch (_ret2) {
+      case 'continue':
+        continue;
+
+      default:
+        if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
+    }
+  }
+
+  // return true if wildcard or subject matches some properties
+  return wildcard || matchesSome;
+}
+
+/**
+ * Removes an existing embed.
+ *
+ * @param state the current framing state.
+ * @param id the @id of the embed to remove.
+ */
+function _removeEmbed(state, id) {
+  // get existing embed
+  var embeds = state.uniqueEmbeds[state.graph];
+  var embed = embeds[id];
+  var parent = embed.parent;
+  var property = embed.property;
+
+  // create reference to replace embed
+  var subject = { '@id': id };
+
+  // remove existing embed
+  if (types.isArray(parent)) {
+    // replace subject with reference
+    for (var i = 0; i < parent.length; ++i) {
+      if (util.compareValues(parent[i], subject)) {
+        parent[i] = subject;
+        break;
+      }
+    }
+  } else {
+    // replace subject with reference
+    var useArray = types.isArray(parent[property]);
+    util.removeValue(parent, property, subject, { propertyIsArray: useArray });
+    util.addValue(parent, property, subject, { propertyIsArray: useArray });
+  }
+
+  // recursively remove dependent dangling embeds
+  var removeDependents = function removeDependents(id) {
+    // get embed keys as a separate array to enable deleting keys in map
+    var ids = Object.keys(embeds);
+    var _iteratorNormalCompletion10 = true;
+    var _didIteratorError10 = false;
+    var _iteratorError10 = undefined;
+
+    try {
+      for (var _iterator10 = ids[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+        var next = _step10.value;
+
+        if (next in embeds && types.isObject(embeds[next].parent) && embeds[next].parent['@id'] === id) {
+          delete embeds[next];
+          removeDependents(next);
+        }
+      }
+    } catch (err) {
+      _didIteratorError10 = true;
+      _iteratorError10 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion10 && _iterator10.return) {
+          _iterator10.return();
+        }
+      } finally {
+        if (_didIteratorError10) {
+          throw _iteratorError10;
+        }
+      }
+    }
+  };
+  removeDependents(id);
+}
+
+/**
+ * Adds framing output to the given parent.
+ *
+ * @param parent the parent to add to.
+ * @param property the parent property.
+ * @param output the output to add.
+ */
+function _addFrameOutput(parent, property, output) {
+  if (types.isObject(parent)) {
+    util.addValue(parent, property, output, { propertyIsArray: true });
+  } else {
+    parent.push(output);
+  }
+}
+
+/**
+ * Node matches if it is a node, and matches the pattern as a frame.
+ *
+ * @param state the current framing state.
+ * @param pattern used to match value
+ * @param value to check
+ * @param flags the frame flags.
+ */
+function _nodeMatch(state, pattern, value, flags) {
+  if (!('@id' in value)) {
+    return false;
+  }
+  var nodeObject = state.subjects[value['@id']];
+  return nodeObject && _filterSubject(state, nodeObject, pattern, flags);
+}
+
+/**
+ * Value matches if it is a value and matches the value pattern
+ *
+ * * `pattern` is empty
+ * * @values are the same, or `pattern[@value]` is a wildcard, and
+ * * @types are the same or `value[@type]` is not null
+ *   and `pattern[@type]` is `{}`, or `value[@type]` is null
+ *   and `pattern[@type]` is null or `[]`, and
+ * * @languages are the same or `value[@language]` is not null
+ *   and `pattern[@language]` is `{}`, or `value[@language]` is null
+ *   and `pattern[@language]` is null or `[]`.
+ *
+ * @param pattern used to match value
+ * @param value to check
+ */
+function _valueMatch(pattern, value) {
+  var v1 = value['@value'];
+  var t1 = value['@type'];
+  var l1 = value['@language'];
+  var v2 = pattern['@value'] ? types.isArray(pattern['@value']) ? pattern['@value'] : [pattern['@value']] : [];
+  var t2 = pattern['@type'] ? types.isArray(pattern['@type']) ? pattern['@type'] : [pattern['@type']] : [];
+  var l2 = pattern['@language'] ? types.isArray(pattern['@language']) ? pattern['@language'] : [pattern['@language']] : [];
+
+  if (v2.length === 0 && t2.length === 0 && l2.length === 0) {
+    return true;
+  }
+  if (!(v2.includes(v1) || types.isEmptyObject(v2[0]))) {
+    return false;
+  }
+  if (!(!t1 && t2.length === 0 || t2.includes(t1) || t1 && types.isEmptyObject(t2[0]))) {
+    return false;
+  }
+  if (!(!l1 && l2.length === 0 || l2.includes(l1) || l1 && types.isEmptyObject(l2[0]))) {
+    return false;
+  }
+  return true;
+}
+
+/***/ }),
+/* 136 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*
+ * Copyright (c) 2017 Digital Bazaar, Inc. All rights reserved.
+ */
+
+
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
+
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 var JsonLdError = __webpack_require__(6);
 
-var _require = __webpack_require__(3),
+var _require = __webpack_require__(4),
     _isArray = _require.isArray,
     _isObject = _require.isObject,
     _isString = _require.isString;
@@ -16353,13 +17716,15 @@ var _require = __webpack_require__(3),
 var _require2 = __webpack_require__(5),
     _isList = _require2.isList,
     _isValue = _require2.isValue,
+    _isGraph = _require2.isGraph,
     _isSimpleGraph = _require2.isSimpleGraph,
     _isSubjectReference = _require2.isSubjectReference;
 
 var _require3 = __webpack_require__(15),
     _expandIri = _require3.expandIri,
     _getContextValue = _require3.getContextValue,
-    _isKeyword = _require3.isKeyword;
+    _isKeyword = _require3.isKeyword,
+    _processContext = _require3.process;
 
 var _require4 = __webpack_require__(25),
     _removeBase = _require4.removeBase;
@@ -16434,6 +17799,12 @@ api.compact = function (_ref) {
     return rval;
   }
 
+  // use any scoped context on activeProperty
+  var ctx = _getContextValue(activeCtx, activeProperty, '@context');
+  if (ctx) {
+    activeCtx = _processContext({ activeCtx: activeCtx, localCtx: ctx, options: options });
+  }
+
   // recursively compact object
   if (_isObject(element)) {
     if (options.link && '@id' in element && element['@id'] in options.link) {
@@ -16472,36 +17843,68 @@ api.compact = function (_ref) {
       options.link[element['@id']].push({ expanded: element, compacted: _rval });
     }
 
-    // process element keys in order
+    // apply any context defined on an alias of @type
+    // if key is @type and any compacted value is a term having a local
+    // context, overlay that context
+    var types = element['@type'] || [];
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = types[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var type = _step.value;
+
+        var compactedType = api.compactIri({ activeCtx: activeCtx, iri: type, relativeTo: { vocab: true } });
+
+        // Use any scoped context defined on this value
+        var _ctx = _getContextValue(activeCtx, compactedType, '@context');
+        if (_ctx) {
+          activeCtx = _processContext({ activeCtx: activeCtx, localCtx: _ctx, options: options });
+        }
+      }
+
+      // process element keys in order
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+
     var keys = Object.keys(element).sort();
-    for (var ki = 0; ki < keys.length; ++ki) {
-      var expandedProperty = keys[ki];
+
+    var _loop = function _loop(expandedProperty) {
       var expandedValue = element[expandedProperty];
 
       // compact @id and @type(s)
       if (expandedProperty === '@id' || expandedProperty === '@type') {
-        var compactedValue = void 0;
-
-        // compact single @id
-        if (_isString(expandedValue)) {
-          compactedValue = api.compactIri({
+        var compactedValue = [].concat(expandedValue).map(function (expandedIri) {
+          return api.compactIri({
             activeCtx: activeCtx,
-            iri: expandedValue,
-            relativeTo: { vocab: expandedProperty === '@type' }
+            iri: expandedIri,
+            relativeTo: {
+              vocab: expandedProperty === '@type'
+            }
           });
-        } else {
-          // expanded value must be a @type array
-          compactedValue = [];
-          for (var vi = 0; vi < expandedValue.length; ++vi) {
-            compactedValue.push(api.compactIri({ activeCtx: activeCtx, iri: expandedValue[vi], relativeTo: { vocab: true } }));
-          }
+        });
+        if (compactedValue.length === 1) {
+          compactedValue = compactedValue[0];
         }
 
         // use keyword alias and add value
         var alias = api.compactIri({ activeCtx: activeCtx, iri: expandedProperty, relativeTo: { vocab: true } });
         var isArray = _isArray(compactedValue) && expandedValue.length === 0;
         _addValue(_rval, alias, compactedValue, { propertyIsArray: isArray });
-        continue;
+        return 'continue';
       }
 
       // handle @reverse
@@ -16532,7 +17935,22 @@ api.compact = function (_ref) {
           _addValue(_rval, _alias, _compactedValue);
         }
 
-        continue;
+        return 'continue';
+      }
+
+      if (expandedProperty === '@preserve') {
+        // compact using activeProperty
+        var _compactedValue2 = api.compact({
+          activeCtx: activeCtx,
+          activeProperty: activeProperty,
+          element: expandedValue,
+          options: options,
+          compactionMap: compactionMap });
+
+        if (!(_isArray(_compactedValue2) && _compactedValue2.length === 0)) {
+          _addValue(_rval, expandedProperty, _compactedValue2);
+        }
+        return 'continue';
       }
 
       // handle @index property
@@ -16540,13 +17958,13 @@ api.compact = function (_ref) {
         // drop @index if inside an @index container
         var _container2 = _getContextValue(activeCtx, activeProperty, '@container') || [];
         if (_container2.includes('@index')) {
-          continue;
+          return 'continue';
         }
 
         // use keyword alias and add value
         var _alias2 = api.compactIri({ activeCtx: activeCtx, iri: expandedProperty, relativeTo: { vocab: true } });
         _addValue(_rval, _alias2, expandedValue);
-        continue;
+        return 'continue';
       }
 
       // skip array processing for keywords that aren't @graph or @list
@@ -16554,7 +17972,7 @@ api.compact = function (_ref) {
         // use keyword alias and add value as is
         var _alias3 = api.compactIri({ activeCtx: activeCtx, iri: expandedProperty, relativeTo: { vocab: true } });
         _addValue(_rval, _alias3, expandedValue);
-        continue;
+        return 'continue';
       }
 
       // Note: expanded value must be an array due to expansion algorithm.
@@ -16571,102 +17989,230 @@ api.compact = function (_ref) {
           relativeTo: { vocab: true },
           reverse: insideReverse
         });
-        _addValue(_rval, itemActiveProperty, expandedValue, { propertyIsArray: true });
+        var nestProperty = itemActiveProperty in activeCtx.mappings ? activeCtx.mappings[itemActiveProperty]['@nest'] : null;
+        var nestResult = _rval;
+        if (nestProperty) {
+          _checkNestProperty(activeCtx, nestProperty);
+          if (!_isObject(_rval[nestProperty])) {
+            _rval[nestProperty] = {};
+          }
+          nestResult = _rval[nestProperty];
+        }
+        _addValue(nestResult, itemActiveProperty, expandedValue, { propertyIsArray: true });
       }
 
       // recusively process array values
-      for (var _vi = 0; _vi < expandedValue.length; ++_vi) {
-        var expandedItem = expandedValue[_vi];
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
 
-        // compact property and get container type
-        var _itemActiveProperty = api.compactIri({
-          activeCtx: activeCtx,
-          iri: expandedProperty,
-          value: expandedItem,
-          relativeTo: { vocab: true },
-          reverse: insideReverse
-        });
-        var _container3 = _getContextValue(activeCtx, _itemActiveProperty, '@container') || [];
+      try {
+        for (var _iterator3 = expandedValue[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var expandedItem = _step3.value;
 
-        // get simple @graph or @list value if appropriate
-        var isSimpleGraph = _isSimpleGraph(expandedItem);
-        var isList = _isList(expandedItem);
-        var inner = void 0;
-        if (isList) {
-          inner = expandedItem['@list'];
-        } else if (isSimpleGraph) {
-          inner = expandedItem['@graph'];
-        }
+          // compact property and get container type
+          var _itemActiveProperty = api.compactIri({
+            activeCtx: activeCtx,
+            iri: expandedProperty,
+            value: expandedItem,
+            relativeTo: { vocab: true },
+            reverse: insideReverse
+          });
 
-        // recursively compact expanded item
-        var compactedItem = api.compact({
-          activeCtx: activeCtx,
-          activeProperty: _itemActiveProperty,
-          element: isList || isSimpleGraph ? inner : expandedItem,
-          options: options,
-          compactionMap: compactionMap
-        });
-
-        // handle @list
-        if (isList) {
-          // ensure @list value is an array
-          if (!_isArray(compactedItem)) {
-            compactedItem = [compactedItem];
-          }
-
-          if (!_container3.includes('@list')) {
-            // wrap using @list alias
-            compactedItem = _defineProperty({}, api.compactIri({ activeCtx: activeCtx, iri: '@list', relativeTo: { vocab: true } }), compactedItem);
-
-            // include @index from expanded @list, if any
-            if ('@index' in expandedItem) {
-              compactedItem[api.compactIri({ activeCtx: activeCtx, iri: '@index', relativeTo: { vocab: true } })] = expandedItem['@index'];
+          // if itemActiveProperty is a @nest property, add values to nestResult, otherwise rval
+          var _nestProperty = _itemActiveProperty in activeCtx.mappings ? activeCtx.mappings[_itemActiveProperty]['@nest'] : null;
+          var _nestResult = _rval;
+          if (_nestProperty) {
+            _checkNestProperty(activeCtx, _nestProperty);
+            if (!_isObject(_rval[_nestProperty])) {
+              _rval[_nestProperty] = {};
             }
-          } else if (_itemActiveProperty in _rval) {
-            // can't use @list container for more than 1 list
-            throw new JsonLdError('JSON-LD compact error; property has a "@list" @container ' + 'rule but there is more than a single @list that matches ' + 'the compacted term in the document. Compaction might mix ' + 'unwanted items into the list.', 'jsonld.SyntaxError', { code: 'compaction to list of lists' });
+            _nestResult = _rval[_nestProperty];
           }
-        }
 
-        // handle simple @graph
-        if (isSimpleGraph && !_container3.includes('@graph')) {
-          // wrap using @graph alias
-          compactedItem = _defineProperty({}, api.compactIri({ activeCtx: activeCtx, iri: '@graph', relativeTo: { vocab: true } }), compactedItem);
+          var _container3 = _getContextValue(activeCtx, _itemActiveProperty, '@container') || [];
 
-          // include @index from expanded @graph, if any
-          if ('@index' in expandedItem) {
-            compactedItem[api.compactIri({ activeCtx: activeCtx, iri: '@index', relativeTo: { vocab: true } })] = expandedItem['@index'];
+          // get simple @graph or @list value if appropriate
+          var isGraph = _isGraph(expandedItem);
+          var isList = _isList(expandedItem);
+          var inner = void 0;
+          if (isList) {
+            inner = expandedItem['@list'];
+          } else if (isGraph) {
+            inner = expandedItem['@graph'];
           }
-        }
 
-        // handle language and index maps
-        if (_container3.includes('@language') || _container3.includes('@index')) {
-          // get or create the map object
-          var mapObject = void 0;
-          if (_itemActiveProperty in _rval) {
-            mapObject = _rval[_itemActiveProperty];
+          // recursively compact expanded item
+          var compactedItem = api.compact({
+            activeCtx: activeCtx,
+            activeProperty: _itemActiveProperty,
+            element: isList || isGraph ? inner : expandedItem,
+            options: options,
+            compactionMap: compactionMap
+          });
+
+          // handle @list
+          if (isList) {
+            // ensure @list value is an array
+            if (!_isArray(compactedItem)) {
+              compactedItem = [compactedItem];
+            }
+
+            if (!_container3.includes('@list')) {
+              // wrap using @list alias
+              compactedItem = _defineProperty({}, api.compactIri({ activeCtx: activeCtx, iri: '@list', relativeTo: { vocab: true } }), compactedItem);
+
+              // include @index from expanded @list, if any
+              if ('@index' in expandedItem) {
+                compactedItem[api.compactIri({ activeCtx: activeCtx, iri: '@index', relativeTo: { vocab: true } })] = expandedItem['@index'];
+              }
+            } else if (_itemActiveProperty in _nestResult) {
+              // can't use @list container for more than 1 list
+              throw new JsonLdError('JSON-LD compact error; property has a "@list" @container ' + 'rule but there is more than a single @list that matches ' + 'the compacted term in the document. Compaction might mix ' + 'unwanted items into the list.', 'jsonld.SyntaxError', { code: 'compaction to list of lists' });
+            }
+          }
+
+          // Graph object compaction cases
+          if (isGraph) {
+            if (_container3.includes('@graph') && (_container3.includes('@id') || _container3.includes('@index') && _isSimpleGraph(expandedItem))) {
+              // get or create the map object
+              var mapObject = void 0;
+              if (_itemActiveProperty in _nestResult) {
+                mapObject = _nestResult[_itemActiveProperty];
+              } else {
+                _nestResult[_itemActiveProperty] = mapObject = {};
+              }
+
+              // index on @id or @index or alias of @none
+              var key = (_container3.includes('@id') ? expandedItem['@id'] : expandedItem['@index']) || api.compactIri({ activeCtx: activeCtx, iri: '@none', vocab: true });
+              // add compactedItem to map, using value of `@id` or a new blank node identifier
+              _addValue(mapObject, key, compactedItem, { propertyIsArray: !options.compactArrays || _container3.includes('@set') });
+            } else if (_container3.includes('@graph') && _isSimpleGraph(expandedItem)) {
+              // container includes @graph but not @id or @index and value is a simple graph object
+              // add compact value
+              _addValue(_nestResult, _itemActiveProperty, compactedItem, { propertyIsArray: !options.compactArrays || _container3.includes('@set') });
+            } else {
+              // wrap using @graph alias, remove array if only one item
+              if (_isArray(compactedItem) && compactedItem.length === 1) {
+                compactedItem = compactedItem[0];
+              }
+              compactedItem = _defineProperty({}, api.compactIri({ activeCtx: activeCtx, iri: '@graph', relativeTo: { vocab: true } }), compactedItem);
+
+              // include @id from expanded graph, if any
+              if ('@id' in expandedItem) {
+                compactedItem[api.compactIri({ activeCtx: activeCtx, iri: '@id', relativeTo: { vocab: true } })] = expandedItem['@id'];
+              }
+
+              // include @index from expanded graph, if any
+              if ('@index' in expandedItem) {
+                compactedItem[api.compactIri({ activeCtx: activeCtx, iri: '@index', relativeTo: { vocab: true } })] = expandedItem['@index'];
+              }
+              _addValue(_nestResult, _itemActiveProperty, compactedItem, { propertyIsArray: !options.compactArrays || _container3.includes('@set') });
+            }
+          } else if (_container3.includes('@language') || _container3.includes('@index') || _container3.includes('@id') || _container3.includes('@type')) {
+            // handle language and index maps
+            // get or create the map object
+            var _mapObject = void 0;
+            if (_itemActiveProperty in _nestResult) {
+              _mapObject = _nestResult[_itemActiveProperty];
+            } else {
+              _nestResult[_itemActiveProperty] = _mapObject = {};
+            }
+
+            var _key = void 0;
+            if (_container3.includes('@language')) {
+              // if container is a language map, simplify compacted value to
+              // a simple string
+              if (_isValue(compactedItem)) {
+                compactedItem = compactedItem['@value'];
+              }
+              _key = expandedItem['@language'];
+            } else if (_container3.includes('@index')) {
+              _key = expandedItem['@index'];
+            } else if (_container3.includes('@id')) {
+              var idKey = api.compactIri({ activeCtx: activeCtx, iri: '@id', vocab: true });
+              _key = compactedItem[idKey];
+              delete compactedItem[idKey];
+            } else if (_container3.includes('@type')) {
+              var typeKey = api.compactIri({ activeCtx: activeCtx, iri: '@type', vocab: true });
+              var _types = void 0;
+
+              var _concat = [].concat(compactedItem[typeKey] || []);
+
+              var _concat2 = _toArray(_concat);
+
+              _key = _concat2[0];
+              _types = _concat2.slice(1);
+
+              switch (_types.length) {
+                case 0:
+                  delete compactedItem[typeKey];
+                  break;
+                case 1:
+                  compactedItem[typeKey] = _types[0];
+                  break;
+                default:
+                  compactedItem[typeKey] = _types;
+                  break;
+              }
+            }
+
+            // if compacting this value which has no key, index on @none
+            if (!_key) {
+              _key = api.compactIri({ activeCtx: activeCtx, iri: '@none', vocab: true });
+            }
+            // add compact value to map object using key from expanded value
+            // based on the container type
+            _addValue(_mapObject, _key, compactedItem, { propertyIsArray: _container3.includes('@set') });
           } else {
-            _rval[_itemActiveProperty] = mapObject = {};
+            // use an array if: compactArrays flag is false,
+            // @container is @set or @list , value is an empty
+            // array, or key is @graph
+            var _isArray2 = !options.compactArrays || _container3.includes('@set') || _container3.includes('@list') || _isArray(compactedItem) && compactedItem.length === 0 || expandedProperty === '@list' || expandedProperty === '@graph';
+
+            // add compact value
+            _addValue(_nestResult, _itemActiveProperty, compactedItem, { propertyIsArray: _isArray2 });
           }
-
-          // if container is a language map, simplify compacted value to
-          // a simple string
-          if (_container3.includes('@language') && _isValue(compactedItem)) {
-            compactedItem = compactedItem['@value'];
+        }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
           }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
+        }
+      }
+    };
 
-          // add compact value to map object using key from expanded value
-          // based on the container type
-          var c = _container3.includes('@language') ? '@language' : '@index';
-          _addValue(mapObject, expandedItem[c], compactedItem);
-        } else {
-          // use an array if: compactArrays flag is false,
-          // @container is @set or @list , value is an empty
-          // array, or key is @graph
-          var _isArray2 = !options.compactArrays || _container3.includes('@set') || _container3.includes('@list') || _isArray(compactedItem) && compactedItem.length === 0 || expandedProperty === '@list' || expandedProperty === '@graph';
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
 
-          // add compact value
-          _addValue(_rval, _itemActiveProperty, compactedItem, { propertyIsArray: _isArray2 });
+    try {
+      for (var _iterator2 = keys[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        var expandedProperty = _step2.value;
+
+        var _ret = _loop(expandedProperty);
+
+        if (_ret === 'continue') continue;
+      }
+    } catch (err) {
+      _didIteratorError2 = true;
+      _iteratorError2 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion2 && _iterator2.return) {
+          _iterator2.return();
+        }
+      } finally {
+        if (_didIteratorError2) {
+          throw _iteratorError2;
         }
       }
     }
@@ -16719,15 +18265,36 @@ api.compactIri = function (_ref2) {
 
     // prefer @index if available in value
     var containers = [];
-    if (_isObject(value) && '@index' in value) {
-      containers.push('@index');
+    if (_isObject(value) && '@index' in value && !('@graph' in value)) {
+      containers.push('@index', '@index@set');
     }
 
-    // prefer `['@graph', '@set']` and then `@graph` if value is a simple graph
-    // TODO: support `@graphId`?
-    if (_isSimpleGraph(value)) {
-      containers.push('@graph@set');
-      containers.push('@graph');
+    // if value is a preserve object, use its value
+    if (_isObject(value) && '@preserve' in value) {
+      value = value['@preserve'][0];
+    }
+
+    // prefer most specific container including @graph, prefering @set variations
+    if (_isGraph(value)) {
+      // favor indexmap if the graph is indexed
+      if ('@index' in value) {
+        containers.push('@graph@index', '@graph@index@set', '@index', '@index@set');
+      }
+      // favor idmap if the graph is has an @id
+      if ('@id' in value) {
+        containers.push('@graph@id', '@graph@id@set');
+      }
+      containers.push('@graph', '@graph@set', '@set');
+      // allow indexmap if the graph is not indexed
+      if (!('@index' in value)) {
+        containers.push('@graph@index', '@graph@index@set', '@index', '@index@set');
+      }
+      // allow idmap if the graph does not have an @id
+      if (!('@id' in value)) {
+        containers.push('@graph@id', '@graph@id@set');
+      }
+    } else if (_isObject(value) && !_isValue(value)) {
+      containers.push('@id', '@id@set', '@type', '@set@type');
     }
 
     // defaults for term selection based on type/language
@@ -16797,7 +18364,7 @@ api.compactIri = function (_ref2) {
     } else {
       if (_isValue(value)) {
         if ('@language' in value && !('@index' in value)) {
-          containers.push('@language');
+          containers.push('@language', '@language@set');
           typeOrLanguageValue = value['@language'];
         } else if ('@type' in value) {
           typeOrLanguage = '@type';
@@ -16812,6 +18379,19 @@ api.compactIri = function (_ref2) {
 
     // do term selection
     containers.push('@none');
+
+    // an index map can be used to index values using @none, so add as a low priority
+    if (_isObject(value) && !('@index' in value)) {
+      // allow indexing even if no @index present
+      containers.push('@index', '@index@set');
+    }
+
+    // values without type or language can use @language map
+    if (_isValue(value) && Object.keys(value).length === 1) {
+      // allow indexing even if no @index present
+      containers.push('@language', '@language@set');
+    }
+
     var term = _selectTerm(activeCtx, iri, value, containers, typeOrLanguage, typeOrLanguageValue);
     if (term !== null) {
       return term;
@@ -16851,18 +18431,39 @@ api.compactIri = function (_ref2) {
   for (var _i3 = partialMatches.length - 1; _i3 >= 0; --_i3) {
     var entry = partialMatches[_i3];
     var terms = entry.terms;
-    for (var ti = 0; ti < terms.length; ++ti) {
-      // a CURIE is usable if:
-      // 1. it has no mapping, OR
-      // 2. value is null, which means we're not compacting an @value, AND
-      //   the mapping matches the IRI
-      var curie = terms[ti] + ':' + iri.substr(entry.iri.length);
-      var isUsableCurie = !(curie in activeCtx.mappings) || value === null && activeCtx.mappings[curie]['@id'] === iri;
+    var _iteratorNormalCompletion4 = true;
+    var _didIteratorError4 = false;
+    var _iteratorError4 = undefined;
 
-      // select curie if it is shorter or the same length but lexicographically
-      // less than the current choice
-      if (isUsableCurie && (choice === null || _compareShortestLeast(curie, choice) < 0)) {
-        choice = curie;
+    try {
+      for (var _iterator4 = terms[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        var _term = _step4.value;
+
+        // a CURIE is usable if:
+        // 1. it has no mapping, OR
+        // 2. value is null, which means we're not compacting an @value, AND
+        //   the mapping matches the IRI
+        var curie = _term + ':' + iri.substr(entry.iri.length);
+        var isUsableCurie = activeCtx.mappings[_term]._prefix && (!(curie in activeCtx.mappings) || value === null && activeCtx.mappings[curie]['@id'] === iri);
+
+        // select curie if it is shorter or the same length but lexicographically
+        // less than the current choice
+        if (isUsableCurie && (choice === null || _compareShortestLeast(curie, choice) < 0)) {
+          choice = curie;
+        }
+      }
+    } catch (err) {
+      _didIteratorError4 = true;
+      _iteratorError4 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion4 && _iterator4.return) {
+          _iterator4.return();
+        }
+      } finally {
+        if (_didIteratorError4) {
+          throw _iteratorError4;
+        }
       }
     }
   }
@@ -17022,10 +18623,17 @@ api.removePreserve = function (ctx, input, options) {
     }
 
     // recurse through properties
+    var graphAlias = api.compactIri({ activeCtx: ctx, iri: '@graph', relativeTo: { vocab: true } });
     for (var prop in input) {
+      // potentially remove the id, if it is an unreference bnode
+      if (prop === idAlias && options.bnodesToClear.includes(input[prop])) {
+        delete input[idAlias];
+        continue;
+      }
+
       var _result = api.removePreserve(ctx, input[prop], options);
       var container = _getContextValue(ctx, prop, '@container') || [];
-      if (options.compactArrays && _isArray(_result) && _result.length === 1 && container.length === 0) {
+      if (options.compactArrays && _isArray(_result) && _result.length === 1 && container.length === 0 && prop !== graphAlias) {
         _result = _result[0];
       }
       input[prop] = _result;
@@ -17098,8 +18706,21 @@ function _selectTerm(activeCtx, iri, value, containers, typeOrLanguage, typeOrLa
   return null;
 }
 
+/**
+ * The value of `@nest` in the term definition must either be `@nest`, or a term
+ * which resolves to `@nest`.
+ *
+ * @param activeCtx the active context.
+ * @param nestProperty a term in the active context or `@nest`.
+ */
+function _checkNestProperty(activeCtx, nestProperty) {
+  if (_expandIri(activeCtx, nestProperty, { vocab: true }) !== '@nest') {
+    throw new JsonLdError('JSON-LD compact error; nested property must have an @nest value resolving to @nest.', 'jsonld.SyntaxError', { code: 'invalid @nest value' });
+  }
+}
+
 /***/ }),
-/* 131 */
+/* 137 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17118,7 +18739,7 @@ var _require2 = __webpack_require__(24),
     LINK_HEADER_REL = _require2.LINK_HEADER_REL;
 
 var JsonLdError = __webpack_require__(6);
-var RequestQueue = __webpack_require__(49);
+var RequestQueue = __webpack_require__(50);
 
 /**
  * Creates a built-in node document loader.
@@ -17306,8 +18927,8 @@ module.exports = function () {
 
   headers = buildHeaders(headers);
   // TODO: use `r2`
-  request = request || __webpack_require__(48);
-  var http = __webpack_require__(48);
+  request = request || __webpack_require__(49);
+  var http = __webpack_require__(49);
   // TODO: disable cache until HTTP caching implemented
   //const cache = new DocumentCache();
 
@@ -17330,7 +18951,7 @@ function _request(request, options) {
 }
 
 /***/ }),
-/* 132 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17349,7 +18970,7 @@ var _require2 = __webpack_require__(24),
     LINK_HEADER_REL = _require2.LINK_HEADER_REL;
 
 var JsonLdError = __webpack_require__(6);
-var RequestQueue = __webpack_require__(49);
+var RequestQueue = __webpack_require__(50);
 
 var REGEX_LINK_HEADER = /(^|(\r\n))link:/i;
 
@@ -17493,7 +19114,7 @@ function _get(xhr, url, headers) {
 }
 
 /***/ }),
-/* 133 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17562,7 +19183,7 @@ module.exports = function (jsonld) {
 };
 
 /***/ }),
-/* 134 */
+/* 140 */
 /***/ (function(module, exports) {
 
 /* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {/* globals __webpack_amd_options__ */
