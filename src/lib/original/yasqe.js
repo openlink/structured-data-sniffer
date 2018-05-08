@@ -10606,14 +10606,12 @@ function findFirstPrefix(cm, line, ch, lineText) {
     }
     if (pass == 1 && found < ch) break;
     var tokenType = cm.getTokenTypeAt(CodeMirror.Pos(line, found + 1));
-    if (!/^(string)/.test(tokenType)) return found + 1;
+    if (!/^(comment|string)/.test(tokenType)) return found + 1;
     at = found - 1;
     //Could not find a prefix, no use looping any further. Probably invalid query
     if (at === pass) break;
   }
 }
-
-
 
 CodeMirror.registerHelper("fold", "prefix", function(cm, start) {
   var line = start.line, lineText = cm.getLine(line);
