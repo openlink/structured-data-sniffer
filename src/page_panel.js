@@ -28,6 +28,11 @@ var doc_URL = null;
 var baseURL = null;
 var prevSelectedTab = null;
 var selectedTab = null;
+var gOidc = {
+       webid : null,
+       storage : ''
+     };
+const popupUri = "https://solid.openlinksw.com:8444/common/popup.html";
 
 var gData = {
         text: null,
@@ -42,6 +47,40 @@ var g_RestCons = new Rest_Cons();
 
 $(document).ready(function()
 {
+  var oidc_login_btn = document.getElementById('oidc-login-btn');
+
+  solid.auth.trackSession(session => {
+    gOidc.webid = session ? session.webId : null;
+    var webid_href = document.getElementById('oidc-webid');
+
+    webid_href.href = gOidc.webid ? gOidc.webid :'';
+    webid_href.title = gOidc.webid ? gOidc.webid :'';
+    webid_href.style.display = gOidc.webid ? 'initial' :'none';
+
+    oidc_login_btn.innerText = gOidc.webid ? 'Logout' : 'Login';
+
+    if (gOidc.webid) {
+      gOidc.storage = (new URL(gOidc.webid)).origin + '/';
+      getWebIdProfile(gOidc.webid)
+        .then(prof => {
+          if (prof.storage)
+            gOidc.storage = prof.storage;
+          if (!gOidc.storage.endsWith('/'))
+            gOidc.storage += '/';
+        });
+      
+    } else {
+      gOidc.storage = '';
+    }
+    Download_exec_update_state();
+  })
+
+  oidc_login_btn.addEventListener('click', function () {
+     gOidc.webid ? solid.auth.logout() : solid.auth.popupLogin({popupUri});
+  });
+
+
+  
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
 
@@ -480,22 +519,45 @@ function Sparql_exec()
 }
 
 
+
+function Download_exec_update_state() {
+  var cmd = $('#save-action option:selected').attr('id');
+  if (cmd==='filesave')
+    $('#save-file').show();
+  else
+    $('#save-file').hide();
+  if (cmd==='fileupload') {
+    $('#oidc-login').show();
+  } else {
+    $('#oidc-login').hide();
+  }
+
+  var filename;
+  var fmt = $('#save-fmt option:selected').attr('id');
+
+  if (fmt == "json")
+    filename = cmd==="fileupload" ? "jsonld_data.jsonld" : "jsonld_data.txt";
+  else if (fmt == "ttl") 
+    filename = cmd==="fileupload" ? "turtle_data.ttl" : "turtle_data.txt";
+  else
+    filename = "rdf_data.rdf";
+
+  var oidc_url = document.getElementById('oidc-url');
+  oidc_url.value = gOidc.storage + (filename || '');
+}
+
+
 function Download_exec()
 {
   $('#save-action').change(function() {
-    var cmd = $('#save-action option:selected').attr('id');
-    if (cmd==='filesave')
-      $('#save-file').show();
-    else
-      $('#save-file').hide();
+    Download_exec_update_state();
   });
 
-  var cmd = $('#save-action option:selected').attr('id');
-  if (cmd==="filesave")
-      $('#save-file').show();
-    else
-      $('#save-file').hide();
+  $('#save-fmt').change(function() {
+    Download_exec_update_state();
+  });
 
+  Download_exec_update_state();
 
   var isFileSaverSupported = false;
   try {
@@ -509,6 +571,7 @@ function Download_exec()
   if (Browser.isEdgeWebExt)
     $('#save-action').prop('disabled', true);
 
+  
   var filename = null;
   var fmt = "json";
 
@@ -525,6 +588,9 @@ function Download_exec()
     fmt = "rdf";
   }
 
+  var oidc_url = document.getElementById('oidc-url');
+  oidc_url.value = gOidc.storage + (filename || '');
+
 
   if (filename!==null) {
     $('#save-filename').val(filename);
@@ -540,13 +606,14 @@ function Download_exec()
 
     $( "#save-confirm" ).dialog({
       resizable: true,
+      width:500,
       height:300,
       modal: true,
       buttons: {
         "OK": function() {
           var action = $('#save-action option:selected').attr('id');
           var fmt = $('#save-fmt option:selected').attr('id');
-          var fname = $('#save-filename').val().trim();
+          var fname = action ==='fileupload' ? $('#oidc-url').val().trim(): $('#save-filename').val().trim();
           save_data(action, fname, fmt);
           $(this).dialog( "destroy" );
         },
@@ -562,6 +629,7 @@ function Download_exec()
 
   return false;
 }
+
 
 
 function save_data(action, fname, fmt, callback)
@@ -610,6 +678,44 @@ function save_data(action, fname, fmt, callback)
     else if (action==="filesave") {
       blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
       saveAs(blob, fname);
+    }
+    else if (action==="fileupload") {
+     var contentType = "text/plain;charset=utf-8";
+
+     if (fmt==="json")
+       contentType = "application/ld+json;charset=utf-8";
+     else if (fmt==="rdf")
+       contentType = "application/rdf+xml;charset=utf-8";
+     else
+       contentType = "text/turtle;charset=utf-8";
+
+      putResource(fname, retdata.txt, contentType, null)
+        .then(response => {
+          showInfo('Saved');
+        })
+        .catch(error => {
+          console.error('Error saving document', error)
+
+          let message
+
+          switch (error.status) {
+            case 0:
+            case 405:
+              message = 'this location is not writable'
+              break
+            case 401:
+            case 403:
+              message = 'you do not have permission to write here'
+              break
+            case 406:
+              message = 'enter a name for your resource'
+              break
+            default:
+              message = error.message
+              break
+          }
+          showInfo('Unable to save:' +message);
+        })
     }
     else {
       selectTab("#src");
@@ -710,3 +816,100 @@ function showInfo(msg)
 
 
 
+function putResource (url, data, contentType, links, options = {}) 
+{
+  const DEFAULT_CONTENT_TYPE = 'text/html; charset=utf-8'
+  const _fetch = solid.auth.fetch;
+  const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
+
+  if (!url) {
+    return Promise.reject(new Error('Cannot PUT resource - missing url'))
+  }
+
+  options.method = 'PUT'
+
+  options.body = data
+
+  if (!options.noCredentials) {
+    options.credentials = 'include'
+  }
+
+  options.headers = options.headers || {}
+
+  options.headers['Content-Type'] = contentType || DEFAULT_CONTENT_TYPE
+
+  links = links
+    ? LDP_RESOURCE + ', ' + links
+    : LDP_RESOURCE
+
+  options.headers['Link'] = links
+
+  return _fetch(url, options)
+
+    .then(response => {
+      if (!response.ok) {  // not a 2xx level response
+        let error = new Error('Error writing resource: ' +
+          response.status + ' ' + response.statusText)
+        error.status = response.status
+        error.response = response
+
+        throw error
+      }
+
+      return response
+    })
+}
+
+
+
+function getWebIdProfile(url) 
+{
+  var PIM = $rdf.Namespace("http://www.w3.org/ns/pim/space#");
+  var FOAF = $rdf.Namespace("http://xmlns.com/foaf/0.1/");
+
+  var promise = new Promise(function(resolve, reject) {
+      // Load main profile
+      getGraph(url).then(
+          function(graph) {
+              // set WebID
+              var docURI = (url.indexOf('#') >= 0)?url.slice(0, url.indexOf('#')):url;
+              var webid = graph.any($rdf.sym(docURI), FOAF('primaryTopic'));
+              // find additional resources to load
+              var storage = graph.statementsMatching(webid, PIM('storage'), undefined);
+              var profile = {webid};
+              if (storage && storage.length > 0) 
+                profile.storage = storage[0].object.value;
+
+              return resolve(profile);
+          }
+      )
+      .catch(
+          function(err) {
+              reject(err);
+          }
+      );
+  });
+
+  return promise;
+}
+
+function getGraph(url)
+{
+  const timeout = 5000;
+
+  var promise = new Promise(function(resolve, reject) {
+      var g = new $rdf.graph();
+      var f = new $rdf.fetcher(g, timeout);
+
+      var docURI = (url.indexOf('#') >= 0)?url.slice(0, url.indexOf('#')):url;
+      f.nowOrWhenFetched(docURI,undefined,function(ok, body, xhr) {
+          if (!ok) {
+              reject({status: xhr.status, xhr: xhr});
+          } else {
+              resolve(g);
+          }
+      });
+  });
+
+  return promise;
+}

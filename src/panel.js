@@ -742,8 +742,6 @@ function parse_Data(dData)
 /**/
 //  gData.baseURL = doc_URL;
 
-  g_RestCons.load(doc_URL);
-
   return new Promise(function resolver(resolve, reject) {
     Promise.resolve({d:dData, start_id:0})
     .then(function (val) {
@@ -792,6 +790,9 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       try {
         gData.tab_index = sender.tab.index;
       } catch(e){}
+
+      g_RestCons.load(doc_URL);
+
       if (request.is_data_exists)
       {
         parse_Data(dData)
@@ -819,7 +820,8 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
         $('#tabs a[href=#posh]').hide();
         selectedTab = null;
 
-        show_rest();
+        selectTab('#cons');
+        g_RestCons.show();
       } 
     }
     else
@@ -936,19 +938,20 @@ function Prefs_exec()
 
 function Download_exec()
 {
-  $('#save-action').change(function() {
+  function update_state() {
     var cmd = $('#save-action option:selected').attr('id');
     if (cmd==='filesave')
       $('#save-file').show();
     else
       $('#save-file').hide();
+  }
+
+
+  $('#save-action').change(function() {
+    update_state();
   });
 
-  var cmd = $('#save-action option:selected').attr('id');
-  if (cmd==="filesave")
-      $('#save-file').show();
-    else
-      $('#save-file').hide();
+  update_state();
 
 
   var isFileSaverSupported = false;
@@ -962,6 +965,7 @@ function Download_exec()
 
   if (Browser.isEdgeWebExt)
     $('#save-action').prop('disabled', true);
+
 
   var filename = null;
   var fmt = "json";
