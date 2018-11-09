@@ -72,11 +72,6 @@ following projects:
     Description : Linked Data API for JavaScript 
 
 
-* jsuri.js
-    Project	: https://github.com/derek-watson/jsUri
-    License	: MIT license
-    Description	: Uri parsing and manipulation for node.js and the browser.
-
 * FileSaver.js
     Project	: https://github.com/eligrey/FileSaver.js
     License	: MIT license
