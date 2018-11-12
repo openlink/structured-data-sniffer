@@ -38,6 +38,7 @@
         <script type="text/javascript" src="lib/namespace.js"></script>
         <script type="text/javascript" src="lib/codemirror.js"></script>
         <script type="text/javascript" src="lib/yasqe.js"></script>
+        <script type="text/javascript" src="lib/solid-auth-client.bundle.js"></script>
 
 
         <script type="text/javascript" src="browser.js"></script>
@@ -68,16 +69,17 @@
          <tr>
           <td>Action:</td>
           <td>
-            <SELECT id="save-action" style="WIDTH: 200px" >
+            <SELECT id="save-action" style="WIDTH: 300px" >
               <OPTION id="view" selected>View Raw Data</OPTION>
               <OPTION id="filesave">Download Raw Data</OPTION>
+              <OPTION id="fileupload">Upload Raw Data</OPTION>
             </SELECT>
           </td>
          </tr>
 
          <tr id="save-file">
           <td> Save&nbsp;As: </td>
-          <td> <input id="save-filename" style="WIDTH: 200px"> </td>
+          <td> <input id="save-filename" style="WIDTH: 300px"> </td>
          </tr>
 
          <tr>
@@ -90,6 +92,18 @@
             </SELECT>
           </td>
          </tr>
+        </table>
+
+        <table id="oidc-login" style="font-size: 14px;">
+         <tr >
+          <td> <button id="oidc-login-btn">Login</button> </td>
+          <td> <a id="oidc-webid" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
+         </tr>
+         <tr >
+          <td> Save&nbsp;To&nbsp;URL: </td>
+          <td> <input id="oidc-url" style="WIDTH: 380px"> </td>
+         </tr>
+
         </table>
       </div>
 

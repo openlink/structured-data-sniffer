@@ -196,3 +196,102 @@ Rest_Cons.prototype = {
   },
 
 }
+
+
+function putResource (url, data, contentType, links, options = {}) 
+{
+  const DEFAULT_CONTENT_TYPE = 'text/html; charset=utf-8'
+  const _fetch = solid.auth.fetch;
+  const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
+
+  if (!url) {
+    return Promise.reject(new Error('Cannot PUT resource - missing url'))
+  }
+
+  options.method = 'PUT'
+
+  options.body = data
+
+  if (!options.noCredentials) {
+    options.credentials = 'include'
+  }
+
+  options.headers = options.headers || {}
+
+  options.headers['Content-Type'] = contentType || DEFAULT_CONTENT_TYPE
+
+  links = links
+    ? LDP_RESOURCE + ', ' + links
+    : LDP_RESOURCE
+
+  options.headers['Link'] = links
+
+  return _fetch(url, options)
+
+    .then(response => {
+      if (!response.ok) {  // not a 2xx level response
+        let error = new Error('Error writing resource: ' +
+          response.status + ' ' + response.statusText)
+        error.status = response.status
+        error.response = response
+
+        throw error
+      }
+
+      return response
+    })
+}
+
+
+
+function getWebIdProfile(url) 
+{
+  var PIM = $rdf.Namespace("http://www.w3.org/ns/pim/space#");
+  var FOAF = $rdf.Namespace("http://xmlns.com/foaf/0.1/");
+
+  var promise = new Promise(function(resolve, reject) {
+      // Load main profile
+      getGraph(url).then(
+          function(graph) {
+              // set WebID
+              var docURI = (url.indexOf('#') >= 0)?url.slice(0, url.indexOf('#')):url;
+              var webid = graph.any($rdf.sym(docURI), FOAF('primaryTopic'));
+              // find additional resources to load
+              var storage = graph.statementsMatching(webid, PIM('storage'), undefined);
+              var profile = {webid};
+              if (storage && storage.length > 0) 
+                profile.storage = storage[0].object.value;
+
+              return resolve(profile);
+          }
+      )
+      .catch(
+          function(err) {
+              reject(err);
+          }
+      );
+  });
+
+  return promise;
+}
+
+function getGraph(url)
+{
+  const timeout = 5000;
+
+  var promise = new Promise(function(resolve, reject) {
+      var g = new $rdf.graph();
+      var f = new $rdf.fetcher(g, timeout);
+
+      var docURI = (url.indexOf('#') >= 0)?url.slice(0, url.indexOf('#')):url;
+      f.nowOrWhenFetched(docURI,undefined,function(ok, body, xhr) {
+          if (!ok) {
+              reject({status: xhr.status, xhr: xhr});
+          } else {
+              resolve(g);
+          }
+      });
+  });
+
+  return promise;
+}

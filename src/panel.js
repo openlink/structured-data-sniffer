@@ -43,10 +43,52 @@ var gData = {
       };
 var src_view = null;
 var g_RestCons = new Rest_Cons();
+var gOidc = {
+       webid : null,
+       storage : ''
+     };
 
 
 $(document).ready(function()
 {
+  var oidc_login_btn = document.getElementById('oidc-login-btn');
+
+  solid.auth.trackSession(session => {
+    gOidc.webid = session ? session.webId : null;
+    var webid_href = document.getElementById('oidc-webid');
+
+    webid_href.href = gOidc.webid ? gOidc.webid :'';
+    webid_href.title = gOidc.webid ? gOidc.webid :'';
+    webid_href.style.display = gOidc.webid ? 'initial' :'none';
+
+    oidc_login_btn.innerText = gOidc.webid ? 'Logout' : 'Login';
+
+    if (gOidc.webid) {
+      gOidc.storage = (new URL(gOidc.webid)).origin + '/';
+      getWebIdProfile(gOidc.webid)
+        .then(prof => {
+          if (prof.storage)
+            gOidc.storage = prof.storage;
+          if (!gOidc.storage.endsWith('/'))
+            gOidc.storage += '/';
+        });
+      
+    } else {
+      gOidc.storage = '';
+    }
+    Download_exec_update_state();
+  })
+
+  oidc_login_btn.addEventListener('click', function () {
+     const width = 250;
+     const height = 100;
+     const left = window.screenX + (window.innerWidth - width) / 2;
+     const top = window.screenY + (window.innerHeight - height) / 2;
+     const settings = `width=${width},height=${height},left=${left},top=${top}`;
+     gOidc.webid ? solid.auth.logout() : window.open('login.html', 'Login', settings);
+  });
+
+  
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
 
@@ -936,23 +978,49 @@ function Prefs_exec()
 }
 
 
-function Download_exec()
+
+function Download_exec_update_state() 
 {
-  function update_state() {
-    var cmd = $('#save-action option:selected').attr('id');
-    if (cmd==='filesave')
-      $('#save-file').show();
-    else
-      $('#save-file').hide();
+  var cmd = $('#save-action option:selected').attr('id');
+  if (cmd==='filesave')
+    $('#save-file').show();
+  else
+    $('#save-file').hide();
+  if (cmd==='fileupload') {
+    $('#oidc-login').show();
+  } else {
+    $('#oidc-login').hide();
   }
 
+  var filename;
+  var fmt = $('#save-fmt option:selected').attr('id');
 
+  if (fmt == "json")
+    filename = cmd==="fileupload" ? "jsonld_data.jsonld" : "jsonld_data.txt";
+  else if (fmt == "ttl") 
+    filename = cmd==="fileupload" ? "turtle_data.ttl" : "turtle_data.txt";
+  else
+    filename = "rdf_data.rdf";
+
+  var oidc_url = document.getElementById('oidc-url');
+  oidc_url.value = gOidc.storage + (filename || '');
+
+  var save_filename = document.getElementById('save-filename');
+  save_filename.value = filename || '';
+}
+
+
+function Download_exec()
+{
   $('#save-action').change(function() {
-    update_state();
+    Download_exec_update_state();
   });
 
-  update_state();
+  $('#save-fmt').change(function() {
+    Download_exec_update_state();
+  });
 
+  Download_exec_update_state();
 
   var isFileSaverSupported = false;
   try {
@@ -1010,13 +1078,14 @@ function Download_exec()
 
     var dlg = $( "#save-confirm" ).dialog({
       resizable: true,
+      width:500,
       height:300,
       modal: true,
       buttons: {
         "OK": function() {
           var action = $('#save-action option:selected').attr('id');
           var fmt = $('#save-fmt option:selected').attr('id');
-          var fname = $('#save-filename').val().trim();
+          var fname = action ==='fileupload' ? $('#oidc-url').val().trim(): $('#save-filename').val().trim();
           save_data(action, fname, fmt);
           $(this).dialog( "destroy" );
         },
@@ -1079,6 +1148,44 @@ function save_data(action, fname, fmt, callback)
     else if (action==="filesave") {
       blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
       saveAs(blob, fname);
+    }
+    else if (action==="fileupload") {
+     var contentType = "text/plain;charset=utf-8";
+
+     if (fmt==="json")
+       contentType = "application/ld+json;charset=utf-8";
+     else if (fmt==="rdf")
+       contentType = "application/rdf+xml;charset=utf-8";
+     else
+       contentType = "text/turtle;charset=utf-8";
+
+      putResource(fname, retdata.txt, contentType, null)
+        .then(response => {
+          showInfo('Saved');
+        })
+        .catch(error => {
+          console.error('Error saving document', error)
+
+          let message
+
+          switch (error.status) {
+            case 0:
+            case 405:
+              message = 'this location is not writable'
+              break
+            case 401:
+            case 403:
+              message = 'you do not have permission to write here'
+              break
+            case 406:
+              message = 'enter a name for your resource'
+              break
+            default:
+              message = error.message
+              break
+          }
+          showInfo('Unable to save:' +message);
+        })
     }
     else {
       selectTab("#src");
