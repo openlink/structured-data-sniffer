@@ -56,5 +56,6 @@
     "file:///*/*"
   ],
   "content_security_policy": 
-    "script-src 'self' 'unsafe-eval' chrome-extension://lib; object-src 'self' chrome-extension://lib; style-src 'self' 'unsafe-inline' chrome-extension://lib https://solid.openlinksw.com; media-src 'self' 'unsafe-inline' chrome-extension://lib ;"
+    "script-src 'self' 'unsafe-eval' moz-extension://lib; object-src 'self' moz-extension://lib; style-src 'self' 'unsafe-inline' moz-extension://lib https://solid.openlinksw.com; media-src 'self' 'unsafe-inline' moz-extension://lib ;"
+
 }
