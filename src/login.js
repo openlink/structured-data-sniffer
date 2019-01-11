@@ -10,6 +10,6 @@
 
 
   setTimeout(function (){
-    solid.auth.popupLogin({popupUri})
-  }, 500);
+    solid.auth.popupLogin({popupUri});
+  }, 3000);
 
