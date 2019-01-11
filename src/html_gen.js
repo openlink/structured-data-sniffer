@@ -185,10 +185,14 @@
     format_id : function (value, id_list) 
     {
        var entity_id = id_list[value];
+//--
+/***
        if (entity_id!==undefined && this.is_BNode(value)) {
          return "";
        }
-       else {
+       else 
+***/
+       {
          // for scroll between entities on page
          var uri = String(value);
          var anc = "";
