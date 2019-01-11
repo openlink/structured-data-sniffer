@@ -247,6 +247,8 @@ function getWebIdProfile(url)
 {
   var PIM = $rdf.Namespace("http://www.w3.org/ns/pim/space#");
   var FOAF = $rdf.Namespace("http://xmlns.com/foaf/0.1/");
+  var LDP = $rdf.Namespace("http://www.w3.org/ns/ldp#");
+  var AS = $rdf.Namespace("http://www.w3.org/ns/activitystreams#");
 
   var promise = new Promise(function(resolve, reject) {
       // Load main profile
@@ -255,11 +257,19 @@ function getWebIdProfile(url)
               // set WebID
               var docURI = (url.indexOf('#') >= 0)?url.slice(0, url.indexOf('#')):url;
               var webid = graph.any($rdf.sym(docURI), FOAF('primaryTopic'));
+
               // find additional resources to load
+              var inbox = graph.statementsMatching(webid, LDP('inbox'), undefined);
               var storage = graph.statementsMatching(webid, PIM('storage'), undefined);
+              var outbox = graph.statementsMatching(webid, AS('outbox'), undefined);
+
               var profile = {webid};
-              if (storage && storage.length > 0) 
+              if (inbox && inbox.length > 0)
+                profile.storage = inbox[0].object.value;
+              else if (storage && storage.length > 0) 
                 profile.storage = storage[0].object.value;
+              else if (outbox && outbox.length > 0)
+                profile.storage = outbox[0].object.value;
 
               return resolve(profile);
           }

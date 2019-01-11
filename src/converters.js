@@ -118,7 +118,7 @@ Convert_Turtle.prototype = {
     if (this._pos < textData.length) {
       try {
         var store = N3.Writer({ format: 'N-Triples' });
-        var parser = N3.Parser({documentIRI:self.baseURI});
+        var parser = N3.Parser({baseIRI:self.baseURI});
         var ttl_data = textData[self._pos];
 
         parser.parse(ttl_data,
@@ -135,9 +135,9 @@ Convert_Turtle.prototype = {
                 self.callback(null, self._output);
             }
             else if (tr) {
-              store.addTriple(self.fixNode(tr.subject),
-                              self.fixNode(tr.predicate),
-                              self.fixNode(tr.object));
+              store.addQuad(tr.subject,
+                            tr.predicate,
+                            tr.object);
             }
             else {
               var context = prefixes;
@@ -196,25 +196,6 @@ Convert_Turtle.prototype = {
     }
 
   },
-
-
-  fixNode : function (n)
-  {
-     if ( n==="")
-         return this.baseURI;
-     else if (N3.Util.isIRI(n)) {
-       if (n==="")
-         return this.baseURI;
-       else if (n.substring(0,1)==="#")
-         return this.baseURI+n;
-       else if (n.substring(0,1)===":")
-         return this.baseURI+n;
-       else
-         return n;
-     } else {
-       return n;
-     }
-  }
 
 }
 

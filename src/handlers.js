@@ -75,7 +75,7 @@ Fix_Nano.prototype = {
             self._bad_data = true;
           }
 
-          if (self._tokens==1) {
+          if (token && self._tokens==1) {
             if ( (tok0.type === "prefixed" 
                  || tok0.type==="IRI" 
                  || tok0.type==="abbreviation"
@@ -191,7 +191,7 @@ Handle_Turtle.prototype = {
     if (this._pos < textData.length) {
       try {
         var store = new N3DataConverter();
-        var parser = N3.Parser({documentIRI:self.baseURI});
+        var parser = N3.Parser({baseIRI:self.baseURI, format:'text/n3'});
         var ttl_data = textData[self._pos];
 
         if (this.ns_pref!==null)
@@ -227,9 +227,9 @@ Handle_Turtle.prototype = {
 
             }
             else if (tr) {
-              store.addTriple(self.fixNode(tr.subject),
-                              self.fixNode(tr.predicate),
-                              self.fixNode(tr.object));
+              store.addTriple(tr.subject,
+                              tr.predicate,
+                              tr.object);
             }
             else {
 
@@ -271,27 +271,6 @@ Handle_Turtle.prototype = {
 
   },
 
-
-  fixNode : function (n)
-  {
-     if ( n==="")
-         return this.baseURI;
-     else if (N3.Util.isIRI(n)) {
-       if (n==="")
-         return this.baseURI;
-       else if (n.substring(0,1)==="#")
-         return this.baseURI+n;
-//??
-/***
-       else if (n.substring(0,1)===":")
-         return this.baseURI+'/'+n.substring(1);
-***/
-       else
-         return n;
-     } else {
-       return n;
-     }
-  }
 
 }
 
@@ -424,14 +403,27 @@ function N3DataConverter(options) {
   this._LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
   this.RDF_PREFIX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
   this.RDF_TYPE   = this.RDF_PREFIX + 'type';
+  this.xsdString  = 'http://www.w3.org/2001/XMLSchema#string',
   this.output = [];
 }
 
 N3DataConverter.prototype = {
-  addTriple: function (subj, pred, obj)
+
+  _IriOrBlank: function (entity) {
+    // A blank node or list is represented as-is
+    if (entity.termType !== 'NamedNode')
+      return 'id' in entity ? entity.id : '_:' + entity.value;
+    // Escape special characters
+    return entity.value;
+  },
+
+  addTriple: function (n_subj, n_pred, n_obj)
   {
       var s = null;
       var o = null;
+      var subj = this._IriOrBlank(n_subj);
+      var pred = this._IriOrBlank(n_pred);
+      var obj = (n_obj.termType==="Literal") ? n_obj.value : this._IriOrBlank(n_obj);
 
       for(var i=0; i < this.output.length; i++)
         if (this.output[i].s === subj) {
@@ -463,17 +455,14 @@ N3DataConverter.prototype = {
       {
         p_obj[obj]=1;
 
-        if (obj[0] !=='"') {
-          p.push({iri :obj});
-        }
-        else {
-          var match = this._LiteralMatcher.exec(obj);
-          if (!match) throw new Error('Invalid literal: ' + obj);
+        if (obj.termType==="Literal") {
           p.push({
-             value:match[1],
-             type:match[2],
-             lang:match[3]
+             value:n_obj.value,
+             type: (n_obj.datatypeString!==this.xsdString) ? obj.datatypeString : "",
+             lang: n_obj.language
             });
+        } else {
+          p.push({iri :obj});
         }
       }
 

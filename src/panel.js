@@ -785,6 +785,9 @@ function parse_Data(dData)
     })
     .then(function(val){
       return resolve(val.d);
+    })
+    .catch(function(err) {
+      console.log(err);
     });
   });
 }

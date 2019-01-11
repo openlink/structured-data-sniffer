@@ -618,25 +618,24 @@
     {
       if (g_super_links==null) {
          $('body').append(
-           '<div class="super_links_popup" >'
-          +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
-          +' <div class="super_links_popup-content"></div>'
-          +'</div> '
-          +'<div class="super_links_msg" style="font-size: 14px;"> '
-          +'<table style="border-style:none">'
-          +'<tr>'
-          +' <td class="super_links_msg_td">'
-          +'  <img src="data:image/gif;base64,'+Browser.throbber+'" class="super_links_img" />'
-          +' </td>'
-          +' <td class="super_links_msg_td">'
-          +'  &nbsp;Preparing&nbsp;Super&nbsp;Links'
-          +' </td>'
-          +'</tr>'
-          +'</table>'
-          +'</div> '
+           `<div class="super_links_popup" >
+            <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
+            <div class="super_links_popup-content"></div>
+            </div> 
+            <div class="super_links_msg" style="font-size: 14px;"> 
+            <table style="border-style:none">
+            <tr>
+             <td class="super_links_msg_td" style="width:16px;">
+              <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img" />
+             </td>
+             <td class="super_links_msg_td">
+              &nbsp;Preparing&nbsp;Super&nbsp;Links
+             </td>
+            </tr>
+            </table>
+            </div> `
          );
       }
-
         var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
         var url_about = "https://linkeddata.uriburner.com/about/html/http/"+result[3]+"?sponger:get=add";
 
