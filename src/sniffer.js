@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2018 OpenLink Software
+ *  Copyright (C) 2015-2019 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -365,11 +365,9 @@
             //send data_exists flag to extension
             Browser.api.runtime.sendMessage({
                         property: "status",
-                        status: 'ready',
+                        status: "ready",
                         data_exists: data_found,
                         doc_URL: document.location.href
-                    },
-                    function (response) {
                     });
 
         } catch (e) {
@@ -620,25 +618,24 @@
     {
       if (g_super_links==null) {
          $('body').append(
-           '<div class="super_links_popup" >'
-          +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
-          +' <div class="super_links_popup-content"></div>'
-          +'</div> '
-          +'<div class="super_links_msg" style="font-size: 14px;"> '
-          +'<table style="border-style:none">'
-          +'<tr>'
-          +' <td class="super_links_msg_td">'
-          +'  <img src="data:image/gif;base64,'+Browser.throbber+'" class="super_links_img" />'
-          +' </td>'
-          +' <td class="super_links_msg_td">'
-          +'  &nbsp;Preparing&nbsp;Super&nbsp;Links'
-          +' </td>'
-          +'</tr>'
-          +'</table>'
-          +'</div> '
+           `<div class="super_links_popup" >
+            <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
+            <div class="super_links_popup-content"></div>
+            </div> 
+            <div class="super_links_msg" style="font-size: 14px;"> 
+            <table style="border-style:none">
+            <tr>
+             <td class="super_links_msg_td" style="width:16px;">
+              <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img" />
+             </td>
+             <td class="super_links_msg_td">
+              &nbsp;Preparing&nbsp;Super&nbsp;Links
+             </td>
+            </tr>
+            </table>
+            </div> `
          );
       }
-
         var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
         var url_about = "https://linkeddata.uriburner.com/about/html/http/"+result[3]+"?sponger:get=add";
 
@@ -676,7 +673,10 @@
 
     function exec_super_links_query(links_query, links_timeout)
     {
-      var iri = new Uri(location.href).setAnchor("").toString();
+      var url = new URL(location.href);
+      url.hash = '';
+      var iri = url.toString();
+
       var br_lang = navigator.language || navigator.userLanguage;
       if (br_lang && br_lang.length>0) {
         var i = br_lang.indexOf('-');
@@ -982,7 +982,7 @@
                     || (json_ld_Text && json_ld_Text.length > 0)
                     || (turtle_Text  && turtle_Text.length > 0)
                     || (rdf_Text     && rdf_Text.length > 0)
-                    || (rdfa         && rdfa.length > 0)
+                    || (rdfa.data    && rdfa.data.length > 0)
                     || (ttl_nano_Text && ttl_nano_Text.length > 0)
                     || (json_nano_Text && json_nano_Text.length > 0)
                     || (rdf_nano_Text && rdf_nano_Text.length > 0)
@@ -996,8 +996,6 @@
                         property: "doc_data",
                         data: JSON.stringify(docData, undefined, 2),
                         is_data_exists: data_exists
-                    },
-                    function (response) {
                     });
             }
 

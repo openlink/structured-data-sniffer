@@ -3,7 +3,7 @@
 #
 #  This file is part of the OpenLink Structured Data Sniffer
 #
-#  Copyright (C) 2015-2018 OpenLink Software
+#  Copyright (C) 2015-2019 OpenLink Software
 #
 #  This project is free software; you can redistribute it and/or modify it
 #  under the terms of the GNU General Public License as published by the
@@ -71,11 +71,6 @@ following projects:
     License	: MIT license
     Description : Linked Data API for JavaScript 
 
-
-* jsuri.js
-    Project	: https://github.com/derek-watson/jsUri
-    License	: MIT license
-    Description	: Uri parsing and manipulation for node.js and the browser.
 
 * FileSaver.js
     Project	: https://github.com/eligrey/FileSaver.js

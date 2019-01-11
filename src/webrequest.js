@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2018 OpenLink Software
+ *  Copyright (C) 2015-2019 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -19,8 +19,6 @@
  */
 
 
-
-if (Browser.isChromeAPI)
 {
   var setting = new Settings();
   var _r = {};
@@ -153,7 +151,7 @@ if (Browser.isChromeAPI)
                                           || content_type.match(/(text\/plain)/)
                                           || content_type.match(/(application\/octet-stream)/)
                      )) {
-        var url_path = new Uri(d.url).path();
+        var url_path = (new URL(d.url)).pathname;
         if (url_path.endsWith(".owl")) {
           handle = true;
           type = "rdf";
@@ -196,16 +194,19 @@ if (Browser.isChromeAPI)
           }
           else if (Browser.isFirefoxWebExt) {
             Browser.api.tabs.update(d.tabId, { url: _url });
-//don't show save dialog      return { cancel: true };
-            return { cancel: false };
+//don't show save dialog      
+            return { cancel: true };
           }
           else {
+            Browser.api.tabs.update(d.tabId, { url: _url });
+            return { cancel: true };
+/**
             if (v_cancel)
               Browser.api.tabs.update(d.tabId, { url: _url });
             else
               Browser.openTab(_url);
             return { "responseHeaders":d.responseHeaders };
-//              return { cancel: false};
+**/
           }
       }
   }

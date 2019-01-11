@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2018 OpenLink Software
+ *  Copyright (C) 2015-2019 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -19,9 +19,6 @@
  */
 
 var Browser = {
-    isChromeAPI: true,
-    isFirefoxSDK: false,
-
     isChromeWebExt: false,
     isFirefoxWebExt: true,
     isEdgeWebExt: false,
@@ -47,5 +44,5 @@ var Browser = {
 }
 
 try {
-  Browser.api = (Browser.isChromeAPI && Browser.isChromeWebExt) ? chrome : browser;
+  Browser.api = (Browser.isChromeWebExt) ? chrome : browser;
 } catch(e) {}

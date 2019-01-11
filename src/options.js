@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2018 OpenLink Software
+ *  Copyright (C) 2015-2019 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -109,10 +109,11 @@ $(function(){
 
 function closeOptions()
 {
-    if (Browser.isChromeAPI && Browser.isFirefoxWebExt) {
-      Browser.api.tabs.getCurrent(function(tab) {
-        Browser.api.tabs.remove(tab.id);
-      });
+    if (Browser.isFirefoxWebExt) {
+      Browser.api.tabs.getCurrent()
+        .then((tab) => {
+          Browser.api.tabs.remove(tab.id);
+        });
     } else {
       window.close();
     }
@@ -336,29 +337,53 @@ function enableCtrls()
 
 function createCmdImportURL(srv, _url)
 {
-    var url = new Uri(_url);
+    var url = new URL(_url);
     var h_url = "";
 
     switch (srv) {
       case 'describe':
-        h_url = url.setProtocol("http").setPath('/describe/').setQuery('').setAnchor('').toString();
+        url.protocol = 'http:';
+        url.pathname = '/describe/';
+        url.search = '';
+        url.hash = '';
+        h_url = url.toString();
         h_url += '?url={url}&sponger:get=add';
         break;
       case 'describe-ssl':
-        h_url = url.setProtocol("https").setPath('/describe/').setQuery('').setAnchor('').toString();
+        url.protocol = 'https:';
+        url.pathname = '/describe/';
+        url.search = '';
+        url.hash = '';
+        h_url = url.toString();
         h_url += '?url={url}&sponger:get=add';
         break;
       case 'about':
-        h_url = url.setProtocol("http").setPath('/about/html/').setQuery('').setAnchor('').toString();
+        url.protocol = 'http:';
+        url.pathname = '/about/html/';
+        url.search = '';
+        url.hash = '';
+        h_url = url.toString();
         break;
       case 'about-ssl':
-	      h_url = url.setProtocol("https").setPath('/about/html/').setQuery('').setAnchor('').toString();
+        url.protocol = 'https:';
+        url.pathname = '/about/html/';
+        url.search = '';
+        url.hash = '';
+        h_url = url.toString();
         break;
       case 'ode':
-	      h_url = url.setProtocol("http").setPath('/ode/').setQuery('?uri=').setAnchor('').toString();
+        url.protocol = 'http:';
+        url.pathname = '/ode/';
+        url.search = '?uri=';
+        url.hash = '';
+        h_url = url.toString();
         break;
       case 'ode-ssl':
-        h_url = url.setProtocol("https").setPath('/ode/').setQuery('?uri=').setAnchor('').toString();
+        url.protocol = 'https:';
+        url.pathname = '/ode/';
+        url.search = '?uri=';
+        url.hash = '';
+        h_url = url.toString();
         break;
       case 'custom':
         h_url = _url;

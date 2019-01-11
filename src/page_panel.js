@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2018 OpenLink Software
+ *  Copyright (C) 2015-2019 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -28,6 +28,7 @@ var doc_URL = null;
 var baseURL = null;
 var prevSelectedTab = null;
 var selectedTab = null;
+var gOidc = new OidcWeb();
 
 var gData = {
         text: null,
@@ -36,17 +37,24 @@ var gData = {
         ext: null
       };
 
-var yasqe = {
-        obj : null,
-        val : null,
-        init: false,
-      };
-
 var src_view = null;
+var g_RestCons = new Rest_Cons();
 
 
 $(document).ready(function()
 {
+  var oidc_login_btn = document.getElementById('oidc-login-btn');
+  oidc_login_btn.addEventListener('click', async function () {
+     if (gOidc.webid) {
+       await gOidc.logout();
+       Download_exec_update_state();
+     } else {
+       gOidc.login();
+     }
+  });
+
+
+  
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
 
@@ -56,39 +64,42 @@ $(document).ready(function()
 
   $('#sparql_btn').click(Sparql_exec);
 
-  $('#rest_btn').click(show_rest);
+  $('#rest_btn').click(function() {
+    selectTab('#cons');
+    g_RestCons.show();
+  });
 
   $('#download_btn').click(Download_exec);
 
-  $('#tabs a[href=#src]').click(function(){
+  $('#tabs a[href="#src"]').click(function(){
       selectTab(prevSelectedTab);
       return false;
   });
-  $('#tabs a[href=#cons]').click(function(){
+  $('#tabs a[href="#cons"]').click(function(){
       selectTab(prevSelectedTab);
       return false;
   });
-  $('#tabs a[href=#micro]').click(function(){
+  $('#tabs a[href="#micro"]').click(function(){
       selectTab('#micro');
       return false;
   });
-  $('#tabs a[href=#jsonld]').click(function(){
+  $('#tabs a[href="#jsonld"]').click(function(){
       selectTab('#jsonld');
       return false;
   });
-  $('#tabs a[href=#turtle]').click(function(){
+  $('#tabs a[href="#turtle"]').click(function(){
       selectTab('#turtle');
       return false;
   });
-  $('#tabs a[href=#rdfa]').click(function(){
+  $('#tabs a[href="#rdfa"]').click(function(){
       selectTab('#rdfa');
       return false;
   });
-  $('#tabs a[href=#rdf]').click(function(){
+  $('#tabs a[href="#rdf"]').click(function(){
       selectTab('#rdf');
       return false;
   });
-  $('#tabs a[href=#posh]').click(function(){
+  $('#tabs a[href="#posh"]').click(function(){
       selectTab('#posh');
       return false;
   });
@@ -101,7 +112,7 @@ $(document).ready(function()
   } catch(e) { }
 
   try{
-    yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
+    g_RestCons.yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
         lineNumbers: true,
         lineWrapping: false,
 	      sparql: { showQueryButton: false },
@@ -109,13 +120,15 @@ $(document).ready(function()
 	     createShareLink : null,
 	      persistent: null,
     });
-    yasqe.obj.setSize("100%", 150);
+    g_RestCons.yasqe.obj.setSize("100%", 150);
   } catch(e) {
   }
   $("#query_place").hide();
 
 
-  $('#rest_exec').click(rest_exec);
+  $('#rest_exec').click(function() {
+     g_RestCons.exec(doc_URL);
+  });
   $('#rest_exit').click(function(){
       selectTab(prevSelectedTab);
       return false;
@@ -124,7 +137,9 @@ $(document).ready(function()
     icons: { primary: 'ui-icon-plusthick' },
     text: false
   });
-  $('#rest_add').click(addRestEmpty);
+  $('#rest_add').click(function() {
+    g_RestCons.add_empty_row();
+  });
 
   $('#src_exit').click(function(){
       selectTab(prevSelectedTab);
@@ -140,18 +155,6 @@ $(document).ready(function()
 
 
 // Trap any link clicks and open them in the current tab.
-/**
-$('a').live('click', function(e) {
-  var url = new Uri(document.baseURI).setAnchor("");
-  var href = e.currentTarget.href;
-  if (href.lastIndexOf(url+"#sc", 0) === 0) {
-    return true;
-  } else {
-    window.open(href);
-    return false;
-  }
-});
-**/
 $(document).on('click', 'a', function(e) {
   function check_URI(uri) {
     if (doc_URL[doc_URL.length-1]==="#")
@@ -168,7 +171,10 @@ $(document).on('click', 'a', function(e) {
   if (hashPos!=-1 && hashPos!=href.length-1)
     hashName = href.substring(hashPos+1);
 
-  var url = new Uri(document.baseURI).setAnchor("");
+  var url = new URL(document.baseURI);
+  url.hash = '';
+  url = url.toString();
+
   if (href.lastIndexOf(url+"#sc", 0) === 0) {
     return true;
   }
@@ -260,12 +266,12 @@ function start_parse_data(data_text, data_type, data_url, ext)
 
   doc_URL = data_url;
 
-  var url = new Uri(data_url);
-  url.setAnchor("");
-  url.setQuery("");
+  var url = new URL(doc_URL);
+  url.hash ='';
+  url.search = '';
   baseURL = url.toString();
 
-  load_restData(doc_URL);
+  g_RestCons.load(doc_URL);
 
   if (data_type==="turtle")
     {
@@ -299,7 +305,7 @@ function start_parse_data(data_text, data_type, data_url, ext)
     }
   else
     {
-      var source = data_text.replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
+      var source = sanitize_str(data_text);
       document.body.innerHTML = "<pre>"+source+"</pre>";
     }
 
@@ -314,7 +320,7 @@ function selectTab(tab)
   function updateTab(tab, selTab)
   {
     var tab_data = $(tab+'_items');
-    var tab_id = $('#tabs a[href='+tab+']');
+    var tab_id = $('#tabs a[href="'+tab+'"]');
 
     if (selTab===tab) {
       tab_data.show()
@@ -333,8 +339,8 @@ function selectTab(tab)
   updateTab('#rdfa', selectedTab);
   updateTab('#rdf', selectedTab);
   updateTab('#posh', selectedTab);
-  $('#tabs a[href=#src]').hide();
-  $('#tabs a[href=#cons]').hide();
+  $('#tabs a[href="#src"]').hide();
+  $('#tabs a[href="#cons"]').hide();
 }
 
 
@@ -487,22 +493,65 @@ function Sparql_exec()
 }
 
 
-function Download_exec()
+
+async function Download_exec_update_state() 
+{
+
+  try {
+    await gOidc.checkSession();
+
+    var webid_href = document.getElementById('oidc-webid');
+
+    webid_href.href = gOidc.webid ? gOidc.webid :'';
+    webid_href.title = gOidc.webid ? gOidc.webid :'';
+    webid_href.style.display = gOidc.webid ? 'initial' :'none';
+
+    var oidc_login_btn = document.getElementById('oidc-login-btn');
+    oidc_login_btn.innerText = gOidc.webid ? 'Logout' : 'Login';
+
+  } catch (e) {
+    console.log(e);
+  }
+  var cmd = $('#save-action option:selected').attr('id');
+  if (cmd==='filesave')
+    $('#save-file').show();
+  else
+    $('#save-file').hide();
+  if (cmd==='fileupload') {
+    $('#oidc-login').show();
+  } else {
+    $('#oidc-login').hide();
+  }
+
+  var filename;
+  var fmt = $('#save-fmt option:selected').attr('id');
+
+  if (fmt == "json")
+    filename = cmd==="fileupload" ? "jsonld_data.jsonld" : "jsonld_data.txt";
+  else if (fmt == "ttl") 
+    filename = cmd==="fileupload" ? "turtle_data.ttl" : "turtle_data.txt";
+  else
+    filename = "rdf_data.rdf";
+
+  var oidc_url = document.getElementById('oidc-url');
+  oidc_url.value = gOidc.storage + (filename || '');
+
+  var save_filename = document.getElementById('save-filename');
+  save_filename.value = filename || '';
+}
+
+
+async function Download_exec()
 {
   $('#save-action').change(function() {
-    var cmd = $('#save-action option:selected').attr('id');
-    if (cmd==='filesave')
-      $('#save-file').show();
-    else
-      $('#save-file').hide();
+    Download_exec_update_state();
   });
 
-  var cmd = $('#save-action option:selected').attr('id');
-  if (cmd==="filesave")
-      $('#save-file').show();
-    else
-      $('#save-file').hide();
+  $('#save-fmt').change(function() {
+    Download_exec_update_state();
+  });
 
+  await Download_exec_update_state();
 
   var isFileSaverSupported = false;
   try {
@@ -516,6 +565,7 @@ function Download_exec()
   if (Browser.isEdgeWebExt)
     $('#save-action').prop('disabled', true);
 
+  
   var filename = null;
   var fmt = "json";
 
@@ -532,6 +582,9 @@ function Download_exec()
     fmt = "rdf";
   }
 
+  var oidc_url = document.getElementById('oidc-url');
+  oidc_url.value = gOidc.storage + (filename || '');
+
 
   if (filename!==null) {
     $('#save-filename').val(filename);
@@ -547,13 +600,14 @@ function Download_exec()
 
     $( "#save-confirm" ).dialog({
       resizable: true,
+      width:500,
       height:300,
       modal: true,
       buttons: {
         "OK": function() {
           var action = $('#save-action option:selected').attr('id');
           var fmt = $('#save-fmt option:selected').attr('id');
-          var fname = $('#save-filename').val().trim();
+          var fname = action ==='fileupload' ? $('#oidc-url').val().trim(): $('#save-filename').val().trim();
           save_data(action, fname, fmt);
           $(this).dialog( "destroy" );
         },
@@ -569,6 +623,7 @@ function Download_exec()
 
   return false;
 }
+
 
 
 function save_data(action, fname, fmt, callback)
@@ -617,6 +672,44 @@ function save_data(action, fname, fmt, callback)
     else if (action==="filesave") {
       blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
       saveAs(blob, fname);
+    }
+    else if (action==="fileupload") {
+     var contentType = "text/plain;charset=utf-8";
+
+     if (fmt==="json")
+       contentType = "application/ld+json;charset=utf-8";
+     else if (fmt==="rdf")
+       contentType = "application/rdf+xml;charset=utf-8";
+     else
+       contentType = "text/turtle;charset=utf-8";
+
+      putResource(gOidc.fetch, fname, retdata.txt, contentType, null)
+        .then(response => {
+          showInfo('Saved');
+        })
+        .catch(error => {
+          console.error('Error saving document', error)
+
+          let message
+
+          switch (error.status) {
+            case 0:
+            case 405:
+              message = 'this location is not writable'
+              break
+            case 401:
+            case 403:
+              message = 'you do not have permission to write here'
+              break
+            case 406:
+              message = 'enter a name for your resource'
+              break
+            default:
+              message = error.message
+              break
+          }
+          showInfo('Unable to save:' +message);
+        })
     }
     else {
       selectTab("#src");
@@ -702,156 +795,34 @@ function save_data(action, fname, fmt, callback)
 
 function showInfo(msg)
 {
-  $("#alert-msg").prop("textContent",msg);
-  $("#alert-dlg" ).dialog({
+  $('#alert-msg').prop('textContent',msg);
+  $('#alert-dlg').dialog({
     resizable: true,
     height:180,
     modal: true,
     buttons: {
       Cancel: function() {
-        $(this).dialog( "destroy" );
+        $(this).dialog('destroy');
       }
     }
   });
 }
 
 
-function show_rest()
+Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
 {
-  selectTab('#cons');
-//--  $('#tabs a[href=#cons]').show();
-  if (yasqe.obj && yasqe.val && !yasqe.init) {
-    yasqe.obj.setValue(yasqe.val+"\n");
-    yasqe.init = true;
-  }
-}
-
-
-
-
-// ==== restData ====
-function rest_exec() {
-  if (!doc_URL) {
-    return;
-  }
-
-  var url = new Uri(doc_URL);
-  url.setQuery("");
-
-  if (yasqe.obj) {
-    var val = yasqe.obj.getValue();
-    var name = $("#query_id").val();
-    if (val && (val.replace(/[\r\n ]/g, '')).length > 0) {
-       url.addQueryParam(name, val);
-    }
-  }
-
-  var rows = $('#restData>tr');
-  for(var i=0; i < rows.length; i++) {
-    var r = $(rows[i]);
-    var h = r.find('#h').val();
-    var v = r.find('#v').val();
-    if (h.length>0)
-       url.addQueryParam(h, v);
-  }
-
-  var win_url = url.toString();
-
-  Browser.api.tabs.create({url:win_url});
-}
-
-
-function rest_del(e) {
-  //get the row we clicked on
-  var row = $(this).parents('tr:first');
-
-  $('#alert-msg').prop('textContent',"Delete row ?");
-  $( "#alert-dlg" ).dialog({
-    resizable: false,
-    height:180,
-    modal: true,
-    buttons: {
-      "Yes": function() {
-          $(row).remove();
-          $(this).dialog( "destroy" );
-      },
-      "No": function() {
-          $(this).dialog( "destroy" );
-      }
-    }
-  });
-  return true;
-}
-
-
-
-function createRestRow(h,v)
-{
-  var del = '<button id="rest_del" class="rest_del">Del</button>';
-  return '<tr><td width="12px">'+del+'</td>'
-            +'<td><input id="h" style="WIDTH: 100%" value="'+h+'"></td>'
-            +'<td><input id="v" style="WIDTH: 100%" value="'+v+'"></td></tr>';
-}
-
-
-function addRestEmpty()
-{
-  addRestParam("","");
-}
-
-function addRestParam(h,v)
-{
-  $('#restData').append(createRestRow(h, v));
-  $('.rest_del').button({
-    icons: { primary: 'ui-icon-minusthick' },
-    text: false
-  });
-  $('.rest_del').click(rest_del);
-}
-
-function delRest()
-{
-  var data = $('#users_data>tr');
-  var data = $('#restData>tr');
-  for(var i=0; i < data.length; i++) {
-    $(data[i]).remove();
-  }
-}
-
-
-function load_restData(doc_url)
-{
-  yasqe.val = null;
-
-  delRest();
-
-  if (!doc_url) {
-    addRestEmpty();
-    return;
-  }
-
-  var url = new Uri(doc_url);
-  var params = url.queryPairs;
-  for(var i=0; i<params.length; i++) {
-    var val = params[i][1];
-    var key = params[i][0];
-    if (key === "query" || key ==="qtxt") {
-      yasqe.val = val;
-      $("#query_id").val(key);
+  try {
+    if (request.cmd === "store_updated" && request.key === "oidc.session")
+    {
+      Download_exec_update_state(); 
     }
     else
-      addRestParam(params[i][0], val);
+    {
+      sendResponse({}); /* stop */
+    }
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
   }
 
-  if (params.length == 0)
-    addRestEmpty();
+});
 
-  if (yasqe.obj && yasqe.val) {
-    yasqe.obj.setValue(yasqe.val+"\n");
-  }
-  else {
-    yasqe.obj.setValue("\n");
-    $(".yasqe").hide();
-  }
-}
-// ==== restData  END ====

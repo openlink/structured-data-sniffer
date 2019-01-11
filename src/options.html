@@ -3,7 +3,7 @@
 <!--
     This file is part of the OpenLink Structured Data Sniffer
 
-    Copyright (C) 2015-2018 OpenLink Software
+    Copyright (C) 2015-2019 OpenLink Software
 
     This project is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -25,14 +25,13 @@
     <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />
     <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />
     <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />
-    <link type="text/css" href="lib/css/yasqe.min.css" rel="stylesheet" />
+    <link type="text/css" href="lib/css/yasqe.css" rel="stylesheet" />
 
     <script type="text/javascript" src="lib/jquery-3.1.0.min.js"></script>
     <script type="text/javascript" src="lib/jquery-migrate-3.0.0.min.js"></script>
     <script type="text/javascript" src="lib/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="lib/jsuri.js"></script>
     <script type="text/javascript" src="lib/codemirror.js"></script>
-    <script type="text/javascript" src="lib/yasqe.min.js"></script>
+    <script type="text/javascript" src="lib/yasqe.js"></script>
 
     <script type="text/javascript" src="browser.js"></script>
     <script type="text/javascript" src="settings.js"></script>
@@ -84,13 +83,13 @@
       <li><a href="#tabs-1">Settings</a></li>
       <li><a href="#tabs-2">SPARQL Query Service</a></li>
       <li><a href="#tabs-3">Super Links</a></li>
-	    <li><a href="#tabs-4">About</a></li>
+      <li><a href="#tabs-4">About</a></li>
       </ul>
 
         <div id="tabs-1">
-          <table>
+          <div style="display:flex; flex-direction: column; align-self: flex-start;">
 
-           <tr>
+           <div>
              <table>
               <tr>
                <td>UI&nbsp;Terminology:</td>
@@ -121,16 +120,13 @@
               <tr>
              </table>
 
-           </tr>
+             <hr/>
+           </div>
 
-           <tr> <p/> </tr>
-           <tr> <hr> </tr>
-           <tr> <p/> </tr>
 
-           <tr>
-              <td> LOD Cloud Lookup & Upload </td>
-           </tr>
-           <tr>
+           <div>
+             <div> LOD Cloud Lookup & Upload </div>
+             <p/>
                <table>
                 <tr>
                  <td>Service Type :</td>
@@ -145,27 +141,26 @@
                  </td>
                 </tr>
                </table>
-           </tr>
-           <tr>
+
                <table>
                 <tr id="import-url-bcast">
                  <td> URL: </td>
                  <td> <input id="import-url" style="WIDTH: 418px"> </td>
                 </tr>
                </table>
-           </tr>
-           <tr> <p/> </tr>
-           <tr>
-               <input id="import-set-def" value="Revert to Defaults" type="button">
-           </tr>
 
-           <tr> <p/> </tr>
-           <tr> <hr> </tr>
-           <tr> <p/> </tr>
+               <p>
+                 <input id="import-set-def" value="Revert to Defaults" type="button">
+               </p>
+
+               <hr/>
+           </div>
 
 
-           <tr>Annotation (Read-Write) Service</tr>
-           <tr>
+
+           <div>
+             <div>Annotation (Read-Write) Service</div>
+             <p/>
                <table>
                 <tr>
                  <td > Default Storage Document URL: </td>
@@ -183,119 +178,87 @@
                   </table>
                 </tr>
                </table>
-           </tr>
-           <tr> <p/> </tr>
-           <tr>
-               <input id="rww-set-def" value="Revert to Defaults" type="button">
-           </tr>
 
-           <tr> <p/> </tr>
-           <tr> <hr> </tr>
-           <tr> <p/> </tr>
-<!--
-           <tr>
-               SPARQL Query Service
-           </tr>
-           <tr>
-               <table>
-                <tr>
-                 <td> URL: </td>
-                 <td> <input id="sparql-url" style="WIDTH: 405px"> </td>
-                </tr>
+               <p>
+                 <input id="rww-set-def" value="Revert to Defaults" type="button">
+               </p>
+           </div>
 
-                <tr>
-                 <td>Query:</td>
-                 <td>
-                   <SELECT id="sparql-cmd" style="WIDTH: 255px" >
-                     <OPTION id="select" selected>SELECT ...</OPTION>
-                     <OPTION id="describe">DESCRIBE ...</OPTION>
-                     <OPTION id="construct">CONSTRUCT ...</OPTION>
-                   </SELECT>
-                 </td>
-                </tr>
-               </table>
-           </tr>
-           <tr>
-               <textarea id="sparql-query" style="width: 450px; height: 77px">
-               </textarea>
-           </tr>
-           <tr> <p/> </tr>
-           <tr>
-               <input id="sparql-set-def" value="Revert to Defaults" type="button">
-           </tr>
--->
-
-          </table>
+          </div>
         </div>
 
         <div id="tabs-2">
-          <table>
-            <tr>
-                <table>
-                 <tr>
-                  <td> URL: </td>
-                  <td> <input id="sparql-url" style="WIDTH: 405px"> </td>
-                 </tr>
+          <div style="display:flex; flex-direction: column; align-self: flex-start;">
+            <table>
+             <tr>
+              <td> URL: </td>
+              <td> <input id="sparql-url" style="WIDTH: 405px"> </td>
+             </tr>
 
-                 <tr>
-                  <td>Query:</td>
-                  <td>
-                    <SELECT id="sparql-cmd" style="WIDTH: 255px" >
-                      <OPTION id="select" selected>SELECT ...</OPTION>
-                      <OPTION id="describe">DESCRIBE ...</OPTION>
-                      <OPTION id="construct">CONSTRUCT ...</OPTION>
-                    </SELECT>
-                  </td>
-                 </tr>
-                </table>
-            </tr>
-            <tr>
-                <div style="width: 450px; height: 450px">
-                  <textarea id="sparql-query" style="width: 450px; height: 450px">
-                  </textarea>
-              </div>
-            </tr>
-            <tr> <p/> </tr>
-            <tr>
-                <input id="sparql-set-def" value="Revert to Defaults" type="button">
-            </tr>
-          </table>
+             <tr>
+              <td>Query:</td>
+              <td>
+                <SELECT id="sparql-cmd" style="WIDTH: 255px" >
+                  <OPTION id="select" selected>SELECT ...</OPTION>
+                  <OPTION id="describe">DESCRIBE ...</OPTION>
+                  <OPTION id="construct">CONSTRUCT ...</OPTION>
+                </SELECT>
+              </td>
+             </tr>
+            </table>
+            <div style="width: 450px; height: 450px">
+                <textarea id="sparql-query" style="width: 450px; height: 450px">
+                </textarea>
+            </div>
+            <p>
+              <input id="sparql-set-def" value="Revert to Defaults" type="button">
+            </p>
+          </div>
         </div>
 
         <div id="tabs-3">
-          <table>
+          <div style="display:flex; flex-direction: column; align-self: flex-start;">
 
-           <tr>
-                <table>
-                 <tr>
-                  <td>Query&nbspTimeout: </td>
-                  <td> <input id="super-links-timeout" style="WIDTH: 70px"> </td>
-                  <td> milliseconds (values less than 1000 are ignored)</td>
-                 </tr>
+           <div>
+             <table>
+               <tr>
+                 <td>Query&nbspTimeout: </td>
+                 <td> <input id="super-links-timeout" style="WIDTH: 70px"> </td>
+                 <td> milliseconds (values less than 1000 are ignored)</td>
+              </tr>
+             </table>
+           </div>
 
-                </table>
-           </tr>
+           <div>SPARQL query:</div>
 
-           <tr>
-               SPARQL query:
-           </tr>
-           <tr>
-               <div style="width: 470px; height: 500px">
-               <textarea id="super-links-query" style="white-space:nowrap">
-               </textarea>
-             </div>
-           </tr>
+           <div style="width: 470px; height: 500px">
+             <textarea id="super-links-query" style="white-space:nowrap">
+             </textarea>
+           </div>
 
-           <tr> <p/> </tr>
-           <tr>
-               <input id="super-links-set-def" value="Revert to Defaults" type="button">
-           </tr>
+           <p>
+             <input id="super-links-set-def" value="Revert to Defaults" type="button">
+           </p>
 
-          </table>
+           <table>
+            <tr>
+             <td>&#x25cf <span style="color:red">{url}</span>
+               token will be replaced with the URI of the current page
+             </td>
+            </tr>
+            <tr>
+             <td>&#x25cf <span style="color:red">{lang}</span>
+               token will be replaced with the browser's active UserLang 
+               (or <span style="color:red">en</span> if unset or not detected) 
+             </td>
+            </tr>
+           </table>
+
+          </div>
         </div>
 
 
-	      <div id="tabs-4">
+	<div id="tabs-4">
             <IMG alt="" src="images/icon48.png">
             <h3>OpenLink Structured Data Sniffer</h3>
             <p id="ext_ver">Version 0.0.0</p>
@@ -307,7 +270,7 @@
               as the World Wide Web and Linked Open Data Cloud.
             </p>
             <p>Visit OpenLink Structured Data Sniffer <a href="http://osds.openlinksw.com" target="_blank">homepage</a> for additional product information.</p>
-            <p>Copyright 2015-2018 <a href="http://www.openlinksw.com" target="_blank">OpenLink Software</a></p>
+            <p>Copyright 2015-2019 <a href="http://www.openlinksw.com" target="_blank">OpenLink Software</a></p>
         </div>
     </div>
     <p/>

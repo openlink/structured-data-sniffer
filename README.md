@@ -19,7 +19,7 @@ Support for additional browsers like
 is under construction.
 
 ## License
-Copyright 2015-2018 [OpenLink Software](mailto:opensource@openlinksw.com)
+Copyright 2015-2019 [OpenLink Software](mailto:opensource@openlinksw.com)
 
 This software is licensed under the GNU General Public License (see
 [COPYING](https://github.com/OpenLinkSoftware/OSDS_extension/blob/develop/COPYING)).
@@ -78,17 +78,16 @@ To install this extension manually use the following steps:
 Download the [Firefox OSDS .zip](https://github.com/OpenLinkSoftware/OSDS_extension/releases/download/v2.16.1/OSDS_FF.zip)
 file and extract the .xpi file.
 
-To install this extension manually in Firefox v28+, use the following steps:
+NOTE: Only temporary install is possible for unsigned .xpi file in last versions of Firefox.
+
+To install this extension manually in Firefox, use the following steps:
+
 - Open the **Firefox** browser
-- In address bar type: **about:config**
-- Press the **I'll be careful, i promise** button
-- Search for **xpinstall.signatures.required**
-- Double click that line so the value is set to **false**
-- In address bar type: **about:addons**
-- Click on the Gear icon and select **Install Add-On from file...** from the menu
+- In address bar type: **about:addons** or choose menu ** Add-ons**
+- Click on Gear icon and choose **Debug Add-ons**
+- Click on **Load Temporary Add-on**
 - Navigate to the directory where you extracted the OSDS_FF.xpi file, select this file and press the
-  **Open** button
-- Press the **install** button
+**Open** button
 
 
 ### Examples

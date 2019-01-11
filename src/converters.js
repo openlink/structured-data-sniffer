@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2018 OpenLink Software
+ *  Copyright (C) 2015-2019 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -118,7 +118,7 @@ Convert_Turtle.prototype = {
     if (this._pos < textData.length) {
       try {
         var store = N3.Writer({ format: 'N-Triples' });
-        var parser = N3.Parser({documentIRI:self.baseURI});
+        var parser = N3.Parser({baseIRI:self.baseURI});
         var ttl_data = textData[self._pos];
 
         parser.parse(ttl_data,
@@ -135,9 +135,9 @@ Convert_Turtle.prototype = {
                 self.callback(null, self._output);
             }
             else if (tr) {
-              store.addTriple(self.fixNode(tr.subject),
-                              self.fixNode(tr.predicate),
-                              self.fixNode(tr.object));
+              store.addQuad(tr.subject,
+                            tr.predicate,
+                            tr.object);
             }
             else {
               var context = prefixes;
@@ -196,25 +196,6 @@ Convert_Turtle.prototype = {
     }
 
   },
-
-
-  fixNode : function (n)
-  {
-     if ( n==="")
-         return this.baseURI;
-     else if (N3.Util.isIRI(n)) {
-       if (n==="")
-         return this.baseURI;
-       else if (n.substring(0,1)==="#")
-         return this.baseURI+n;
-       else if (n.substring(0,1)===":")
-         return this.baseURI+n;
-       else
-         return n;
-     } else {
-       return n;
-     }
-  }
 
 }
 
@@ -349,7 +330,7 @@ Convert_JSONLD.prototype = {
                 handle_error(error);
               }
               else {
-                jsonld.toRDF(expanded, {format: 'application/nquads'},
+                jsonld.toRDF(expanded, {format: 'application/nquads', includeRelativeUrls: true},
                   function(error, nquads) {
                     if (error) {
                       handle_error(error);
