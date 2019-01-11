@@ -15813,7 +15813,7 @@ function _expandObject(_ref2) {
       }
 
       // expand property
-      var expandedProperty = _expandIri(activeCtx, key, { vocab: true });
+      var expandedProperty = _expandIri(activeCtx, key, { vocab: true, base: true });
 
       // drop non-absolute IRI keys that aren't keywords unless custom mapped
       if (expandedProperty === null || !(_isAbsoluteIri(expandedProperty) || _isKeyword(expandedProperty))) {

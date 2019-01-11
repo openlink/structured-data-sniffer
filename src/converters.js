@@ -330,7 +330,7 @@ Convert_JSONLD.prototype = {
                 handle_error(error);
               }
               else {
-                jsonld.toRDF(expanded, {format: 'application/nquads'},
+                jsonld.toRDF(expanded, {format: 'application/nquads', includeRelativeUrls: true},
                   function(error, nquads) {
                     if (error) {
                       handle_error(error);
