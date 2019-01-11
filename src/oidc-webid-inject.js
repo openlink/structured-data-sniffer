@@ -35,7 +35,7 @@ async function recvMessage(event)
 
 
   setTimeout(function (){
-      Browser.api.runtime.sendMessage({cmd:'close_oidc'});
+     Browser.api.runtime.sendMessage({cmd:'close_oidc_web', url: document.location.href});
   }, 1500);
 }
 

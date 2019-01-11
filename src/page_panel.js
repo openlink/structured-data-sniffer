@@ -71,35 +71,35 @@ $(document).ready(function()
 
   $('#download_btn').click(Download_exec);
 
-  $('#tabs a[href=#src]').click(function(){
+  $('#tabs a[href="#src"]').click(function(){
       selectTab(prevSelectedTab);
       return false;
   });
-  $('#tabs a[href=#cons]').click(function(){
+  $('#tabs a[href="#cons"]').click(function(){
       selectTab(prevSelectedTab);
       return false;
   });
-  $('#tabs a[href=#micro]').click(function(){
+  $('#tabs a[href="#micro"]').click(function(){
       selectTab('#micro');
       return false;
   });
-  $('#tabs a[href=#jsonld]').click(function(){
+  $('#tabs a[href="#jsonld"]').click(function(){
       selectTab('#jsonld');
       return false;
   });
-  $('#tabs a[href=#turtle]').click(function(){
+  $('#tabs a[href="#turtle"]').click(function(){
       selectTab('#turtle');
       return false;
   });
-  $('#tabs a[href=#rdfa]').click(function(){
+  $('#tabs a[href="#rdfa"]').click(function(){
       selectTab('#rdfa');
       return false;
   });
-  $('#tabs a[href=#rdf]').click(function(){
+  $('#tabs a[href="#rdf"]').click(function(){
       selectTab('#rdf');
       return false;
   });
-  $('#tabs a[href=#posh]').click(function(){
+  $('#tabs a[href="#posh"]').click(function(){
       selectTab('#posh');
       return false;
   });
@@ -320,7 +320,7 @@ function selectTab(tab)
   function updateTab(tab, selTab)
   {
     var tab_data = $(tab+'_items');
-    var tab_id = $('#tabs a[href='+tab+']');
+    var tab_id = $('#tabs a[href="'+tab+'"]');
 
     if (selTab===tab) {
       tab_data.show()
@@ -339,8 +339,8 @@ function selectTab(tab)
   updateTab('#rdfa', selectedTab);
   updateTab('#rdf', selectedTab);
   updateTab('#posh', selectedTab);
-  $('#tabs a[href=#src]').hide();
-  $('#tabs a[href=#cons]').hide();
+  $('#tabs a[href="#src"]').hide();
+  $('#tabs a[href="#cons"]').hide();
 }
 
 

@@ -115,6 +115,16 @@ var POSH = (function () {
       var triples = "";
       var self = this;
       var twittercard = false;
+      var url = new URL(baseURI);
+      var baseOrigin = url.origin;
+      var basePATH = baseURI;
+
+      if (baseURI.lastIndexOf('.')!=-1) {
+         var i = baseURI.lastIndexOf('/');
+         if (i!=-1)
+           basePATH = basePATH.substring(0, i);
+      }
+
 
       function s_startWith(str, val) {
         if (str)
@@ -280,15 +290,17 @@ var POSH = (function () {
         {
           return n;
         }
-        else if (s_startWith(n, "#") 
-                 || s_startWith(n, "/")
-                 )
+        else if (s_startWith(n, "#"))
         {
           return baseURI+n;
         }
+        else if (s_startWith(n, "/"))
+        {
+          return baseOrigin+n;
+        }
         else
         {
-          return baseURI+"/"+n;
+          return basePATH+"/"+n;
         }
       }
 

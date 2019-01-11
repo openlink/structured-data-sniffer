@@ -86,11 +86,12 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
           Browser.api.pageAction.hide(sender.tab.id);
       }
     }
-    else if (request.cmd === "close_oidc")
+    else if (request.cmd === "close_oidc_web")
     {
       var curWin = await getCurWin();
       var curTab = await getCurTab();
-      if (curTab.length > 0 && curTab[0].windowId === curWin.id) {
+      if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
+          && curTab[0].url === request.url) {
         Browser.api.tabs.remove(curTab[0].id);
       }
     }

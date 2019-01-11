@@ -318,7 +318,6 @@ OidcWeb = function(data) {
 
   const options = { solid: true };
   this.authClient = new OIDCWebClient(options);
-//  this.login_url = 'https://smalinin.github.io/oidc-web/login.html#relogin';
   this.login_url = 'https://openlinksoftware.github.io/oidc-web/login.html#relogin';
 }
 
@@ -330,8 +329,11 @@ OidcWeb.prototype = {
       var idp = '';
       if (this.session) {
         idp = this.session.issuer;
-        var clients = await localStore_get(oidc_clients+idp);
-        localStorage.setItem(oidc_clients+idp, clients);
+        var key = oidc_clients+idp;
+        var rec = await this.localStore_get(key);
+        if (rec && rec[key])
+          localStorage.setItem(oidc_clients+idp, rec[key]);
+
         await this.authClient.logout();
       }
       await localStore_remove(oidc_session);
