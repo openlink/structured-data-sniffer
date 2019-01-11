@@ -261,3 +261,45 @@ Settings.prototype = {
 
 
 }
+
+
+async function localStore_save(key, val) 
+{
+    var rec = {};
+    rec[key]=val;
+    if (Browser.isChromeWebExt) {
+      return new Promise(function (resolve, reject) {
+        Browser.api.storage.local.set(rec, () => resolve());
+      })
+    } else {
+      return Browser.api.storage.local.set(rec);
+    }
+}
+
+async function localStore_get(key) 
+{
+    if (Browser.isChromeWebExt) {
+      return new Promise(function (resolve, reject) {
+        Browser.api.storage.local.get(key, (rec) => {
+          resolve(rec)
+        });
+      })
+    } else {
+      return Browser.api.storage.local.get(key);
+    }
+}
+
+async function localStore_remove(key) 
+{
+    if (Browser.isChromeWebExt) {
+      return new Promise(function (resolve, reject) {
+        Browser.api.storage.local.remove(key, (rec) => {
+          resolve(rec)
+        });
+      })
+    } else {
+      return Browser.api.storage.local.remove(key);
+    }
+}
+
+

@@ -43,7 +43,6 @@ Rest_Cons = function () {
 Rest_Cons.prototype = {
 
   show : function() {
-//--  $('#tabs a[href=#cons]').show();
     if (this.yasqe.obj && this.yasqe.val && !this.yasqe.init) {
       this.yasqe.obj.setValue(this.yasqe.val+"\n");
       this.yasqe.init = true;
@@ -198,10 +197,10 @@ Rest_Cons.prototype = {
 }
 
 
-function putResource (url, data, contentType, links, options = {}) 
+function putResource (_fetch, url, data, contentType, links, options = {}) 
 {
   const DEFAULT_CONTENT_TYPE = 'text/html; charset=utf-8'
-  const _fetch = solid.auth.fetch;
+  const _ffetch = _fetch || fetch;;
   const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
 
   if (!url) {
@@ -226,7 +225,7 @@ function putResource (url, data, contentType, links, options = {})
 
   options.headers['Link'] = links
 
-  return _fetch(url, options)
+  return _ffetch(url, options)
 
     .then(response => {
       if (!response.ok) {  // not a 2xx level response
@@ -295,3 +294,89 @@ function getGraph(url)
 
   return promise;
 }
+
+
+const { OIDCWebClient } = OIDC;
+const oidc_session = 'oidc.session';
+const oidc_clients = 'oidc.clients.';
+
+OidcWeb = function(data) {
+  this.webid = null;
+  this.storage = null;
+  this.session = null;
+  this.fetch = fetch;
+
+  const options = { solid: true };
+  this.authClient = new OIDCWebClient(options);
+//  this.login_url = 'https://smalinin.github.io/oidc-web/login.html#relogin';
+  this.login_url = 'https://openlinksoftware.github.io/oidc-web/login.html#relogin';
+}
+
+
+OidcWeb.prototype = {
+  logout : async function()
+  {
+    if (this.webid) {
+      var idp = '';
+      if (this.session) {
+        idp = this.session.issuer;
+        var clients = await localStore_get(oidc_clients+idp);
+        localStorage.setItem(oidc_clients+idp, clients);
+        await this.authClient.logout();
+      }
+      await localStore_remove(oidc_session);
+      await localStore_remove(oidc_clients+idp);
+      this.webid = null;
+      this.storage = null;
+      this.session = null;
+      this.fetch = fetch;
+    }
+  },
+
+  login: function() {
+     const width = 650;
+     const height = 400;
+     const left = window.screenX + (window.innerWidth - width) / 2;
+     const top = window.screenY + (window.innerHeight - height) / 2;
+     const settings = `width=${width},height=${height},left=${left},top=${top}`;
+     window.open(gOidc.login_url, 'Login', settings);
+  },
+
+  checkSession: async function() 
+  {
+    try {
+      var rec = await localStore_get(oidc_session);
+
+      if (rec && rec[oidc_session]) {
+        var session = rec[oidc_session];
+        localStorage.setItem(oidc_session, session);
+      } else
+        localStorage.removeItem(oidc_session);
+
+      var prev_webid = this.webid;
+
+      this.session = await this.authClient.currentSession()
+      this.webid = (this.session.hasCredentials()) ? this.session.idClaims.sub : null;
+      this.fetch = (this.webid) ? this.session.fetch : null;
+
+      if (prev_webid !== this.webid && this.webid) {
+        this.storage = (new URL(this.webid)).origin + '/';
+        var prof = await getWebIdProfile(this.webid);
+
+        if (prof.storage)
+          this.storage = prof.storage;
+        if (!this.storage.endsWith('/'))
+          this.storage += '/';
+      }
+
+      if (!this.webid)
+        this.storage = '';
+
+    } catch(e) {
+      console.log(e);
+    }
+  }
+
+}
+
+

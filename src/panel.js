@@ -43,49 +43,19 @@ var gData = {
       };
 var src_view = null;
 var g_RestCons = new Rest_Cons();
-var gOidc = {
-       webid : null,
-       storage : ''
-     };
+var gOidc = new OidcWeb();
 
 
 $(document).ready(function()
 {
   var oidc_login_btn = document.getElementById('oidc-login-btn');
-
-  solid.auth.trackSession(session => {
-    gOidc.webid = session ? session.webId : null;
-    var webid_href = document.getElementById('oidc-webid');
-
-    webid_href.href = gOidc.webid ? gOidc.webid :'';
-    webid_href.title = gOidc.webid ? gOidc.webid :'';
-    webid_href.style.display = gOidc.webid ? 'initial' :'none';
-
-    oidc_login_btn.innerText = gOidc.webid ? 'Logout' : 'Login';
-
-    if (gOidc.webid) {
-      gOidc.storage = (new URL(gOidc.webid)).origin + '/';
-      getWebIdProfile(gOidc.webid)
-        .then(prof => {
-          if (prof.storage)
-            gOidc.storage = prof.storage;
-          if (!gOidc.storage.endsWith('/'))
-            gOidc.storage += '/';
-        });
-      
-    } else {
-      gOidc.storage = '';
-    }
-    Download_exec_update_state();
-  })
-
-  oidc_login_btn.addEventListener('click', function () {
-     const width = 250;
-     const height = 100;
-     const left = window.screenX + (window.innerWidth - width) / 2;
-     const top = window.screenY + (window.innerHeight - height) / 2;
-     const settings = `width=${width},height=${height},left=${left},top=${top}`;
-     gOidc.webid ? solid.auth.logout() : window.open('login.html', 'Login', settings);
+  oidc_login_btn.addEventListener('click', async function () {
+     if (gOidc.webid) {
+       await gOidc.logout();
+       Download_exec_update_state();
+     } else {
+       gOidc.login();
+     }
   });
 
   
@@ -979,8 +949,25 @@ function Prefs_exec()
 
 
 
-function Download_exec_update_state() 
+async function Download_exec_update_state() 
 {
+  try {
+    await gOidc.checkSession();
+
+    var webid_href = document.getElementById('oidc-webid');
+
+    webid_href.href = gOidc.webid ? gOidc.webid :'';
+    webid_href.title = gOidc.webid ? gOidc.webid :'';
+    webid_href.style.display = gOidc.webid ? 'initial' :'none';
+
+    var oidc_login_btn = document.getElementById('oidc-login-btn');
+    oidc_login_btn.innerText = gOidc.webid ? 'Logout' : 'Login';
+
+  } catch (e) {
+    console.log(e);
+  }
+
+  
   var cmd = $('#save-action option:selected').attr('id');
   if (cmd==='filesave')
     $('#save-file').show();
@@ -1010,7 +997,7 @@ function Download_exec_update_state()
 }
 
 
-function Download_exec()
+async function Download_exec()
 {
   $('#save-action').change(function() {
     Download_exec_update_state();
@@ -1020,7 +1007,7 @@ function Download_exec()
     Download_exec_update_state();
   });
 
-  Download_exec_update_state();
+  await Download_exec_update_state();
 
   var isFileSaverSupported = false;
   try {
@@ -1159,7 +1146,7 @@ function save_data(action, fname, fmt, callback)
      else
        contentType = "text/turtle;charset=utf-8";
 
-      putResource(fname, retdata.txt, contentType, null)
+      putResource(gOidc.fetch, fname, retdata.txt, contentType, null)
         .then(response => {
           showInfo('Saved');
         })

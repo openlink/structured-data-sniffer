@@ -26,10 +26,36 @@ if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
 }
 
 
+async function getCurWin()
+{
+  if (Browser.isChromeWebExt) {
+    return new Promise(function (resolve, reject) {
+      Browser.api.windows.getCurrent({}, (w) => {
+        resolve(w)
+      });
+    })
+  } else {
+    return Browser.api.windows.getCurrent({});
+  }
+}
+
+async function getCurTab()
+{
+  if (Browser.isChromeWebExt) {
+    return new Promise(function (resolve, reject) {
+      Browser.api.tabs.query({active:true, currentWindow:true}, (t) => {
+        resolve(t)
+      });
+    })
+  } else {
+    return Browser.api.tabs.query({active:true, currentWindow:true});
+  }
+}
+
 
 //Chrome API
 //wait data from extension
-Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
     if (request.property == "status")
@@ -60,6 +86,14 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
           Browser.api.pageAction.hide(sender.tab.id);
       }
     }
+    else if (request.cmd === "close_oidc")
+    {
+      var curWin = await getCurWin();
+      var curTab = await getCurTab();
+      if (curTab.length > 0 && curTab[0].windowId === curWin.id) {
+        Browser.api.tabs.remove(curTab[0].id);
+      }
+    }
     else
     {
       sendResponse({}); /* stop */
@@ -69,7 +103,4 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
   }
 
 });
-
-
-
 

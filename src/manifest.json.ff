@@ -36,6 +36,11 @@
       "run_at": "document_idle"
     },
     {
+      "matches": ["https://*/*"],
+      "js": ["browser.js", "oidc-webid-inject.js"],
+      "run_at": "document_start"
+    },
+    {
       "matches": ["<all_urls>"],
       "js": ["frame.js"],
       "run_at": "document_idle",
@@ -43,6 +48,7 @@
     }
   ],
   "permissions": [
+    "storage", 
     "webRequest", 
     "webRequestBlocking",
     "tabs", 
