@@ -29,7 +29,10 @@
      return str.lastIndexOf(val, 0) === 0;
   }
 
-  Browser.api.webRequest.onBeforeRequest.addListener(onBeforeRequestLocal, {types: ["main_frame"], urls: ["file:///*"]}, ["blocking"]);
+  Browser.api.webRequest.onBeforeRequest.addListener(
+      onBeforeRequestLocal, 
+        {types: ["main_frame"], urls: ["file:///*"]}, 
+        ["blocking"]);
 
   function onBeforeRequestLocal(d)
   {
@@ -89,7 +92,9 @@
 
 
   Browser.api.webRequest.onHeadersReceived.addListener(
-  	onHeadersReceived, {types: ["main_frame"], urls: ["<all_urls>"]}, ["responseHeaders", "blocking"]);
+  	onHeadersReceived, 
+  	  {types: ["main_frame"], urls: ["<all_urls>"]}, 
+  	  ["responseHeaders", "blocking"]);
 
 
   function onHeadersReceived(d)
@@ -97,7 +102,12 @@
     //console.log(d);
     if (d.method && d.method!=="GET")
       return;
+    if (d.url.endsWith('#osds'))
+      return;
 
+
+    var chk_xml = setting.getValue("ext.osds.handle_xml");
+    var handle_xml = (chk_xml && chk_xml==="1");
     var handle = false;
     var v_cancel = false;
     var type = null;
@@ -179,8 +189,8 @@
         }
       }
 
-      if (!handle && content_type!==null && (content_type.match(/(application\/xml)/) 
-                      || content_type.match(/(text\/xml)/) )) 
+      if (handle_xml && !handle && content_type!==null 
+          && (content_type.match(/(application\/xml)/) || content_type.match(/(text\/xml)/) )) 
       {
           handle = true;
           type = "xml";
@@ -210,6 +220,7 @@
           }
       }
   }
+
 
 
 }

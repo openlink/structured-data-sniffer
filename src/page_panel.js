@@ -225,6 +225,18 @@ function load_data_from_url(loc)
       hdr_accept = 'application/ld+json;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
     else if (type==="rdf")
       hdr_accept = 'application/rdf+xml;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
+    else if (type==="xml")
+      hdr_accept = 'application/xml;text/xml;q=0.9,text/html;application/xhtml+xml;q=0.5,*/*;q=0.1';
+      
+/***
+    var options = {
+        method: 'GET',
+        headers: {
+          'Accept': hdr_accept,
+          'Cache-control': 'no-cache'
+        }
+      }
+***/
 
     jQuery.ajaxSetup({
        dataType: "text",
@@ -236,9 +248,10 @@ function load_data_from_url(loc)
     jQuery.get(url, function(data, status){
         start_parse_data(data, type, url, ext);
     }, "text").fail(function(msg) {
-        alert("Could not load data from: "+url+"\nError: "+msg.statusText);
+        var msg = "Could not load data from: "+url+"\nError: "+msg.statusText;
+        alert(msg);
+        show_Data(msg, '');
     });
-
 }
 
 
@@ -305,8 +318,9 @@ function start_parse_data(data_text, data_type, data_url, ext)
     }
   else
     {
-      var source = sanitize_str(data_text);
-      document.body.innerHTML = "<pre>"+source+"</pre>";
+//      var source = sanitize_str(data_text);
+//      document.body.innerHTML = "<pre>"+source+"</pre>";
+      location.href = data_url+"#osds";
     }
 
 }
@@ -378,12 +392,12 @@ function show_Data(data_error, html_data)
     return err_html;
   }
 
-  $('#tabs a[href=#micro]').hide();
-  $('#tabs a[href=#jsonld]').hide();
-  $('#tabs a[href=#turtle]').hide();
-  $('#tabs a[href=#rdfa]').hide();
-  $('#tabs a[href=#rdf]').hide();
-  $('#tabs a[href=#posh]').hide();
+  $('#tabs a[href="#micro"]').hide();
+  $('#tabs a[href="#jsonld"]').hide();
+  $('#tabs a[href="#turtle"]').hide();
+  $('#tabs a[href="#rdfa"]').hide();
+  $('#tabs a[href="#rdf"]').hide();
+  $('#tabs a[href="#posh"]').hide();
 
 
   if (gData.type === "turtle")
@@ -400,7 +414,7 @@ function show_Data(data_error, html_data)
       if (html.length > 0)
           $('#turtle_items #docdata_view').append(html);
 
-      $('#tabs a[href=#turtle]').show();
+      $('#tabs a[href="#turtle"]').show();
       selectTab('#turtle');
     }
   else if (gData.type === "jsonld")
@@ -417,7 +431,7 @@ function show_Data(data_error, html_data)
       if (html.length > 0)
           $('#jsonld_items #docdata_view').append(html);
 
-      $('#tabs a[href=#jsonld]').show();
+      $('#tabs a[href="#jsonld"]').show();
       selectTab('#jsonld');
     }
   else if (gData.type === "rdf")
@@ -434,7 +448,7 @@ function show_Data(data_error, html_data)
       if (html.length > 0)
           $('#rdf_items #docdata_view').append(html);
 
-      $('#tabs a[href=#rdf]').show();
+      $('#tabs a[href="#rdf"]').show();
       selectTab('#rdf');
     }
 

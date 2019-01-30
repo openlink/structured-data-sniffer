@@ -254,6 +254,11 @@ function loadPref()
     if (chk_action && chk_action==="1")
       $("#chk_show_action_for_url_with_params").attr('checked','checked');
 
+    var chk_xml = gPref.getValue("ext.osds.handle_xml");
+    if (chk_xml && chk_xml==="1")
+      $("#chk_try_handle_xml").attr('checked','checked');
+
+
     var import_url = gPref.getValue("ext.osds.import.url");
     var import_srv = gPref.getValue("ext.osds.import.srv");
 
@@ -293,6 +298,8 @@ function savePref()
    gPref.setValue("ext.osds.pref.user.chk", $('#chk_pref_user').is(':checked')?"1":"0");
 
    gPref.setValue("ext.osds.pref.show_action", $('#chk_show_action_for_url_with_params').is(':checked')?"1":"0");
+
+   gPref.setValue("ext.osds.handle_xml", $('#chk_try_handle_xml').is(':checked')?"1":"0");
 
 //   gPref.setValue("ext.osds.pref.user", $('#pref_user').val().trim());
 

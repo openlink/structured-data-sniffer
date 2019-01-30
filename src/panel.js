@@ -436,17 +436,17 @@ function show_Data(dData)
 
 
   if (!micro)
-    $('#tabs a[href=#micro]').hide();
+    $('#tabs a[href="#micro"]').hide();
   if (!jsonld)
-    $('#tabs a[href=#jsonld]').hide();
+    $('#tabs a[href="#jsonld"]').hide();
   if (!turtle)
-    $('#tabs a[href=#turtle]').hide();
+    $('#tabs a[href="#turtle"]').hide();
   if (!rdfa)
-    $('#tabs a[href=#rdfa]').hide();
+    $('#tabs a[href="#rdfa"]').hide();
   if (!rdf)
-    $('#tabs a[href=#rdf]').hide();
+    $('#tabs a[href="#rdf"]').hide();
   if (!posh)
-    $('#tabs a[href=#posh]').hide();
+    $('#tabs a[href="#posh"]').hide();
 
   gData_showed = true;
 }
@@ -816,23 +816,23 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
         })
         .catch(function(e) {
           console.log("OSDS: Error="+e);
-          $('#tabs a[href=#micro]').hide();
-          $('#tabs a[href=#jsonld]').hide();
-          $('#tabs a[href=#turtle]').hide();
-          $('#tabs a[href=#rdfa]').hide();
-          $('#tabs a[href=#rdf]').hide();
-          $('#tabs a[href=#posh]').hide();
+          $('#tabs a[href="#micro"]').hide();
+          $('#tabs a[href="#jsonld"]').hide();
+          $('#tabs a[href="#turtle"]').hide();
+          $('#tabs a[href="#rdfa"]').hide();
+          $('#tabs a[href="#rdf"]').hide();
+          $('#tabs a[href="#posh"]').hide();
           selectedTab = null;
         });
       }
       else
       {
-        $('#tabs a[href=#micro]').hide();
-        $('#tabs a[href=#jsonld]').hide();
-        $('#tabs a[href=#turtle]').hide();
-        $('#tabs a[href=#rdfa]').hide();
-        $('#tabs a[href=#rdf]').hide();
-        $('#tabs a[href=#posh]').hide();
+        $('#tabs a[href="#micro"]').hide();
+        $('#tabs a[href="#jsonld"]').hide();
+        $('#tabs a[href="#turtle"]').hide();
+        $('#tabs a[href="#rdfa"]').hide();
+        $('#tabs a[href="#rdf"]').hide();
+        $('#tabs a[href="#posh"]').hide();
         selectedTab = null;
 
         selectTab('#cons');
