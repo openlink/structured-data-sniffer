@@ -24,7 +24,7 @@ for I_DIR in background.html background.js content.css converters.js frame.js; d
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in handlers.js html_gen.js oidc-webid-inject.js options.html options.js; do
+for I_DIR in handlers.js html_gen.js OidcWebid.js oidc-webid-inject.js options.html options.js; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
