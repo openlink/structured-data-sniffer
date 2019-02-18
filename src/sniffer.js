@@ -789,9 +789,6 @@
       
       return [viewPortWidth, viewPortHeight];
     }
-/**********************************************/
-
-
 
 
     async function create_popup_table(lst, ev)

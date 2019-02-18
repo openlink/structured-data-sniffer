@@ -796,7 +796,7 @@ function parse_Data(dData)
 
 //Chrome API
 //wait data from extension
-Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
     if (request.property == "doc_data")
@@ -860,7 +860,6 @@ function SuperLinks_exec()
     var link_query = setting.getValue("ext.osds.super_links.query");
     var link_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
 
-//##!!
     if (Browser.isFirefoxWebExt) {
       Browser.api.tabs.query({active:true, currentWindow:true})
         .then((tabs) => {
@@ -1061,11 +1060,6 @@ async function Download_exec()
     $('#'+cur_fmt,'#save-fmt').removeProp('selected');
     $('#'+fmt,'#save-fmt').prop('selected',true);
 
-    if (fmt!=="rdf")
-      $('#rdf','#save-fmt').prop('disabled', true);
-    else
-      $('#rdf','#save-fmt').prop('disabled', false);
-
     var dlg = $( "#save-confirm" ).dialog({
       resizable: true,
       width:500,
@@ -1076,8 +1070,8 @@ async function Download_exec()
           var action = $('#save-action option:selected').attr('id');
           var fmt = $('#save-fmt option:selected').attr('id');
           var fname = action ==='fileupload' ? $('#oidc-url').val().trim(): $('#save-filename').val().trim();
-          save_data(action, fname, fmt);
-          $(this).dialog( "destroy" );
+          save_data(action, fname, fmt)
+           .then(() => {$(this).dialog( "destroy" )});
         },
         Cancel: function() {
           $(this).dialog( "destroy" );
@@ -1092,7 +1086,7 @@ async function Download_exec()
 }
 
 
-function save_data(action, fname, fmt, callback)
+async function save_data(action, fname, fmt, callback)
 {
 
   function out_from(data, error, skipped_error)
@@ -1232,11 +1226,12 @@ function save_data(action, fname, fmt, callback)
     if (data.length==0 && quad_data.length==0)
       return;
 
+
     if (selectedTab==="#micro" && data.length > 0)
     {
       var handler = new Handle_Microdata(true);
       handler.parse(JSON.parse(data[0]), gData.baseURL,
-        function(error, ttl_data)
+        async function(error, ttl_data)
         {
           if (error) {
             exec_action(action, out_from(error));
@@ -1250,95 +1245,72 @@ function save_data(action, fname, fmt, callback)
           }
           else if (fmt==="json") { // json
             var conv = new Convert_Turtle();
-            conv.to_json([ttl_data], null, gData.baseURL,
-              function(error, text_data) {
-                exec_action(action, out_from(text_data, error, conv.skipped_error));
-              });
+            var text_data = await conv.to_json([ttl_data], null, gData.baseURL);
+            exec_action(action, out_from(text_data, null, conv.skipped_error)); 
           }
           else {
-            showInfo("Conversion to RDF/XML isn't supported");
+            var conv = new Convert_Turtle();
+            var text_data = await conv.to_rdf([ttl_data], null, gData.baseURL);
+            exec_action(action, out_from(text_data, null, conv.skipped_error)); 
           }
         });
     }
     else if (selectedTab==="#rdfa" && data.length > 0)
     {
-      var handler = new Handle_Turtle(0, true);
-      handler.parse(data, gData.baseURL,
-        function(error, ttl_data)
-        {
-          if (error || handler.skipped_error.length > 0) {
-            exec_action(action, out_from(null, error, handler.skipped_error));
-            return;
-          }
-          if (ttl==null)
-              return;
-
+      var handler = new Convert_Turtle();
+      var ttl_data = await handler.fix_ttl(data, gData.baseURL);
+      if (handler.skipped_error.length > 0) {
+        exec_action(action, out_from(null, error, handler.skipped_error));
+        return;
+      }
+      if (ttl_data && ttl_data.length > 0) 
+      {
           if (fmt==="ttl") {
             exec_action(action, out_from(ttl_data));
           }
           else if (fmt==="json") { // json
             var conv = new Convert_Turtle();
-            conv.to_json(ttl_data, null, gData.baseURL,
-              function(error, text_data) {
-                exec_action(action, out_from(text_data, error, conv.skipped_error));
-              });
+            var text_data = await conv.to_json(ttl_data, null, gData.baseURL);
+            exec_action(action, out_from(text_data, null, conv.skipped_error));
           }
           else {
-            showInfo("Conversion to RDF/XML isn't supported");
+            var conv = new Convert_Turtle();
+            var text_data = await conv.to_rdf(ttl_data, null, gData.baseURL);
+            exec_action(action, out_from(text_data, null, conv.skipped_error));
           }
-        });
+      }
     }
     else if (src_fmt!==fmt)
     {
       if (src_fmt==="ttl") {
         var conv = new Convert_Turtle();
         if (fmt==="json") {
-          conv.to_json(data, quad_data, gData.baseURL,
-            function(error, text_data) {
-              exec_action(action, out_from(text_data, error, conv.skipped_error));
-            });
+          var text_data = await conv.to_json(data, quad_data, gData.baseURL);
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
         } else if (fmt==="rdf") {
-          showInfo("Conversion to RDF/XML isn't supported");
-/***
-          conv.to_rdf(data, quad_data, gData.baseURL,
-            function(error, text_data) {
-              exec_action(action, out_from(text_data, error, conv.skipped_error));
-            });
-***/
+          var text_data = await conv.to_rdf(data, quad_data, gData.baseURL);
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
         }
       }
       else if (src_fmt==="json"){
         var conv = new Convert_JSONLD();
         if (fmt==="ttl"){
-          conv.to_ttl(data, gData.baseURL,
-            function(error, text_data)
-            {
-              exec_action(action, out_from(text_data, error, conv.skipped_error));
-            });
+          var text_data = await conv.to_ttl(data, gData.baseURL);
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
         } else if (fmt==="rdf"){
-          showInfo("Conversion to RDF/XML isn't supported");
-/***
-          conv.to_rdf(data, gData.baseURL,
-            function(error, text_data) {
-              exec_action(action, out_from(text_data, error, conv.skipped_error));
-            });
-***/
+          var text_data = await conv.to_rdf(data, gData.baseURL);
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
         }
       }
       else if (src_fmt==="rdf"){
         var conv = new Convert_RDF_XML();
         if (fmt==="ttl") {
-          conv.to_ttl(data, gData.baseURL,
-            function(error, text_data)
-            {
-              exec_action(action, out_from(text_data, error, conv.skipped_error));
-            });
+          var text_data = await conv.to_ttl(data, gData.baseURL);
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
+
         } else if (fmt==="json"){
-          conv.to_json(data, gData.baseURL,
-            function(error, text_data)
-            {
-              exec_action(action, out_from(text_data, error, conv.skipped_error));
-            });
+          var text_data = conv.to_json(data, gData.baseURL);
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
         }
       }
     } else {

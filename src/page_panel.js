@@ -607,11 +607,6 @@ async function Download_exec()
     $('#'+cur_fmt,'#save-fmt').removeProp('selected');
     $('#'+fmt,'#save-fmt').prop('selected',true);
 
-    if (fmt!=="rdf")
-      $('#rdf','#save-fmt').prop('disabled', true);
-    else
-      $('#rdf','#save-fmt').prop('disabled', false);
-
     $( "#save-confirm" ).dialog({
       resizable: true,
       width:500,
@@ -622,8 +617,8 @@ async function Download_exec()
           var action = $('#save-action option:selected').attr('id');
           var fmt = $('#save-fmt option:selected').attr('id');
           var fname = action ==='fileupload' ? $('#oidc-url').val().trim(): $('#save-filename').val().trim();
-          save_data(action, fname, fmt);
-          $(this).dialog( "destroy" );
+          save_data(action, fname, fmt)
+           .then(() => {$(this).dialog( "destroy" )});
         },
         Cancel: function() {
           $(this).dialog( "destroy" );
@@ -640,7 +635,7 @@ async function Download_exec()
 
 
 
-function save_data(action, fname, fmt, callback)
+async function save_data(action, fname, fmt, callback)
 {
 
   function out_from(data, error, skipped_error)
@@ -754,43 +749,34 @@ function save_data(action, fname, fmt, callback)
     if (src_fmt!==fmt)
     {
       if (src_fmt==="ttl") {
+        var handler = new Convert_Turtle();
         if (fmt==="json") {
-          var handler = new Convert_Turtle();
-          handler.to_json(data, null, baseURL,
-            function(error, text_data) {
-              exec_action(action, out_from(text_data, error, handler.skipped_error));
-            });
+          var text_data = await handler.to_json(data, null, baseURL);
+          exec_action(action, out_from(text_data, error, handler.skipped_error));
         } else {
-          showInfo("Conversion to RDF/XML isn't supported");
+          var text_data = await handler.to_rdf(data, null, baseURL);
+          exec_action(action, out_from(text_data, error, handler.skipped_error));
         }
       }
       else if (src_fmt==="json") {
+        var handler = new Convert_JSONLD();
         if (fmt==="ttl") {
-          var handler = new Convert_JSONLD();
-          handler.to_ttl(data, baseURL,
-            function(error, text_data)
-            {
-              exec_action(action, out_from(text_data, error, handler.skipped_error));
-            });
+          var text_data = await handler.to_ttl(data, baseURL);
+          exec_action(action, out_from(text_data, error, handler.skipped_error));
         } else {
-          showInfo("Conversion to RDF/XML isn't supported");
+          var text_data = await handler.to_rdf(data, baseURL);
+          exec_action(action, out_from(text_data, error, handler.skipped_error));
         }
       }
       else if (src_fmt==="rdf") {
         if (fmt==="ttl") {
           var conv = new Convert_RDF_XML();
-          conv.to_ttl(data, baseURL,
-            function(error, text_data)
-            {
-              exec_action(action, out_from(text_data, error, conv.skipped_error));
-            });
+          var text_data = await conv.to_ttl(data, baseURL);
+          exec_action(action, out_from(text_data, error, conv.skipped_error));
         } else if (fmt==="json") {
           var conv = new Convert_RDF_XML();
-          conv.to_json(data, baseURL,
-            function(error, text_data)
-            {
-              exec_action(action, out_from(text_data, error, conv.skipped_error));
-            });
+          var text_data = await conv.to_json(data, baseURL);
+          exec_action(action, out_from(text_data, error, conv.skipped_error));
         }
       }
       else {

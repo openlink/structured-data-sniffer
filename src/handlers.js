@@ -455,10 +455,10 @@ N3DataConverter.prototype = {
       {
         p_obj[obj]=1;
 
-        if (obj.termType==="Literal") {
+        if (n_obj.termType==="Literal") {
           p.push({
              value:n_obj.value,
-             type: (n_obj.datatypeString!==this.xsdString) ? obj.datatypeString : "",
+             type: (n_obj.datatypeString!==this.xsdString) ? n_obj.datatypeString : "",
              lang: n_obj.language
             });
         } else {
