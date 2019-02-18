@@ -95,6 +95,14 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
         Browser.api.tabs.remove(curTab[0].id);
       }
     }
+    else if (request.cmd === "getPref")
+    {
+      var val = '';
+      var settings = new Settings();
+      if (request.key)
+        val = settings.getValue(request.key)
+      sendResponse({cmd: request.cmd, key:request.key, val});
+    }
     else
     {
       sendResponse({}); /* stop */

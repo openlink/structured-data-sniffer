@@ -601,77 +601,66 @@
     }
 
 
-    function xhr_new ()
+    function fetchWithTimeout(url, options, timeout) 
     {
-      var xhr = null;
-
-      var oXMLHttpRequest = window.XMLHttpRequest;
-      if (oXMLHttpRequest)
-        xhr = new oXMLHttpRequest(); /* gecko */
-      else if (window.ActiveXObject)
-        xhr = new ActiveXObject("Microsoft.XMLHTTP"); /* ie */
-      return xhr;
+      return Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), timeout)
+        )
+      ]);
     }
 
 
-    function add_super_links(sender, links_query, links_timeout)
+    async function add_super_links(sender, links_query, links_timeout)
     {
       if (g_super_links==null) {
          $('body').append(
            `<div class="super_links_popup" >
-            <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
-            <div class="super_links_popup-content"></div>
+             <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
+             <div class="super_links_popup-content"></div>
             </div> 
-            <div class="super_links_msg" style="font-size: 14px;"> 
-            <table style="border-style:none">
-            <tr>
-             <td class="super_links_msg_td" style="width:16px;">
-              <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img" />
-             </td>
-             <td class="super_links_msg_td">
-              &nbsp;Preparing&nbsp;Super&nbsp;Links
-             </td>
-            </tr>
-            </table>
-            </div> `
+            <div class="super_links_msg" style="font-size: 14px; flex-direction: row; height:40px; padding: 10px 10px 10px 20px;"> 
+              <div style="width:16px;">
+                <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
+              </div>
+              <div>&nbsp;Preparing&nbsp;Super&nbsp;Links</div>
+            </div>`
          );
       }
         var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
         var url_about = "https://linkeddata.uriburner.com/about/html/http/"+result[3]+"?sponger:get=add";
 
-        var xhr = xhr_new ();
-        xhr.onreadystatechange = function()
-          {
-            if (xhr.readyState == 4) {
-              if (xhr.status===200) {
-                  if (xhr.responseURL.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
-                    location.href = xhr.responseURL; //console.log("redirected");
-                    return;
-                  }
-                  exec_super_links_query(links_query, links_timeout);
+        var options = {
+             headers: {
+                'Accept': 'text/html',
+                'Cache-control': 'no-cache'
+             },
+             credentials: 'include',
+            };
 
-              }
-              else {
-                alert("Sponge error:"+xhr.status+" ["+xhr.statusText+"]");
-                //$(".super_links_msg").css("display","none");
-                exec_super_links_query(links_query, links_timeout);
-              }
+        try  {
+          var rc = await fetchWithTimeout(url_about, options, 30000);
+          if (rc.ok && rc.status == 200) {
+            if (rc.redirected && rc.url.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
+              location.href = rc.url; //console.log("redirected");
+              return;
             }
+            exec_super_links_query(links_query, links_timeout);
+
+          } else {
+            alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
+            //$(".super_links_msg").css("display","none");
+            exec_super_links_query(links_query, links_timeout);
           }
 
-        $(".super_links_msg").css("display","block");
-
-        try {
-          xhr.withCredentials = true;
-          xhr.timeout = 30000;
-          xhr.open ('GET', url_about, true);
-          xhr.setRequestHeader ('Accept', 'text/html');
-          xhr.setRequestHeader ('Cache-control', 'no-cache');
-          xhr.send (null);
-        } catch (e) {}
+        } catch(e) {
+          console.log(e);
+        }
     }
 
-    function exec_super_links_query(links_query, links_timeout)
+
+    async function exec_super_links_query(links_query, links_timeout)
     {
       var url = new URL(location.href);
       url.hash = '';
@@ -689,45 +678,56 @@
       var url_links = "https://linkeddata.uriburner.com/sparql";
       var links_sparql_query = new Settings().createSuperLinksQuery(links_query, iri, br_lang);
 
-      jQuery.ajaxSetup({
-         dataType: "text",
-         headers:{'Accept': 'application/json',
-               'Cache-control': 'no-cache'},
-         cache: false,
-         timeout: links_timeout,
-         xhrFields: {
-               withCredentials: true
-         }
-      });
+      $(".super_links_msg").css("display","flex");
 
-      params = {
-              format:'application/json',
-              query: links_sparql_query,
-              CXML_redir_for_subjs: 121,
-              timeout: links_timeout
-                };
+      var get_url = new URL(url_links);
+      var params = get_url.searchParams;
+      params.append('format', 'application/json');
+      params.append('query', links_sparql_query);
+      params.append('CXML_redir_for_subjs', 121);
+      params.append('timeout', links_timeout);
+      params.append('_', Date.now());
 
-      jQuery.get(url_links, params, function(data, status){
-        try {
-          var val = JSON.parse(data);
-          g_super_links = val.results.bindings;
-          var labels = [];
-          for(var i=0; i < g_super_links.length; i++) {
-            labels.push(g_super_links[i].extractLabel.value);
-            g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
+      var options = {
+            headers: {
+              'Accept': 'application/json',
+              'Cache-control': 'no-cache'
+            },
+            credentials: 'include',
+          };
+
+      try  {
+        var rc = await fetchWithTimeout(get_url, options, links_timeout);
+        if (rc.ok && rc.status == 200) {
+          try {
+            var data = await rc.text();
+            var val = JSON.parse(data);
+            g_super_links = val.results.bindings;
+            var labels = [];
+            for(var i=0; i < g_super_links.length; i++) {
+              labels.push(g_super_links[i].extractLabel.value);
+              g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
+            }
+
+            mark_strings(labels);
+          } catch(e) {
+            console.log(e);
+          } finally {
+            $(".super_links_msg").css("display","none");
           }
 
-          mark_strings(labels);
-        } finally {
-          $(".super_links_msg").css("display","none");
+        } else {
+          alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
+          //$(".super_links_msg").css("display","none");
+          exec_super_links_query(links_query, links_timeout);
         }
-      }, "text").fail(function(msg) {
-          $(".super_links_msg").css("display","none");
-          alert("Could not load data from: "+url_links+"\nError: "+msg.statusText);
-      });
 
-
+      } catch(e) {
+        $(".super_links_msg").css("display","none");
+        alert("Could not load data from: "+url_links+"\nError: "+e);
+      }
     }
+
 
 /**********************************************/
     function positionPopupOnPage( evt )
@@ -794,15 +794,16 @@
 
 
 
-    function create_popup_table(lst, ev)
+    async function create_popup_table(lst, ev)
     {
       $('.super_links_popup-content').children().remove();
 
-      var settings = new Settings();
+      var settings = new SettingsProxy();
 
-      function create_href(url) {
+      async function create_href(url) {
          // http://linkeddata.uriburner.com/about/id/entity/https/thenextweb.com/hardfork/2019/02/05/facebook-is-doing-something-with-blockchain-but-nobody-knows-what/#babelfy_bn%3A03624775n_ED31AF22-2E19-11E9-B5EB-80FD74DC2BE9       
          var href = url;
+/***
          if (href.startsWith('http://'))
            href = href.substring('http://'.length)
          else if (href.startsWith('https://'))
@@ -822,9 +823,8 @@
            href = 'https://' + href.substring('https/'.length)
          else
            return url;
-
-//         return settings.createSparqlUrl(href);
-         return settings.createImportUrl(href);
+****/
+         return await settings.createImportUrl(href);
       }
       
 
@@ -846,7 +846,7 @@
 
               var association = v.association.value;
               var associationLabel = v.associationLabel?v.associationLabel.value:association;
-              var extract_href = create_href(extract);
+              var extract_href = await create_href(extract);
 
               tdata += 
               `<tr><td> <a target="_blank" href="${extract_href}">${extLabel}</a></td>`+
@@ -863,7 +863,7 @@
                +'<thead><tr>'
                +'<th style="max-width:190px;">Word</th>'
                +'<th style="max-width:95px;">Association</th>'
-               +'<th style="max-width:285px;">Source</th>'
+               +'<th style="max-width:285px;width:100%;">Source</th>'
                +'<th style="max-width:300px;">Type</th>'
                +'</tr></thead>'
                 +'<tbody>'+tdata+'</tbody>'
@@ -1032,5 +1032,6 @@
             console.log("OSDS:" + e);
         }
     });
+
 
 })();

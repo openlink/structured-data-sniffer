@@ -18,16 +18,17 @@
  *
  */
 
-Settings = function(data) {
-  this.def_import_url = "http://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
-  this.def_import_srv = "describe";
+class Settings {
+  constructor(data) {
+    this.def_import_url = "http://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
+    this.def_import_srv = "describe";
 //  this.def_rww_edit_url = "http://linkeddata.uriburner.com/rdf-editor/#/editor?newDocument=true&statement:entity={url}&view=statements";
-  this.def_rww_edit_url = "http://linkeddata.uriburner.com/rdf-editor/#/editor?data={data}&view=statements";
+    this.def_rww_edit_url = "http://linkeddata.uriburner.com/rdf-editor/#/editor?data={data}&view=statements";
 
-  this.def_sparql_url = "http://linkeddata.uriburner.com/sparql/?query={query}";
-  this.def_sparql_cmd = "select";
+    this.def_sparql_url = "http://linkeddata.uriburner.com/sparql/?query={query}";
+    this.def_sparql_cmd = "select";
 
-  this.def_sparql_qry_spo = "DEFINE get:soft \"soft\" \n"+
+    this.def_sparql_qry_spo = "DEFINE get:soft \"soft\" \n"+
                             "SELECT DISTINCT ?s AS ?subject  ?p AS ?predicate ?o AS ?object \n"+
                             "FROM <{url}> \n"+
                             "WHERE { ?s ?p ?o \n"+
@@ -37,7 +38,7 @@ Settings = function(data) {
                             "               OR CONTAINS(str(?p),'mentions')) \n"+
                             "      } LIMIT 100\n";
 
-  this.def_sparql_qry_eav = "DEFINE get:soft \"soft\" \n"+
+    this.def_sparql_qry_eav = "DEFINE get:soft \"soft\" \n"+
                             "SELECT DISTINCT ?s AS ?entity  ?p AS ?attribute ?o AS ?value \n"+
                             "FROM <{url}> \n"+
                             "WHERE { ?s ?p ?o \n"+
@@ -47,9 +48,9 @@ Settings = function(data) {
                             "               OR CONTAINS(str(?p),'mentions')) \n"+
                             "      } LIMIT 100\n";
 
-  this.def_super_links_timeout = 30000000;
+    this.def_super_links_timeout = 30000000;
 
-  this.def_super_links_query = ''
+    this.def_super_links_query = ''
   +'DEFINE get:soft "soft" \n'
   +' \n'
   +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
@@ -103,12 +104,10 @@ Settings = function(data) {
   +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider  \n'
   +'ORDER BY DESC (2) \n';
 
-  this._data = (data!== undefined && data!==null) ? data:null;
-}
+    this._data = (data!== undefined && data!==null) ? data:null;
+  }
 
-
-Settings.prototype = {
-  getSparqlQueryDefault : function(mode)
+  getSparqlQueryDefault(mode)
   {
     if (mode===null)
       mode = this.getValue("ext.osds.uiterm.mode");
@@ -117,10 +116,12 @@ Settings.prototype = {
       return this.def_sparql_qry_eav;
     else
       return this.def_sparql_qry_spo;
-  },
+  }
 
-  getValue : function(id)
+  getValue(id)
   {
+    
+    
     var val = null;
 
     try {
@@ -179,9 +180,9 @@ Settings.prototype = {
           break;
     }
     return val;
-  },
+  }
 
-  setValue : function(id, val)
+  setValue(id, val)
   {
     try {
 /**
@@ -195,9 +196,9 @@ Settings.prototype = {
     } catch(e) {
       console.log(e);
     }
-  },
+  }
 
-  createRwwUrl : function (curUrl, data)
+  createRwwUrl(curUrl, data)
   {
     var edit_url = this.getValue('ext.osds.rww.edit.url');
     var store_url = this.getValue('ext.osds.rww.store.url');
@@ -217,29 +218,34 @@ Settings.prototype = {
       edit_url = edit_url.replace("{data}", encodeURIComponent(data?data:""));
 
     return edit_url;
-  },
+  }
 
 
-  createSparqlUrl : function (curUrl)
+  createSparqlUrl(curUrl)
   {
     var sparql_url = this.getValue('ext.osds.sparql.url');
     var query = this.getValue('ext.osds.sparql.query');
 
     query = encodeURIComponent(query.replace(/{url}/g, curUrl));
     return sparql_url.replace(/{query}/g, query);
-  },
+  }
 
-  createSuperLinksQuery : function (query, curUrl, lang)
+  createSuperLinksQuery(query, curUrl, lang)
   {
 //    var query = this.getValue('ext.osds.super_links.query');
     return query.replace(/{url}/g, curUrl).replace(/{lang}/g, lang);
-  },
+  }
 
 
-  createImportUrl : function (curUrl)
+  createImportUrl(curUrl)
   {
     var handle_url = this.getValue('ext.osds.import.url');
     var srv = this.getValue('ext.osds.import.srv');
+    return this._createImportUrl_1(curUrl, handle_url, srv)
+  }
+
+  _createImportUrl_1(curUrl, handle_url, srv)
+  {
     var docURL = encodeURIComponent(curUrl);
 
     switch(srv) {
@@ -269,7 +275,42 @@ Settings.prototype = {
        return handle_url + docURL;
   }
 
+}
 
+
+class SettingsProxy {
+  constructor() {
+    this.settings = new Settings();
+  }
+
+  async getValue(key) 
+  {
+    if (Browser.isChromeWebExt) {
+      return new Promise(function (resolve, reject) {
+        Browser.api.runtime.sendMessage({cmd: "getPref", key},
+          function(resp) {
+            var val = null;
+            if (resp.val && resp.key === key)
+              val = resp.val
+            resolve(resp.val);
+          });
+        });
+    } else {
+
+      var resp = await Browser.api.runtime.sendMessage({cmd: "getPref", key});
+      var val = null;
+      if (resp.val && resp.key === key)
+        val = resp.val;
+      return val;
+    }
+  }
+
+  async createImportUrl(curUrl)
+  {
+    var handle_url = await this.getValue('ext.osds.import.url');
+    var srv = await this.getValue('ext.osds.import.srv');
+    return this.settings._createImportUrl_1(curUrl, handle_url, srv)
+  }
 
 }
 
