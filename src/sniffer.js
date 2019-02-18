@@ -786,24 +786,9 @@
         viewPortWidth = window.innerWidth;
         viewPortHeight = window.innerHeight;
       }
-/**
-	// IE6 in standards compliant mode (i.e. with a valid doctype as the
-	// first line in the document)
-       else if (typeof document.documentElement != 'undefined'
-                && typeof document.documentElement.clientWidth !=
-               'undefined' && document.documentElement.clientWidth != 0)
-      {
-          viewPortWidth = document.documentElement.clientWidth;
-          viewPortHeight = document.documentElement.clientHeight;
-      }
-      // older versions of IE
-      else {
-          viewPortWidth = document.getElementsByTagName('body')[0].clientWidth;
-          viewPortHeight = document.getElementsByTagName('body')[0].clientHeight;
-      }
-**/
- 	return [viewPortWidth, viewPortHeight];
-      }
+      
+      return [viewPortWidth, viewPortHeight];
+    }
 /**********************************************/
 
 
@@ -812,6 +797,36 @@
     function create_popup_table(lst, ev)
     {
       $('.super_links_popup-content').children().remove();
+
+      var settings = new Settings();
+
+      function create_href(url) {
+         // http://linkeddata.uriburner.com/about/id/entity/https/thenextweb.com/hardfork/2019/02/05/facebook-is-doing-something-with-blockchain-but-nobody-knows-what/#babelfy_bn%3A03624775n_ED31AF22-2E19-11E9-B5EB-80FD74DC2BE9       
+         var href = url;
+         if (href.startsWith('http://'))
+           href = href.substring('http://'.length)
+         else if (href.startsWith('https://'))
+           href = href.substring('http://'.length)
+         else
+           return url;
+
+         var prefix = 'linkeddata.uriburner.com/about/id/entity/';
+         if (href.startsWith(prefix))
+           href = href.substring(prefix.length);
+         else
+           return url;
+
+         if (href.startsWith('http/'))
+           href = 'http://'+ href.substring('http/'.length)
+         else if (href.startsWith('https/'))
+           href = 'https://' + href.substring('https/'.length)
+         else
+           return url;
+
+//         return settings.createSparqlUrl(href);
+         return settings.createImportUrl(href);
+      }
+      
 
       if (lst.length > 0)
       {
@@ -831,14 +846,14 @@
 
               var association = v.association.value;
               var associationLabel = v.associationLabel?v.associationLabel.value:association;
+              var extract_href = create_href(extract);
 
-
-              tdata += '<tr>'
-                +'<td> <a target="_blank" href="'+extract+'">'+extLabel+'</a></td>'
-                +'<td> <a target="_blank" href="'+association+'">'+associationLabel+'</a> </td>'
-                +'<td> <a target="_blank" href="'+prov+'">'+provName+'</a></td>'
-                +'<td> <a target="_blank" href="'+entityType+'">'+entityTypeLabel+'</a></td>'
-                +'</tr>';
+              tdata += 
+              `<tr><td> <a target="_blank" href="${extract_href}">${extLabel}</a></td>`+
+              ` <td> <a target="_blank" href="${association}">${associationLabel}</a> </td>`+
+              ` <td> <a target="_blank" href="${prov}">${provName}</a></td>`+
+              ` <td> <a target="_blank" href="${entityType}">${entityTypeLabel}</a></td>`+
+              `</tr>`;
             }
           } catch(e) {}
         }
