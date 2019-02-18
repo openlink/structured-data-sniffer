@@ -508,20 +508,20 @@ function Sparql_exec()
 
 
 
-async function Download_exec_update_state() 
+function Download_exec_update_state() 
 {
 
   try {
-    await gOidc.checkSession();
+    gOidc.checkSession().then(() => {
+      var webid_href = document.getElementById('oidc-webid');
 
-    var webid_href = document.getElementById('oidc-webid');
+      webid_href.href = gOidc.webid ? gOidc.webid :'';
+      webid_href.title = gOidc.webid ? gOidc.webid :'';
+      webid_href.style.display = gOidc.webid ? 'initial' :'none';
 
-    webid_href.href = gOidc.webid ? gOidc.webid :'';
-    webid_href.title = gOidc.webid ? gOidc.webid :'';
-    webid_href.style.display = gOidc.webid ? 'initial' :'none';
-
-    var oidc_login_btn = document.getElementById('oidc-login-btn');
-    oidc_login_btn.innerText = gOidc.webid ? 'Logout' : 'Login';
+      var oidc_login_btn = document.getElementById('oidc-login-btn');
+      oidc_login_btn.innerText = gOidc.webid ? 'Logout' : 'Login';
+    });
 
   } catch (e) {
     console.log(e);
@@ -565,7 +565,7 @@ async function Download_exec()
     Download_exec_update_state();
   });
 
-  await Download_exec_update_state();
+  Download_exec_update_state();
 
   var isFileSaverSupported = false;
   try {
@@ -752,31 +752,31 @@ async function save_data(action, fname, fmt, callback)
         var handler = new Convert_Turtle();
         if (fmt==="json") {
           var text_data = await handler.to_json(data, null, baseURL);
-          exec_action(action, out_from(text_data, error, handler.skipped_error));
+          exec_action(action, out_from(text_data, null, handler.skipped_error));
         } else {
           var text_data = await handler.to_rdf(data, null, baseURL);
-          exec_action(action, out_from(text_data, error, handler.skipped_error));
+          exec_action(action, out_from(text_data, null, handler.skipped_error));
         }
       }
       else if (src_fmt==="json") {
         var handler = new Convert_JSONLD();
         if (fmt==="ttl") {
           var text_data = await handler.to_ttl(data, baseURL);
-          exec_action(action, out_from(text_data, error, handler.skipped_error));
+          exec_action(action, out_from(text_data, null, handler.skipped_error));
         } else {
           var text_data = await handler.to_rdf(data, baseURL);
-          exec_action(action, out_from(text_data, error, handler.skipped_error));
+          exec_action(action, out_from(text_data, null, handler.skipped_error));
         }
       }
       else if (src_fmt==="rdf") {
         if (fmt==="ttl") {
           var conv = new Convert_RDF_XML();
           var text_data = await conv.to_ttl(data, baseURL);
-          exec_action(action, out_from(text_data, error, conv.skipped_error));
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
         } else if (fmt==="json") {
           var conv = new Convert_RDF_XML();
           var text_data = await conv.to_json(data, baseURL);
-          exec_action(action, out_from(text_data, error, conv.skipped_error));
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
         }
       }
       else {

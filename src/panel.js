@@ -464,7 +464,7 @@ function check_Microdata(val)
         function(error, html_data)
         {
           if (error)
-            val.d.micro.error = error.toString();
+            val.d.micro.error.push(error.toString());
           else
             val.d.micro.expanded = html_data;
 
@@ -647,7 +647,7 @@ function check_RDFa(val)
       handler.parse(val.d.rdfa.data, gData.baseURL,
         function(error, html_data) {
           if (error)
-            val.d.rdfa.error = error;
+            val.d.rdfa.error.push(error);
           else {
             val.d.rdfa.expanded = html_data;
             gData.rdfa.ttl_text = [val.d.rdfa.ttl];
@@ -726,13 +726,13 @@ function check_RDF_XML_Nano(val)
 function parse_Data(dData)
 {
   dData.micro.expanded = null;
-  dData.micro.error = null;
+  dData.micro.error = [];
   dData.jsonld.expanded = null;
   dData.jsonld.error = [];
   dData.turtle.expanded = null;
   dData.turtle.error = [];
   dData.rdfa.expanded = null;
-  dData.rdfa.error = null;
+  dData.rdfa.error = [];
   dData.ttl_nano.expanded = null;
   dData.ttl_nano.error = null;
   dData.json_nano.expanded = null;
@@ -740,7 +740,7 @@ function parse_Data(dData)
   dData.posh.expanded = null;
   dData.posh.error = [];
   dData.rdf.expanded = null;
-  dData.rdf.error = null;
+  dData.rdf.error = [];
   dData.rdf_nano.expanded = null;
   dData.rdf_nano.error = null;
   doc_URL = dData.doc_URL;
@@ -951,19 +951,20 @@ function Prefs_exec()
 
 
 
-async function Download_exec_update_state() 
+function Download_exec_update_state() 
 {
   try {
-    await gOidc.checkSession();
+    gOidc.checkSession().then(() => {
+      var webid_href = document.getElementById('oidc-webid');
 
-    var webid_href = document.getElementById('oidc-webid');
+      webid_href.href = gOidc.webid ? gOidc.webid :'';
+      webid_href.title = gOidc.webid ? gOidc.webid :'';
+      webid_href.style.display = gOidc.webid ? 'initial' :'none';
 
-    webid_href.href = gOidc.webid ? gOidc.webid :'';
-    webid_href.title = gOidc.webid ? gOidc.webid :'';
-    webid_href.style.display = gOidc.webid ? 'initial' :'none';
+      var oidc_login_btn = document.getElementById('oidc-login-btn');
+      oidc_login_btn.innerText = gOidc.webid ? 'Logout' : 'Login';
+    });
 
-    var oidc_login_btn = document.getElementById('oidc-login-btn');
-    oidc_login_btn.innerText = gOidc.webid ? 'Logout' : 'Login';
 
   } catch (e) {
     console.log(e);
@@ -1009,7 +1010,7 @@ async function Download_exec()
     Download_exec_update_state();
   });
 
-  await Download_exec_update_state();
+  Download_exec_update_state();
 
   var isFileSaverSupported = false;
   try {

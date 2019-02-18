@@ -160,7 +160,9 @@ class Convert_Turtle{
                        jsonld.compact(doc, context, function(error, compacted) {
                          if (error) {
                            self.skipped_error.push(error);
-                           resolve('');
+                           //resolve('');
+                           var json = {'@context':context, '@graph':doc};
+                           resolve(JSON.stringify(json, null, 2));
                          }
                          else {
                            resolve(JSON.stringify(compacted, null, 2));
@@ -270,7 +272,7 @@ class Convert_JSONLD {
                 resolve('');
               }
               else {
-                jsonld.toRDF(expanded, {format: 'application/nquads', includeRelativeUrls: true},
+                jsonld.toRDF(expanded, {base:baseURL, format: 'application/nquads', includeRelativeUrls: true},
                   function(error, nquads) {
                     if (error) {
                       self.skipped_error.push(""+error);
