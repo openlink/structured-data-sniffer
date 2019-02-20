@@ -275,6 +275,104 @@ class Settings {
        return handle_url + docURL;
   }
 
+
+  createDefaultImportCmdFor(srv, _url)
+  {
+    var url = new URL(_url);
+    var h_url = "";
+
+    switch (srv) {
+      case 'describe':
+        url.protocol = 'http:';
+        url.pathname = '/describe/';
+        url.search = '';
+        url.hash = '';
+        h_url = url.toString();
+        h_url += '?url={url}&sponger:get=add';
+        break;
+      case 'describe-ssl':
+        url.protocol = 'https:';
+        url.pathname = '/describe/';
+        url.search = '';
+        url.hash = '';
+        h_url = url.toString();
+        h_url += '?url={url}&sponger:get=add';
+        break;
+      case 'about':
+        url.protocol = 'http:';
+        url.pathname = '/about/html/';
+        url.search = '';
+        url.hash = '';
+        h_url = url.toString();
+        break;
+      case 'about-ssl':
+        url.protocol = 'https:';
+        url.pathname = '/about/html/';
+        url.search = '';
+        url.hash = '';
+        h_url = url.toString();
+        break;
+      case 'ode':
+        url.protocol = 'http:';
+        url.pathname = '/ode/';
+        url.search = '?uri=';
+        url.hash = '';
+        h_url = url.toString();
+        break;
+      case 'ode-ssl':
+        url.protocol = 'https:';
+        url.pathname = '/ode/';
+        url.search = '?uri=';
+        url.hash = '';
+        h_url = url.toString();
+        break;
+      case 'custom':
+        h_url = _url;
+        break;
+    }
+    return h_url;
+  }
+
+
+  createSpongeCmdFor(srv, _url)
+  {
+    var h_url = "";
+    var docURL;
+
+    if (srv==='describe' || srv==='describe-ssl') {
+      docURL = encodeURIComponent(_url);
+    }
+    else {
+        var rc = encodeURIComponent(_url).match(/^((\w+):\/)?\/?(.*)$/);
+        if (!rc) {
+          docURL = encodeURIComponent(_url);
+        }
+        docURL = rc[2] + '/' + rc[3];
+    }
+
+    switch (srv) {
+      case 'describe':
+        h_url = 'http://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add';
+        break;
+      case 'describe-ssl':
+        h_url = 'https://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add';
+        break;
+      case 'about':
+        h_url = 'http://linkeddata.uriburner.com/about/html/{url}?sponger:get=add';
+        break;
+      case 'about-ssl':
+      default:
+        h_url = 'https://linkeddata.uriburner.com/about/html/{url}?sponger:get=add';
+        break;
+    }
+
+    if (h_url.indexOf("{url}")!=-1)
+       return h_url.replace("{url}",docURL);
+    else
+       return h_url + docURL;
+  }
+
+
 }
 
 
@@ -287,7 +385,7 @@ class SettingsProxy {
   {
     if (Browser.isChromeWebExt) {
       return new Promise(function (resolve, reject) {
-        Browser.api.runtime.sendMessage({cmd: "getPref", key},
+        Browser.api.runtime.sendMessage({'cmd': 'getPref', 'key':key},
           function(resp) {
             var val = null;
             if (resp.val && resp.key === key)
@@ -297,7 +395,7 @@ class SettingsProxy {
         });
     } else {
 
-      var resp = await Browser.api.runtime.sendMessage({cmd: "getPref", key});
+      var resp = await Browser.api.runtime.sendMessage({'cmd': 'getPref', 'key':key});
       var val = null;
       if (resp.val && resp.key === key)
         val = resp.val;
@@ -310,6 +408,16 @@ class SettingsProxy {
     var handle_url = await this.getValue('ext.osds.import.url');
     var srv = await this.getValue('ext.osds.import.srv');
     return this.settings._createImportUrl_1(curUrl, handle_url, srv)
+  }
+
+  createDefaultImportCmdFor(srv, _url)
+  {
+    return this.settings.createDefaultImportCmdFor(srv, _url);
+  }
+
+  createSpongeCmdFor(srv, _url)
+  {
+    return this.settings.createSpongeCmdFor(srv, _url)
   }
 
 }

@@ -58,6 +58,26 @@ async function getCurTab()
 Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
+    if (request.cmd === "close_oidc_web")
+    {
+      var curWin = await getCurWin();
+      var curTab = await getCurTab();
+      if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
+          && curTab[0].url === request.url) {
+        Browser.api.tabs.remove(curTab[0].id);
+      }
+    }
+    
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
+
+
+Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+{
+  try {
     if (request.property == "status")
     {
       var doc_URL = request.doc_URL;
@@ -86,30 +106,22 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
           Browser.api.pageAction.hide(sender.tab.id);
       }
     }
-    else if (request.cmd === "close_oidc_web")
-    {
-      var curWin = await getCurWin();
-      var curTab = await getCurTab();
-      if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
-          && curTab[0].url === request.url) {
-        Browser.api.tabs.remove(curTab[0].id);
-      }
-    }
     else if (request.cmd === "getPref")
     {
       var val = '';
       var settings = new Settings();
       if (request.key)
         val = settings.getValue(request.key)
-      sendResponse({cmd: request.cmd, key:request.key, val});
+      sendResponse({'cmd': request.cmd, 'key':request.key, 'val':val});
     }
+/**
     else
     {
-      sendResponse({}); /* stop */
+      sendResponse({}); // stop
     }
+**/
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }
 
 });
-

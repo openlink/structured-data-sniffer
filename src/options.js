@@ -25,84 +25,88 @@ var yasqe_srv = null;
 $(function(){
 	// Tabs
 
-	gPref = new Settings();
+  gPref = new Settings();
 
-	$("#revert-confirm").hide();
-	$("#users-edit").hide();
-	$('#users_add').click(addUsersEmpty);
-	$('#users_add').button({
-		icons: { primary: 'ui-icon-plusthick' },
-		text: false
-	});
+  $("#revert-confirm").hide();
+  $("#users-edit").hide();
+  $('#users_add').click(addUsersEmpty);
+  $('#users_add').button({
+	icons: { primary: 'ui-icon-plusthick' },
+	text: false
+  });
 
 
   $('#tabs').tabs({
-		activate: function( event, ui ) {
-			if (ui.newPanel[0].id == "tabs-2") {
-				var s = yasqe_srv.getValue();
-				yasqe_srv.setValue(s);
-			}
-			else if (ui.newPanel[0].id == "tabs-3") {
-        var s = yasqe_slinks.getValue();
-        yasqe_slinks.setValue(s);
-			}
-		}
+    activate: function( event, ui ) {
+	if (ui.newPanel[0].id == "tabs-2") {
+	   var s = yasqe_srv.getValue();
+	   yasqe_srv.setValue(s);
+	}
+	else if (ui.newPanel[0].id == "tabs-3") {
+           var s = yasqe_slinks.getValue();
+           yasqe_slinks.setValue(s);
+	}
+    }
   });
 
-	try{
-		yasqe_slinks = YASQE.fromTextArea(document.getElementById('super-links-query'), {
+  try{
+    yasqe_slinks = YASQE.fromTextArea(document.getElementById('super-links-query'), {
        lineNumbers: true,
-	     lineWrapping: false,
-	     sparql: { showQueryButton: false },
+      lineWrapping: false,
+            sparql: { showQueryButton: false },
        createShortLink : null,
        createShareLink : null,
 	     persistent: null,
-		});
-	  yasqe_slinks.setSize("100%", 480);
+    });
+    yasqe_slinks.setSize("100%", 480);
 
-	  yasqe_srv = YASQE.fromTextArea(document.getElementById('sparql-query'), {
+    yasqe_srv = YASQE.fromTextArea(document.getElementById('sparql-query'), {
 			lineNumbers: true,
 			lineWrapping: false,
 			sparql: { showQueryButton: false },
 			createShortLink : null,
 			createShareLink : null,
 			persistent: null,
-	  });
+    });
 
-	  yasqe_srv.setSize("100%", 420);
+    yasqe_srv.setSize("100%", 420);
   } catch(e) {
-		console.log(e);
+    console.log(e);
   }
 
-	loadPref();
+  try {
+    loadPref();
+  } catch(e) {
+    console.log(e);
+  }
 
-	$('#uiterm-mode').change(function() {
-		var cmd = $('#sparql-cmd option:selected').attr('id');
-		  yasqe_srv.setValue(createSparqlQuery(cmd));
-	});
+  $('#uiterm-mode').change(function() {
+      var cmd = $('#sparql-cmd option:selected').attr('id');
+      yasqe_srv.setValue(createSparqlQuery(cmd));
+  });
 
-	$('#import-srv').change(function() {
-			setTimeout(enableCtrls,200);
-	});
+  $('#import-srv').change(function() {
+	setTimeout(enableCtrls,200);
+  });
 
-	$('#sparql-cmd').change(function() {
-		var cmd = $('#sparql-cmd option:selected').attr('id');
-		 yasqe_srv.setValue(createSparqlQuery(cmd));
-	});
+  $('#sparql-cmd').change(function() {
+	var cmd = $('#sparql-cmd option:selected').attr('id');
+	 yasqe_srv.setValue(createSparqlQuery(cmd));
+  });
 
-	$('#OK_btn').click(savePref);
-	$('#Cancel_btn').click(closeOptions);
+  $('#OK_btn').click(savePref);
+  $('#Cancel_btn').click(closeOptions);
 
-	$('#import-set-def').click(setImportDefaults);
-	$('#rww-set-def').click(setRWWDefaults);
-	$('#sparql-set-def').click(setSparqlDefaults);
-	$('#super-links-set-def').click(setSuperLinksDefaults);
+  $('#import-set-def').click(setImportDefaults);
+  $('#rww-set-def').click(setRWWDefaults);
+  $('#sparql-set-def').click(setSparqlDefaults);
+  $('#super-links-set-def').click(setSuperLinksDefaults);
 
-	$('#call_edit_users').click(call_edit_users);
+  $('#call_edit_users').click(call_edit_users);
 
-	enableCtrls();
+  enableCtrls();
 
-	$('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
+  $('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
 
 });
 
@@ -197,6 +201,9 @@ function setSuperLinksDefaults()
         "OK": function() {
           $('#super-links-timeout').val(gPref.def_super_links_timeout);
           yasqe_slinks.setValue(gPref.def_super_links_query);
+          DOM.qSel('#super-links-sponge #about').selected = true;
+          DOM.qSel('#super-links-viewer #html-fb').selected = true;
+
           $(this).dialog( "close" );
         },
         Cancel: function() {
@@ -286,6 +293,14 @@ function loadPref()
 
     var super_timeout = gPref.getValue("ext.osds.super_links.timeout");
     $('#super-links-timeout').val(super_timeout);
+
+    var sponge = gPref.getValue("ext.osds.super-links-sponge");
+    if (sponge)
+      DOM.qSel('#super-links-sponge #'+sponge).selected = true;
+
+    var viewer = gPref.getValue("ext.osds.super-links-viewer");
+    if (viewer)
+      DOM.qSel('#super-links-viewer #'+viewer).selected = true;
 }
 
 
@@ -327,6 +342,13 @@ function savePref()
    var timeout = $('#super-links-timeout').val().trim();
    gPref.setValue("ext.osds.super_links.timeout", parseInt(timeout, 10));
 
+   var v; 
+   v = DOM.qSel('#super-links-sponge option:checked').id;
+   gPref.setValue("ext.osds.super-links-sponge", v);
+
+   v = DOM.qSel('#super-links-viewer option:checked').id;
+   gPref.setValue("ext.osds.super-links-viewer", v);
+
    closeOptions();
 }
 
@@ -335,69 +357,12 @@ function savePref()
 function enableCtrls()
 {
     var srv = $('#import-srv option:selected').attr('id');
-    var h_url = createCmdImportURL(srv, $('#import-url').val().trim());
+    var h_url = new Settings.createDefaultImportCmdFor(srv, $('#import-url').val().trim());
 
     $('#import-url-bcast').show();
     $('#import-url').val(h_url);
 };
 
-
-function createCmdImportURL(srv, _url)
-{
-    var url = new URL(_url);
-    var h_url = "";
-
-    switch (srv) {
-      case 'describe':
-        url.protocol = 'http:';
-        url.pathname = '/describe/';
-        url.search = '';
-        url.hash = '';
-        h_url = url.toString();
-        h_url += '?url={url}&sponger:get=add';
-        break;
-      case 'describe-ssl':
-        url.protocol = 'https:';
-        url.pathname = '/describe/';
-        url.search = '';
-        url.hash = '';
-        h_url = url.toString();
-        h_url += '?url={url}&sponger:get=add';
-        break;
-      case 'about':
-        url.protocol = 'http:';
-        url.pathname = '/about/html/';
-        url.search = '';
-        url.hash = '';
-        h_url = url.toString();
-        break;
-      case 'about-ssl':
-        url.protocol = 'https:';
-        url.pathname = '/about/html/';
-        url.search = '';
-        url.hash = '';
-        h_url = url.toString();
-        break;
-      case 'ode':
-        url.protocol = 'http:';
-        url.pathname = '/ode/';
-        url.search = '?uri=';
-        url.hash = '';
-        h_url = url.toString();
-        break;
-      case 'ode-ssl':
-        url.protocol = 'https:';
-        url.pathname = '/ode/';
-        url.search = '?uri=';
-        url.hash = '';
-        h_url = url.toString();
-        break;
-      case 'custom':
-        h_url = _url;
-        break;
-    }
-    return h_url;
-};
 
 
 function createSparqlQuery(cmd)
@@ -520,3 +485,9 @@ function save_users_data()
 
   gPref.setValue('ext.osds.pref.user.list', JSON.stringify(list, undefined, 2));
 }
+
+var DOM = {};
+
+DOM.qSel = (sel) => { return document.querySelector(sel); };
+DOM.iSel = (id) => { return document.getElementById(id); };
+

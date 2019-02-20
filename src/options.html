@@ -227,8 +227,27 @@
              <table>
                <tr>
                  <td>Query&nbspTimeout: </td>
-                 <td> <input id="super-links-timeout" style="WIDTH: 70px"> </td>
-                 <td> milliseconds (values less than 1000 are ignored)</td>
+                 <td> <input id="super-links-timeout" style="WIDTH: 70px"> milliseconds (values less than 1000 are ignored) </td>
+              </tr>
+               <tr>
+                 <td style="text-align:right;">SpongeMode: </td>
+                 <td> 
+                   <SELECT id="super-links-sponge" style="WIDTH: 200px" >
+                     <OPTION id="describe" >URIBurner Describe</OPTION>
+                     <OPTION id="describe-ssl" SELECTED>URIBurner Describe TLS</OPTION>
+                     <OPTION id="about">URIBurner About</OPTION>
+                     <OPTION id="about-ssl">URIBurner About TLS</OPTION>
+                   </SELECT>
+                 </td>
+              </tr>
+               <tr>
+                 <td style="text-align:right;">Viewer: </td>
+                 <td> 
+                   <SELECT id="super-links-viewer" style="WIDTH: 200px" >
+                     <OPTION id="html" selected>HTML</OPTION>
+                     <OPTION id="html-fb" SELECTED>HTML+Faceted Browsing</OPTION>
+                   </SELECT>
+                 </td>
               </tr>
              </table>
            </div>

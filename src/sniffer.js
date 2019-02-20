@@ -628,35 +628,44 @@
             </div>`
          );
       }
-        var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
-        var url_about = "https://linkeddata.uriburner.com/about/html/http/"+result[3]+"?sponger:get=add";
 
-        var options = {
-             headers: {
-                'Accept': 'text/html',
-                'Cache-control': 'no-cache'
-             },
-             credentials: 'include',
-            };
+      var settings = new SettingsProxy();
+      var sponge_mode = await settings.getValue('ext.osds.super-links-sponge');
+      var url_sponge;
 
-        try  {
-          var rc = await fetchWithTimeout(url_about, options, 30000);
-          if (rc.ok && rc.status == 200) {
-            if (rc.redirected && rc.url.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
-              location.href = rc.url; //console.log("redirected");
-              return;
-            }
-            exec_super_links_query(links_query, links_timeout);
+      if (sponge_mode) {
+          url_sponge = settings.createSpongeCmdFor(sponge_mode, location.href);
+      } else {
+        var rc = location.href.match(/^((\w+):\/)?\/?(.*)$/);
+        url_sponge = "https://linkeddata.uriburner.com/about/html/http/"+rc[3]+"?sponger:get=add";
+      }
 
-          } else {
-            alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
-            //$(".super_links_msg").css("display","none");
-            exec_super_links_query(links_query, links_timeout);
+      var options = {
+           headers: {
+              'Accept': 'text/html',
+              'Cache-control': 'no-cache'
+           },
+           credentials: 'include',
+          };
+
+      try  {
+        var rc = await fetchWithTimeout(url_sponge, options, 30000);
+        if (rc.ok && rc.status == 200) {
+          if (rc.redirected && rc.url.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
+            location.href = rc.url; //console.log("redirected");
+            return;
           }
+          exec_super_links_query(links_query, links_timeout);
 
-        } catch(e) {
-          console.log(e);
+        } else {
+          alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
+          //$(".super_links_msg").css("display","none");
+          exec_super_links_query(links_query, links_timeout);
         }
+
+      } catch(e) {
+        console.log(e);
+      }
     }
 
 
@@ -796,32 +805,14 @@
       $('.super_links_popup-content').children().remove();
 
       var settings = new SettingsProxy();
+      var viewer_mode = await settings.getValue('ext.osds.super-links-viewer');
 
       async function create_href(url) {
          // http://linkeddata.uriburner.com/about/id/entity/https/thenextweb.com/hardfork/2019/02/05/facebook-is-doing-something-with-blockchain-but-nobody-knows-what/#babelfy_bn%3A03624775n_ED31AF22-2E19-11E9-B5EB-80FD74DC2BE9       
-         var href = url;
-/***
-         if (href.startsWith('http://'))
-           href = href.substring('http://'.length)
-         else if (href.startsWith('https://'))
-           href = href.substring('http://'.length)
+         if (viewer_mode==='html-fb')
+           return await settings.createImportUrl(url);
          else
            return url;
-
-         var prefix = 'linkeddata.uriburner.com/about/id/entity/';
-         if (href.startsWith(prefix))
-           href = href.substring(prefix.length);
-         else
-           return url;
-
-         if (href.startsWith('http/'))
-           href = 'http://'+ href.substring('http/'.length)
-         else if (href.startsWith('https/'))
-           href = 'https://' + href.substring('https/'.length)
-         else
-           return url;
-****/
-         return await settings.createImportUrl(href);
       }
       
 
@@ -1020,8 +1011,8 @@
                     request_open_tab(request.url, sender)
                 else if (request.property == "super_links")
                     add_super_links(sender, request.query, request.timeout)
-                else
-                    sendResponse({});  // stop
+//                else
+//                    sendResponse({});  // stop
             });
 
 

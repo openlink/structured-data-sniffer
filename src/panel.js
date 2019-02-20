@@ -839,10 +839,10 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
         g_RestCons.show();
       } 
     }
-    else
-    {
-      sendResponse({}); /* stop */
-    }
+//    else
+//    {
+//      sendResponse({}); /* stop */
+//    }
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }
