@@ -640,6 +640,8 @@
         url_sponge = "https://linkeddata.uriburner.com/about/html/http/"+rc[3]+"?sponger:get=add";
       }
 
+      $(".super_links_msg").css("display","block");
+
       var options = {
            headers: {
               'Accept': 'text/html',
@@ -726,14 +728,16 @@
           }
 
         } else {
-          alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
-          //$(".super_links_msg").css("display","none");
-          exec_super_links_query(links_query, links_timeout);
+          alert("Could not load data from: "+url_links+"\nError: "+rc.status);
+          $(".super_links_msg").css("display","none");
+          //exec_super_links_query(links_query, links_timeout);
         }
 
       } catch(e) {
         $(".super_links_msg").css("display","none");
-        alert("Could not load data from: "+url_links+"\nError: "+e);
+        alert("Could not load data from: "+url_links+"\nError: "+rc.status+"  "+rc.statusText);
+      } finally {
+        $(".super_links_msg").css("display","none");
       }
     }
 
