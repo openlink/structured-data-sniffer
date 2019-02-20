@@ -548,7 +548,7 @@ function Download_exec_update_state()
     filename = "rdf_data.rdf";
 
   var oidc_url = document.getElementById('oidc-url');
-  oidc_url.value = gOidc.storage + (filename || '');
+  oidc_url.value = (gOidc.storage || '') + (filename || '');
 
   var save_filename = document.getElementById('save-filename');
   save_filename.value = filename || '';
