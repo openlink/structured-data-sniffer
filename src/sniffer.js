@@ -620,7 +620,7 @@
              <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
              <div class="super_links_popup-content"></div>
             </div> 
-            <div class="super_links_msg" style="font-size: 14px; flex-direction: row; height:40px; padding: 10px 10px 10px 20px;"> 
+            <div class="super_links_msg" style="display:flex; font-size: 14px; flex-direction: row; height:40px; padding: 10px 10px 10px 20px;"> 
               <div style="width:16px;">
                 <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
               </div>
@@ -630,17 +630,18 @@
       }
 
       var settings = new SettingsProxy();
-      var sponge_mode = await settings.getValue('ext.osds.super-links-sponge');
+      var sponge_type = await settings.getValue('ext.osds.super-links-sponge');
+      var sponge_mode = await settings.getValue('ext.osds.super-links-sponge-mode');
       var url_sponge;
 
-      if (sponge_mode) {
-          url_sponge = settings.createSpongeCmdFor(sponge_mode, location.href);
+      if (sponge_type) {
+          url_sponge = settings.createSpongeCmdFor(sponge_type, sponge_mode, location.href);
       } else {
         var rc = location.href.match(/^((\w+):\/)?\/?(.*)$/);
         url_sponge = "https://linkeddata.uriburner.com/about/html/http/"+rc[3]+"?sponger:get=add";
       }
 
-      $(".super_links_msg").css("display","block");
+      $(".super_links_msg").css("display","flex");
 
       var options = {
            headers: {
@@ -654,7 +655,9 @@
         var rc = await fetchWithTimeout(url_sponge, options, 30000);
         if (rc.ok && rc.status == 200) {
           if (rc.redirected && rc.url.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
-            location.href = rc.url; //console.log("redirected");
+            alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
+            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+            location.href = redir;
             return;
           }
           exec_super_links_query(links_query, links_timeout);
@@ -687,7 +690,7 @@
       }
 
       var url_links = "https://linkeddata.uriburner.com/sparql";
-      var links_sparql_query = new Settings().createSuperLinksQuery(links_query, iri, br_lang);
+      var links_sparql_query = (new Settings()).createSuperLinksQuery(links_query, iri, br_lang);
 
       $(".super_links_msg").css("display","flex");
 
@@ -728,9 +731,14 @@
           }
 
         } else {
-          alert("Could not load data from: "+url_links+"\nError: "+rc.status);
           $(".super_links_msg").css("display","none");
-          //exec_super_links_query(links_query, links_timeout);
+          if (rc.status == 403) {
+            alert("Could not execute SPARQL query againts: "+url_links+"\nTry Login and execute query again");
+            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+            location.href = redir;
+          } else {
+            alert("Could not load data from: "+url_links+"\nError: "+rc.status);
+          }
         }
 
       } catch(e) {

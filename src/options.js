@@ -201,7 +201,8 @@ function setSuperLinksDefaults()
         "OK": function() {
           $('#super-links-timeout').val(gPref.def_super_links_timeout);
           yasqe_slinks.setValue(gPref.def_super_links_query);
-          DOM.qSel('#super-links-sponge #about').selected = true;
+          DOM.qSel('#super-links-sponge #describe-ssl').selected = true;
+          DOM.qSel('#super-links-sponge-mode #soft').selected = true;
           DOM.qSel('#super-links-viewer #html-fb').selected = true;
 
           $(this).dialog( "close" );
@@ -298,6 +299,10 @@ function loadPref()
     if (sponge)
       DOM.qSel('#super-links-sponge #'+sponge).selected = true;
 
+    var sponge_mode = gPref.getValue("ext.osds.super-links-sponge-mode");
+    if (sponge_mode)
+      DOM.qSel('#super-links-sponge-mode #'+sponge_mode).selected = true;
+
     var viewer = gPref.getValue("ext.osds.super-links-viewer");
     if (viewer)
       DOM.qSel('#super-links-viewer #'+viewer).selected = true;
@@ -346,6 +351,9 @@ function savePref()
    v = DOM.qSel('#super-links-sponge option:checked').id;
    gPref.setValue("ext.osds.super-links-sponge", v);
 
+   v = DOM.qSel('#super-links-sponge-mode option:checked').id;
+   gPref.setValue("ext.osds.super-links-sponge-mode", v);
+
    v = DOM.qSel('#super-links-viewer option:checked').id;
    gPref.setValue("ext.osds.super-links-viewer", v);
 
@@ -357,7 +365,7 @@ function savePref()
 function enableCtrls()
 {
     var srv = $('#import-srv option:selected').attr('id');
-    var h_url = new Settings.createDefaultImportCmdFor(srv, $('#import-url').val().trim());
+    var h_url = (new Settings).createDefaultImportCmdFor(srv, $('#import-url').val().trim());
 
     $('#import-url-bcast').show();
     $('#import-url').val(h_url);

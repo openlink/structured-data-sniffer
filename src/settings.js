@@ -51,8 +51,8 @@ class Settings {
     this.def_super_links_timeout = 30000000;
 
     this.def_super_links_query = ''
-  +'DEFINE get:soft "soft" \n'
-  +' \n'
+//  +'DEFINE get:soft "soft" \n'
+//  +' \n'
   +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
   +' \n'
   +'SELECT DISTINCT  sample(?extract) as ?sample ?extract ?extractLabel ?associationLabel ?entityTypeLabel ?entityType ?p as ?association ?providerLabel ?provider \n'
@@ -334,10 +334,13 @@ class Settings {
   }
 
 
-  createSpongeCmdFor(srv, _url)
+  createSpongeCmdFor(srv, mode, _url)
   {
-    var h_url = "";
+    var h_url = '';
     var docURL;
+    var _mode = mode==='soft'?'soft':'add';
+
+
 
     if (srv==='describe' || srv==='describe-ssl') {
       docURL = encodeURIComponent(_url);
@@ -352,17 +355,17 @@ class Settings {
 
     switch (srv) {
       case 'describe':
-        h_url = 'http://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add';
+        h_url = 'http://linkeddata.uriburner.com/describe/?url={url}&sponger:get='+_mode;
         break;
       case 'describe-ssl':
-        h_url = 'https://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add';
+        h_url = 'https://linkeddata.uriburner.com/describe/?url={url}&sponger:get='+_mode;
         break;
       case 'about':
-        h_url = 'http://linkeddata.uriburner.com/about/html/{url}?sponger:get=add';
+        h_url = 'http://linkeddata.uriburner.com/about/html/{url}?sponger:get='+_mode;
         break;
       case 'about-ssl':
       default:
-        h_url = 'https://linkeddata.uriburner.com/about/html/{url}?sponger:get=add';
+        h_url = 'https://linkeddata.uriburner.com/about/html/{url}?sponger:get='+_mode;
         break;
     }
 
@@ -415,9 +418,9 @@ class SettingsProxy {
     return this.settings.createDefaultImportCmdFor(srv, _url);
   }
 
-  createSpongeCmdFor(srv, _url)
+  createSpongeCmdFor(srv, mode, _url)
   {
-    return this.settings.createSpongeCmdFor(srv, _url)
+    return this.settings.createSpongeCmdFor(srv, mode, _url)
   }
 
 }

@@ -899,7 +899,7 @@ function SuperLinks_exec()
 function Import_doc()
 {
   if (doc_URL!==null) {
-     var _url = new Settings().createImportUrl(doc_URL);
+     var _url = (new Settings()).createImportUrl(doc_URL);
      Browser.openTab(_url, gData.tab_index);
   }
 
@@ -911,13 +911,13 @@ function Rww_exec()
 {
   function openRww(data)
   {
-     var _url = new Settings().createRwwUrl(doc_URL, data);
+     var _url = (new Settings()).createRwwUrl(doc_URL, data);
      Browser.openTab(_url, gData.tab_index);
   }
 
 
   if (doc_URL!==null) {
-     var edit_url = new Settings().getValue('ext.osds.rww.edit.url');
+     var edit_url = (new Settings()).getValue('ext.osds.rww.edit.url');
 
      if (edit_url.indexOf("{data}")!=-1) {
         save_data("export-rww", "data.txt", "ttl", openRww);
@@ -933,7 +933,7 @@ function Rww_exec()
 function Sparql_exec()
 {
   if (doc_URL!==null) {
-     var _url = new Settings().createSparqlUrl(doc_URL);
+     var _url = (new Settings()).createSparqlUrl(doc_URL);
      Browser.openTab(_url, gData.tab_index);
   }
 
