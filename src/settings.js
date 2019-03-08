@@ -51,9 +51,8 @@ class Settings {
     this.def_super_links_timeout = 30000000;
 
     this.def_super_links_query = ''
-//  +'DEFINE get:soft "soft" \n'
-//  +' \n'
   +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
+  +'PREFIX schema: <http://schema.org/> \n'
   +' \n'
   +'SELECT DISTINCT  sample(?extract) as ?sample ?extract ?extractLabel ?associationLabel ?entityTypeLabel ?entityType ?p as ?association ?providerLabel ?provider \n'
   +'WHERE {  \n'
@@ -62,7 +61,7 @@ class Settings {
   +'           # ?source ( skos:related|schema:about|schema:mentions ) ?extract .  \n'
   +'           ?source ?p ?extract.  \n'
   +'           # filter (?source = <https://linkeddata.uriburner.com/about/id/entity/https/www.microstrategy.com/us/product/analytics/hypercards>)  \n'
-  +'           filter (?p in ( skos:related, schema:about)) \n'
+  +'           filter (?p in ( skos:related, schema:about, schema:mentions)) \n'
   +'           # ?source ( skos:related|schema:about) ?extract .  \n'
   +'           ?extract a ?entityType ;  \n'
   +'           # ?extract a oplattr:NamedEntity ;  \n'
