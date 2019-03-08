@@ -235,7 +235,7 @@
                    <table style="border-spacing:0px;">
                      <tr>
                        <td>
-                         <SELECT id="super-links-sponge" style="WIDTH: 200px" >
+                         <SELECT id="super-links-sponge" style="WIDTH: 160px" >
                            <OPTION id="describe" >URIBurner Describe</OPTION>
                            <OPTION id="describe-ssl" SELECTED>URIBurner Describe TLS</OPTION>
                            <OPTION id="about">URIBurner About</OPTION>
@@ -243,9 +243,11 @@
                          </SELECT>
                        </td>
                        <td>
-                         <SELECT id="super-links-sponge-mode" style="WIDTH: 150px" >
-                           <OPTION id="soft" selected>Use only local data</OPTION>
-                           <OPTION id="add" >Fetch remote data</OPTION>
+                         <SELECT id="super-links-sponge-mode" style="WIDTH: 200px" >
+                           <OPTION id="xxx" selected>Use local Cache</OPTION>
+                           <OPTION id="soft">Automatic Cache Invalidation</OPTION>
+                           <OPTION id="add">Add to Cache</OPTION>
+                           <OPTION id="replace">Force Cache Invalidation</OPTION>
                          </SELECT>
                        </td>
                      </tr>
@@ -255,7 +257,7 @@
                <tr>
                  <td style="text-align:right;">Viewer: </td>
                  <td> 
-                   <SELECT id="super-links-viewer" style="WIDTH: 200px" >
+                   <SELECT id="super-links-viewer" style="WIDTH: 160px" >
                      <OPTION id="html" selected>HTML</OPTION>
                      <OPTION id="html-fb" SELECTED>HTML+Faceted Browsing</OPTION>
                    </SELECT>

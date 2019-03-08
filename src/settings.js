@@ -338,34 +338,66 @@ class Settings {
   {
     var h_url = '';
     var docURL;
-    var _mode = mode==='soft'?'soft':'add';
+    var _mode = '';
 
+    if (mode === 'soft')
+      _mode = 'sponger:get=soft';
+    else if (mode === 'add')
+      _mode = 'sponger:get=add';
+    else if (mode === 'replace')
+      _mode = 'sponger:get=replace';
+
+    function createProxyURI(srv, url)
+    {
+      var proxyurl = encodeURIComponent(url);
+
+      if (srv==='describe' || srv==='describe-ssl') {
+        var rc = url.match(/^((\w+):\/)?\/?(.*)$/);
+        if (rc) {
+          url = rc[2] + '/' + rc[3];
+          if (srv==='describe')
+            proxyurl = 'http://linkeddata.uriburner.com/about/html/'+url;
+          else if (srv==='describe-ssl')
+            proxyurl = 'https://linkeddata.uriburner.com/about/html/'+url;
+        }
+      }
+      return proxyurl;      
+    }
 
 
     if (srv==='describe' || srv==='describe-ssl') {
-      docURL = encodeURIComponent(_url);
+      docURL = encodeURIComponent(createProxyURI(srv, _url));
+//      docURL = encodeURIComponent(_url);
     }
     else {
-        var rc = encodeURIComponent(_url).match(/^((\w+):\/)?\/?(.*)$/);
-        if (!rc) {
+        var rc = _url.match(/^((\w+):\/)?\/?(.*)$/);
+        if (!rc)
           docURL = encodeURIComponent(_url);
-        }
-        docURL = rc[2] + '/' + rc[3];
+        else
+          docURL = rc[2] + '/' + rc[3];
     }
 
     switch (srv) {
       case 'describe':
-        h_url = 'http://linkeddata.uriburner.com/describe/?url={url}&sponger:get='+_mode;
+        h_url = 'http://linkeddata.uriburner.com/describe/?url={url}';
+        if (_mode)
+          h_url += '&'+_mode;
         break;
       case 'describe-ssl':
-        h_url = 'https://linkeddata.uriburner.com/describe/?url={url}&sponger:get='+_mode;
+        h_url = 'https://linkeddata.uriburner.com/describe/?url={url}';
+        if (_mode)
+          h_url += '&'+_mode;
         break;
       case 'about':
-        h_url = 'http://linkeddata.uriburner.com/about/html/{url}?sponger:get='+_mode;
+        h_url = 'http://linkeddata.uriburner.com/about/html/{url}';
+        if (_mode)
+          h_url += '?'+_mode;
         break;
       case 'about-ssl':
       default:
-        h_url = 'https://linkeddata.uriburner.com/about/html/{url}?sponger:get='+_mode;
+        h_url = 'https://linkeddata.uriburner.com/about/html/{url}';
+        if (_mode)
+          h_url += '?'+_mode;
         break;
     }
 

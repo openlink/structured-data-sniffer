@@ -657,7 +657,7 @@
           if (rc.redirected && rc.url.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
             alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
             var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            location.href = redir;
+            document.location.href = redir;
             return;
           }
           exec_super_links_query(links_query, links_timeout);
@@ -735,7 +735,7 @@
           if (rc.status == 403) {
             alert("Could not execute SPARQL query againts: "+url_links+"\nTry Login and execute query again");
             var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            location.href = redir;
+            document.location.href = redir;
           } else {
             alert("Could not load data from: "+url_links+"\nError: "+rc.status);
           }
