@@ -356,9 +356,9 @@ class Settings {
         if (rc) {
           url = rc[2] + '/' + rc[3];
           if (srv==='describe')
-            proxyurl = 'http://linkeddata.uriburner.com/about/html/'+url;
+            proxyurl = 'http://linkeddata.uriburner.com/about/id/entity/'+url;
           else if (srv==='describe-ssl')
-            proxyurl = 'https://linkeddata.uriburner.com/about/html/'+url;
+            proxyurl = 'https://linkeddata.uriburner.com/about/id/entity/'+url;
         }
       }
       return proxyurl;      
@@ -366,8 +366,8 @@ class Settings {
 
 
     if (srv==='describe' || srv==='describe-ssl') {
-      docURL = encodeURIComponent(createProxyURI(srv, _url));
-//      docURL = encodeURIComponent(_url);
+//      docURL = encodeURIComponent(createProxyURI(srv, _url));
+      docURL = encodeURIComponent(_url);
     }
     else {
         var rc = _url.match(/^((\w+):\/)?\/?(.*)$/);
