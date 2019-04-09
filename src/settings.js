@@ -231,7 +231,9 @@ class Settings {
 
   createSuperLinksQuery(query, curUrl, lang)
   {
-//    var query = this.getValue('ext.osds.super_links.query');
+    if (curUrl.endsWith('?'))
+      curUrl = curUrl.substring(0, curUrl.length-1);
+
     return query.replace(/{url}/g, curUrl).replace(/{lang}/g, lang);
   }
 
@@ -338,6 +340,9 @@ class Settings {
     var h_url = '';
     var docURL;
     var _mode = '';
+
+    if (_url.endsWith('?'))
+      _url = _url.substring(0, _url.length-1);
 
     if (mode === 'soft')
       _mode = 'sponger:get=soft';

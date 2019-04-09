@@ -627,8 +627,6 @@
               <div>&nbsp;Preparing&nbsp;Super&nbsp;Links</div>
             </div>`
          );
-      } else {
-        return;
       }
 
       var settings = new SettingsProxy();
@@ -676,6 +674,8 @@
         }
 
       } catch(e) {
+        $(".super_links_msg").css("display","none");
+        alert("Sponge "+e);
         console.log(e);
       }
     }
@@ -760,7 +760,7 @@
 
       } catch(e) {
         $(".super_links_msg").css("display","none");
-        alert("Could not load data from: "+url_links+"\nError: "+rc.status+"  "+rc.statusText);
+        alert("Could not load data from: "+url_links+"\n"+e);
       } finally {
         $(".super_links_msg").css("display","none");
       }
