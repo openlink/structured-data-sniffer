@@ -665,9 +665,14 @@
           exec_super_links_query(links_query, links_timeout);
 
         } else {
-          alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
-          //$(".super_links_msg").css("display","none");
-          exec_super_links_query(links_query, links_timeout);
+          if (rc.status==401 || rc.status==403) {
+            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+            document.location.href = redir;
+            return;
+          } else {
+            alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
+            exec_super_links_query(links_query, links_timeout);
+          }
         }
 
       } catch(e) {
@@ -717,7 +722,7 @@
         if (rc.ok && rc.status == 200) {
           try {
             var data = await rc.text();
-            var jso = Papa.parse(data,{header: true});
+            var jso = Papa.parse(data,{header: true, skipEmptyLines: true});
             g_super_links = jso.data;
             var labels = [];
             for(var i=0; i < g_super_links.length; i++) {
@@ -735,6 +740,14 @@
 
         } else {
           $(".super_links_msg").css("display","none");
+          if (rc.status==401 || rc.status==403) {
+            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+            document.location.href = redir;
+            return;
+          } else {
+            alert("Could not load data from: "+url_links+"\nError: "+rc.status);
+          }
+/***
           if (rc.status == 403) {
             alert("Could not execute SPARQL query againts: "+url_links+"\nTry Login and execute query again");
             var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
@@ -742,6 +755,7 @@
           } else {
             alert("Could not load data from: "+url_links+"\nError: "+rc.status);
           }
+***/
         }
 
       } catch(e) {
