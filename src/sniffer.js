@@ -627,6 +627,8 @@
               <div>&nbsp;Preparing&nbsp;Super&nbsp;Links</div>
             </div>`
          );
+      } else {
+        return;
       }
 
       var settings = new SettingsProxy();
@@ -696,7 +698,7 @@
 
       var get_url = new URL(url_links);
       var params = get_url.searchParams;
-      params.append('format', 'application/json');
+      params.append('format', 'text/csv');
       params.append('query', links_sparql_query);
       params.append('CXML_redir_for_subjs', 121);
       params.append('timeout', links_timeout);
@@ -704,7 +706,7 @@
 
       var options = {
             headers: {
-              'Accept': 'application/json',
+              'Accept': 'text/plain',
               'Cache-control': 'no-cache'
             },
             credentials: 'include',
@@ -715,12 +717,13 @@
         if (rc.ok && rc.status == 200) {
           try {
             var data = await rc.text();
-            var val = JSON.parse(data);
-            g_super_links = val.results.bindings;
+            var jso = Papa.parse(data,{header: true});
+            g_super_links = jso.data;
             var labels = [];
             for(var i=0; i < g_super_links.length; i++) {
-              labels.push(g_super_links[i].extractLabel.value);
-              g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
+              var label = g_super_links[i].extractLabel || '';
+              labels.push(label);
+              g_super_links[i]._id = label.toLowerCase();
             }
 
             mark_strings(labels);
@@ -836,16 +839,16 @@
           var v = lst[i];
 
           try {
-            var extract = v.extract?v.extract.value:null;
-            var prov = v.provider?v.provider.value:null;
+            var extract = v.extract?v.extract:null;
+            var prov = v.provider?v.provider:null;
             if (extract && prov) {
-              var extLabel = v.extractLabel?v.extractLabel.value:'';
-              var provName = v.providerLabel?v.providerLabel.value:prov;
-              var entityType = v.entityType.value;
-              var entityTypeLabel = v.entityTypeLabel?v.entityTypeLabel.value:type_iri;
+              var extLabel = v.extractLabel?v.extractLabel:'';
+              var provName = v.providerLabel?v.providerLabel:prov;
+              var entityType = v.entityType;
+              var entityTypeLabel = v.entityTypeLabel?v.entityTypeLabel:entityType;
 
               var association = v.association.value;
-              var associationLabel = v.associationLabel?v.associationLabel.value:association;
+              var associationLabel = v.associationLabel?v.associationLabel:association;
               var extract_href = await create_href(extract);
 
               tdata += 
