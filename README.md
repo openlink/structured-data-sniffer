@@ -1,12 +1,16 @@
 # OpenLink Structured Data Sniffer
 
+*This respository is primarily focused on developers.  You may want to also look 
+at [the more user-/consumer-focused site](http://osds.openlinksw.com/).*
+
 ## Intro
-The OpenLink Structured Data Sniffer (OSDS) is a plugin for the
+
+The OpenLink Structured Data Sniffer (OSDS) is a plugin for 
 [Google Chrome](http://www.google.com/chrome/browser/),
-[Mozilla Firefox](http://www.mozilla.org/firefox/) and the
+[Mozilla Firefox](http://www.mozilla.org/firefox/), and 
 [Opera](http://www.opera.com/)
-browser, that detects and shows structured data embedded in web pages in either of the following
-formats:
+web browsers, that detects and shows structured data embedded in web pages 
+in any of the following formats:
 
 - **JSON-LD**
 - **Microdata**
@@ -24,14 +28,19 @@ Copyright 2015-2019 [OpenLink Software](mailto:opensource@openlinksw.com)
 This software is licensed under the GNU General Public License (see
 [COPYING](https://github.com/OpenLinkSoftware/OSDS_extension/blob/develop/COPYING)).
 
-**Note**: that the only valid version of the GPL license as far as this project is concerned is the
-original GNU General Public License Version 2, dated June 1991.
+**Note**: the only valid version of the GPL license as far as this project is concerned is the
+original **GNU General Public License Version 2**, dated June 1991.
 
 
 ## Deployment
-To deploy this extension on your local machine you can either *clone the git source tree* or
-*download a source archive* and then *install the extension* into your Chrome or Opera browser on
-the same system.
+
+Stable and/or signed releases may be deployed from 
+[the Chrome store](https://chrome.google.com/webstore/detail/openlink-structured-data/egdaiaihbdoiibopledjahjaihbmjhdj) 
+or [the Mozilla catalog](https://addons.mozilla.org/en-US/firefox/addon/openlink-structured-data-sniff/).
+
+To deploy the latest development version on your local machine, you can (1) either (a) *clone 
+the git source tree* or (b) *download a source archive*, and then (2) *install the extension* 
+into your Chrome or Opera browser on the same system.
 
 ### Clone the git source tree
 Clone the sources from github using the following commands:
@@ -43,7 +52,8 @@ $ git clone https://github.com/OpenLinkSoftware/OSDS_extension
 which will automatically download the latest develop branch.
 
 ### Download a source archive
-Download and extract a .tar.gz or .zip from either one of the
+
+Download and extract a `.tar.gz` or `.zip` from either one of the
 [stable releases](https://github.com/OpenLinkSoftware/OSDS_extension/releases/latest)
 or directly from one of the following links:
 
@@ -54,7 +64,8 @@ or directly from one of the following links:
 
 
 ### Install the extension in Chrome
-To install this extension manually use the following steps:
+
+To install this extension manually in Chrome, use the following steps:
 
 - Open the Chrome browser
 - Select from menu: **Chrome** -> **Preferences** -> **Extensions**
@@ -65,7 +76,8 @@ To install this extension manually use the following steps:
 
 
 ### Install the extension in Opera
-To install this extension manually use the following steps:
+
+To install this extension manually in Opera, use the following steps:
 
 - Open the Opera browser
 - In address bar type in **opera:extensions**
@@ -75,13 +87,15 @@ To install this extension manually use the following steps:
 - Press the **Select** button
 
 ### Install the extension in Firefox
-Download the [Firefox OSDS .zip](https://github.com/OpenLinkSoftware/OSDS_extension/releases/download/v2.16.1/OSDS_FF.zip)
-file and extract the .xpi file.
 
-NOTE: Only temporary install is possible for unsigned .xpi file in last versions of Firefox.
+NOTE: Recent versions of Firefox only permit temporary installation of the unsigned `.xpi` file.  The latest 
+signed extension, which may lag a bit behind the unsigned, can be permanently installed from the 
+[Mozilla Add-ons catalog(https://addons.mozilla.org/en-US/firefox/addon/openlink-structured-data-sniff/).
 
 To install this extension manually in Firefox, use the following steps:
 
+- Download the [Firefox OSDS .zip](https://github.com/OpenLinkSoftware/OSDS_extension/releases/download/v2.16.1/OSDS_FF.zip)
+file and extract the unsigned `.xpi` file.
 - Open the **Firefox** browser
 - In address bar type: **about:addons** or choose menu ** Add-ons**
 - Click on Gear icon and choose **Debug Add-ons**
