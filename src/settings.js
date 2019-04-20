@@ -20,12 +20,12 @@
 
 class Settings {
   constructor(data) {
-    this.def_import_url = "http://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
-    this.def_import_srv = "describe";
+    this.def_import_url = "https://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
+    this.def_import_srv = "describe-ssl";
 //  this.def_rww_edit_url = "http://linkeddata.uriburner.com/rdf-editor/#/editor?newDocument=true&statement:entity={url}&view=statements";
-    this.def_rww_edit_url = "http://linkeddata.uriburner.com/rdf-editor/#/editor?data={data}&view=statements";
+    this.def_rww_edit_url = "https://linkeddata.uriburner.com/rdf-editor/#/editor?data={data}&view=statements";
 
-    this.def_sparql_url = "http://linkeddata.uriburner.com/sparql/?query={query}";
+    this.def_sparql_url = "https://linkeddata.uriburner.com/sparql/?query={query}";
     this.def_sparql_cmd = "select";
 
     this.def_sparql_qry_spo = "DEFINE get:soft \"soft\" \n"+

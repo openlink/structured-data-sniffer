@@ -499,7 +499,10 @@ function Rww_exec()
 function Sparql_exec()
 {
   if (doc_URL!==null) {
-     var _url = (new Settings()).createSparqlUrl(doc_URL);
+      var u = new URL(doc_URL);
+      u.hash = '';
+      u.search = '';
+     var _url = (new Settings()).createSparqlUrl(u.toString());
      Browser.api.tabs.create({url:_url});
   }
 

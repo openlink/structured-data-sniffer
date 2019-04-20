@@ -685,6 +685,7 @@
     {
       var url = new URL(location.href);
       url.hash = '';
+      //url.search = '';
       var iri = url.toString();
 
       var br_lang = navigator.language || navigator.userLanguage;

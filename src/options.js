@@ -132,8 +132,8 @@ function setImportDefaults()
       buttons: {
         "OK": function() {
 
-          $('#'+gPref.def_import_srv,'#import-srv').attr('selected','selected');
-          var h_url = createCmdImportURL(gPref.def_import_srv, gPref.def_import_url.trim());
+          DOM.qSel('#import-srv #'+gPref.def_import_srv).selected=true;
+          var h_url = gPref.createDefaultImportCmdFor(gPref.def_import_srv, gPref.def_import_url.trim());
           $('#import-url').val(h_url);
           enableCtrls();
 
@@ -176,10 +176,9 @@ function setSparqlDefaults()
       buttons: {
         "OK": function() {
 
-          $('#'+gPref.def_sparql_cmd,'#sparql-cmd').attr('selected','selected');
+          DOM.qSel('#sparql-cmd #'+gPref.def_sparql_cmd).selected=true;
           $('#sparql-url').val(gPref.def_sparql_url);
-					yasqe_srv.setValue(createSparqlQuery(gPref.def_sparql_cmd));
-
+	  yasqe_srv.setValue(createSparqlQuery(gPref.def_sparql_cmd));
 
           $(this).dialog( "close" );
         },
@@ -250,7 +249,8 @@ function load_pref_user()
 function loadPref()
 {
     var uiterm_mode = gPref.getValue("ext.osds.uiterm.mode");
-    $('#'+uiterm_mode,'#uiterm-mode').attr('selected','selected');
+    DOM.qSel('#uiterm-mode #'+uiterm_mode).selected=true;
+
 
     var chk_user = gPref.getValue("ext.osds.pref.user.chk");
     if (chk_user && chk_user==="1")
@@ -270,7 +270,7 @@ function loadPref()
     var import_url = gPref.getValue("ext.osds.import.url");
     var import_srv = gPref.getValue("ext.osds.import.srv");
 
-    $('#'+import_srv,'#import-srv').attr('selected','selected');
+    DOM.qSel('#import-srv #'+import_srv).selected=true;
     $('#import-url').val(import_url);
 
 
@@ -288,6 +288,8 @@ function loadPref()
 
     var sparql_cmd = gPref.getValue("ext.osds.sparql.cmd");
     $('#'+sparql_cmd,'#sparql-cmd').attr('selected','selected');
+    DOM.qSel('#sparql-cmd #'+sparql_cmd).selected=true;
+
 
     yasqe_srv.setValue(gPref.getValue("ext.osds.sparql.query")+"\n");
     yasqe_slinks.setValue(gPref.getValue("ext.osds.super_links.query")+"\n");
