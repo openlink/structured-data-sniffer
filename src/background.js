@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2018 OpenLink Software
+ *  Copyright (C) 2015-2019 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -26,9 +26,55 @@ if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
 }
 
 
+async function getCurWin()
+{
+  if (Browser.isChromeWebExt) {
+    return new Promise(function (resolve, reject) {
+      Browser.api.windows.getCurrent({}, (w) => {
+        resolve(w)
+      });
+    })
+  } else {
+    return Browser.api.windows.getCurrent({});
+  }
+}
+
+async function getCurTab()
+{
+  if (Browser.isChromeWebExt) {
+    return new Promise(function (resolve, reject) {
+      Browser.api.tabs.query({active:true, currentWindow:true}, (t) => {
+        resolve(t)
+      });
+    })
+  } else {
+    return Browser.api.tabs.query({active:true, currentWindow:true});
+  }
+}
+
 
 //Chrome API
 //wait data from extension
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
+{
+  try {
+    if (request.cmd === "close_oidc_web")
+    {
+      var curWin = await getCurWin();
+      var curTab = await getCurTab();
+      if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
+          && curTab[0].url === request.url) {
+        Browser.api.tabs.remove(curTab[0].id);
+      }
+    }
+    
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
+
+
 Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
 {
   try {
@@ -37,11 +83,11 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       var doc_URL = request.doc_URL;
       var show_action = request.data_exists;
       var sparql_pattern = /\/sparql\/?$/gmi;
-      var url = new Uri(doc_URL);
+      var url = new URL(doc_URL);
       var setting = new Settings();
       var action_for_params =  setting.getValue("ext.osds.pref.show_action");
 
-      if (doc_URL && url.queryPairs.length>0
+      if (doc_URL && url.search.length>0
           && (sparql_pattern.test(doc_URL) || action_for_params) )
       {
         show_action = true;
@@ -60,16 +106,22 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
           Browser.api.pageAction.hide(sender.tab.id);
       }
     }
+    else if (request.cmd === "getPref")
+    {
+      var val = '';
+      var settings = new Settings();
+      if (request.key)
+        val = settings.getValue(request.key)
+      sendResponse({'cmd': request.cmd, 'key':request.key, 'val':val});
+    }
+/**
     else
     {
-      sendResponse({}); /* stop */
+      sendResponse({}); // stop
     }
+**/
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }
 
 });
-
-
-
-

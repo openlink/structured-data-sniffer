@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2018 OpenLink Software
+ *  Copyright (C) 2015-2019 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -365,11 +365,9 @@
             //send data_exists flag to extension
             Browser.api.runtime.sendMessage({
                         property: "status",
-                        status: 'ready',
+                        status: "ready",
                         data_exists: data_found,
                         doc_URL: document.location.href
-                    },
-                    function (response) {
                     });
 
         } catch (e) {
@@ -603,80 +601,93 @@
     }
 
 
-    function xhr_new ()
+    function fetchWithTimeout(url, options, timeout) 
     {
-      var xhr = null;
-
-      var oXMLHttpRequest = window.XMLHttpRequest;
-      if (oXMLHttpRequest)
-        xhr = new oXMLHttpRequest(); /* gecko */
-      else if (window.ActiveXObject)
-        xhr = new ActiveXObject("Microsoft.XMLHTTP"); /* ie */
-      return xhr;
+      return Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), timeout)
+        )
+      ]);
     }
 
 
-    function add_super_links(sender, links_query, links_timeout)
+    async function add_super_links(sender, links_query, links_timeout)
     {
       if (g_super_links==null) {
          $('body').append(
-           '<div class="super_links_popup" >'
-          +' <a href="#close" title="Close" class="super_links_popup_close">&times;</a> '
-          +' <div class="super_links_popup-content"></div>'
-          +'</div> '
-          +'<div class="super_links_msg" style="font-size: 14px;"> '
-          +'<table style="border-style:none">'
-          +'<tr>'
-          +' <td class="super_links_msg_td">'
-          +'  <img src="data:image/gif;base64,'+Browser.throbber+'" class="super_links_img" />'
-          +' </td>'
-          +' <td class="super_links_msg_td">'
-          +'  &nbsp;Preparing&nbsp;Super&nbsp;Links'
-          +' </td>'
-          +'</tr>'
-          +'</table>'
-          +'</div> '
+           `<div class="super_links_popup" >
+             <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
+             <div class="super_links_popup-content"></div>
+            </div> 
+            <div class="super_links_msg" style="display:flex; font-size: 14px; flex-direction: row; height:40px; padding: 10px 10px 10px 20px;"> 
+              <div style="width:16px;">
+                <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
+              </div>
+              <div>&nbsp;Preparing&nbsp;Super&nbsp;Links</div>
+            </div>`
          );
       }
 
-        var result = location.href.match(/^((\w+):\/)?\/?(.*)$/);
-        var url_about = "https://linkeddata.uriburner.com/about/html/http/"+result[3]+"?sponger:get=add";
+      var settings = new SettingsProxy();
+      var sponge_type = await settings.getValue('ext.osds.super-links-sponge');
+      var sponge_mode = await settings.getValue('ext.osds.super-links-sponge-mode');
+      var url_sponge;
 
-        var xhr = xhr_new ();
-        xhr.onreadystatechange = function()
-          {
-            if (xhr.readyState == 4) {
-              if (xhr.status===200) {
-                  if (xhr.responseURL.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
-                    location.href = xhr.responseURL; //console.log("redirected");
-                    return;
-                  }
-                  exec_super_links_query(links_query, links_timeout);
+      if (sponge_type) {
+          url_sponge = settings.createSpongeCmdFor(sponge_type, sponge_mode, location.href);
+      } else {
+        var rc = location.href.match(/^((\w+):\/)?\/?(.*)$/);
+        url_sponge = "https://linkeddata.uriburner.com/about/html/http/"+rc[3]+"?sponger:get=add";
+      }
 
-              }
-              else {
-                alert("Sponge error:"+xhr.status+" ["+xhr.statusText+"]");
-                //$(".super_links_msg").css("display","none");
-                exec_super_links_query(links_query, links_timeout);
-              }
-            }
+      $(".super_links_msg").css("display","flex");
+
+      var options = {
+           headers: {
+              'Accept': 'text/html',
+              'Cache-control': 'no-cache'
+           },
+           credentials: 'include',
+          };
+
+      try  {
+        var rc = await fetchWithTimeout(url_sponge, options, 30000);
+        if (rc.ok && rc.status == 200) {
+          if (rc.redirected && rc.url.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
+            alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
+            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+            document.location.href = redir;
+            return;
           }
+          exec_super_links_query(links_query, links_timeout);
 
-        $(".super_links_msg").css("display","block");
+        } else {
+          if (rc.status==401 || rc.status==403) {
+            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+            document.location.href = redir;
+            return;
+          } else {
+            alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
+            exec_super_links_query(links_query, links_timeout);
+          }
+        }
 
-        try {
-          xhr.withCredentials = true;
-          xhr.timeout = 30000;
-          xhr.open ('GET', url_about, true);
-          xhr.setRequestHeader ('Accept', 'text/html');
-          xhr.setRequestHeader ('Cache-control', 'no-cache');
-          xhr.send (null);
-        } catch (e) {}
+      } catch(e) {
+        $(".super_links_msg").css("display","none");
+        alert("Sponge "+e);
+        console.log(e);
+      }
     }
 
-    function exec_super_links_query(links_query, links_timeout)
+
+    async function exec_super_links_query(links_query, links_timeout)
     {
-      var iri = new Uri(location.href).setAnchor("").toString();
+      var url = new URL(location.href);
+      url.hash = '';
+      //url.search = '';
+      var iri = url.toString();
+
       var br_lang = navigator.language || navigator.userLanguage;
       if (br_lang && br_lang.length>0) {
         var i = br_lang.indexOf('-');
@@ -687,47 +698,75 @@
       }
 
       var url_links = "https://linkeddata.uriburner.com/sparql";
-      var links_sparql_query = new Settings().createSuperLinksQuery(links_query, iri, br_lang);
+      var links_sparql_query = (new Settings()).createSuperLinksQuery(links_query, iri, br_lang);
 
-      jQuery.ajaxSetup({
-         dataType: "text",
-         headers:{'Accept': 'application/json',
-               'Cache-control': 'no-cache'},
-         cache: false,
-         timeout: links_timeout,
-         xhrFields: {
-               withCredentials: true
-         }
-      });
+      $(".super_links_msg").css("display","flex");
 
-      params = {
-              format:'application/json',
-              query: links_sparql_query,
-              CXML_redir_for_subjs: 121,
-              timeout: links_timeout
-                };
+      var get_url = new URL(url_links);
+      var params = get_url.searchParams;
+      params.append('format', 'text/csv');
+      params.append('query', links_sparql_query);
+      params.append('CXML_redir_for_subjs', 121);
+      params.append('timeout', links_timeout);
+      params.append('_', Date.now());
 
-      jQuery.get(url_links, params, function(data, status){
-        try {
-          var val = JSON.parse(data);
-          g_super_links = val.results.bindings;
-          var labels = [];
-          for(var i=0; i < g_super_links.length; i++) {
-            labels.push(g_super_links[i].extractLabel.value);
-            g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
+      var options = {
+            headers: {
+              'Accept': 'text/plain',
+              'Cache-control': 'no-cache'
+            },
+            credentials: 'include',
+          };
+
+      try  {
+        var rc = await fetchWithTimeout(get_url, options, links_timeout);
+        if (rc.ok && rc.status == 200) {
+          try {
+            var data = await rc.text();
+            var jso = Papa.parse(data,{header: true, skipEmptyLines: true});
+            g_super_links = jso.data;
+            var labels = [];
+            for(var i=0; i < g_super_links.length; i++) {
+              var label = g_super_links[i].extractLabel || '';
+              labels.push(label);
+              g_super_links[i]._id = label.toLowerCase();
+            }
+
+            mark_strings(labels);
+          } catch(e) {
+            console.log(e);
+          } finally {
+            $(".super_links_msg").css("display","none");
           }
 
-          mark_strings(labels);
-        } finally {
+        } else {
           $(".super_links_msg").css("display","none");
+          if (rc.status==401 || rc.status==403) {
+            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+            document.location.href = redir;
+            return;
+          } else {
+            alert("Could not load data from: "+url_links+"\nError: "+rc.status);
+          }
+/***
+          if (rc.status == 403) {
+            alert("Could not execute SPARQL query againts: "+url_links+"\nTry Login and execute query again");
+            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+            document.location.href = redir;
+          } else {
+            alert("Could not load data from: "+url_links+"\nError: "+rc.status);
+          }
+***/
         }
-      }, "text").fail(function(msg) {
-          $(".super_links_msg").css("display","none");
-          alert("Could not load data from: "+url_links+"\nError: "+msg.statusText);
-      });
 
-
+      } catch(e) {
+        $(".super_links_msg").css("display","none");
+        alert("Could not load data from: "+url_links+"\n"+e);
+      } finally {
+        $(".super_links_msg").css("display","none");
+      }
     }
+
 
 /**********************************************/
     function positionPopupOnPage( evt )
@@ -786,32 +825,26 @@
         viewPortWidth = window.innerWidth;
         viewPortHeight = window.innerHeight;
       }
-/**
-	// IE6 in standards compliant mode (i.e. with a valid doctype as the
-	// first line in the document)
-       else if (typeof document.documentElement != 'undefined'
-                && typeof document.documentElement.clientWidth !=
-               'undefined' && document.documentElement.clientWidth != 0)
-      {
-          viewPortWidth = document.documentElement.clientWidth;
-          viewPortHeight = document.documentElement.clientHeight;
-      }
-      // older versions of IE
-      else {
-          viewPortWidth = document.getElementsByTagName('body')[0].clientWidth;
-          viewPortHeight = document.getElementsByTagName('body')[0].clientHeight;
-      }
-**/
- 	return [viewPortWidth, viewPortHeight];
-      }
-/**********************************************/
+      
+      return [viewPortWidth, viewPortHeight];
+    }
 
 
-
-
-    function create_popup_table(lst, ev)
+    async function create_popup_table(lst, ev)
     {
       $('.super_links_popup-content').children().remove();
+
+      var settings = new SettingsProxy();
+      var viewer_mode = await settings.getValue('ext.osds.super-links-viewer');
+
+      async function create_href(url) {
+         // http://linkeddata.uriburner.com/about/id/entity/https/thenextweb.com/hardfork/2019/02/05/facebook-is-doing-something-with-blockchain-but-nobody-knows-what/#babelfy_bn%3A03624775n_ED31AF22-2E19-11E9-B5EB-80FD74DC2BE9       
+         if (viewer_mode==='html-fb')
+           return await settings.createImportUrl(url);
+         else
+           return url;
+      }
+      
 
       if (lst.length > 0)
       {
@@ -821,24 +854,24 @@
           var v = lst[i];
 
           try {
-            var extract = v.extract?v.extract.value:null;
-            var prov = v.provider?v.provider.value:null;
+            var extract = v.extract?v.extract:null;
+            var prov = v.provider?v.provider:null;
             if (extract && prov) {
-              var extLabel = v.extractLabel?v.extractLabel.value:'';
-              var provName = v.providerLabel?v.providerLabel.value:prov;
-              var entityType = v.entityType.value;
-              var entityTypeLabel = v.entityTypeLabel?v.entityTypeLabel.value:type_iri;
+              var extLabel = v.extractLabel?v.extractLabel:'';
+              var provName = v.providerLabel?v.providerLabel:prov;
+              var entityType = v.entityType;
+              var entityTypeLabel = v.entityTypeLabel?v.entityTypeLabel:entityType;
 
               var association = v.association.value;
-              var associationLabel = v.associationLabel?v.associationLabel.value:association;
+              var associationLabel = v.associationLabel?v.associationLabel:association;
+              var extract_href = await create_href(extract);
 
-
-              tdata += '<tr>'
-                +'<td> <a target="_blank" href="'+extract+'">'+extLabel+'</a></td>'
-                +'<td> <a target="_blank" href="'+association+'">'+associationLabel+'</a> </td>'
-                +'<td> <a target="_blank" href="'+prov+'">'+provName+'</a></td>'
-                +'<td> <a target="_blank" href="'+entityType+'">'+entityTypeLabel+'</a></td>'
-                +'</tr>';
+              tdata += 
+              `<tr><td> <a target="_blank" href="${extract_href}">${extLabel}</a></td>`+
+              ` <td> <a target="_blank" href="${association}">${associationLabel}</a> </td>`+
+              ` <td> <a target="_blank" href="${prov}">${provName}</a></td>`+
+              ` <td> <a target="_blank" href="${entityType}">${entityTypeLabel}</a></td>`+
+              `</tr>`;
             }
           } catch(e) {}
         }
@@ -848,7 +881,7 @@
                +'<thead><tr>'
                +'<th style="max-width:190px;">Word</th>'
                +'<th style="max-width:95px;">Association</th>'
-               +'<th style="max-width:285px;">Source</th>'
+               +'<th style="max-width:285px;width:100%;">Source</th>'
                +'<th style="max-width:300px;">Type</th>'
                +'</tr></thead>'
                 +'<tbody>'+tdata+'</tbody>'
@@ -982,7 +1015,7 @@
                     || (json_ld_Text && json_ld_Text.length > 0)
                     || (turtle_Text  && turtle_Text.length > 0)
                     || (rdf_Text     && rdf_Text.length > 0)
-                    || (rdfa         && rdfa.length > 0)
+                    || (rdfa.data    && rdfa.data.length > 0)
                     || (ttl_nano_Text && ttl_nano_Text.length > 0)
                     || (json_nano_Text && json_nano_Text.length > 0)
                     || (rdf_nano_Text && rdf_nano_Text.length > 0)
@@ -996,8 +1029,6 @@
                         property: "doc_data",
                         data: JSON.stringify(docData, undefined, 2),
                         is_data_exists: data_exists
-                    },
-                    function (response) {
                     });
             }
 
@@ -1010,8 +1041,8 @@
                     request_open_tab(request.url, sender)
                 else if (request.property == "super_links")
                     add_super_links(sender, request.query, request.timeout)
-                else
-                    sendResponse({});  // stop
+//                else
+//                    sendResponse({});  // stop
             });
 
 
@@ -1019,5 +1050,6 @@
             console.log("OSDS:" + e);
         }
     });
+
 
 })();

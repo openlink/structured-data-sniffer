@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2018 OpenLink Software
+ *  Copyright (C) 2015-2019 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -1760,7 +1760,8 @@ Namespace = function() {
         "wde": "http://www.wikidata.org/entity/",
         "iiif": "http://iiif.io/api/image/2#",
         "dio": "https://w3id.org/dio#",
-        "fire": "http://tldp.org/HOWTO/XML-RPC-HOWTO/xmlrpc-howto-java.html#"
+        "fire": "http://tldp.org/HOWTO/XML-RPC-HOWTO/xmlrpc-howto-java.html#",
+        "solid": "http://www.w3.org/ns/solid/terms#"
   };
 /**
  bif	 bif:

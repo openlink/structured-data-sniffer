@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2018 OpenLink Software
+ *  Copyright (C) 2015-2019 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -73,17 +73,20 @@
         {
           var item = n_data[i];
           var item_num = start_id + item.n;
-          str += "\
-            <table class='docdata table'> \
-              <thead> \
-                <tr> \
-                  <th width='40%'></th> \
-                  <th width='60%'></th> \
-                </tr> \
-              </thead> \
-              <tbody> \
-                <tr class='major'><td><a name='sc"+item_num+"'>Statement Collection #"+item_num+"</a></td><td></td></tr> \
-                ";
+          str += 
+           `<table class='docdata table'> 
+              <thead> 
+                <tr> 
+                  <th width='40%'></th> 
+                  <th width='60%'></th> 
+                </tr> 
+              </thead> 
+              <tbody> 
+                <tr class='major'>
+                  <td><a name='sc${item_num}'>Statement Collection #${item_num}</a></td>
+                  <td></td>
+                </tr> 
+                `;
           str += this.format_id(item.s, id_list);
 
           var props = "";
@@ -91,22 +94,24 @@
           props += this.format_props(item.props, id_list, false);
 
           if (props.length > 0)
-            str += "<tr class='major'> <td>"+this.PredName+"s</td><td></td> </tr>" + props;
+            str += `<tr class='major'> 
+                      <td>${this.PredName}s</td>
+                      <td></td> 
+                    </tr>${props}`;
 
-          str += "\
-              </tbody> \
-            </table> \
-                 ";
+          str += `
+              </tbody> 
+            </table> 
+            `;
         }
 
-        var tbl_start = "\
-                <table> \
-                  <tbody> \
-                  ";
-        var tbl_end = "\
-                  </tbody> \
-                </table> \
-                ";
+        var tbl_start = `
+                <table> 
+                  <tbody> `;
+        var tbl_end = `
+                  </tbody>
+                </table>
+                `;
         if (str.length > 0)
            expanded = tbl_start + str + tbl_end;
       }
@@ -135,12 +140,20 @@
             var entity_id = id_list[iri];
             //nodeID://
             if (entity_id!==undefined && self.is_BNode(iri)) {
-              str += "<tr class='data_row'><td>" + key_str + "</td><td class='major'><a href='#sc"+entity_id+"'><i>See Statement Collection #" + entity_id + "</i></a></td></tr>";
+              str += `<tr class='data_row'>
+                         <td> ${key_str} </td>
+                         <td class='major'>
+                           <a href='#sc${entity_id}'><i>See Statement Collection #${entity_id}</i></a>
+                         </td>
+                      </tr>`;
             }
             else {
               var sval = self.iri2html(obj.iri);
               var td_class = obj.typeid!==undefined?" class='typeid'":"";
-              str += "<tr class='data_row'><td"+td_class+">" + key_str + "</td><td"+td_class+">"+sval+"</td></tr>";
+              str += `<tr class='data_row'>
+                        <td ${td_class}> ${key_str} </td>
+                        <td ${td_class} > ${sval} </td>
+                      </tr>`;
             }
           } 
           else {
@@ -159,7 +172,10 @@
             else {
               sval = self.check_link(v);
             }
-            str += "<tr class='data_row'><td>" + key_str + "</td><td>"+sval+"</td></tr>";
+            str += `<tr class='data_row'>
+                      <td> ${key_str} </td>
+                      <td> ${sval} </td>
+                    </tr>`;
           }
         } 
       });
@@ -169,20 +185,28 @@
     format_id : function (value, id_list) 
     {
        var entity_id = id_list[value];
+//--
+/***
        if (entity_id!==undefined && this.is_BNode(value)) {
          return "";
        }
-       else {
+       else 
+***/
+       {
          // for scroll between entities on page
          var uri = String(value);
          var anc = "";
          if (this.docURI && uri.match(/^http(s)?:\/\//) && this.check_URI(uri)) {
            var hashPos = uri.lastIndexOf("#");
-           if (hashPos!=-1 && hashPos!=uri.length-1)
+           if (hashPos!=-1 && hashPos!=uri.length-1) {
              anc = '<a name="'+uri.substr(hashPos+1)+'"/>';           
+           }
          }
          var sval = this.iri2html(uri);
-         return "<tr class='major data_row'><td>"+anc+this.SubjName+"</td><td>" + sval + "</td></tr>";
+         return `<tr class='major data_row'>
+                   <td> ${anc} ${this.SubjName} </td>
+                   <td> ${sval} </td>
+                 </tr>`;
        }
     },
 
@@ -205,28 +229,30 @@
       if ( s_val.match(/^http(s)?:\/\//) ) {
         if ( s_val.match(/\.(jpg|png|gif)$/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
-          return '<a href="' + val + '" title="' + val + '"><img src="' + val + '" style="max-width:'+width+'px;" /></a>';
-        } if ( s_val.match(/\.(jpg|png|gif)[?#].*/) ) {
-          var width = (is_key!==undefined && is_key)?200:300;
-          return '<a href="' + val + '" title="' + val + '"><img src="' + val + '" style="max-width:'+width+'px;" /></a>';
+          return `<a href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
         } 
-        return '<a href="' + val + '">' + val + '</a>';
-      } else if ( s_val.match(/^mailto:/) ) {
-        return '<a href="' + val + '">' + val + '</a>';
+        if ( s_val.match(/\.(jpg|png|gif)[?#].*/) ) {
+          var width = (is_key!==undefined && is_key)?200:300;
+          return `<a href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
+        } 
+        return `<a href="${val}"> ${val} </a>`;
+      } 
+      else if ( s_val.match(/^mailto:/) ) {
+        return `<a href="${val}"> ${val} </a>`;
       }
-      return val;
+      return this.pre(val);
     },
 
 
     pref_link : function (val, pref) 
     {
       var data = val.substring(pref.link.length);
-      return '<a href="' + val + '" title="' + val + '">' + pref.ns+':'+data + '</a>';
+      return `<a href="${val}" title="${val}"> ${pref.ns}:${data}</a>`;
     },
 
     pre : function (text) 
     {
-      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return sanitize_str(text);
     },
 
     s_startWith : function (str, val) {
@@ -257,7 +283,7 @@
       else {
         var anc_name = this.subst_list[uri];
         if (anc_name) {
-          var v = '<a href="' + uri + '" title="' + uri + '">' + anc_name + '</a>';
+          var v = `<a href="${uri}" title="${uri}"> ${anc_name}</a>`;
           return {rc:true, val:v};
         }
         else
