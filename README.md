@@ -19,7 +19,7 @@ Support for additional browsers like
 is under construction.
 
 ## License
-Copyright 2015-2018 [OpenLink Software](mailto:opensource@openlinksw.com)
+Copyright 2015-2019 [OpenLink Software](mailto:opensource@openlinksw.com)
 
 This software is licensed under the GNU General Public License (see
 [COPYING](https://github.com/OpenLinkSoftware/OSDS_extension/blob/develop/COPYING)).
