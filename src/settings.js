@@ -104,6 +104,7 @@ class Settings {
   +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider  \n'
   +'ORDER BY DESC (2) \n';
 ***/
+/***
   +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
   +'PREFIX schema: <http://schema.org/> \n'
   +' \n'
@@ -159,6 +160,48 @@ class Settings {
   +' }  \n'
   +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider  \n'
   +'ORDER BY DESC (2) \n';
+***/
+  +'prefix oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
+  +'prefix schema: <http://schema.org/>  \n'
+  +'select distinct  \n'
+  +'       # sample(?extract) as ?sample  \n'
+  +'       ?extract ?extractLabel  \n'
+  +'       ?entityType bif:regexp_substr("[^/#]+$", ?entityType, 0) as ?entityTypeLabel  \n'
+  +'       ?p as ?association ?associationLabel  \n'
+  +'       ?provider ?providerLabel  \n'
+  +'where  \n'
+  +'{   \n'
+  +'graph <{url}>   \n'
+  +'  {     \n'
+  +'    ?source ?p ?extract.     \n'
+  +'    ?extract \n'
+  +'      a ?entityType ;    \n'
+  +'      oplattr:providedBy ?provider ;   \n'
+  +'      (rdfs:label | schema:name | foaf:name | schema:headline) ?extractLabel .   \n'
+  +'    optional { ?provider foaf:name | schema:name ?providerLabel } . \n'
+  +'    filter (?p in ( skos:related, schema:about, schema:mentions))   \n'
+  +'    filter (!contains(str(?entityType),"Tag"))   \n'
+  +'  }   \n'
+  +'  ## Obtain relation (statement predicate) labels   \n'
+  +'  optional \n'
+  +'  { \n'
+  +'    { \n'
+  +'      graph <http://www.w3.org/2004/02/skos/core>  \n'
+  +'      {  \n'
+  +'        ?p rdfs:label | schema:name ?associationLabel .  \n'
+  +'      }   \n'
+  +'    } \n'
+  +'    union \n'
+  +'    { \n'
+  +'      graph <http://schema.org/>  \n'
+  +'      {  \n'
+  +'        ?p rdfs:label | schema:name ?associationLabel .  \n'
+  +'      }   \n'
+  +'    } \n'
+  +'    #filter (lang(?associationLabel) = "{lang}")   \n'
+  +'  } \n'
+  +'} \n'
+  +'order by ?extractLabel ?entityType \n';
     this._data = (data!== undefined && data!==null) ? data:null;
   }
 
