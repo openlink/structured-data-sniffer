@@ -602,8 +602,11 @@
 
 
 
-    function add_super_links(sender, data)
+    async function add_super_links(sender, data)
     {
+      var settings = new SettingsProxy();
+      var highlight_mode = await settings.getValue('ext.osds.super-links-highlight');
+
       if (g_super_links==null) {
          $('body').append(
            `<div class="super_links_popup" >
@@ -630,7 +633,7 @@
           g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
         }
 
-        mark_strings(labels);
+        mark_strings(labels, highlight_mode);
       } catch(e) {
         console.log(e);
       } finally {
@@ -765,7 +768,7 @@
     }
 
 
-    function mark_strings(keyword)
+    function mark_strings(keyword, highlight_mode)
     {
       var terms = {};
       var options = {
@@ -786,13 +789,14 @@
                       // foundTerm is the found search term
                       // totalCounter is a counter indicating the total number of all marks
                       // at the time of the function call
-                 var count = terms[foundTerm];
+                 word = foundTerm.toLowerCase();
+                 var count = terms[word];
                  if (count===undefined) {
-                    terms[foundTerm]=1;
+                    terms[word]=1;
                     return true;
                  } else {
-                    terms[foundTerm]=count+1;
-                    return (count >= 1)? false: true;
+                    terms[word]=count+1;
+                    return (count >= 1 && highlight_mode==='first')? false: true;
                  } 
             },
             "each": function(node){

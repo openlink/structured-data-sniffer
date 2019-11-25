@@ -203,6 +203,7 @@ function setSuperLinksDefaults()
           DOM.qSel('#super-links-sponge #describe-ssl').selected = true;
           DOM.qSel('#super-links-sponge-mode #xxx').selected = true;
           DOM.qSel('#super-links-viewer #html-fb').selected = true;
+          DOM.qSel('#super-links-highlight #all').selected = true;
 
           $(this).dialog( "close" );
         },
@@ -308,6 +309,10 @@ function loadPref()
     var viewer = gPref.getValue("ext.osds.super-links-viewer");
     if (viewer)
       DOM.qSel('#super-links-viewer #'+viewer).selected = true;
+
+    var mode = gPref.getValue("ext.osds.super-links-highlight");
+    if (mode)
+      DOM.qSel('#super-links-highlight #'+mode).selected = true;
 }
 
 
@@ -358,6 +363,9 @@ function savePref()
 
    v = DOM.qSel('#super-links-viewer option:checked').id;
    gPref.setValue("ext.osds.super-links-viewer", v);
+
+   v = DOM.qSel('#super-links-highlight option:checked').id;
+   gPref.setValue("ext.osds.super-links-highlight", v);
 
    closeOptions();
 }
