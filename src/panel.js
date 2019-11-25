@@ -839,10 +839,8 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
         g_RestCons.show();
       } 
     }
-//    else
-//    {
-//      sendResponse({}); /* stop */
-//    }
+
+    sendResponse({}); /* stop */
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }
@@ -851,9 +849,20 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
 
 
+function fetchWithTimeout(url, options, timeout) 
+{
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), timeout)
+    )
+  ]);
+}
+
+
 
 ////////////////////////////////////////////////////
-function SuperLinks_exec()
+async function SuperLinks_exec()
 {
   if (doc_URL!==null) {
     var setting = new Settings();
@@ -862,26 +871,29 @@ function SuperLinks_exec()
 
     if (Browser.isFirefoxWebExt) {
       Browser.api.tabs.query({active:true, currentWindow:true})
-        .then((tabs) => {
+        .then(async (tabs) => {
           if (tabs.length > 0) {
+
+            var data = await request_superlinks(tabs[0].url);
+
             Browser.api.tabs.sendMessage(tabs[0].id, 
               {
-                property: 'super_links',
-                query : link_query,
-                timeout: link_timeout
+                property: 'super_links_data',
+                data : data
               });
             window.close();
           }
         });
     } else {
 
-      Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
+      Browser.api.tabs.query({active:true, currentWindow:true}, async function(tabs) {
         if (tabs.length > 0) {
+          var data = await request_superlinks(tabs[0].url);
+
           Browser.api.tabs.sendMessage(tabs[0].id, 
             {
-              property: 'super_links',
-              query : link_query,
-              timeout: link_timeout
+              property: 'super_links_data',
+              data : data
             },
             function(response) {
             });
@@ -893,6 +905,151 @@ function SuperLinks_exec()
 
   return false;
 }
+
+
+async function request_superlinks(doc_url)
+{
+  var setting = new Settings();
+  var links_query = setting.getValue("ext.osds.super_links.query");
+  var links_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
+  var sponge_type = setting.getValue('ext.osds.super-links-sponge');
+  var sponge_mode = setting.getValue('ext.osds.super-links-sponge-mode');
+  var url_sponge;
+
+
+  if (sponge_type) {
+    url_sponge = setting.createSpongeCmdFor(sponge_type, sponge_mode, doc_url);
+  } else {
+    var rc = doc_url.match(/^((\w+):\/)?\/?(.*)$/);
+    url_sponge = "https://linkeddata.uriburner.com/about/html/http/"+rc[3]+"?sponger:get=add";
+  }
+
+ $(".super_links_msg").css("display","flex");
+
+  var options = {
+       headers: {
+          'Accept': 'text/html',
+          'Cache-control': 'no-cache'
+       },
+       credentials: 'include',
+      };
+
+  try  {
+    var rc = await fetchWithTimeout(url_sponge, options, 30000);
+    if (rc.ok && rc.status == 200) {
+      if (rc.redirected && rc.url.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
+        alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
+        var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+        Browser.openTab(redir);
+        alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
+        return;
+      }
+      return await exec_super_links_query(doc_url, links_query, links_timeout);
+
+    } else {
+      if (rc.status==401 || rc.status==403) {
+        var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+        Browser.openTab(redir);
+        alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
+        return;
+      } else {
+        alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
+        return await exec_super_links_query(doc_url, links_query, links_timeout);
+      }
+    }
+
+  } catch(e) {
+    $(".super_links_msg").css("display","none");
+    alert("Sponge "+e);
+    console.log(e);
+  }
+
+  return null;
+}
+
+
+async function exec_super_links_query(doc_url, links_query, links_timeout)
+{
+  var url = new URL(doc_url);
+  url.hash = '';
+  //url.search = '';
+  var iri = url.toString();
+
+  var br_lang = navigator.language || navigator.userLanguage;
+  if (br_lang && br_lang.length>0) {
+    var i = br_lang.indexOf('-');
+    if (i!=-1)
+       br_lang = br_lang.substr(0,i);
+  } else {
+    br_lang = 'en';
+  }
+
+  var url_links = "https://linkeddata.uriburner.com/sparql";
+  var links_sparql_query = (new Settings()).createSuperLinksQuery(links_query, iri, br_lang);
+
+  $(".super_links_msg").css("display","flex");
+
+  var get_url = new URL(url_links);
+  var params = get_url.searchParams;
+  params.append('format', 'application/json');
+  params.append('query', links_sparql_query);
+  params.append('CXML_redir_for_subjs', 121);
+  params.append('timeout', links_timeout);
+  params.append('_', Date.now());
+
+  var options = {
+        headers: {
+          'Accept': 'application/json',
+          'Cache-control': 'no-cache'
+        },
+        credentials: 'include',
+      };
+
+  try  {
+    var rc = await fetchWithTimeout(get_url, options, links_timeout);
+    if (rc.ok && rc.status == 200) {
+      try {
+        var data = await rc.text();
+        return data;
+
+      } catch(e) {
+        console.log(e);
+      } finally {
+        $(".super_links_msg").css("display","none");
+      }
+
+    } else {
+      $(".super_links_msg").css("display","none");
+      if (rc.status==401 || rc.status==403) {
+        var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+        Browser.openTab(redir);
+        alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
+        return null;
+      } else {
+        alert("Could not load data from: "+url_links+"\nError: "+rc.status);
+        return null;
+      }
+/***
+          if (rc.status == 403) {
+            alert("Could not execute SPARQL query againts: "+url_links+"\nTry Login and execute query again");
+            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
+            document.location.href = redir;
+          } else {
+            alert("Could not load data from: "+url_links+"\nError: "+rc.status);
+          }
+***/
+    }
+
+  } catch(e) {
+    $(".super_links_msg").css("display","none");
+    alert("Could not load data from: "+url_links+"\n"+e);
+    return null;
+  } finally {
+    $(".super_links_msg").css("display","none");
+  }
+}
+
+
 
 
 

@@ -601,18 +601,8 @@
     }
 
 
-    function fetchWithTimeout(url, options, timeout) 
-    {
-      return Promise.race([
-        fetch(url, options),
-        new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), timeout)
-        )
-      ]);
-    }
 
-
-    async function add_super_links(sender, links_query, links_timeout)
+    function add_super_links(sender, data)
     {
       if (g_super_links==null) {
          $('body').append(
@@ -624,146 +614,30 @@
               <div style="width:16px;">
                 <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
               </div>
-              <div>&nbsp;Preparing&nbsp;Super&nbsp;Links</div>
+              <div>&nbsp;Applying&nbsp;Super&nbsp;Links</div>
             </div>`
          );
       }
 
-      var settings = new SettingsProxy();
-      var sponge_type = await settings.getValue('ext.osds.super-links-sponge');
-      var sponge_mode = await settings.getValue('ext.osds.super-links-sponge-mode');
-      var url_sponge;
-
-      if (sponge_type) {
-          url_sponge = settings.createSpongeCmdFor(sponge_type, sponge_mode, location.href);
-      } else {
-        var rc = location.href.match(/^((\w+):\/)?\/?(.*)$/);
-        url_sponge = "https://linkeddata.uriburner.com/about/html/http/"+rc[3]+"?sponger:get=add";
-      }
-
       $(".super_links_msg").css("display","flex");
 
-      var options = {
-           headers: {
-              'Accept': 'text/html',
-              'Cache-control': 'no-cache'
-           },
-           credentials: 'include',
-          };
-
-      try  {
-        var rc = await fetchWithTimeout(url_sponge, options, 30000);
-        if (rc.ok && rc.status == 200) {
-          if (rc.redirected && rc.url.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
-            alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
-            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            document.location.href = redir;
-            return;
-          }
-          exec_super_links_query(links_query, links_timeout);
-
-        } else {
-          if (rc.status==401 || rc.status==403) {
-            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            document.location.href = redir;
-            return;
-          } else {
-            alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
-            exec_super_links_query(links_query, links_timeout);
-          }
+      try {
+        var val = JSON.parse(data);
+        g_super_links = val.results.bindings;
+        var labels = [];
+        for(var i=0; i < g_super_links.length; i++) {
+          labels.push(g_super_links[i].extractLabel.value);
+          g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
         }
 
+        mark_strings(labels);
       } catch(e) {
-        $(".super_links_msg").css("display","none");
-        alert("Sponge "+e);
         console.log(e);
-      }
-    }
-
-
-    async function exec_super_links_query(links_query, links_timeout)
-    {
-      var url = new URL(location.href);
-      url.hash = '';
-      //url.search = '';
-      var iri = url.toString();
-
-      var br_lang = navigator.language || navigator.userLanguage;
-      if (br_lang && br_lang.length>0) {
-        var i = br_lang.indexOf('-');
-        if (i!=-1)
-           br_lang = br_lang.substr(0,i);
-      } else {
-        br_lang = 'en';
-      }
-
-      var url_links = "https://linkeddata.uriburner.com/sparql";
-      var links_sparql_query = (new Settings()).createSuperLinksQuery(links_query, iri, br_lang);
-
-      $(".super_links_msg").css("display","flex");
-
-      var get_url = new URL(url_links);
-      var params = get_url.searchParams;
-      params.append('format', 'text/csv');
-      params.append('query', links_sparql_query);
-      params.append('CXML_redir_for_subjs', 121);
-      params.append('timeout', links_timeout);
-      params.append('_', Date.now());
-
-      var options = {
-            headers: {
-              'Accept': 'text/plain',
-              'Cache-control': 'no-cache'
-            },
-            credentials: 'include',
-          };
-
-      try  {
-        var rc = await fetchWithTimeout(get_url, options, links_timeout);
-        if (rc.ok && rc.status == 200) {
-          try {
-            var data = await rc.text();
-            var jso = Papa.parse(data,{header: true, skipEmptyLines: true});
-            g_super_links = jso.data;
-            var labels = [];
-            for(var i=0; i < g_super_links.length; i++) {
-              var label = g_super_links[i].extractLabel || '';
-              labels.push(label);
-              g_super_links[i]._id = label.toLowerCase();
-            }
-
-            mark_strings(labels);
-          } catch(e) {
-            console.log(e);
-          } finally {
-            $(".super_links_msg").css("display","none");
-          }
-
-        } else {
-          $(".super_links_msg").css("display","none");
-          if (rc.status==401 || rc.status==403) {
-            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            document.location.href = redir;
-            return;
-          } else {
-            alert("Could not load data from: "+url_links+"\nError: "+rc.status);
-          }
-/***
-          if (rc.status == 403) {
-            alert("Could not execute SPARQL query againts: "+url_links+"\nTry Login and execute query again");
-            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            document.location.href = redir;
-          } else {
-            alert("Could not load data from: "+url_links+"\nError: "+rc.status);
-          }
-***/
-        }
-
-      } catch(e) {
-        $(".super_links_msg").css("display","none");
-        alert("Could not load data from: "+url_links+"\n"+e);
       } finally {
-        $(".super_links_msg").css("display","none");
+        function close_msg() {
+            $(".super_links_msg").css("display","none");
+        }
+        setTimeout(close_msg, 2000);
       }
     }
 
@@ -838,7 +712,6 @@
       var viewer_mode = await settings.getValue('ext.osds.super-links-viewer');
 
       async function create_href(url) {
-         // http://linkeddata.uriburner.com/about/id/entity/https/thenextweb.com/hardfork/2019/02/05/facebook-is-doing-something-with-blockchain-but-nobody-knows-what/#babelfy_bn%3A03624775n_ED31AF22-2E19-11E9-B5EB-80FD74DC2BE9       
          if (viewer_mode==='html-fb')
            return await settings.createImportUrl(url);
          else
@@ -854,16 +727,16 @@
           var v = lst[i];
 
           try {
-            var extract = v.extract?v.extract:null;
-            var prov = v.provider?v.provider:null;
+            var extract = v.extract?v.extract.value:null;
+            var prov = v.provider?v.provider.value:null;
             if (extract && prov) {
-              var extLabel = v.extractLabel?v.extractLabel:'';
-              var provName = v.providerLabel?v.providerLabel:prov;
-              var entityType = v.entityType;
-              var entityTypeLabel = v.entityTypeLabel?v.entityTypeLabel:entityType;
+              var extLabel = v.extractLabel?v.extractLabel.value:'';
+              var provName = v.providerLabel?v.providerLabel.value:prov;
+              var entityType = v.entityType.value;
+              var entityTypeLabel = v.entityTypeLabel?v.entityTypeLabel.value:entityType;
 
               var association = v.association.value;
-              var associationLabel = v.associationLabel?v.associationLabel:association;
+              var associationLabel = v.associationLabel?v.associationLabel.value:association;
               var extract_href = await create_href(extract);
 
               tdata += 
@@ -1038,11 +911,11 @@
                 if (request.property == "doc_data")
                     request_doc_data();
                 else if (request.property == "open_tab")
-                    request_open_tab(request.url, sender)
-                else if (request.property == "super_links")
-                    add_super_links(sender, request.query, request.timeout)
-//                else
-//                    sendResponse({});  // stop
+                    request_open_tab(request.url, sender);
+                else if (request.property == "super_links_data")
+                    add_super_links(sender, request.data);
+
+                sendResponse({});  // stop
             });
 
 

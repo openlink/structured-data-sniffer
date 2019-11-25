@@ -819,10 +819,9 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
     {
       Download_exec_update_state(); 
     }
-//    else
-//    {
-//      sendResponse({}); /* stop */
-//    }
+ 
+    sendResponse({}); /* stop */
+
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }

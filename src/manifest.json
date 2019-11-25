@@ -26,7 +26,7 @@
   "content_scripts": [
     {
       "matches": ["file:///*/*","*://*/*"],
-      "js": ["lib/jquery-3.1.0.min.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", "lib/jquery.mark.js", "lib/namespace.js", "lib/posh.js", "lib/papaparse.js", "browser.js", "settings.js", "sniffer.js"],
+      "js": ["lib/jquery-3.1.0.min.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", "lib/jquery.mark.js", "lib/namespace.js", "lib/posh.js", "browser.js", "settings.js", "sniffer.js"],
       "css": ["content.css"],
       "run_at": "document_idle"
     },
