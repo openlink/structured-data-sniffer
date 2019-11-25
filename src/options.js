@@ -201,7 +201,7 @@ function setSuperLinksDefaults()
           $('#super-links-timeout').val(gPref.def_super_links_timeout);
           yasqe_slinks.setValue(gPref.def_super_links_query);
           DOM.qSel('#super-links-sponge #describe-ssl').selected = true;
-          DOM.qSel('#super-links-sponge-mode #soft').selected = true;
+          DOM.qSel('#super-links-sponge-mode #xxx').selected = true;
           DOM.qSel('#super-links-viewer #html-fb').selected = true;
 
           $(this).dialog( "close" );
