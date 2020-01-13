@@ -805,13 +805,14 @@
           } catch(e) {}
         }
 
+
         $('.super_links_popup-content')
            .append('<table class="super_links_table">'
                +'<thead><tr>'
-               +'<th style="max-width:190px;">Word</th>'
-               +'<th style="max-width:95px;">Association</th>'
-               +'<th style="max-width:285px;width:100%;">Source</th>'
-               +'<th style="max-width:300px;">Type</th>'
+               +'<th style="max-width:190px;min-width:100px">Word</th>'
+               +'<th style="max-width:130px;min-width:150px">Association</th>'
+               +'<th style="max-width:350px;width:40%;">Source</th>'
+               +'<th style="max-width:200px;width:20%">Type</th>'
                +'</tr></thead>'
                 +'<tbody>'+tdata+'</tbody>'
                 +'</table>');
