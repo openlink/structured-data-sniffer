@@ -40,7 +40,8 @@
     var ttl_nano_pattern = /(## (Nanotation|Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle) +(End|Stop) ##)(.*)/gmi;
     var jsonld_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
     var json_nano_pattern = /(## JSON +Start ##)((.|\n|\r)*?)((## JSON +(End|Stop) ##))(.*)/gmi;
-    var rdf_nano_pattern = /(## RDF\/XML +Start ##)((.|\n|\r)*?)((## RDF\/XML +(End|Stop) ##))(.*)/gmi;
+    var rdf_nano_pattern = /(## RDF(\/|-)XML +Start ##)((.|\n|\r)*?)((## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
+//    var rdf_nano_pattern = /(## RDF\/XML +Start ##)((.|\n|\r)*?)((## RDF\/XML +(End|Stop) ##))(.*)/gmi;
 
 
     function getSelectionString(el, win) {
@@ -195,7 +196,7 @@
                 var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
                 var p2 = /^ *#/;
                 var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
-                var p4 = /## +(RDF\/XML) +(Start|End|Stop) *##/;
+                var p4 = /## +(RDF(\/|-)XML) +(Start|End|Stop) *##/;
                 var p5 = /## +(JSON) +(Start|End|Stop) *##/;
 
                 s_split.forEach(function (item, i, arr) {
@@ -270,7 +271,7 @@
                     if (ndata == null)
                         break;
 
-                    var str = ndata[2];
+                    var str = ndata[3];
                     if (str.length > 0) {
                         rdf_ret.push(str);
                     }
