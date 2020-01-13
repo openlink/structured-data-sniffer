@@ -114,6 +114,10 @@ $(document).ready(function()
       selectTab('#posh');
       return false;
   });
+  $('#tabs a[href="#json"]').click(function(){
+      selectTab('#json');
+      return false;
+  });
 
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
