@@ -276,7 +276,6 @@
                     }
                 }
 
-//??CHECKME FIXME
                 //try get JSON Nano
                 while (true) {
                     var ndata = json_nano_pattern.exec(s_doc);
@@ -656,10 +655,34 @@
       try {
         var val = JSON.parse(data);
         g_super_links = val.results.bindings;
-        var labels = [];
+        var list = {};
         for(var i=0; i < g_super_links.length; i++) {
-          labels.push(g_super_links[i].extractLabel.value);
-          g_super_links[i]._id = g_super_links[i].extractLabel.value.toLowerCase();
+          var s = g_super_links[i].extractLabel.value;
+          g_super_links[i]._id = s.toLowerCase();
+          list[s]=0;
+        }
+
+        var keys = Object.keys(list); 
+        for(var i=0; i< keys.length; i++) {
+          var s = keys[i];
+          for(var j=0; j < keys.length; j++) {
+            if (j != i && keys[j].indexOf(s) != -1) {
+              list[s] = 1;
+              break;
+            }
+          }
+        }
+
+        var labels = [];
+        for(var i=0; i< keys.length; i++) {
+          var s = keys[i];
+          if (list[s] === 0)
+            labels.push(s);
+        }
+        for(var i=0; i< keys.length; i++) {
+          var s = keys[i];
+          if (list[s] !== 0)
+            labels.push(s);
         }
 
         mark_strings(labels, highlight_mode);
@@ -797,71 +820,119 @@
     }
 
 
-    function mark_strings(keyword, highlight_mode)
+    function mark_strings(keywords, highlight_mode)
     {
-      var terms = {};
-      var options = {
+      $("body").unmark();
+
+      for(var i=0; i < keywords.length; i++)
+      {
+        var keyword = keywords[i];
+        var word;
+        var options = {
             "element": "a",  //"a"
             "className": "super_link_mark",
             "exclude": ["a"],
             "separateWordSearch": false,
-            "acrossElements": true,
-            "accuracy": "exactly",
-//!            "diacritics": true,
+            "acrossElements": false,
+            "accuracy": {
+               "value": "exactly",
+               "limiters": ":;.,’'\"-–—‒_(){}[]!+=".split("")
+             },
             "diacritics": false,
-            "iframes": false,
-            "iframesTimeout": 5000,
             "caseSensitive": false,
             "ignoreJoiners": false,
-            "filter": function(textNode, foundTerm, totalCounter){
+            "filter": function(textNode, foundTerm, totalCounter, termCount){
                       // textNode is the text node which contains the found term
                       // foundTerm is the found search term
                       // totalCounter is a counter indicating the total number of all marks
                       // at the time of the function call
                  word = foundTerm.toLowerCase();
-                 var count = terms[word];
-                 if (count===undefined) {
-                    terms[word]=1;
-                    return true;
-                 } else {
-                    terms[word]=count+1;
-                    return (count >= 1 && highlight_mode==='first')? false: true;
-                 } 
+                 return (termCount > 0 && highlight_mode==='first')? false: true;
             },
             "each": function(node){
                 // node is the marked DOM element
                 $(node).attr("href","");
+                $(node).attr("mark_id",keyword.toLowerCase());
+
             },
-            "done": function(counter){
+          };
 
-                $('.super_links_popup_close').click(function(e){
-                    $('.super_links_popup').hide();
-                    return false;
-                 });
+        $("body").mark(keyword, options);
+      }
 
-                $('.super_link_mark').click(function(ev){
-                    var label = ev.target.innerText.toLowerCase();
-                    var lst = [];
-                    for (var i=0; i < g_super_links.length; i++) {
-                      if (g_super_links[i]._id.indexOf(label)!=-1)
-                        lst.push(g_super_links[i]);
-                    }
+      $('.super_links_popup_close').click(function(e){
+          $('.super_links_popup').hide();
+          return false;
+       });
 
-                    create_popup_table(lst, ev);
-                    return false;
-                 });
-            }
-        };
+      $('.super_link_mark').click(function(ev){
+          var mark_id = ev.target.getAttribute('mark_id');
+          var lst = [];
+          for (var i=0; i < g_super_links.length; i++) {
+            if (g_super_links[i]._id.indexOf(mark_id)!=-1)
+              lst.push(g_super_links[i]);
+          }
 
-
-      $("body").unmark({
-        done: function() {
-          $("body").mark(keyword, options);
-        }
-      });
+          create_popup_table(lst, ev);
+          return false;
+       });
     }
 
 
+    function mark_stringsE(keywords, highlight_mode)
+    {
+      $("body").unmark();
+
+      for(var i=0; i < keywords.length; i++)
+      {
+        var keyword = keywords[i];
+//        var word;
+        var options = {
+            "element": "a",  //"a"
+            "className": "super_link_mark",
+            "exclude": ["a"],
+            "acrossElements": false,
+//            "acrossElements": true,
+            "filter": function(textNode, foundTerm, termCount){
+                      // textNode is the text node which contains the found term
+                      // foundTerm is the found search term
+                      // totalCounter is a counter indicating the total number of all marks
+                      // at the time of the function call
+//                 word = foundTerm.toLowerCase();
+                 return (termCount > 0 && highlight_mode==='first')? false: true;
+            },
+            "each": function(node){
+                // node is the marked DOM element
+                $(node).attr("href","");
+                $(node).attr("mark_id",keyword.toLowerCase());
+
+            },
+          };
+
+//        var r = new RegExp('/\S*Lor[^]?m/gmi');
+//        var r = new RegExp('\S*'+keyword+' ', 'gmi');
+        var r = new RegExp('(^|\\s+)'+keyword, 'gmi');
+        $("body").markRegExp(r, options);
+
+      }
+
+      $('.super_links_popup_close').click(function(e){
+          $('.super_links_popup').hide();
+          return false;
+       });
+
+      $('.super_link_mark').click(function(ev){
+          var mark_id = ev.target.getAttribute('mark_id');
+          var lst = [];
+          for (var i=0; i < g_super_links.length; i++) {
+            if (g_super_links[i]._id.indexOf(mark_id)!=-1)
+              lst.push(g_super_links[i]);
+          }
+
+          create_popup_table(lst, ev);
+          return false;
+       });
+    }
 
 
     jQuery(document).ready(function () {
