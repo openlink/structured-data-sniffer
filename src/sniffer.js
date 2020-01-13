@@ -879,62 +879,6 @@
     }
 
 
-    function mark_stringsE(keywords, highlight_mode)
-    {
-      $("body").unmark();
-
-      for(var i=0; i < keywords.length; i++)
-      {
-        var keyword = keywords[i];
-//        var word;
-        var options = {
-            "element": "a",  //"a"
-            "className": "super_link_mark",
-            "exclude": ["a"],
-            "acrossElements": false,
-//            "acrossElements": true,
-            "filter": function(textNode, foundTerm, termCount){
-                      // textNode is the text node which contains the found term
-                      // foundTerm is the found search term
-                      // totalCounter is a counter indicating the total number of all marks
-                      // at the time of the function call
-//                 word = foundTerm.toLowerCase();
-                 return (termCount > 0 && highlight_mode==='first')? false: true;
-            },
-            "each": function(node){
-                // node is the marked DOM element
-                $(node).attr("href","");
-                $(node).attr("mark_id",keyword.toLowerCase());
-
-            },
-          };
-
-//        var r = new RegExp('/\S*Lor[^]?m/gmi');
-//        var r = new RegExp('\S*'+keyword+' ', 'gmi');
-        var r = new RegExp('(^|\\s+)'+keyword, 'gmi');
-        $("body").markRegExp(r, options);
-
-      }
-
-      $('.super_links_popup_close').click(function(e){
-          $('.super_links_popup').hide();
-          return false;
-       });
-
-      $('.super_link_mark').click(function(ev){
-          var mark_id = ev.target.getAttribute('mark_id');
-          var lst = [];
-          for (var i=0; i < g_super_links.length; i++) {
-            if (g_super_links[i]._id.indexOf(mark_id)!=-1)
-              lst.push(g_super_links[i]);
-          }
-
-          create_popup_table(lst, ev);
-          return false;
-       });
-    }
-
-
     jQuery(document).ready(function () {
 
         try {

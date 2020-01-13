@@ -523,8 +523,12 @@ function check_JSON_LD(val)
           if (error)
             val.d.jsonld.error.push(error);
 
-          if (html_data)
-            val.d.jsonld.expanded = html_data;
+          if (html_data) {
+            if (val.d.jsonld.expanded) 
+              val.d.jsonld.expanded += html_data;
+            else
+              val.d.jsonld.expanded = html_data;
+          }
 
           if (handler.skipped_error.length>0)
             val.d.jsonld.error = val.d.jsonld.error.concat(handler.skipped_error);
@@ -553,8 +557,12 @@ function check_JsonLD_Nano(val)
           if (error)
             val.d.jsonld.error.push(error);
 
-          if (html_data)
-            val.d.jsonld.expanded = html_data;
+          if (html_data) {
+            if (val.d.jsonld.expanded) 
+              val.d.jsonld.expanded += html_data;
+            else
+              val.d.jsonld.expanded = html_data;
+          }
 
           if (handler.skipped_error.length>0)
             val.d.jsonld.error = val.d.jsonld.error.concat(handler.skipped_error);
@@ -614,8 +622,12 @@ function check_Turtle(val)
           if (error)
             val.d.turtle.error.push(error);
 
-          if (html_data)
-            val.d.turtle.expanded = html_data;
+          if (html_data) {
+            if (val.d.turtle.expanded)
+              val.d.turtle.expanded += html_data;
+            else
+              val.d.turtle.expanded = html_data;
+          }
 
           if (handler.skipped_error.length>0)
             val.d.turtle.error = val.d.turtle.error.concat(handler.skipped_error);
@@ -648,8 +660,12 @@ function check_Turtle_Nano(val)
                 if (error)
                   val.d.turtle.error.push(error);
 
-                if (html_data)
-                  val.d.turtle.expanded = html_data;
+                if (html_data) {
+                  if (val.d.turtle.expanded)
+                    val.d.turtle.expanded += html_data;
+                  else
+                    val.d.turtle.expanded = html_data;
+                }
 
                 if (handler.skipped_error.length>0)
                   val.d.turtle.error = val.d.turtle.error.concat(handler.skipped_error);
@@ -740,8 +756,12 @@ function check_RDF_XML(val)
           if (error)
             val.d.rdf.error.push(error);
 
-          if (html_data)
-            val.d.rdf.expanded = html_data;
+          if (html_data) {
+            if (val.d.rdf.expanded) 
+              val.d.rdf.expanded += html_data;
+            else
+              val.d.rdf.expanded = html_data;
+          }
 
           if (handler.skipped_error.length>0)
             val.d.rdf.error = val.d.rdf.error.concat(handler.skipped_error);
@@ -769,8 +789,12 @@ function check_RDF_XML_Nano(val)
           if (error)
             val.d.rdf.error.push(error);
 
-          if (html_data)
-            val.d.rdf.expanded = html_data;
+          if (html_data) {
+            if (val.d.rdf.expanded) 
+              val.d.rdf.expanded += html_data;
+            else
+              val.d.rdf.expanded = html_data;
+          }
 
           if (handler.skipped_error.length>0)
             val.d.rdf.error = val.d.rdf.error.concat(handler.skipped_error);
