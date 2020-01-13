@@ -51,6 +51,7 @@
         <script type="text/javascript" src="ttl_gen.js"></script>
         <script type="text/javascript" src="html_gen.js"></script>
         <script type="text/javascript" src="webrequest.js"></script>
+
         <link rel="stylesheet" href="sniffer.css" />
 
         <style type="text/css">
@@ -79,7 +80,7 @@
          <tr>
           <td>Action:</td>
           <td>
-            < id="save-action" style="WIDTH: 300px" >
+            <SELECT id="save-action" style="WIDTH: 300px" >
               <OPTION id="view" selected>View Raw Data</OPTION>
               <OPTION id="filesave">Download Raw Data</OPTION>
               <OPTION id="fileupload">Upload Raw Data</OPTION>
@@ -97,8 +98,9 @@
           <td>
             <SELECT id="save-fmt" style="WIDTH: 100px" >
               <OPTION id="ttl" selected>Turtle</OPTION>
-              <OPTION id="json">JSON-LD</OPTION>
+              <OPTION id="jsonld">JSON-LD</OPTION>
               <OPTION id="rdf">RDF/XML</OPTION>
+              <OPTION id="json">JSON</OPTION>
             </SELECT>
           </td>
          </tr>
@@ -157,6 +159,7 @@
           <li><a href="#rdfa" title="Metadata encoded using RDFa Notation">RDFa</a></li>
           <li><a href="#rdf" title="Metadata encoded using RDF/XML Notation">RDF/XML</a></li>
           <li><a href="#posh" title="Metadata encoded using Plain Old Semantic HTML Notation">POSH</a></li>
+          <li><a href="#json" title="Metadata encoded using JSON Notation">JSON</a></li>
         </ul>
       </div>
 
@@ -265,6 +268,15 @@
         </div>
 
         <div id="posh_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="json_items">
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>

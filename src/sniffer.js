@@ -32,12 +32,14 @@
     var rdfa_subjects = null;
     var rdf_Text = null;
     var ttl_nano_Text = null;
-    var json_nano_Text = null;
+    var jsonld_nano_Text = null;
     var rdf_nano_Text = null;
+    var json_nano_Text = null;
     var data_found = false;
 
     var ttl_nano_pattern = /(## (Nanotation|Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle) +(End|Stop) ##)(.*)/gmi;
-    var json_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
+    var jsonld_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
+    var json_nano_pattern = /(## JSON +Start ##)((.|\n|\r)*?)((## JSON +(End|Stop) ##))(.*)/gmi;
     var rdf_nano_pattern = /(## RDF\/XML +Start ##)((.|\n|\r)*?)((## RDF\/XML +(End|Stop) ##))(.*)/gmi;
 
 
@@ -156,6 +158,7 @@
     function sniff_nanotation() {
         var doc_Texts = [];
         var ttl_ret = [];
+        var jsonld_ret = [];
         var json_ret = [];
         var rdf_ret = [];
 
@@ -193,9 +196,10 @@
                 var p2 = /^ *#/;
                 var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
                 var p4 = /## +(RDF\/XML) +(Start|End|Stop) *##/;
+                var p5 = /## +(JSON) +(Start|End|Stop) *##/;
 
                 s_split.forEach(function (item, i, arr) {
-                    if (item.length > 0 && (!p2.test(item) || p1.test(item) || p3.test(item) || p4.test(item)))
+                    if (item.length > 0 && (!p2.test(item) || p1.test(item) || p3.test(item) || p4.test(item) || p5.test(item)))
                         s_doc += item + "\n";
                 });
 
@@ -240,6 +244,41 @@
 
                 //try get JSON-LD Nano
                 while (true) {
+                    var ndata = jsonld_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
+                    var str = ndata[2];
+                    if (str.length > 0) {
+                        var add = false;
+                        for (var c = 0; c < str.length; c++) {
+                            add = str[c] === "{" ? true : false;
+                            if (add)
+                                break;
+                            if (!isWhitespace(str[c]))
+                                break;
+                        }
+
+                        if (add)
+                            jsonld_ret.push(str);
+                    }
+                }
+
+                //try get RDF/XML Nano
+                while (true) {
+                    var ndata = rdf_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
+                    var str = ndata[2];
+                    if (str.length > 0) {
+                        rdf_ret.push(str);
+                    }
+                }
+
+//??CHECKME FIXME
+                //try get JSON Nano
+                while (true) {
                     var ndata = json_nano_pattern.exec(s_doc);
                     if (ndata == null)
                         break;
@@ -259,25 +298,12 @@
                             json_ret.push(str);
                     }
                 }
-
-                //try get RDF/XML Nano
-                while (true) {
-                    var ndata = rdf_nano_pattern.exec(s_doc);
-                    if (ndata == null)
-                        break;
-
-                    var str = ndata[2];
-                    if (str.length > 0) {
-                        rdf_ret.push(str);
-                    }
-                }
-
             }
         }
 
 
-        if (ttl_ret.length > 0 || json_ret.length > 0 || rdf_ret.length > 0)
-            return {ttl: ttl_ret, json: json_ret, rdf: rdf_ret};
+        if (ttl_ret.length > 0 || jsonld_ret.length > 0 || rdf_ret.length > 0)
+            return {ttl: ttl_ret, jsonld: jsonld_ret, rdf: rdf_ret, json: json_ret};
         else
             return null;
     }
@@ -354,8 +380,9 @@
                 var ret = sniff_nanotation();
                 if (ret) {
                     ttl_nano_Text = (ret.ttl.length > 0) ? ret.ttl : null;
-                    json_nano_Text = (ret.json.length > 0) ? ret.json : null;
+                    jsonld_nano_Text = (ret.jsonld.length > 0) ? ret.jsonld : null;
                     rdf_nano_Text = (ret.rdf.length > 0) ? ret.rdf : null;
+                    json_nano_Text = (ret.json.length > 0) ? ret.json : null;
                     data_found = true;
                 }
             }
@@ -447,13 +474,15 @@
             }
 
             ttl_nano_Text === null;
+            jsonld_nano_Text === null;
             json_nano_Text === null;
             rdf_nano_Text === null;
             var ret = sniff_nanotation();
             if (ret) {
                 ttl_nano_Text = (ret.ttl.length > 0) ? ret.ttl : null;
-                json_nano_Text = (ret.json.length > 0) ? ret.json : null;
+                jsonld_nano_Text = (ret.jsonld.length > 0) ? ret.jsonld : null;
                 rdf_nano_Text = (ret.rdf.length > 0) ? ret.rdf : null;
+                json_nano_Text = (ret.json.length > 0) ? ret.json : null;
             }
 
         } catch (e) {
@@ -863,10 +892,12 @@
                     doc_URL: document.location.href,
                     micro: {data: null},
                     jsonld: {text: null},
+                    json: {text: null},
                     rdfa: {data: null, ttl: null},
                     rdf: {text: null},
                     turtle: {text: null},
                     ttl_nano: {text: null},
+                    jsonld_nano: {text: null},
                     json_nano: {text: null},
                     rdf_nano: {text: null},
                     posh: {text: null}
@@ -884,6 +915,7 @@
                 docData.rdfa.data = rdfa.data;
                 docData.rdfa.ttl = rdfa.ttl;
                 docData.ttl_nano.text = ttl_nano_Text;
+                docData.jsonld_nano.text = jsonld_nano_Text;
                 docData.json_nano.text = json_nano_Text;
                 docData.rdf_nano.text = rdf_nano_Text;
                 docData.posh.text = posh_Text;
@@ -894,6 +926,7 @@
                     || (rdf_Text     && rdf_Text.length > 0)
                     || (rdfa.data    && rdfa.data.length > 0)
                     || (ttl_nano_Text && ttl_nano_Text.length > 0)
+                    || (jsonld_nano_Text && jsonld_nano_Text.length > 0)
                     || (json_nano_Text && json_nano_Text.length > 0)
                     || (rdf_nano_Text && rdf_nano_Text.length > 0)
                     || (posh_Text    && posh_Text.length > 0)

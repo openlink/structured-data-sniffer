@@ -372,6 +372,163 @@ Handle_JSONLD.prototype = {
 }
 
 
+Handle_JSON = function (make_ttl) {
+  this.s_id = '_:s'+Date.now().toString(16)+'_';
+  this.id = 0;
+  this.callback = null;
+  this._pos = 0;
+  this._output = null;
+  this.start_id = 0;
+  this.skip_error = true;
+  this.skipped_error = [];
+  this._make_ttl = false;
+  if (make_ttl)
+    this._make_ttl = make_ttl;
+  this.baseURL = '';
+};
+
+Handle_JSON.prototype = {
+
+  gen_subj : function() {
+    this.id++;
+    return this.s_id+this.id;
+  },
+
+  handle_simple : function(b, subj, p, o) 
+  {
+    if (o === null )
+      return; // ignore
+
+    var xsd = 'http://www.w3.org/2001/XMLSchema';
+
+    if (typeof o === 'number') {
+      if (o % 1 === 0)
+        b.push(`${subj} <${this.baseURL}#${p}> "${o}"^^<${xsd}#int> .`);
+      else
+        b.push(`${subj} <${this.baseURL}#${p}> "${o}"^^<${xsd}#double> .`);
+    } else if (typeof o === 'string') {
+      b.push(`${subj} <${this.baseURL}#${p}> "${o}" .`);
+    } else if (typeof o === 'boolean') {
+      b.push(`${subj} <${this.baseURL}#${p}> "${o}"^^<${xsd}#boolean> .`);
+    } else {
+      b.push(`${subj} <${this.baseURL}#${p}> "${o}" .`);
+    }
+  },
+
+  handle_arr : function(b, subj, p, o) 
+  {
+    if (o === null )
+      return; // ignore
+
+    if (typeof o === 'object') {
+      var s = this.gen_subj();
+      b.push(`${subj} <${this.baseURL}#${p}> ${s} .`);
+      this.handle_obj(b, s, o);
+    } else {
+      this.handle_simple(b, subj, p, o);
+    }
+  },
+
+  handle_obj : function(b, subj, obj)
+  {
+    if (obj === null )
+      return; // ignore
+    
+    if (typeof obj === 'object') {
+
+      var props = Object.keys(obj);
+      for(var i=0; i < props.length; i++) {
+        var p = props[i];
+        var v = obj[p];
+
+        if (typeof v === 'object') {
+          if (Array.isArray(v)) {
+            for(var j=0; j < v.length; j++) {
+              this.handle_arr(b, subj, p, v[j]);
+            }
+          } else if (v!== null) {
+            var s = this.gen_subj();
+            b.push(`${subj} <${this.baseURL}#${p}> ${s} .`);
+            this.handle_obj(b, s, v);
+          }
+        } else {
+          this.handle_simple(b, subj, p, v);
+        }
+      }
+    } else {
+      this.handle_simple(b, subj, 'p', obj);
+    } 
+  },
+  
+  
+  parse : function(textData, docURL, callback) {
+    this.callback = callback;
+    this.baseURL = docURL;
+    var self = this;
+
+    function handle_error(error)
+    {
+      if (self.skip_error)
+      {
+        self.skipped_error.push(""+error);
+        self._pos++;
+
+        if (self._pos < textData.length)
+          self.parse(textData, docURL, self.callback);
+        else
+          self.callback(null, self._output);
+      }
+      else {
+          self.callback(""+error, null);
+      }
+    }
+
+
+    if (this._pos < textData.length)
+    {
+      try {
+        var buf = [];
+        json_data = JSON.parse(textData[this._pos]);
+        if (json_data != null) {
+          self.handle_obj(buf, self.gen_subj(), json_data);
+
+          var ttl_data = buf.join('\n');
+          var handler = new Handle_Turtle(self.start_id, self._make_ttl);
+          handler.skip_error = false;
+          handler.parse([ttl_data], docURL, function(error, html_data) {
+            if (error) {
+              handle_error(error);
+            }
+            else {
+              if (self._output===null)
+                self._output = "";
+
+              self._output += html_data;
+              self._output += "\n\n";
+              self._pos++;
+              self.start_id += handler.start_id;
+
+              if (self._pos < textData.length)
+                self.parse(textData, docURL, self.callback);
+              else
+                self.callback(null, self._output);
+            }
+          });
+        }
+        else
+          self.callback(null, null);
+      } catch (ex) {
+        handle_error(ex.toString());
+      }
+
+    } else {
+       self.callback(null, this._output);
+    }
+  },
+}
+
+
+
 
 Handle_RDFa = function () {
   this.callback = null;

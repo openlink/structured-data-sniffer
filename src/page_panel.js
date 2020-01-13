@@ -543,8 +543,10 @@ function Download_exec_update_state()
   var filename;
   var fmt = $('#save-fmt option:selected').attr('id');
 
-  if (fmt == "json")
+  if (fmt == "jsonld")
     filename = cmd==="fileupload" ? "jsonld_data.jsonld" : "jsonld_data.txt";
+  else if (fmt == "json")
+    filename = "json_data.txt";
   else if (fmt == "ttl") 
     filename = cmd==="fileupload" ? "turtle_data.ttl" : "turtle_data.txt";
   else
@@ -584,11 +586,13 @@ async function Download_exec()
 
   
   var filename = null;
-  var fmt = "json";
+  var fmt = "jsonld";
+
+//??  $('#save-fmt #json').prop('disabled', true);
 
   if (gData.type == "jsonld" && gData.text) {
     filename = "jsonld_data.txt";
-    fmt = "json";
+    fmt = "jsonld";
   }
   else if (gData.type == "turtle" && gData.text) {
     filename = "turtle_data.txt";
@@ -597,6 +601,11 @@ async function Download_exec()
   else if (gData.type == "rdf" && gData.text) {
     filename = "rdf_data.rdf";
     fmt = "rdf";
+  }
+  else if (gData.type == "json" && gData.text) {
+    filename = "json_data.txt";
+    fmt = "json";
+//??    $('#save-fmt #json').prop('disabled', false);
   }
 
   var oidc_url = document.getElementById('oidc-url');
@@ -688,8 +697,10 @@ async function save_data(action, fname, fmt, callback)
     else if (action==="fileupload") {
      var contentType = "text/plain;charset=utf-8";
 
-     if (fmt==="json")
+     if (fmt==="jsonld")
        contentType = "application/ld+json;charset=utf-8";
+     else if (fmt==="json")
+       contentType = "application/json;charset=utf-8";
      else if (fmt==="rdf")
        contentType = "application/rdf+xml;charset=utf-8";
      else
@@ -735,6 +746,10 @@ async function save_data(action, fname, fmt, callback)
     var src_fmt = null;
 
     if (gData.type==="jsonld" && gData.text!==null) {
+      src_fmt = "jsonld";
+      data = data.concat(gData.text);
+    }
+    else if (gData.type==="json" && gData.text!==null) {
       src_fmt = "json";
       data = data.concat(gData.text);
     }
@@ -753,15 +768,15 @@ async function save_data(action, fname, fmt, callback)
     {
       if (src_fmt==="ttl") {
         var handler = new Convert_Turtle();
-        if (fmt==="json") {
-          var text_data = await handler.to_json(data, null, baseURL);
+        if (fmt==="jsonld") {
+          var text_data = await handler.to_jsonld(data, null, baseURL);
           exec_action(action, out_from(text_data, null, handler.skipped_error));
         } else {
           var text_data = await handler.to_rdf(data, null, baseURL);
           exec_action(action, out_from(text_data, null, handler.skipped_error));
         }
       }
-      else if (src_fmt==="json") {
+      else if (src_fmt==="jsonld") {
         var handler = new Convert_JSONLD();
         if (fmt==="ttl") {
           var text_data = await handler.to_ttl(data, baseURL);
@@ -771,14 +786,27 @@ async function save_data(action, fname, fmt, callback)
           exec_action(action, out_from(text_data, null, handler.skipped_error));
         }
       }
+      else if (src_fmt==="json"){
+        var conv = new Convert_JSON();
+        if (fmt==="ttl"){
+          var text_data = await conv.to_ttl(data, gData.baseURL);
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
+        } else if (fmt==="rdf"){
+          var text_data = await conv.to_rdf(data, gData.baseURL);
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
+        } else if (fmt==="jsonld"){
+          var text_data = await conv.to_jsonld(data, gData.baseURL);
+          exec_action(action, out_from(text_data, null, conv.skipped_error));
+        }
+      }
       else if (src_fmt==="rdf") {
         if (fmt==="ttl") {
           var conv = new Convert_RDF_XML();
           var text_data = await conv.to_ttl(data, baseURL);
           exec_action(action, out_from(text_data, null, conv.skipped_error));
-        } else if (fmt==="json") {
+        } else if (fmt==="jsonld") {
           var conv = new Convert_RDF_XML();
-          var text_data = await conv.to_json(data, baseURL);
+          var text_data = await conv.to_jsonld(data, baseURL);
           exec_action(action, out_from(text_data, null, conv.skipped_error));
         }
       }
