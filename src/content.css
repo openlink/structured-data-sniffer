@@ -25,7 +25,7 @@
 	display: none;
 	border: 2px solid #000;
 	border-radius: 10px;
-	width: 720px;
+	width: 910px;
 	height: 205px;
 	background: #fff;
 	color: black;
@@ -34,7 +34,7 @@
 	font-family: Arial, Helvetica, sans-serif;
 }
 .super_links_popup-content {
-	width: 700px;
+	width: 890px;
 	height: 180px;
 	overflow: auto;
 }

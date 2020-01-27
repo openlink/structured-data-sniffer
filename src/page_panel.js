@@ -588,7 +588,6 @@ async function Download_exec()
   var filename = null;
   var fmt = "jsonld";
 
-//??  $('#save-fmt #json').prop('disabled', true);
 
   if (gData.type == "jsonld" && gData.text) {
     filename = "jsonld_data.txt";

@@ -409,7 +409,6 @@
 
     function sniff_Data() {
         try {
-
             micro_items = jQuery('[itemscope]').not(jQuery('[itemscope] [itemscope]'));
 
             if (posh_Text === null) {
@@ -887,19 +886,15 @@
 
             is_data_exist();
             if (!data_found) {
-                setTimeout(is_data_exist, 3000);
+                window.setTimeout(is_data_exist, 3000);
             }
 
 
             function request_doc_data() {
                 scan_frames();
 
-                function prepared_data() {
-                    sniff_Data();
-                    send_doc_data();
-                }
-
-                setTimeout(prepared_data, 500);
+                sniff_Data();
+                send_doc_data();
             }
 
 
@@ -971,7 +966,6 @@
 
                 sendResponse({});  // stop
             });
-
 
         } catch (e) {
             console.log("OSDS:" + e);
