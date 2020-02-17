@@ -911,7 +911,9 @@ function parse_Data(dData)
   url.hash ='';
   url.search = '';
   gData.baseURL = url.toString();
-
+  var len = gData.baseURL.length;
+  if (gData.baseURL[len-1] === '/')
+    gData.baseURL = gData.baseURL.substring(0, len-1);
 
   return new Promise(function resolver(resolve, reject) {
     Promise.resolve({d:dData, start_id:0})

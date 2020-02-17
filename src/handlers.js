@@ -385,6 +385,8 @@ Handle_JSON = function (make_ttl) {
   if (make_ttl)
     this._make_ttl = make_ttl;
   this.baseURL = '';
+  this.rep1 = /\(/g;
+  this.rep2 = /\)/g 
 };
 
 Handle_JSON.prototype = {
@@ -392,6 +394,10 @@ Handle_JSON.prototype = {
   gen_subj : function() {
     this.id++;
     return this.s_id+this.id;
+  },
+
+  encodeURI: function(v) {
+    return encodeURIComponent(v).replace(this.rep1,'%28').replace(this.rep2,'%29');
   },
 
   handle_simple : function(b, subj, p, o) 
@@ -403,15 +409,15 @@ Handle_JSON.prototype = {
 
     if (typeof o === 'number') {
       if (o % 1 === 0)
-        b.push(`${subj} <${this.baseURL}#${p}> "${o}"^^<${xsd}#int> .`);
+        b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#int> .`);
       else
-        b.push(`${subj} <${this.baseURL}#${p}> "${o}"^^<${xsd}#double> .`);
+        b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#double> .`);
     } else if (typeof o === 'string') {
-      b.push(`${subj} <${this.baseURL}#${p}> "${o}" .`);
+      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}" .`);
     } else if (typeof o === 'boolean') {
-      b.push(`${subj} <${this.baseURL}#${p}> "${o}"^^<${xsd}#boolean> .`);
+      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#boolean> .`);
     } else {
-      b.push(`${subj} <${this.baseURL}#${p}> "${o}" .`);
+      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}" .`);
     }
   },
 
@@ -422,12 +428,13 @@ Handle_JSON.prototype = {
 
     if (typeof o === 'object') {
       var s = this.gen_subj();
-      b.push(`${subj} <${this.baseURL}#${p}> ${s} .`);
+      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${s} .`);
       this.handle_obj(b, s, o);
     } else {
       this.handle_simple(b, subj, p, o);
     }
   },
+
 
   handle_obj : function(b, subj, obj)
   {
@@ -448,7 +455,7 @@ Handle_JSON.prototype = {
             }
           } else if (v!== null) {
             var s = this.gen_subj();
-            b.push(`${subj} <${this.baseURL}#${p}> ${s} .`);
+            b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${s} .`);
             this.handle_obj(b, s, v);
           }
         } else {
@@ -490,7 +497,12 @@ Handle_JSON.prototype = {
         var buf = [];
         json_data = JSON.parse(textData[this._pos]);
         if (json_data != null) {
-          self.handle_obj(buf, self.gen_subj(), json_data);
+          if (Array.isArray(json_data)) {
+            for(var i=0; i < json_data.length; i++)
+              self.handle_obj(buf, self.gen_subj(), json_data[i]);
+          } else {
+            self.handle_obj(buf, self.gen_subj(), json_data);
+          }
 
           var ttl_data = buf.join('\n');
           var handler = new Handle_Turtle(self.start_id, self._make_ttl);
@@ -922,10 +934,6 @@ Handle_CSV = function (start_id) {
   this.skip_error = true;
   this.skipped_error = [];
 
-  this.escape    = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
-  this.escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
-  this.escapeReplacements = { '\\': '\\\\', '"': '\\"', '\t': '\\t',
-                           '\n': '\\n', '\r': '\\r', '\b': '\\b', '\f': '\\f' };
 };
 
 Handle_CSV.prototype = {
@@ -987,7 +995,7 @@ Handle_CSV.prototype = {
             } else if (typeof v === 'boolean') {
               col_type.push('boolean'); 
             } else if (typeof v === 'string') {
-              if (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('mailto://'))
+              if (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('mailto:') || v.startsWith('urn:') || v.startsWith('../'))
                 col_type.push('anyURI');
               else
                 col_type.push('string');

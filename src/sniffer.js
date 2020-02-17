@@ -32,11 +32,6 @@
     var rdfa_subjects = null;
     var rdf_Text = null;
     var nano = {ttl:null, jsonld:null, rdf:null, json:null, csv:null};
-//    var ttl_nano_Text = null;
-//    var jsonld_nano_Text = null;
-//    var rdf_nano_Text = null;
-//    var json_nano_Text = null;
-//    var csv_nano_Text = null;
     var data_found = false;
 
     var ttl_nano_pattern = /(## (Nanotation|Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle) +(End|Stop) ##)(.*)/gmi;
@@ -44,7 +39,6 @@
     var json_nano_pattern = /(## JSON +Start ##)((.|\n|\r)*?)((## JSON +(End|Stop) ##))(.*)/gmi;
     var csv_nano_pattern = /(## CSV +Start ##)((.|\n|\r)*?)((## CSV +(End|Stop) ##))(.*)/gmi;
     var rdf_nano_pattern = /(## RDF(\/|-)XML +Start ##)((.|\n|\r)*?)((## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
-//    var rdf_nano_pattern = /(## RDF\/XML +Start ##)((.|\n|\r)*?)((## RDF\/XML +(End|Stop) ##))(.*)/gmi;
 
 
     function getSelectionString(el, win) {
@@ -162,11 +156,6 @@
     function sniff_nanotation() {
         var doc_Texts = [];
         var ret = {ttl:[], jsonld:[], json:[], rdf:[], csv:[]};
-//        var ttl_ret = [];
-//        var jsonld_ret = [];
-//        var json_ret = [];
-//        var rdf_ret = [];
-//        var csv_ret = [];
 
         function isWhitespace(c) {
             var cc = c.charCodeAt(0);
@@ -293,7 +282,7 @@
                     if (str.length > 0) {
                         var add = false;
                         for (var c = 0; c < str.length; c++) {
-                            add = str[c] === "{" ? true : false;
+                            add = (str[c] === "{" || str[c] === "[") ? true : false;
                             if (add)
                                 break;
                             if (!isWhitespace(str[c]))
@@ -399,10 +388,6 @@
             if (!data_found) {
                 var ret = sniff_nanotation();
                 if (ret) {
-//??                    ttl_nano_Text = (ret.ttl.length > 0) ? ret.ttl : null;
-//??                    jsonld_nano_Text = (ret.jsonld.length > 0) ? ret.jsonld : null;
-//??                    rdf_nano_Text = (ret.rdf.length > 0) ? ret.rdf : null;
-//??                    json_nano_Text = (ret.json.length > 0) ? ret.json : null;
                     data_found = true;
                     nano = ret;
                 }
@@ -493,19 +478,9 @@
                 }
             }
 
-//??            ttl_nano_Text === null;
-//??            jsonld_nano_Text === null;
-//??            json_nano_Text === null;
-//??            rdf_nano_Text === null;
-//??            csv_nano_Text === null;
             var ret = sniff_nanotation();
             if (ret) {
                 nano = ret;
-//??                ttl_nano_Text = (ret.ttl.length > 0) ? ret.ttl : null;
-//??                jsonld_nano_Text = (ret.jsonld.length > 0) ? ret.jsonld : null;
-//??                rdf_nano_Text = (ret.rdf.length > 0) ? ret.rdf : null;
-//??                json_nano_Text = (ret.json.length > 0) ? ret.json : null;
-//??                csv_nano_Text = (ret.csv.length > 0) ? ret.csv : null;
             }
 
         } catch (e) {
@@ -959,11 +934,6 @@
                 docData.rdf_nano.text = nano.rdf;
                 docData.csv_nano.text = nano.csv;
 
-//??                docData.ttl_nano.text = ttl_nano_Text;
-//??                docData.jsonld_nano.text = jsonld_nano_Text;
-//??                docData.json_nano.text = json_nano_Text;
-//??                docData.rdf_nano.text = rdf_nano_Text;
-
                 if ((microdata.items && microdata.items.length > 0)
                     || (json_ld_Text && json_ld_Text.length > 0)
                     || (turtle_Text  && turtle_Text.length > 0)
@@ -975,13 +945,6 @@
                     || (nano.rdf     && nano.rdf.length > 0)
                     || (nano.csv     && nano.csv.length > 0)
                     || (posh_Text    && posh_Text.length > 0)
-
-//??                    || (ttl_nano_Text && ttl_nano_Text.length > 0)
-//??                    || (jsonld_nano_Text && jsonld_nano_Text.length > 0)
-//??                    || (json_nano_Text && json_nano_Text.length > 0)
-//??                    || (rdf_nano_Text && rdf_nano_Text.length > 0)
-//??                    || (csv_nano_Text && rdf_nano_Text.length > 0)
-
                    )
                   data_exists = true;
 
