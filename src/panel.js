@@ -39,6 +39,7 @@ var gData = {
         jsonld_nano :{ json_text:null },
         rdf_nano :{ rdf_text:null },
         json_nano :{ json_text:null },
+        csv_nano :{ ttl_text:null, text:null },
         posh:{ ttl_text:null },
         tab_index: null,
         tabs:[],
@@ -129,6 +130,11 @@ $(document).ready(function()
       return false;
   });
 
+  $('#tabs a[href="#csv"]').click(function(){
+      selectTab('#csv');
+      return false;
+  });
+
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
         lineNumbers: true
@@ -180,7 +186,6 @@ $(document).ready(function()
 
   jQuery('#ext_ver').text('\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version);
 
-//##!!
   if (Browser.isFirefoxWebExt) {
     Browser.api.tabs.query({active:true, currentWindow:true})
       .then((tabs) => {
@@ -281,6 +286,7 @@ function selectTab(tab)
   updateTab('#rdf', selectedTab);
   updateTab('#posh', selectedTab);
   updateTab('#json', selectedTab);
+  updateTab('#csv', selectedTab);
   $('#tabs a[href="#src"]').hide();
   $('#tabs a[href="#cons"]').hide();
 }
@@ -297,6 +303,7 @@ function show_Data(dData)
   var rdf = false;
   var posh = false;
   var json = false;
+  var csv = false;
   var html = "";
   var err_tabs = [];
 
@@ -467,6 +474,27 @@ function show_Data(dData)
 
 
 
+  $('#csv_items #docdata_view').remove();
+  $('#csv_items').append("<div id='docdata_view' class='alignleft'/>");
+  html = "";
+  if (dData.csv_nano.expanded!==null && dData.csv_nano.expanded.trim().length > 0) {
+      html += dData.csv_nano.expanded;
+      gData.tabs.push("#csv");
+  }
+  if (dData.csv_nano.error.length > 0) {
+      var err_msg = create_err_msg("CSV", dData.csv_nano.error);
+      if (err_msg) {
+        html += err_msg;
+        err_tabs.push("#csv");
+      }
+  }
+  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
+      $('#csv_items #docdata_view').append(html);
+      csv = true;
+  }
+
+
+
   if (gData.tabs.length > 0)
     selectTab(gData.tabs[0]);
   else if (err_tabs.length > 0)
@@ -487,6 +515,8 @@ function show_Data(dData)
     $('#tabs a[href="#posh"]').hide();
   if (!json)
     $('#tabs a[href="#json"]').hide();
+  if (!csv)
+    $('#tabs a[href="#csv"]').hide();
 
   gData_showed = true;
 }
@@ -818,6 +848,37 @@ function check_RDF_XML_Nano(val)
 }
 
 
+function check_CSV_Nano(val)
+{
+  return new Promise(function(resolve, reject) {
+    if (val.d.csv_nano.text!==null && val.d.csv_nano.text.length > 0)
+    {
+      var handler = new Handle_CSV();
+      handler.start_id = val.start_id;
+      handler.parse(val.d.csv_nano.text, gData.baseURL,
+        function(error, html_data, ttl_data) {
+          gData.csv_nano.ttl_text = ttl_data;
+          if (error)
+            val.d.csv_nano.error.push(error);
+
+          if (html_data)
+            val.d.csv_nano.expanded = html_data;
+
+          if (handler.skipped_error.length>0)
+            val.d.csv_nano.error = val.d.csv_nano.error.concat(handler.skipped_error);
+
+          resolve({d:val.d, start_id:0});
+      });
+    }
+    else
+    {
+      resolve({d:val.d, start_id:0});
+    }
+  });
+}
+
+
+
 function parse_Data(dData)
 {
   dData.micro.expanded = null;
@@ -836,6 +897,8 @@ function parse_Data(dData)
   dData.jsonld_nano.error = null;
   dData.json_nano.expanded = null;
   dData.json_nano.error = null;
+  dData.csv_nano.expanded = null;
+  dData.csv_nano.error = [];
   dData.posh.expanded = null;
   dData.posh.error = [];
   dData.rdf.expanded = null;
@@ -882,6 +945,9 @@ function parse_Data(dData)
     .then(function (val) {
        return check_RDF_XML_Nano(val);
     })
+    .then(function (val) {
+       return check_CSV_Nano(val);
+    })
     .then(function(val){
       return resolve(val.d);
     })
@@ -922,6 +988,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
           $('#tabs a[href="#rdf"]').hide();
           $('#tabs a[href="#posh"]').hide();
           $('#tabs a[href="#json"]').hide();
+          $('#tabs a[href="#csv"]').hide();
           selectedTab = null;
         });
       }
@@ -934,6 +1001,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
         $('#tabs a[href="#rdf"]').hide();
         $('#tabs a[href="#posh"]').hide();
         $('#tabs a[href="#json"]').hide();
+        $('#tabs a[href="#csv"]').hide();
         selectedTab = null;
 
         selectTab('#cons');
@@ -1359,6 +1427,10 @@ async function Download_exec()
     fmt = "json";
     $('#save-fmt #json').prop('disabled', false);
   }
+  else if (selectedTab==="#csv" && (gData.csv_nano.ttl_text!==null)) {
+    filename = "turtle_data.txt";
+    fmt = "ttl";
+  }
 
 
   if (filename!==null) {
@@ -1538,6 +1610,10 @@ async function save_data(action, fname, fmt, callback)
     else if (selectedTab==="#posh" && gData.posh.ttl_text!==null) {
       src_fmt = "ttl";
       data = data.concat(gData.posh.ttl_text);
+    }
+    else if (selectedTab==="#csv" && gData.csv_nano.ttl_text!==null) {
+      src_fmt = "ttl";
+      data = data.concat(gData.csv_nano.ttl_text);
     }
     else
       return;

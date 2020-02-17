@@ -907,6 +907,115 @@ Handle_RDF_XML.prototype = {
       self.callback(null, self._output);
     }
   },
+}
+
+
+Handle_CSV = function (start_id) {
+  this.callback = null;
+  this.baseURI = null;
+  this._pos = 0;
+  this._output = null;
+  this._output_ttl = [];
+  this.start_id = 0;
+  if (start_id!==undefined)
+    this.start_id = start_id;
+  this.skip_error = true;
+  this.skipped_error = [];
+
+  this.escape    = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
+  this.escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
+  this.escapeReplacements = { '\\': '\\\\', '"': '\\"', '\t': '\\t',
+                           '\n': '\\n', '\r': '\\r', '\b': '\\b', '\f': '\\f' };
+};
+
+Handle_CSV.prototype = {
+
+  parse : function(textData, baseURL, callback) {
+    this.callback = callback;
+    this.baseURI = baseURL;
+    var self = this;
+
+
+    function handle_error(error)
+    {
+      if (self.skip_error)
+      {
+        self.skipped_error.push(""+error);
+        self._pos++;
+
+        if (self._pos < textData.length)
+          self.parse(textData, baseURL, self.callback);
+        else
+          self.callback(null, self._output, self._output_ttl);
+      }
+      else {
+          self.callback(""+error, null, self._output_ttl);
+      }
+    }
+
+    if (this._pos < textData.length) {
+      try {
+        var text = textData[self._pos];
+        if (text.trim().length <= 0) {
+           self._pos++;
+           self.parse(textData, baseURL, self.callback);
+           return;
+        }
+         
+        var ttl = "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\n";
+        var res = Papa.parse(text, {skipEmptyLines:true, dynamicTyping:true});
+        if (res.errors && res.errors.length > 0) {
+            handle_error(res.errors[0].message);
+            return;
+        }
+
+        var col = res.data[0];
+        for (var i=0; i < col.length; i++) {
+          col[i] = encodeURIComponent(col[i]);
+          ttl += '<#'+col[i]+'> rdf:range <'+baseURL+'> .\n';
+        }
+        ttl += '\n';
+        for(var i=1; i < res.data.length; i++) {
+          var d = res.data[i];
+          var s = '[\n';
+          for(var j=0; j < d.length; j++) {
+            s += '<#'+col[j]+'> "'+d[j]+'";\n';
+          }
+          ttl += s +'].\n\n';
+        }
+
+        self._output_ttl.push(ttl);
+
+        var handler = new Handle_Turtle();
+        handler.skip_error = false;
+        handler.parse([ttl], baseURL, function(error, html_data) {
+          if (error) {
+            handle_error(error.toString());
+          }
+          else {
+            if (self._output===null)
+              self._output = "";
+
+            self._output += html_data;
+            self._output += "\n\n";
+            self._pos++;
+            self.start_id += handler.start_id;
+
+            if (self._pos < textData.length)
+              self.parse(textData, baseURL, self.callback);
+            else
+              self.callback(null, self._output, self._output_ttl);
+          }
+        });
+
+      } catch (ex) {
+        handle_error(ex.toString());
+      }
+    }
+    else {
+      self.callback(null, self._output, self._output_ttl);
+    }
+  },
 
 
 }

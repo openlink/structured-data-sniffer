@@ -28407,7 +28407,8 @@ var Serializer = function () {
     return this.statementsToN3(f.statements);
   };
 
-  __Serializer.prototype._notQNameChars = '\t\r\n !"#$%&\'()*.,+/;<=>?@[\\]^`{|}~';
+//??  __Serializer.prototype._notQNameChars = '\t\r\n !"#$%&\'()*.,+/;<=>?@[\\]^`{|}~';
+  __Serializer.prototype._notQNameChars = '\t\r\n !"#$&\'()*.,+/;<=>?@[\\]^`{|}~';
   __Serializer.prototype._notNameChars = __Serializer.prototype._notQNameChars + ':';
 
   __Serializer.prototype.explicitURI = function (uri) {
