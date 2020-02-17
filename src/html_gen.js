@@ -226,8 +226,10 @@
     check_link : function (val, is_key) 
     {
       var s_val = String(val);
-      var t_val = decodeURI(val)
-      if ( s_val.match(/^http(s)?:\/\//) ) {
+      var t_val = val;
+
+      if ( s_val.match(/^http(s)?:\/\//) ) 
+      {
         if ( s_val.match(/\.(jpg|png|gif)$/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
@@ -236,10 +238,11 @@
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
         } 
-        return `<a href="${val}"> ${t_val} </a>`;
+        return `<a href="${val}"> ${this.decodeURI(val)} </a>`;
       } 
-      else if ( s_val.match(/^mailto:/) ) {
-        return `<a href="${val}"> ${t_val} </a>`;
+      else if ( s_val.match(/^mailto:/) ) 
+      {
+        return `<a href="${val}"> ${this.decodeURI(val)} </a>`;
       }
       return this.pre(val);
     },
@@ -248,7 +251,7 @@
     pref_link : function (val, pref) 
     {
       var data = val.substring(pref.link.length);
-      return `<a href="${val}" title="${val}"> ${pref.ns}:${decodeURI(data)}</a>`;
+      return `<a href="${val}" title="${val}"> ${pref.ns}:${this.decodeURI(data)}</a>`;
     },
 
     pre : function (text) 
@@ -275,8 +278,7 @@
       if (this.s_startWith(uri, this.docURI)) {
         var s = uri.substr(this.docURI.length);
         if (s[0]==="#") {
-//          var v = '<a href="' + uri + '" title="' + uri + '">' +decodeURI(s.substr(1))+ '</a>';
-          var v = '<a href="' + uri + '" title="' + uri + '">' +decodeURI(s)+ '</a>';
+          var v = '<a href="' + uri + '" title="' + uri + '">' +this.decodeURI(s)+ '</a>';
           return {rc:true, val:v};
         }
         else
@@ -285,11 +287,19 @@
       else {
         var anc_name = this.subst_list[uri];
         if (anc_name) {
-          var v = `<a href="${uri}" title="${uri}"> ${decodeURI(anc_name)}</a>`;
+          var v = `<a href="${uri}" title="${uri}"> ${this.decodeURI(anc_name)}</a>`;
           return {rc:true, val:v};
         }
         else
           return {rc:false};
+      }
+    },
+
+    decodeURI : function(val) {
+      try {
+        return decodeURI(val);
+      } catch (ex) {
+        return val; 
       }
     },
 

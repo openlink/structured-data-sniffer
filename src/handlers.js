@@ -971,7 +971,8 @@ Handle_CSV.prototype = {
         }
          
         var ttl = '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n'
-                 +'@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . \n\n';
+                 +'@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . \n'
+                 +'@prefix : <#> . \n\n';
         var res = Papa.parse(text, {skipEmptyLines:true, dynamicTyping:true});
         if (res.errors && res.errors.length > 0) {
             handle_error(res.errors[0].message);
@@ -1011,7 +1012,7 @@ Handle_CSV.prototype = {
 
         for (var i=0; i < col.length; i++) {
           col[i] = encodeURIComponent(col[i]).replace(rep1,'%28').replace(rep2,'%29');
-          ttl += '<#'+col[i]+'> rdf:domain <#> .\n';
+          ttl += '<#'+col[i]+'> rdf:domain : .\n';
         }
 
         ttl += '\n';
