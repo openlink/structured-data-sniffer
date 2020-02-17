@@ -1011,7 +1011,7 @@ Handle_CSV.prototype = {
 
         for (var i=0; i < col.length; i++) {
           col[i] = encodeURIComponent(col[i]).replace(rep1,'%28').replace(rep2,'%29');
-          ttl += '<#'+col[i]+'> rdf:domain <'+baseURL+'> .\n';
+          ttl += '<#'+col[i]+'> rdf:domain <#> .\n';
         }
 
         ttl += '\n';

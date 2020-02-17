@@ -275,7 +275,8 @@
       if (this.s_startWith(uri, this.docURI)) {
         var s = uri.substr(this.docURI.length);
         if (s[0]==="#") {
-          var v = '<a href="' + uri + '" title="' + uri + '">' +decodeURI(s.substr(1))+ '</a>';
+//          var v = '<a href="' + uri + '" title="' + uri + '">' +decodeURI(s.substr(1))+ '</a>';
+          var v = '<a href="' + uri + '" title="' + uri + '">' +decodeURI(s)+ '</a>';
           return {rc:true, val:v};
         }
         else
