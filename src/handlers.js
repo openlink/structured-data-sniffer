@@ -962,7 +962,8 @@ Handle_CSV.prototype = {
            return;
         }
          
-        var ttl = "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\n";
+        var ttl = '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n'
+                 +'@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . \n\n';
         var res = Papa.parse(text, {skipEmptyLines:true, dynamicTyping:true});
         if (res.errors && res.errors.length > 0) {
             handle_error(res.errors[0].message);
@@ -970,16 +971,55 @@ Handle_CSV.prototype = {
         }
 
         var col = res.data[0];
-        for (var i=0; i < col.length; i++) {
-          col[i] = encodeURIComponent(col[i]);
-          ttl += '<#'+col[i]+'> rdf:range <'+baseURL+'> .\n';
+        var col_type = [];
+        if (res.data.length > 1) {
+          for (var i=0; i < res.data[1].length; i++) {
+            var v = res.data[1][i];
+            if (typeof v === 'number') {
+              var is_int = 1;
+              for(var r=1; r < res.data.length; r++) {
+                if (res.data[r][i] % 1 !== 0) {
+                  is_int = 0;
+                  break;
+                }
+              }
+              col_type.push(is_int?'integer':'decimal');
+            } else if (typeof v === 'boolean') {
+              col_type.push('boolean'); 
+            } else if (typeof v === 'string') {
+              if (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('mailto://'))
+                col_type.push('anyURI');
+              else
+                col_type.push('string');
+            } else {
+              col_type.push('string');
+            }
+          }
         }
         ttl += '\n';
+
+        var rep1 = /\(/g;
+        var rep2 = /\)/g 
+
+        for (var i=0; i < col.length; i++) {
+          col[i] = encodeURIComponent(col[i]).replace(rep1,'%28').replace(rep2,'%29');
+          ttl += '<#'+col[i]+'> rdf:domain <'+baseURL+'> .\n';
+        }
+
+        ttl += '\n';
+
+        for (var i=0; i < col.length; i++) {
+          ttl += '<#'+col[i]+'> rdf:range xsd:'+col_type[i]+' .\n';
+        }
+
+        ttl += '\n';
+
         for(var i=1; i < res.data.length; i++) {
           var d = res.data[i];
           var s = '[\n';
           for(var j=0; j < d.length; j++) {
-            s += '<#'+col[j]+'> "'+d[j]+'";\n';
+            var val = d[j];
+            s += '<#'+col[j]+'> "'+d[j]+'"^^xsd:'+col_type[j]+' ;\n' ;
           }
           ttl += s +'].\n\n';
         }
