@@ -38,6 +38,7 @@
         <script type="text/javascript" src="lib/codemirror.js"></script>
         <script type="text/javascript" src="lib/yasqe.js"></script>
         <script type="text/javascript" src="lib/oidc-web.min.js"></script>
+        <script type="text/javascript" src="lib/papaparse.js"></script>
 
 
         <script type="text/javascript" src="browser.js"></script>
@@ -139,6 +140,8 @@
           <li><a href="#rdfa" title="Metadata  encoded using RDFa Notation">RDFa</a></li>
           <li><a href="#rdf" title="Metadata  encoded using RDF/XML Notation">RDF/XML</a></li>
           <li><a href="#posh" title="Metadata encoded using Plain Old Semantic HTML Notation">POSH</a></li>
+          <li><a href="#json" title="Metadata encoded using JSON Notation">JSON</a></li>
+          <li><a href="#csv" title="Metadata encoded using CSV Notation">CSV</a></li>
         </ul>
       </div>
 
@@ -247,6 +250,24 @@
         </div>
 
         <div id="posh_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="json_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="csv_items">
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>

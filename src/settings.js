@@ -249,6 +249,9 @@ class Settings {
       case "ext.osds.handle_xml":
           val = "1";
           break;
+      case "ext.osds.handle_csv":
+          val = "1";
+          break;
       case "ext.osds.uiterm.mode":
           val = "ui-eav"
           break;

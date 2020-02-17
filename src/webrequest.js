@@ -68,6 +68,16 @@
       type = "jsonld";
       ext = "jsonld";
     }
+    else if (d.url.match(/(.json)$/i) ) {
+      handle = true;
+      type = "json";
+      ext = "json";
+    }
+    else if (d.url.match(/(.csv)$/i) ) {
+      handle = true;
+      type = "csv";
+      ext = "csv";
+    }
 
     if (handle) {
       var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
@@ -147,6 +157,14 @@
             type = "rdf";
             header.value = "text/plain";
           }
+          else if (header.value.match(/\/(csv)/)) {
+            handle = true;
+            type = "csv";
+          }
+          else if (header.value.match(/\/(sparql\-results\+json)/)) {
+            handle = true;
+            type = "json";
+          }
           else {
             content_type = header.value;
           }
@@ -182,10 +200,10 @@
           type = "turtle";
           ext = "ttl";
         }
-        else if (url_path.endsWith(".n3")) {
+        else if (url_path.endsWith(".csv")) {
           handle = true;
-          type = "turtle";
-          ext = "n3";
+          type = "csv";
+          ext = "csv";
         }
       }
 

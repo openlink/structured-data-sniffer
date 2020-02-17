@@ -52,19 +52,12 @@ table.wait {
 
 table.docdata {
   border: 1px solid #000;
-  width:665px;
+  width:735px;
   table-layout: fixed;
   font-size: 12px;
   word-wrap:break-word;
 }
 
-table.pdocdata {
-  border: 1px solid #000;
-  width:99%;
-  table-layout: fixed;
-  font-size: 12px;
-  word-wrap:break-word;
-}
 
 table.docdata > tbody {
   border: none;
@@ -96,26 +89,14 @@ table.docdata > tbody > tr > td.typeid {
 
 
 body.sniffer {
-    width: 690px;
-    height: 580px;
-}
-
-body.psniffer {
-    width: 99%;
+    width: 760px;
     height: 580px;
 }
 
 
 div.content {
     overflow: auto;
-    width: 685px;
-    height: 530px;
-    border: 1px solid lightgray;
-}
-
-div.pcontent {
-    overflow: auto;
-    width: 99%;
+    width: 755px;
     height: 530px;
     border: 1px solid lightgray;
 }

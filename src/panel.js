@@ -332,167 +332,38 @@ function show_Data(dData)
     return (err_html.length>0)?err_html:null;
   }
 
-
-  $('#micro_items #docdata_view').remove();
-  $('#micro_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  if (dData.micro.expanded!==null && dData.micro.expanded.trim().length > 0) {
-      html += dData.micro.expanded;
-      gData.tabs.push("#micro");
-  }
-  if (dData.micro.error) {
-      var err_msg = create_err_msg("Microdata", dData.micro.error);
-      if (err_msg) {
-        html += err_msg;
-        err_tabs.push("#micro");
-      }
-  }
-  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-      $('#micro_items #docdata_view').append(html);
-      micro = true;
-  }
-
-
-  $('#jsonld_items #docdata_view').remove();
-  $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  if (dData.jsonld.expanded!==null && dData.jsonld.expanded.trim().length > 0) {
-      html += dData.jsonld.expanded;
-      gData.tabs.push("#jsonld");
-  }
-  if (dData.jsonld.error.length > 0) {
-      var err_msg = create_err_msg("JSON-LD", dData.jsonld.error);
-      if (err_msg) {
-        html += err_msg;
-        err_tabs.push("#jsonld");
-      }
-  }
-  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-      $('#jsonld_items #docdata_view').append(html);
-      jsonld = true;
+  function add_item(tabname, title, val)
+  {
+    $(`#${tabname}_items #docdata_view`).remove();
+    $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
+    var html = "";
+    if (val.expanded!==null && val.expanded.trim().length > 0) {
+        html += val.expanded;
+        gData.tabs.push(`#${tabname}`);
+    }
+    if (val.error) {
+        var err_msg = create_err_msg(title, val.error);
+        if (err_msg) {
+          html += err_msg;
+          err_tabs.push(`#${tabname}`);
+        }
+    }
+    if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
+        $(`#${tabname}_items #docdata_view`).append(html);
+        return true;
+    } else {
+      return false;
+    }
   }
 
-
-  $('#turtle_items #docdata_view').remove();
-  $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  if (dData.turtle.expanded!==null && dData.turtle.expanded.trim().length > 0) {
-      html += dData.turtle.expanded;
-      gData.tabs.push("#turtle");
-  }
-  if (dData.turtle.error.length > 0) {
-      var err_msg = create_err_msg("Turtle", dData.turtle.error);
-      if (err_msg) {
-        html += err_msg;
-        err_tabs.push("#turtle");
-      }
-  }
-  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-      $('#turtle_items #docdata_view').append(html);
-      turtle = true;
-  }
-
-
-  $('#rdfa_items #docdata_view').remove();
-  $('#rdfa_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  if (dData.rdfa.expanded!==null && dData.rdfa.expanded.trim().length > 0) {
-      html += dData.rdfa.expanded;
-      gData.tabs.push("#rdfa");
-  }
-  if (dData.rdfa.error) {
-      var err_msg = create_err_msg("RDFa", dData.rdfa.error);
-      if (err_msg) {
-        html += err_msg;
-        err_tabs.push("#rdfa");
-      }
-  }
-  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-      $('#rdfa_items #docdata_view').append(html);
-      rdfa = true;
-  }
-
-
-  $('#rdf_items #docdata_view').remove();
-  $('#rdf_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  if (dData.rdf.expanded!==null && dData.rdf.expanded.trim().length > 0) {
-      html += dData.rdf.expanded;
-      gData.tabs.push("#rdf");
-  }
-  if (dData.rdf.error) {
-      var err_msg = create_err_msg("RDF/XML", dData.rdf.error);
-      if (err_msg) {
-        html += err_msg;
-        err_tabs.push("#rdf");
-      }
-  }
-  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-      $('#rdf_items #docdata_view').append(html);
-      rdf = true;
-  }
-
-
-  $('#posh_items #docdata_view').remove();
-  $('#posh_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  if (dData.posh.expanded!==null && dData.posh.expanded.trim().length > 0) {
-      html += dData.posh.expanded;
-      gData.tabs.push("#posh");
-  }
-  if (dData.posh.error) {
-      var err_msg = create_err_msg("POSH", dData.posh.error);
-      if (err_msg) {
-        html += err_msg;
-        err_tabs.push("#posh");
-      }
-  }
-  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-      $('#posh_items #docdata_view').append(html);
-      posh = true;
-  }
-
-
-  $('#json_items #docdata_view').remove();
-  $('#json_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  if (dData.json.expanded!==null && dData.json.expanded.trim().length > 0) {
-      html += dData.json.expanded;
-      gData.tabs.push("#json");
-  }
-  if (dData.json.error.length > 0) {
-      var err_msg = create_err_msg("JSON", dData.json.error);
-      if (err_msg) {
-        html += err_msg;
-        err_tabs.push("#json");
-      }
-  }
-  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-      $('#json_items #docdata_view').append(html);
-      json = true;
-  }
-
-
-
-  $('#csv_items #docdata_view').remove();
-  $('#csv_items').append("<div id='docdata_view' class='alignleft'/>");
-  html = "";
-  if (dData.csv_nano.expanded!==null && dData.csv_nano.expanded.trim().length > 0) {
-      html += dData.csv_nano.expanded;
-      gData.tabs.push("#csv");
-  }
-  if (dData.csv_nano.error.length > 0) {
-      var err_msg = create_err_msg("CSV", dData.csv_nano.error);
-      if (err_msg) {
-        html += err_msg;
-        err_tabs.push("#csv");
-      }
-  }
-  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-      $('#csv_items #docdata_view').append(html);
-      csv = true;
-  }
-
+  micro = add_item('micro', 'Microdata', dData.micro);
+  jsonld = add_item('jsonld', 'JSON-LD', dData.jsonld);
+  turtle = add_item('turtle', 'Turtle', dData.turtle);
+  rdfa = add_item('rdfa', 'RDFa', dData.rdfa);
+  rdf = add_item('rdf', 'RDF/XML', dData.rdf);
+  posh = add_item('posh', 'POSH', dData.posh);
+  json = add_item('json', 'JSON', dData.json);
+  csv = add_item('csv', 'CSV', dData.csv_nano);
 
 
   if (gData.tabs.length > 0)
@@ -879,7 +750,7 @@ function check_CSV_Nano(val)
 
 
 
-function parse_Data(dData)
+async function parse_Data(dData)
 {
   dData.micro.expanded = null;
   dData.micro.error = [];
@@ -911,52 +782,21 @@ function parse_Data(dData)
   url.hash ='';
   url.search = '';
   gData.baseURL = url.toString();
-//  var len = gData.baseURL.length;
-//  if (gData.baseURL[len-1] === '/')
-//    gData.baseURL = gData.baseURL.substring(0, len-1);
 
-  return new Promise(function resolver(resolve, reject) {
-    Promise.resolve({d:dData, start_id:0})
-    .then(function (val) {
-       return check_Microdata(val);
-    })
-    .then(function (val) {
-       return check_JSON_LD(val);
-    })
-    .then(function (val) {
-       return check_JsonLD_Nano(val);
-    })
-    .then(function (val) {
-       return check_Json_Nano(val);
-    })
-    .then(function (val) {
-       return check_Turtle(val);
-    })
-    .then(function (val) {
-       return check_Turtle_Nano(val);
-    })
-    .then(function (val) {
-       return check_POSH(val);
-    })
-    .then(function (val) {
-       return check_RDFa(val);
-    })
-    .then(function (val) {
-       return check_RDF_XML(val);
-    })
-    .then(function (val) {
-       return check_RDF_XML_Nano(val);
-    })
-    .then(function (val) {
-       return check_CSV_Nano(val);
-    })
-    .then(function(val){
-      return resolve(val.d);
-    })
-    .catch(function(err) {
-      console.log(err);
-    });
-  });
+  var val = {d:dData, start_id:0};
+
+  val = await check_Microdata(val);
+  val = await check_JSON_LD(val);
+  val = await check_JsonLD_Nano(val);
+  val = await check_Json_Nano(val);
+  val = await check_Turtle(val);
+  val = await check_Turtle_Nano(val);
+  val = await check_POSH(val);
+  val = await check_RDFa(val);
+  val = await check_RDF_XML(val);
+  val = await check_RDF_XML_Nano(val);
+  val = await check_CSV_Nano(val);
+  return val.d;
 }
 
 
@@ -977,12 +817,11 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
       if (request.is_data_exists)
       {
-        parse_Data(dData)
-        .then(function(dData){
+        try {
+          dData = await parse_Data(dData);
           show_Data(dData);
-        })
-        .catch(function(e) {
-          console.log("OSDS: Error="+e);
+        } catch(ex) {
+          console.log("OSDS: Error="+ex);
           $('#tabs a[href="#micro"]').hide();
           $('#tabs a[href="#jsonld"]').hide();
           $('#tabs a[href="#turtle"]').hide();
@@ -992,7 +831,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
           $('#tabs a[href="#json"]').hide();
           $('#tabs a[href="#csv"]').hide();
           selectedTab = null;
-        });
+        }
       }
       else
       {

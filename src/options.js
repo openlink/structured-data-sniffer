@@ -23,7 +23,7 @@ var yasqe_slinks = null;
 var yasqe_srv = null;
 
 $(function(){
-	// Tabs
+  // Tabs
 
   gPref = new Settings();
 
@@ -267,6 +267,10 @@ function loadPref()
     if (chk_xml && chk_xml==="1")
       $("#chk_try_handle_xml").attr('checked','checked');
 
+    var chk_csv = gPref.getValue("ext.osds.handle_csv");
+    if (chk_csv && chk_csv==="1")
+      $("#chk_try_handle_csv").attr('checked','checked');
+
 
     var import_url = gPref.getValue("ext.osds.import.url");
     var import_srv = gPref.getValue("ext.osds.import.srv");
@@ -327,6 +331,7 @@ function savePref()
    gPref.setValue("ext.osds.pref.show_action", $('#chk_show_action_for_url_with_params').is(':checked')?"1":"0");
 
    gPref.setValue("ext.osds.handle_xml", $('#chk_try_handle_xml').is(':checked')?"1":"0");
+   gPref.setValue("ext.osds.handle_csv", $('#chk_try_handle_csv').is(':checked')?"1":"0");
 
 //   gPref.setValue("ext.osds.pref.user", $('#pref_user').val().trim());
 

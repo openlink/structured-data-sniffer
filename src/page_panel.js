@@ -34,7 +34,8 @@ var gData = {
         text: null,
         type: null,
         url: null,
-        ext: null
+        ext: null,
+        ttl_data: null,
       };
 
 var src_view = null;
@@ -101,6 +102,14 @@ $(document).ready(function()
   });
   $('#tabs a[href="#posh"]').click(function(){
       selectTab('#posh');
+      return false;
+  });
+  $('#tabs a[href="#json"]').click(function(){
+      selectTab('#json');
+      return false;
+  });
+  $('#tabs a[href="#csv"]').click(function(){
+      selectTab('#csv');
       return false;
   });
 
@@ -227,6 +236,10 @@ function load_data_from_url(loc)
       hdr_accept = 'application/rdf+xml;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
     else if (type==="xml")
       hdr_accept = 'application/xml;text/xml;q=0.9,text/html;application/xhtml+xml;q=0.5,*/*;q=0.1';
+    else if (type==="json")
+      hdr_accept = 'application/sparql-results+json;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
+    else if (type==="csv")
+      hdr_accept = 'text/csv,application/csv;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
       
 /***
     var options = {
@@ -316,6 +329,25 @@ function start_parse_data(data_text, data_type, data_url, ext)
           show_Data(error, html_data);
       });
     }
+  else if (data_type==="json")
+    {
+      var handler = new Handle_JSON();
+      handler.skip_error = false;
+      handler.parse([data_text], baseURL,
+        function(error, html_data) {
+          show_Data(error, html_data);
+      });
+    }
+  else if (data_type==="csv")
+    {
+      var handler = new Handle_CSV();
+      handler.skip_error = false;
+      handler.parse([data_text], baseURL,
+        function(error, html_data, ttl_data) {
+          gData.ttl_data = ttl_data;
+          show_Data(error, html_data);
+      });
+    }
   else
     {
 //      var source = sanitize_str(data_text);
@@ -353,6 +385,8 @@ function selectTab(tab)
   updateTab('#rdfa', selectedTab);
   updateTab('#rdf', selectedTab);
   updateTab('#posh', selectedTab);
+  updateTab('#json', selectedTab);
+  updateTab('#csv', selectedTab);
   $('#tabs a[href="#src"]').hide();
   $('#tabs a[href="#cons"]').hide();
 }
@@ -361,12 +395,6 @@ function selectTab(tab)
 
 function show_Data(data_error, html_data)
 {
-  var cons = false;
-  var micro = false;
-  var jsonld = false;
-  var turtle = false;
-  var rdfa = false;
-  var posh = false;
   var html = "";
 
   wait_data = $('table.wait').hide();
@@ -392,65 +420,44 @@ function show_Data(data_error, html_data)
     return err_html;
   }
 
+  function show_item(tabname, title)
+  {
+      $(`#${tabname}_items #docdata_view`).remove();
+      $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
+      html = "";
+      if (data_error) {
+        html += create_err_msg(title, data_error);
+      } else {
+        html += html_data;
+      }
+
+      if (html.length > 0)
+          $(`#${tabname}_items #docdata_view`).append(html);
+
+      $(`#tabs a[href="#${tabname}"]`).show();
+      selectTab(`#${tabname}`);
+  }
+
   $('#tabs a[href="#micro"]').hide();
   $('#tabs a[href="#jsonld"]').hide();
   $('#tabs a[href="#turtle"]').hide();
   $('#tabs a[href="#rdfa"]').hide();
   $('#tabs a[href="#rdf"]').hide();
   $('#tabs a[href="#posh"]').hide();
+  $('#tabs a[href="#json"]').hide();
+  $('#tabs a[href="#csv"]').hide();
 
 
   if (gData.type === "turtle")
-    {
-      $('#turtle_items #docdata_view').remove();
-      $('#turtle_items').append("<div id='docdata_view' class='alignleft'/>");
-      html = "";
-      if (data_error) {
-        html += create_err_msg("Turtle", data_error);
-      } else {
-        html += html_data;
-      }
-
-      if (html.length > 0)
-          $('#turtle_items #docdata_view').append(html);
-
-      $('#tabs a[href="#turtle"]').show();
-      selectTab('#turtle');
-    }
+    show_item('turtle', 'Turtle');
   else if (gData.type === "jsonld")
-    {
-      $('#jsonld_items #docdata_view').remove();
-      $('#jsonld_items').append("<div id='docdata_view' class='alignleft'/>");
-      html = "";
-      if (data_error) {
-        html += create_err_msg("JSON-LD", data_error);
-      } else {
-        html += html_data;
-      }
-
-      if (html.length > 0)
-          $('#jsonld_items #docdata_view').append(html);
-
-      $('#tabs a[href="#jsonld"]').show();
-      selectTab('#jsonld');
-    }
+    show_item('jsonld', 'JSON-LD');
   else if (gData.type === "rdf")
-    {
-      $('#rdf_items #docdata_view').remove();
-      $('#rdf_items').append("<div id='docdata_view' class='alignleft'/>");
-      html = "";
-      if (data_error) {
-        html += create_err_msg("RDF/XML", data_error);
-      } else {
-        html += html_data;
-      }
-
-      if (html.length > 0)
-          $('#rdf_items #docdata_view').append(html);
-
-      $('#tabs a[href="#rdf"]').show();
-      selectTab('#rdf');
-    }
+    show_item('rdf', 'RDF/XML');
+  else if (gData.type === "json")
+    show_item('json', 'JSON');
+  else if (gData.type === "csv")
+    show_item('csv', 'CSV');
 
   gData_showed = true;
 }
@@ -606,6 +613,10 @@ async function Download_exec()
     fmt = "json";
 //??    $('#save-fmt #json').prop('disabled', false);
   }
+  else if (gData.type == "csv" && gData.ttl_data) {
+    filename = "turtle_data.txt";
+    fmt = "ttl";
+  }
 
   var oidc_url = document.getElementById('oidc-url');
   oidc_url.value = gOidc.storage + (filename || '');
@@ -760,6 +771,10 @@ async function save_data(action, fname, fmt, callback)
       src_fmt = "rdf";
       data = data.concat(gData.text);
     }
+    else if (gData.type==="csv" && gData.ttl_data!==null) {
+      src_fmt = "ttl";
+      data = data.concat(gData.ttl_data);
+    }
     else
       return;
 
@@ -788,13 +803,13 @@ async function save_data(action, fname, fmt, callback)
       else if (src_fmt==="json"){
         var conv = new Convert_JSON();
         if (fmt==="ttl"){
-          var text_data = await conv.to_ttl(data, gData.baseURL);
+          var text_data = await conv.to_ttl(data, baseURL);
           exec_action(action, out_from(text_data, null, conv.skipped_error));
         } else if (fmt==="rdf"){
-          var text_data = await conv.to_rdf(data, gData.baseURL);
+          var text_data = await conv.to_rdf(data, baseURL);
           exec_action(action, out_from(text_data, null, conv.skipped_error));
         } else if (fmt==="jsonld"){
-          var text_data = await conv.to_jsonld(data, gData.baseURL);
+          var text_data = await conv.to_jsonld(data, baseURL);
           exec_action(action, out_from(text_data, null, conv.skipped_error));
         }
       }
