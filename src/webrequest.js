@@ -36,6 +36,12 @@
 
   function onBeforeRequestLocal(d)
   {
+    var chk_all = setting.getValue("ext.osds.handle_all");
+    if (chk_all && chk_all!=="1")
+      return;
+
+    var chk_csv = setting.getValue("ext.osds.handle_csv");
+    var handle_csv = (chk_csv && chk_csv==="1");
     var handle = false;
     var ext = "";
     if (d.url.match(/(.rdf)$/i)) {
@@ -73,7 +79,7 @@
       type = "json";
       ext = "json";
     }
-    else if (d.url.match(/(.csv)$/i) ) {
+    else if (handle_csv && d.url.match(/(.csv)$/i) ) {
       handle = true;
       type = "csv";
       ext = "csv";
@@ -115,9 +121,14 @@
     if (d.url.endsWith('#osds'))
       return;
 
+    var chk_all = setting.getValue("ext.osds.handle_all");
+    if (chk_all && chk_all!=="1")
+      return;
 
     var chk_xml = setting.getValue("ext.osds.handle_xml");
+    var chk_csv = setting.getValue("ext.osds.handle_csv");
     var handle_xml = (chk_xml && chk_xml==="1");
+    var handle_csv = (chk_csv && chk_csv==="1");
     var handle = false;
     var v_cancel = false;
     var type = null;
@@ -157,7 +168,7 @@
             type = "rdf";
             header.value = "text/plain";
           }
-          else if (header.value.match(/\/(csv)/)) {
+          else if (handle_csv && header.value.match(/\/(csv)/)) {
             handle = true;
             type = "csv";
           }

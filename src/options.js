@@ -94,6 +94,7 @@ $(function(){
 	 yasqe_srv.setValue(createSparqlQuery(cmd));
   });
 
+  $('#chk_try_handle_all').change(changeHandleAll);
   $('#OK_btn').click(savePref);
   $('#Cancel_btn').click(closeOptions);
 
@@ -110,6 +111,12 @@ $(function(){
 
 });
 
+function changeHandleAll()
+{
+   var v = $('#chk_try_handle_all').is(':checked')? false : true;
+     $('#chk_try_handle_xml').prop('disabled', v);
+     $('#chk_try_handle_csv').prop('disabled', v);
+}
 
 function closeOptions()
 {
@@ -271,6 +278,11 @@ function loadPref()
     if (chk_csv && chk_csv==="1")
       $("#chk_try_handle_csv").attr('checked','checked');
 
+    var chk_all = gPref.getValue("ext.osds.handle_all");
+    if (chk_all && chk_all==="1")
+      $("#chk_try_handle_all").attr('checked','checked');
+
+    changeHandleAll();
 
     var import_url = gPref.getValue("ext.osds.import.url");
     var import_srv = gPref.getValue("ext.osds.import.srv");
@@ -332,6 +344,7 @@ function savePref()
 
    gPref.setValue("ext.osds.handle_xml", $('#chk_try_handle_xml').is(':checked')?"1":"0");
    gPref.setValue("ext.osds.handle_csv", $('#chk_try_handle_csv').is(':checked')?"1":"0");
+   gPref.setValue("ext.osds.handle_all", $('#chk_try_handle_all').is(':checked')?"1":"0");
 
 //   gPref.setValue("ext.osds.pref.user", $('#pref_user').val().trim());
 
