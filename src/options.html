@@ -39,7 +39,7 @@
 
     <style type="text/css">
 	/*demo page css*/
-	body{ font: 62.5% "Trebuchet MS", sans-serif; margin: 50px;}
+	body{ margin: 50px;}
 	#dialog_link {padding: .4em 1em .4em 20px;text-decoration: none;position: relative;}
 	#dialog_link span.ui-icon {margin: 0 5px 0 0;position: absolute;left: .2em;top: 50%;margin-top: -8px;}
 	ul#icons {margin: 0; padding: 0;}
@@ -78,7 +78,7 @@
 
 
     <!-- Tabs -->
-    <div id="tabs" style="WIDTH: 500px">
+    <div id="tabs" style="WIDTH: 600px">
       <ul>
       <li><a href="#tabs-1">Settings</a></li>
       <li><a href="#tabs-2">SPARQL Query Service</a></li>
@@ -94,7 +94,7 @@
               <tr>
                <td>UI&nbsp;Terminology:</td>
                <td>
-                 <SELECT id="uiterm-mode" style="WIDTH: 200px" >
+                 <SELECT id="uiterm-mode" style="WIDTH: 300px" >
                    <OPTION id="ui-eav" selected>Entity, Attribute, Value</OPTION>
                    <OPTION id="ui-spo">Subject, Predicate, Object</OPTION>
                  </SELECT>
@@ -106,7 +106,7 @@
                <td><input id="chk_pref_user" type="checkbox"></td>
                <td>Preferred&nbsp;User&nbsp;ID:</td>
                <td>
-                 <SELECT id="pref_user" style="WIDTH: 290px" >
+                 <SELECT id="pref_user" style="WIDTH: 350px" >
                  </SELECT>
                </td>
                <td> <input id="call_edit_users" value="Edit" type="button"> </td>
@@ -124,19 +124,24 @@
              <table>
               <tr>
                <td><input id="chk_try_handle_all" type="checkbox"></td>
-               <td>Visualize&nbsp;Content&nbsp;using&nbsp;OSDS</td>
+               <td>Visualize&nbsp;Content&nbsp;at&nbsp;Load&nbsp;Time</td>
               </tr>
              </table>
              <table>
-              <tr id="chk_try_handle_xml_row">
+              <tr>
                <td style="WIDTH: 10px"></td>
                <td><input id="chk_try_handle_xml" type="checkbox"></td>
-               <td>Try to handle XML files as RDF</td>
+               <td>Best Effort XML to RDF Transformation</td>
               </tr>
-              <tr id="chk_try_handle_csv_row">
+              <tr>
                <td></td>
                <td><input id="chk_try_handle_csv" type="checkbox"></td>
-               <td>Try to handle CSV files as RDF</td>
+               <td>Best Effort CSV to RDF Transformation</td>
+              </tr>
+              <tr>
+               <td></td>
+               <td><input id="chk_try_handle_json" type="checkbox"></td>
+               <td>Best Effort JSON to RDF Transformation</td>
               </tr>
              </table>
 
@@ -151,7 +156,7 @@
                 <tr>
                  <td>Service Type :</td>
                  <td>
-                   <SELECT id="import-srv" style="WIDTH: 245px" >
+                   <SELECT id="import-srv" style="WIDTH: 345px" >
                      <OPTION id="describe" selected>URIBurner Describe</OPTION>
                      <OPTION id="describe-ssl">URIBurner Describe TLS</OPTION>
                      <OPTION id="about">URIBurner About</OPTION>
@@ -165,7 +170,7 @@
                <table>
                 <tr id="import-url-bcast">
                  <td> URL: </td>
-                 <td> <input id="import-url" style="WIDTH: 418px"> </td>
+                 <td> <input id="import-url" style="WIDTH: 518px"> </td>
                 </tr>
                </table>
 
@@ -183,8 +188,8 @@
              <p/>
                <table>
                 <tr>
-                 <td > Default Storage Document URL: </td>
-                 <td> <input id="rww-store-url" style="WIDTH: 265px"> </td>
+                 <td > Default&nbsp;Storage&nbsp;Document&nbsp;URL: </td>
+                 <td> <input id="rww-store-url" style="WIDTH: 345px"> </td>
                 </tr>
                 <tr>
                   <table>
@@ -192,7 +197,7 @@
                       Editor Service URL:
                     </td></tr>
                     <tr><td>
-                      <textarea id="rww-edit-url" style="width: 450px; height: 47px">
+                      <textarea id="rww-edit-url" style="width: 550px; height: 47px">
                       </textarea>
                     </td></tr>
                   </table>
@@ -212,13 +217,13 @@
             <table>
              <tr>
               <td> URL: </td>
-              <td> <input id="sparql-url" style="WIDTH: 405px"> </td>
+              <td> <input id="sparql-url" style="WIDTH: 495px"> </td>
              </tr>
 
              <tr>
               <td>Query:</td>
               <td>
-                <SELECT id="sparql-cmd" style="WIDTH: 255px" >
+                <SELECT id="sparql-cmd" style="WIDTH: 355px" >
                   <OPTION id="select" selected>SELECT ...</OPTION>
                   <OPTION id="describe">DESCRIBE ...</OPTION>
                   <OPTION id="construct">CONSTRUCT ...</OPTION>
@@ -226,8 +231,8 @@
               </td>
              </tr>
             </table>
-            <div style="width: 450px; height: 450px">
-                <textarea id="sparql-query" style="width: 450px; height: 450px">
+            <div style="width: 550px; height: 450px">
+                <textarea id="sparql-query" style="width: 550px; height: 450px">
                 </textarea>
             </div>
             <p>
@@ -243,7 +248,7 @@
              <table>
                <tr>
                  <td>Query&nbspTimeout: </td>
-                 <td> <input id="super-links-timeout" style="WIDTH: 70px"> milliseconds (values less than 1000 are ignored) </td>
+                 <td> <input id="super-links-timeout" style="WIDTH: 120px"> milliseconds (values less than 1000 are ignored) </td>
               </tr>
                <tr>
                  <td style="text-align:right;">SpongeMode: </td>
@@ -251,7 +256,7 @@
                    <table style="border-spacing:0px;">
                      <tr>
                        <td>
-                         <SELECT id="super-links-sponge" style="WIDTH: 160px" >
+                         <SELECT id="super-links-sponge" style="WIDTH: 200px" >
                            <OPTION id="describe" >URIBurner Describe</OPTION>
                            <OPTION id="describe-ssl" SELECTED>URIBurner Describe TLS</OPTION>
                            <OPTION id="about">URIBurner About</OPTION>
@@ -273,7 +278,7 @@
                <tr>
                  <td style="text-align:right;">Viewer: </td>
                  <td> 
-                   <SELECT id="super-links-viewer" style="WIDTH: 160px" >
+                   <SELECT id="super-links-viewer" style="WIDTH: 200px" >
                      <OPTION id="html"> HTML</OPTION>
                      <OPTION id="html-fb" SELECTED> HTML+Faceted Browsing</OPTION>
                    </SELECT>
@@ -282,7 +287,7 @@
                <tr>
                  <td style="text-align:right;">Highlight&nbsp;mode:</td>
                  <td> 
-                   <SELECT id="super-links-highlight" style="WIDTH: 160px" >
+                   <SELECT id="super-links-highlight" style="WIDTH: 200px" >
                      <OPTION id="first" selected>First match</OPTION>
                      <OPTION id="all" >All matches</OPTION>
                    </SELECT>
@@ -293,7 +298,7 @@
 
            <div>SPARQL query:</div>
 
-           <div style="width: 470px; height: 500px">
+           <div style="width: 570px; height: 500px">
              <textarea id="super-links-query" style="white-space:nowrap">
              </textarea>
            </div>

@@ -50,8 +50,18 @@ var g_RestCons = new Rest_Cons();
 var gOidc = new OidcWeb();
 
 
-$(document).ready(function()
+
+
+function showPopup(tabId)
 {
+  //Request the data from the client (foreground) tab.
+  if (Browser.isFirefoxWebExt) {
+     Browser.api.tabs.sendMessage(tabId, { property: 'doc_data' });
+  } else {
+     Browser.api.tabs.sendMessage(tabId, { property: 'doc_data'},
+        function(response) { });
+  }
+
   Download_exec_update_state();
 
   async function click_login() {
@@ -69,10 +79,6 @@ $(document).ready(function()
   var oidc_login_btn1 = document.getElementById('oidc-login-btn1');
   oidc_login_btn1.addEventListener('click', click_login);
 
-  
-  $("#save-confirm").hide();
-  $("#alert-dlg").hide();
-  $("#login-dlg").hide();
 
   $('#slink_btn').click(SuperLinks_exec);
 
@@ -98,56 +104,55 @@ $(document).ready(function()
       return false;
   });
   $('#tabs a[href="#cons"]').click(function(){
-      selectTab(prevSelectedTab);
-      return false;
+    selectTab(prevSelectedTab);
+    return false;
   });
   $('#tabs a[href="#micro"]').click(function(){
-      selectTab('#micro');
-      return false;
+    selectTab('#micro');
+    return false;
   });
   $('#tabs a[href="#jsonld"]').click(function(){
-      selectTab('#jsonld');
-      return false;
+    selectTab('#jsonld');
+    return false;
   });
   $('#tabs a[href="#turtle"]').click(function(){
-      selectTab('#turtle');
-      return false;
+    selectTab('#turtle');
+    return false;
   });
   $('#tabs a[href="#rdfa"]').click(function(){
-      selectTab('#rdfa');
-      return false;
+    selectTab('#rdfa');
+    return false;
   });
   $('#tabs a[href="#rdf"]').click(function(){
-      selectTab('#rdf');
-      return false;
+    selectTab('#rdf');
+    return false;
   });
   $('#tabs a[href="#posh"]').click(function(){
-      selectTab('#posh');
-      return false;
+    selectTab('#posh');
+    return false;
   });
   $('#tabs a[href="#json"]').click(function(){
-      selectTab('#json');
-      return false;
+    selectTab('#json');
+    return false;
   });
 
   $('#tabs a[href="#csv"]').click(function(){
-      selectTab('#csv');
-      return false;
+    selectTab('#csv');
+    return false;
   });
 
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
-        lineNumbers: true
-      });
+      lineNumbers: true
+    });
     src_view.setSize("100%", "100%");
   } catch(e) { }
 
-
   try{
     g_RestCons.yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
-        lineNumbers: true,
-        lineWrapping: false,
-        sparql: { showQueryButton: false },
+      lineNumbers: true,
+      lineWrapping: false,
+      sparql: { showQueryButton: false },
 	      createShortLink : null,
 	      createShareLink : null,
 	      persistent: null,
@@ -156,16 +161,17 @@ $(document).ready(function()
     g_RestCons.yasqe.obj.setSize("100%", 150);
   } catch(e) {
   }
-  $("#query_place").hide();
-
+  
+  if (doc_URL)
+    g_RestCons.load(doc_URL);
 
   $('#rest_exec').click(function() {
-     g_RestCons.exec(doc_URL, gData.tab_index);
+    g_RestCons.exec(doc_URL, gData.tab_index);
   });
   $('#rest_exit').click(function(){
-      if (prevSelectedTab)
-        selectTab(prevSelectedTab);
-      return false;
+    if (prevSelectedTab)
+      selectTab(prevSelectedTab);
+    return false;
   });
   $('#rest_add').button({
     icons: { primary: 'ui-icon-plusthick' },
@@ -176,43 +182,51 @@ $(document).ready(function()
   });
 
   $('#src_exit').click(function(){
-      selectTab(prevSelectedTab);
-      return false;
+    selectTab(prevSelectedTab);
+    return false;
   });
 
-  selectTab('#micro');
-
   gData_showed = false;
+}
+
+
+async function loadPopup()
+{
+  $("#save-confirm").hide();
+  $("#alert-dlg").hide();
+  $("#login-dlg").hide();
+  $("#query_place").hide();
+  selectTab('#micro');
 
   jQuery('#ext_ver').text('\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version);
 
-  if (Browser.isFirefoxWebExt) {
-    Browser.api.tabs.query({active:true, currentWindow:true})
-      .then((tabs) => {
-        if (tabs.length > 0) {
-          //?? Request the microdata items in JSON format from the client (foreground) tab.
-          doc_URL = tabs[0].url;
-          g_RestCons.load(doc_URL);
+  var curTabs = await getCurTab();
+  var tabId = null;
 
-          Browser.api.tabs.sendMessage(tabs[0].id, { property: 'doc_data' });
-        }
-      });
-  } else {
-    Browser.api.tabs.query({active:true, currentWindow:true}, function(tabs) {
-      if (tabs.length > 0) {
-        //?? Request the microdata items in JSON format from the client (foreground) tab.
-        doc_URL = tabs[0].url;
-        g_RestCons.load(doc_URL);
-
-        Browser.api.tabs.sendMessage(tabs[0].id, {
-            property: 'doc_data'
-          },
-          function(response) {
-          });
-      }
-    });
+  if (curTabs.length > 0) {
+    tabId = curTabs[0].id;
+    doc_URL = curTabs[0].url;
   }
+  
+  var setting = new Settings();
+  var chk_all = setting.getValue("ext.osds.handle_all");
+  if (chk_all && chk_all!=="1") {
+    Browser.api.runtime.sendMessage({'cmd': 'openIfHandled', tabId},
+       function(resp) {
+            if (resp.opened)
+               close();
+            else
+               showPopup(tabId);
+       });
+  } 
+  else {
+    showPopup(tabId);
+  }
+}
 
+$(document).ready(function ()
+{ 
+  loadPopup()
 });
 
 

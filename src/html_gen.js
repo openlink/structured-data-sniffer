@@ -149,7 +149,7 @@
             }
             else {
               var sval = self.iri2html(obj.iri);
-              var td_class = obj.typeid!==undefined?" class='typeid'":"";
+              var td_class = obj.typeid!==undefined || key===self.ns.RDF_TYPE ?" class='typeid'":"";
               str += `<tr class='data_row'>
                         <td ${td_class}> ${key_str} </td>
                         <td ${td_class} > ${sval} </td>
@@ -259,10 +259,6 @@
       return sanitize_str(text);
     },
 
-    s_startWith : function (str, val) {
-        return str.lastIndexOf(val, 0) === 0;
-    },
-
     is_BNode : function (str) {
         return (str.lastIndexOf("_:", 0) === 0 || str.lastIndexOf("nodeID://", 0) === 0 || str.lastIndexOf("nodeid://", 0) === 0);
     },
@@ -275,7 +271,7 @@
     },
 
     check_subst : function(uri) {
-      if (this.s_startWith(uri, this.docURI)) {
+      if (uri.startsWith(this.docURI)) {
         var s = uri.substr(this.docURI.length);
         if (s[0]==="#") {
           var v = '<a href="' + uri + '" title="' + uri + '">' +this.decodeURI(s)+ '</a>';

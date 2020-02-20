@@ -1783,13 +1783,9 @@ Namespace.prototype = {
   
   has_known_ns : function (str) 
   {
-    function s_startWith(str, val) {
-     return str.lastIndexOf(val, 0) === 0;
-    }
-
     var rc = null;
     $.each(this.ns_list, function(pref, link_url) {
-      if (s_startWith(String(str),link_url)) {
+      if (String(str).startsWith(link_url)) {
         rc = { ns:pref, link:link_url };
         return false;
       } 
