@@ -117,21 +117,24 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
             var pref_user = setting.getValue('ext.osds.pref.user');
             if (pref_user && pref_user.length> 0) {
               details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
+/***
+              var header_acah = null;
+              for (var h of details.requestHeaders) {
+                if (h.name && h.name.toLowerCase() === "access-control-allow-headers") {
+                  header_acah = h;
+                  break;
+                }
+              }
+
+              if (header_acah && header_acah.value.trim().length > 0) {
+                header_acah.value += ', On-Behalf-Of';
+              }
+              else {
+                details.requestHeaders.push({name:"Access-Control-Allow-Headers", value:"On-Behalf-Of"});
+              }
+***/
             }
           }
-
-          var header_acah = null;
-          for (var h of details.requestHeaders) {
-            if (h.name && h.name.match(/Access-Control-Allow-Headers/i)) {
-              header_acah = h;
-              break;
-            }
-          }
-
-          if (header_acah && header_acah.value.trim().length > 0)
-            header_acah.value += ', On-Behalf-Of'
-          else
-            details.requestHeaders.push({name:"Access-Control-Allow-Headers", value:"On-Behalf-Of"});
           
           return {"requestHeaders": details.requestHeaders};
         },
