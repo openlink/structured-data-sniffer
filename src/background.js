@@ -156,7 +156,7 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
 
     var headerContent = null;
     for (var header of d.responseHeaders) {
-      if (header.name && header.name.match(/content-type/i)) {
+      if (header.name && header.name.match(/^content-type/i)) {
         headerContent = header;
         contentType = header.value;
         break;
