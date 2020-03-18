@@ -285,6 +285,9 @@ class Settings {
       case "ext.osds.super_links.timeout":
           val = this.def_super_links_timeout;
           break;
+      case "ext.osds.super-links-highlight":
+          val = "first";
+          break;
     }
     return val;
   }
