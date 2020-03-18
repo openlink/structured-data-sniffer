@@ -291,6 +291,14 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
     }
 
 
+    var url = new URL(d.url);
+    if (url.hash === "#osds")
+    {
+      could_handle = false;
+      handle = false;
+    }
+
+
     if (chk_all && chk_all!=="1") 
     {
       if (could_handle) {
