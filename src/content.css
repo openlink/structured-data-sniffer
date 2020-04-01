@@ -1,17 +1,21 @@
 .super_links_msg {
-	display: none;
+        all: initial;
+	display: flex;
+	line-height: normal;
+	flex-direction: row; 
 	position: fixed;
 	border: 2px solid #000;
 	border-radius: 2px;
 	width: 200px;
-	height: 40px;
+	height: 20px;
 	top:4px;
 	left: 4px;
 	background: khaki;
 	color: black;
  	z-index: 2147483647;
-	padding: 5px 10px 10px 20px;
+	padding: 10px 10px 10px 20px;
 	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
 }
 
 .super_links_img {
@@ -21,6 +25,7 @@
 
 
 .super_links_popup {
+        all: initial;
 	position: absolute;
 	display: none;
 	border: 2px solid #000;

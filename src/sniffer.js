@@ -642,7 +642,7 @@
              <div class="super_links_popup-content"></div>
              <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
             </div> 
-            <div class="super_links_msg" style="display:flex; line-height: normal; font-size: 14px; flex-direction: row; height:40px; padding: 10px 10px 10px 20px;"> 
+            <div class="super_links_msg"> 
               <div style="width:16px;">
                 <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
               </div>
