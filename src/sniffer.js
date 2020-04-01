@@ -637,10 +637,12 @@
       if (g_super_links==null) {
          $('body').append(
            `<div class="super_links_popup" >
+             <div class="super_links_popup-title"> &nbsp;Super Links </div>
              <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
              <div class="super_links_popup-content"></div>
+             <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
             </div> 
-            <div class="super_links_msg" style="display:flex; font-size: 14px; flex-direction: row; height:40px; padding: 10px 10px 10px 20px;"> 
+            <div class="super_links_msg" style="display:flex; line-height: normal; font-size: 14px; flex-direction: row; height:40px; padding: 10px 10px 10px 20px;"> 
               <div style="width:16px;">
                 <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
               </div>
@@ -807,14 +809,22 @@
         $('.super_links_popup-content')
            .append('<table class="super_links_table">'
                +'<thead><tr>'
-               +'<th style="max-width:190px;min-width:100px">Word</th>'
-               +'<th style="max-width:130px;min-width:150px">Association</th>'
-               +'<th style="max-width:350px;width:40%;">Source</th>'
-               +'<th style="max-width:200px;width:20%">Type</th>'
+               +'<th> Word <span class="super_links_table-resize-handle"/></th>'
+               +'<th> Association <span class="super_links_table-resize-handle"/></th>'
+               +'<th> Source <span class="super_links_table-resize-handle"/></th>'
+               +'<th> Type <span class="super_links_table-resize-handle"/></th>'
                +'</tr></thead>'
                 +'<tbody>'+tdata+'</tbody>'
                 +'</table>');
         $('.super_links_popup').show();
+
+        var popup = DOM.qSel('.super_links_popup');
+        const columns_css = ['minmax(100px, 1.5fr)', 'minmax(100px, 2.5fr)', 'minmax(100px, 4fr)', 'minmax(100px, 2fr)'];
+        makeResizableTable('table.super_links_table', columns_css, '.super_links_popup');
+
+        dragElement(popup, DOM.qSel('.super_links_popup-title'));
+        makeResizable(popup, DOM.qSel('.super_links_popup-resizer'));
+
         positionPopupOnPage(ev);
       }
     }
@@ -974,6 +984,150 @@
             console.log("OSDS:" + e);
         }
     });
+
+  var DOM = {};
+  DOM.qSel = (sel) => { return document.querySelector(sel); };
+  DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
+  DOM.iSel = (id) => { return document.getElementById(id); };
+
+  function makeResizableTable(tableId, columns_css, containerId) {
+     var table = DOM.qSel(tableId);
+     var popup = DOM.qSel(containerId);
+     var headerResized;
+     const columns = [];
+
+     table.style.gridTemplateColumns = columns_css.join(' ');
+
+     function onMouseMove(e)
+     {
+       window.requestAnimationFrame(() => {
+         // Calculate the desired width
+         if (headerResized===null)
+           return;
+
+         var horizontalScrollOffset = document.documentElement.scrollLeft;
+         const width = (horizontalScrollOffset + e.clientX) - popup.offsetLeft - headerResized.offsetLeft;
+       
+         // Update the column object with the new size value
+         const column = columns.find(({ header }) => header === headerResized);
+         column.size = Math.max(100, width) + 'px'; // Enforce our minimum
+  
+         // For the other headers which don't have a set width, fix it to their computed width
+         columns.forEach((column) => {
+           if(column.size.startsWith('minmax')){ // isn't fixed yet (it would be a pixel value otherwise)
+             column.size = parseInt(column.header.clientWidth, 10) + 'px';
+           }
+         })
+
+         // Update the column sizes
+         // Reminder: grid-template-columns sets the width for all columns in one value
+         table.style.gridTemplateColumns = columns
+           .map(({ header, size }) => size)
+           .join(' ');
+       });
+     }
+
+     function onMouseUp(e)
+     {
+        if (headerResized)
+           headerResized.classList.remove('super_links_table-header--being-resized');
+
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        headerResized.classList.remove('super_links_table-header--being-resized');
+        headerResized = null;
+     }
+
+
+     var lst = DOM.qSelAll(tableId+' th');
+     var i = 0;
+
+     for(const header of lst)
+     {
+       columns.push({ 
+         header, 
+         size: columns_css[i],
+       });
+
+       header.querySelector('.super_links_table-resize-handle').onmousedown = (e) => {
+          headerResized = e.target.parentNode;
+          window.addEventListener('mousemove', onMouseMove);
+          window.addEventListener('mouseup', onMouseUp);
+          headerResized.classList.add('super_links_table-header--being-resized');
+       } 
+     }
+  }
+
+
+  function dragElement(el, elHeader) {
+    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+    if (elHeader) {
+      // if present, the header is where you move the DIV from:
+      elHeader.onmousedown = onMouseDown;
+    } else {
+      // otherwise, move the DIV from anywhere inside the DIV:
+      el.onmousedown = onMouseDown;
+    }
+
+    function onMouseDown(e) {
+      e = e || window.event;
+      e.preventDefault();
+      // get the mouse cursor position at startup:
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    }
+
+    function onMouseMove(e) {
+      e = e || window.event;
+      e.preventDefault();
+      // calculate the new cursor position:
+      pos1 = pos3 - e.clientX;
+      pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      // set the element's new position:
+      el.style.top = (el.offsetTop - pos2) + "px";
+      el.style.left = (el.offsetLeft - pos1) + "px";
+    }
+
+    function onMouseUp() {
+      // stop moving when mouse button is released:
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+  }
+
+  function makeResizable(el, elResizer) 
+  {
+    var orig_height = 0;
+    var orig_width = 0;
+    var orig_mouse_x = 0;
+    var orig_mouse_y = 0;
+
+    elResizer.onmousedown = (e) => {
+        e.preventDefault();
+        orig_width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
+        orig_height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
+        orig_mouse_x = e.pageX;
+        orig_mouse_y = e.pageY;
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    }
+    
+    function onMouseMove(e) {
+      el.style.width = Math.max(orig_width + (e.pageX - orig_mouse_x), 600) + 'px';
+      el.style.height = Math.max(orig_height + (e.pageY - orig_mouse_y), 150) + 'px';
+    }
+    
+    function onMouseUp() {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+  }
 
 
 })();

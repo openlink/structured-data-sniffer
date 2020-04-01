@@ -531,5 +531,6 @@ function save_users_data()
 var DOM = {};
 
 DOM.qSel = (sel) => { return document.querySelector(sel); };
+DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
 DOM.iSel = (id) => { return document.getElementById(id); };
 

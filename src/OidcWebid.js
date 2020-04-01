@@ -243,7 +243,7 @@ function getGraph(url)
       var docURI = (url.indexOf('#') >= 0)?url.slice(0, url.indexOf('#')):url;
       f.nowOrWhenFetched(docURI,undefined,function(ok, body, xhr) {
           if (!ok) {
-              reject({status: xhr.status, xhr: xhr});
+              reject({status: (xhr? xhr.status :0), xhr: xhr});
           } else {
               resolve(g);
           }
