@@ -28,7 +28,7 @@ for I_DIR in handlers.js html_gen.js OidcWebid.js oidc-webid-inject.js options.h
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in page_panel.html page_panel.js panel.html panel.js psniffer.css; do
+for I_DIR in page_panel.html page_panel.js panel.html panel.js dataview.css; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
