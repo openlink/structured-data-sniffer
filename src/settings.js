@@ -288,6 +288,12 @@ class Settings {
       case "ext.osds.super-links-highlight":
           val = "first";
           break;
+      case "ext.osds.super-links-sponge-mode":
+          val = "xxx";
+          break;
+      case "ext.osds.super-links-sponge":
+          val = "describe-ssl";
+          break;
     }
     return val;
   }
@@ -450,7 +456,7 @@ class Settings {
   {
     var h_url = '';
     var docURL;
-    var _mode = '';
+    var _mode = null;
 
     if (_url.endsWith('?'))
       _url = _url.substring(0, _url.length-1);

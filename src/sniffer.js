@@ -634,7 +634,7 @@
       var settings = new SettingsProxy();
       var highlight_mode = await settings.getValue('ext.osds.super-links-highlight');
 
-      if (g_super_links==null) {
+      if ($(".super_links_popup").length == 0) {
          $('body').append(
            `<div class="super_links_popup" >
              <div class="super_links_popup-title"> &nbsp;Super Links </div>
