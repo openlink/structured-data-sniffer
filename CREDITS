@@ -34,7 +34,17 @@ following projects:
 * jQuery migrate
     Project	: https://github.com/jquery/jquery-migrate
     License	: https://github.com/jquery/jquery-migrate/blob/master/LICENSE.txt, looks like MIT license
-    Description	: Migrate older jQuery code to jQuery 1.9+
+    Description	: https://jqueryui.com/Migrate older jQuery code to jQuery 1.9+
+
+* jQuery mark
+    Project	: https://github.com/julmot/mark.js/
+    License	: The MIT License (MIT)
+    Description	: JavaScript keyword highlighting. Mark text with with options that fit every application.
+
+* jQuery UI
+    Project	: https://jqueryui.com/
+    License	: https://github.com/jquery/jquery-ui/blob/master/LICENSE.txt
+    Description	: jQuery user interface library 
 
 
 * jsonld.js
