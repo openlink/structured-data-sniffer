@@ -213,7 +213,7 @@ async function loadPopup()
   if (chk_all && chk_all!=="1") {
     Browser.api.runtime.sendMessage({'cmd': 'openIfHandled', tabId},
        function(resp) {
-            if (resp.opened)
+            if (resp && resp.opened)
                close();
             else
                showPopup(tabId);
@@ -408,358 +408,367 @@ function show_Data(dData)
 
 
 
-function check_Microdata(val)
+async function check_Microdata(val)
 {
-  return new Promise(function(resolve, reject) {
     if (val.d.micro.data)
     {
-      var handler = new Handle_Microdata();
-      gData.micro.json_text = [JSON.stringify(val.d.micro.data, undefined, 2)];
-      handler.parse(val.d.micro.data, gData.baseURL,
-        function(error, html_data)
-        {
-          if (error)
-            val.d.micro.error.push(error.toString());
-          else
-            val.d.micro.expanded = html_data;
+      try {
+        var handler = new Handle_Microdata();
+        gData.micro.json_text = [JSON.stringify(val.d.micro.data, undefined, 2)];
+        var ret = handler.parse(val.d.micro.data, gData.baseURL);
 
-          resolve({d:val.d, start_id:0});
-        });
+        if (ret.errors.length > 0)
+          val.d.micro.error = val.d.micro.error.concat(ret.errors);
+
+        if (ret.data)
+          val.d.micro.expanded = ret.data;
+
+        return {d:val.d, start_id:0};
+
+      } catch(ex) {
+        val.d.micro.error.push(ex.toString());
+        return {d:val.d, start_id:0};
+      }
     }
     else
-      resolve({d:val.d, start_id:0});
-  });
+      return {d:val.d, start_id:0};
 }
 
 
 
 
-function check_JSON_LD(val)
+async function check_JSON_LD(val)
 {
-  return new Promise(function(resolve, reject) {
-    if (val.d.jsonld.text!==null && val.d.jsonld.text.length > 0)
-    {
+  if (val.d.jsonld.text!==null && val.d.jsonld.text.length > 0)
+  {
+    try {
       var handler = new Handle_JSONLD();
-      handler.parse(val.d.jsonld.text, gData.baseURL,
-        function(error, html_data) {
-          gData.jsonld.json_text = val.d.jsonld.text;
-          if (error)
-            val.d.jsonld.error.push(error);
+      var ret = await handler.parse(val.d.jsonld.text, gData.baseURL);
 
-          if (html_data) {
-            if (val.d.jsonld.expanded) 
-              val.d.jsonld.expanded += html_data;
-            else
-              val.d.jsonld.expanded = html_data;
-          }
+      gData.jsonld.json_text = val.d.jsonld.text;
 
-          if (handler.skipped_error.length>0)
-            val.d.jsonld.error = val.d.jsonld.error.concat(handler.skipped_error);
+      if (ret.errors.length > 0)
+        val.d.jsonld.error = val.d.jsonld.error.concat(ret.errors);
 
-          resolve({d:val.d, start_id:handler.start_id});
-      });
+      if (ret.data) {
+        if (val.d.jsonld.expanded) 
+          val.d.jsonld.expanded += ret.data;
+        else
+          val.d.jsonld.expanded = ret.data;
+      }
+      return {d:val.d, start_id:handler.start_id};
+
+    } catch(ex) {
+      val.d.jsonld.error.push(ex.toString());
+      return {d:val.d, start_id:0};
     }
-    else
-    {
-      resolve({d:val.d, start_id:0});
-    }
-  });
+  }
+  else
+  {
+    return {d:val.d, start_id:0};
+  }
 }
 
 
-function check_JsonLD_Nano(val)
+async function check_JsonLD_Nano(val)
 {
-  return new Promise(function(resolve, reject) {
-    if (val.d.jsonld_nano.text!==null && val.d.jsonld_nano.text.length > 0)
-    {
+  if (val.d.jsonld_nano.text!==null && val.d.jsonld_nano.text.length > 0)
+  {
+    try {
       var handler = new Handle_JSONLD();
       handler.start_id = val.start_id;
-      handler.parse(val.d.jsonld_nano.text, gData.baseURL,
-        function(error, html_data) {
-          gData.jsonld_nano.json_text = val.d.jsonld_nano.text;
-          if (error)
-            val.d.jsonld.error.push(error);
+      var ret = await handler.parse(val.d.jsonld_nano.text, gData.baseURL);
 
-          if (html_data) {
-            if (val.d.jsonld.expanded) 
-              val.d.jsonld.expanded += html_data;
-            else
-              val.d.jsonld.expanded = html_data;
-          }
+      gData.jsonld_nano.json_text = val.d.jsonld_nano.text;
 
-          if (handler.skipped_error.length>0)
-            val.d.jsonld.error = val.d.jsonld.error.concat(handler.skipped_error);
+      if (ret.errors.length > 0)
+        val.d.jsonld.error = val.d.jsonld.error.concat(ret.errors);
 
-          resolve({d:val.d, start_id:0});
-      });
+      if (ret.data) {
+        if (val.d.jsonld.expanded) 
+          val.d.jsonld.expanded += ret.data;
+        else
+          val.d.jsonld.expanded = ret.data;
+      }
+      return {d:val.d, start_id:0};
+      
+    } catch(ex) {
+      val.d.jsonld.error.push(ex.toString());
+      return {d:val.d, start_id:0};
     }
-    else
-    {
-      resolve({d:val.d, start_id:0});
-    }
-  });
+  }
+  else
+  {
+    return {d:val.d, start_id:0};
+  }
 }
 
 
 
-function check_Json_Nano(val)
+async function check_Json_Nano(val)
 {
-  return new Promise(function(resolve, reject) {
-    if (val.d.json_nano.text!==null && val.d.json_nano.text.length > 0)
-    {
+  if (val.d.json_nano.text!==null && val.d.json_nano.text.length > 0)
+  {
+    try {
       var handler = new Handle_JSON();
       handler.start_id = val.start_id;
-      handler.parse(val.d.json_nano.text, gData.baseURL,
-        function(error, html_data) {
-          gData.json_nano.json_text = val.d.json_nano.text;
-          if (error)
-            val.d.json.error.push(error);
+      var ret = await handler.parse(val.d.json_nano.text, gData.baseURL);
 
-          if (html_data)
-            val.d.json.expanded = html_data;
+      gData.json_nano.json_text = val.d.json_nano.text;
 
-          if (handler.skipped_error.length>0)
-            val.d.json.error = val.d.json.error.concat(handler.skipped_error);
+      if (ret.errors.length > 0)
+        val.d.json.error = val.d.json.error.concat(ret.errors);
 
-          resolve({d:val.d, start_id:0});
-      });
+      if (ret.data)
+        val.d.json.expanded = ret.data;
+
+      return {d:val.d, start_id:0};
+
+    } catch(ex) {
+      val.d.json.error.push(ex.toString());
+      return {d:val.d, start_id:0};
     }
-    else
-    {
-      resolve({d:val.d, start_id:0});
-    }
-  });
+  }
+  else
+  {
+    return {d:val.d, start_id:0};
+  }
 }
 
 
 
-function check_Turtle(val)
+async function check_Turtle(val)
 {
-  return new Promise(function(resolve, reject) {
-    if (val.d.turtle.text!==null && val.d.turtle.text.length > 0)
-    {
+  if (val.d.turtle.text!==null && val.d.turtle.text.length > 0)
+  {
+    try {
       var handler = new Handle_Turtle();
-      handler.parse(val.d.turtle.text, gData.baseURL,
-        function(error, html_data) {
-          gData.turtle.ttl_text = val.d.turtle.text;
-          if (error)
-            val.d.turtle.error.push(error);
+      var ret = await handler.parse(val.d.turtle.text, gData.baseURL);
 
-          if (html_data) {
-            if (val.d.turtle.expanded)
-              val.d.turtle.expanded += html_data;
-            else
-              val.d.turtle.expanded = html_data;
-          }
+      gData.turtle.ttl_text = val.d.turtle.text;
 
-          if (handler.skipped_error.length>0)
-            val.d.turtle.error = val.d.turtle.error.concat(handler.skipped_error);
+      if (ret.errors.length>0)
+        val.d.turtle.error = val.d.turtle.error.concat(ret.errors);
 
-          resolve({d:val.d, start_id:handler.start_id});
-      });
+      if (ret.data) {
+        if (val.d.turtle.expanded)
+          val.d.turtle.expanded += ret.data;
+        else
+          val.d.turtle.expanded = ret.data;
+      }
+      return {d:val.d, start_id:handler.start_id};
+
+    } catch (ex) {
+      val.d.turtle.error.push(ex.toString());
+      return {d:val.d, start_id:0};
     }
-    else
-    {
-      resolve({d:val.d, start_id:0});
-    }
-  });
+  }
+  else
+  {
+    return {d:val.d, start_id:0};
+  }
 }
 
 
-function check_Turtle_Nano(val)
+async function check_Turtle_Nano(val)
 {
-  return new Promise(function(resolve, reject) {
-    if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0)
-    {
-      new Fix_Nano().parse(val.d.ttl_nano.text,
-        function(output){
-          val.d.ttl_nano.text = output;
+  if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0)
+  {
+    var fix = new Fix_Nano();
+    var output = await fix.parse(val.d.ttl_nano.text);
+    
+    val.d.ttl_nano.text = output;
 
-          if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0) {
-            var handler = new Handle_Turtle(val.start_id);
-            handler.parse_nano(val.d.ttl_nano.text, gData.baseURL,
-              function(error, html_data) {
-                gData.ttl_nano.ttl_text = val.d.ttl_nano.text;
-                if (error)
-                  val.d.turtle.error.push(error);
+    if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0) {
+      try {
+        var handler = new Handle_Turtle(val.start_id);
+        var ret = await handler.parse_nano(val.d.ttl_nano.text, gData.baseURL);
+      
+        gData.ttl_nano.ttl_text = val.d.ttl_nano.text;
 
-                if (html_data) {
-                  if (val.d.turtle.expanded)
-                    val.d.turtle.expanded += html_data;
-                  else
-                    val.d.turtle.expanded = html_data;
-                }
+        if (ret.errors.length>0)
+          val.d.turtle.error = val.d.turtle.error.concat(ret.errors);
+                
+        if (ret.data) {
+          if (val.d.turtle.expanded)
+            val.d.turtle.expanded += ret.data;
+          else
+            val.d.turtle.expanded = ret.data;
+        }
 
-                if (handler.skipped_error.length>0)
-                  val.d.turtle.error = val.d.turtle.error.concat(handler.skipped_error);
+        return {d:val.d, start_id:0};
 
-                resolve({d:val.d, start_id:0});
-            });
-          }
-          else {
-            resolve({d:val.d, start_id:0});
-          }
-      });
+      } catch (ex) {
+        val.d.turtle.error.push(ex.toString());
+        return {d:val.d, start_id:0};
+      }
     }
     else
-    {
-      resolve({d:val.d, start_id:0});
-    }
-  });
+      return {d:val.d, start_id:0};
+  }
+  else
+  {
+    return {d:val.d, start_id:0};
+  }
 }
 
 
 
-function check_POSH(val)
+async function check_POSH(val)
 {
-  return new Promise(function(resolve, reject) {
-    if (val.d.posh.text!==null && val.d.posh.text.length > 0)
-    {
+  if (val.d.posh.text!==null && val.d.posh.text.length > 0)
+  {
+    try {
       var handler = new Handle_Turtle();
-      handler.parse([val.d.posh.text], gData.baseURL,
-        function(error, html_data) {
-          gData.posh.ttl_text = val.d.posh.text;
-          if (error)
-            val.d.posh.error.push(error);
+      var ret = await handler.parse([val.d.posh.text], gData.baseURL);
 
-          if (html_data)
-            val.d.posh.expanded = html_data;
+      gData.posh.ttl_text = val.d.posh.text;
 
-          if (handler.skipped_error.length>0)
-            val.d.posh.error = val.d.posh.error.concat(handler.skipped_error);
+      if (ret.errors.length>0)
+        val.d.posh.error = val.d.posh.error.concat(ret.errors);
+                
+      if (ret.data) {
+        val.d.posh.expanded = ret.data;
+      }
+      return {d:val.d, start_id:0};
 
-            resolve({d:val.d, start_id:0});
-      });
+    } catch (ex) {
+      val.d.posh.error.push(ex.toString());
+      return {d:val.d, start_id:0};
     }
-    else
-    {
-      resolve({d:val.d, start_id:0});
-    }
-  });
+  }
+  else
+  {
+    return {d:val.d, start_id:0};
+  }
 }
 
 
 
-function check_RDFa(val)
+async function check_RDFa(val)
 {
-  return new Promise(function(resolve, reject) {
-    if (val.d.rdfa.data)
-    {
+  if (val.d.rdfa.data)
+  {
+    try {
       var handler = new Handle_RDFa();
-      handler.parse(val.d.rdfa.data, gData.baseURL,
-        function(error, html_data) {
-          if (error)
-            val.d.rdfa.error.push(error);
-          else {
-            val.d.rdfa.expanded = html_data;
-            gData.rdfa.ttl_text = [val.d.rdfa.ttl];
-          }
+      var ret = handler.parse(val.d.rdfa.data, gData.baseURL);
 
-          resolve({d:val.d, start_id:0});
-      });
+      if (ret.errors.length>0)
+        val.d.rdfa.error = val.d.rdfa.error.concat(ret.errors);
+                
+      if (ret.data) {
+        val.d.rdfa.expanded = ret.data;
+        gData.rdfa.ttl_text = [val.d.rdfa.ttl];
+      }
+      return {d:val.d, start_id:0};
+
+    } catch (ex) {
+      val.d.rdfa.error.push(ex.toString());
+      return {d:val.d, start_id:0};
     }
-    else
-    {
-      resolve({d:val.d, start_id:0});
-    }
-  });
+  }
+  else
+  {
+    return {d:val.d, start_id:0};
+  }
 }
 
 
 
-function check_RDF_XML(val)
+async function check_RDF_XML(val)
 {
-  return new Promise(function(resolve, reject) {
-    if (val.d.rdf.text && val.d.rdf.text.length > 0)
-    {
+  if (val.d.rdf.text && val.d.rdf.text.length > 0)
+  {
+    try {
       var handler = new Handle_RDF_XML();
-      handler.parse(val.d.rdf.text, gData.baseURL,
-        function(error, html_data) {
-          gData.rdf.text = val.d.rdf.text;
-          if (error)
-            val.d.rdf.error.push(error);
+      var ret = await handler.parse(val.d.rdf.text, gData.baseURL);
 
-          if (html_data) {
-            if (val.d.rdf.expanded) 
-              val.d.rdf.expanded += html_data;
-            else
-              val.d.rdf.expanded = html_data;
-          }
+      gData.rdf.text = val.d.rdf.text;
 
-          if (handler.skipped_error.length>0)
-            val.d.rdf.error = val.d.rdf.error.concat(handler.skipped_error);
+      if (ret.errors.length>0)
+        val.d.rdf.error = val.d.rdf.error.concat(ret.errors);
+                
+      if (ret.data) {
+        if (val.d.rdf.expanded)
+          val.d.rdf.expanded += ret.data;
+        else
+          val.d.rdf.expanded = ret.data;
+      }
+      return {d:val.d, start_id:0};
 
-          resolve({d:val.d, start_id:0});
-      });
+    } catch (ex) {
+      val.d.rdf.error.push(ex.toString());
+      return {d:val.d, start_id:0};
     }
-    else
-    {
-      resolve({d:val.d, start_id:0});
-    }
-  });
+  }
+  else
+  {
+    return {d:val.d, start_id:0};
+  }
 }
 
 
-function check_RDF_XML_Nano(val)
+async function check_RDF_XML_Nano(val)
 {
-  return new Promise(function(resolve, reject) {
-    if (val.d.rdf_nano.text!==null && val.d.rdf_nano.text.length > 0)
-    {
+  if (val.d.rdf_nano.text!==null && val.d.rdf_nano.text.length > 0)
+  {
+    try {
       var handler = new Handle_RDF_XML();
-      handler.parse(val.d.rdf_nano.text, gData.baseURL,
-        function(error, html_data) {
-          gData.rdf_nano.rdf_text = val.d.rdf_nano.text;
-          if (error)
-            val.d.rdf.error.push(error);
+      var ret = await handler.parse(val.d.rdf_nano.text, gData.baseURL);
 
-          if (html_data) {
-            if (val.d.rdf.expanded) 
-              val.d.rdf.expanded += html_data;
-            else
-              val.d.rdf.expanded = html_data;
-          }
+      gData.rdf_nano.rdf_text = val.d.rdf_nano.text;
 
-          if (handler.skipped_error.length>0)
-            val.d.rdf.error = val.d.rdf.error.concat(handler.skipped_error);
+      if (ret.errors.length>0)
+        val.d.rdf.error = val.d.rdf.error.concat(ret.errors);
+                
+      if (ret.data) {
+        if (val.d.rdf.expanded)
+          val.d.rdf.expanded += ret.data;
+        else
+          val.d.rdf.expanded = ret.data;
+      }
+      return {d:val.d, start_id:0};
 
-          resolve({d:val.d, start_id:0});
-      });
+    } catch (ex) {
+      val.d.rdf.error.push(ex.toString());
+      return {d:val.d, start_id:0};
     }
-    else
-    {
-      resolve({d:val.d, start_id:0});
-    }
-  });
+  }
+  else
+  {
+    return {d:val.d, start_id:0};
+  }
 }
 
 
-function check_CSV_Nano(val)
+async function check_CSV_Nano(val)
 {
-  return new Promise(function(resolve, reject) {
-    if (val.d.csv_nano.text!==null && val.d.csv_nano.text.length > 0)
-    {
+  if (val.d.csv_nano.text!==null && val.d.csv_nano.text.length > 0)
+  {
+    try {
       var handler = new Handle_CSV();
       handler.start_id = val.start_id;
-      handler.parse(val.d.csv_nano.text, gData.baseURL,
-        function(error, html_data, ttl_data) {
-          gData.csv_nano.ttl_text = ttl_data;
-          if (error)
-            val.d.csv_nano.error.push(error);
+      var ret = await handler.parse(val.d.csv_nano.text, gData.baseURL);
 
-          if (html_data)
-            val.d.csv_nano.expanded = html_data;
+      gData.csv_nano.ttl_text = ret.ttl_data;
 
-          if (handler.skipped_error.length>0)
-            val.d.csv_nano.error = val.d.csv_nano.error.concat(handler.skipped_error);
+      if (ret.errors.length>0)
+        val.d.csv_nano.error = val.d.csv_nano.error.concat(ret.errors);
+                
+      if (ret.data) {
+        val.d.csv_nano.expanded = ret.data;
+      }
+      return {d:val.d, start_id:0};
 
-          resolve({d:val.d, start_id:0});
-      });
+    } catch (ex) {
+      val.d.csv_nano.error.push(ex.toString());
+      return {d:val.d, start_id:0};
     }
-    else
-    {
-      resolve({d:val.d, start_id:0});
-    }
-  });
+  }
+  else
+  {
+    return {d:val.d, start_id:0};
+  }
 }
 
 
@@ -799,18 +808,22 @@ async function parse_Data(dData)
 
   var val = {d:dData, start_id:0};
 
-  val = await check_Microdata(val);
-  val = await check_JSON_LD(val);
-  val = await check_JsonLD_Nano(val);
-  val = await check_Json_Nano(val);
-  val = await check_Turtle(val);
-  val = await check_Turtle_Nano(val);
-  val = await check_POSH(val);
-  val = await check_RDFa(val);
-  val = await check_RDF_XML(val);
-  val = await check_RDF_XML_Nano(val);
-  val = await check_CSV_Nano(val);
-  return val.d;
+  try {
+    val = await check_Microdata(val);
+    val = await check_JSON_LD(val);
+    val = await check_JsonLD_Nano(val);
+    val = await check_Json_Nano(val);
+    val = await check_Turtle(val);
+    val = await check_Turtle_Nano(val);
+    val = await check_POSH(val);
+    val = await check_RDFa(val);
+    val = await check_RDF_XML(val);
+    val = await check_RDF_XML_Nano(val);
+    val = await check_CSV_Nano(val);
+    return val.d;
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 
@@ -1480,30 +1493,29 @@ async function save_data(action, fname, fmt, callback)
     if (selectedTab==="#micro" && data.length > 0)
     {
       var handler = new Handle_Microdata(true);
-      handler.parse(JSON.parse(data[0]), gData.baseURL,
-        async function(error, ttl_data)
-        {
-          if (error) {
-            exec_action(action, out_from(error));
-            return;
-          }
-          if (ttl==null)
-              return;
+      var ret = handler.parse(JSON.parse(data[0]), gData.baseURL);
+      if (ret.errors.length > 0) {
+        exec_action(action, out_from(error));
+        return;
+      }
+      if (ret.data==null)
+        return;
 
-          if (fmt==="ttl") {
-            exec_action(action, out_from(ttl_data));
-          }
-          else if (fmt==="jsonld") { // json
-            var conv = new Convert_Turtle();
-            var text_data = await conv.to_jsonld([ttl_data], null, gData.baseURL);
-            exec_action(action, out_from(text_data, null, conv.skipped_error)); 
-          }
-          else {
-            var conv = new Convert_Turtle();
-            var text_data = await conv.to_rdf([ttl_data], null, gData.baseURL);
-            exec_action(action, out_from(text_data, null, conv.skipped_error)); 
-          }
-        });
+      var ttl_data = ret.data;
+
+      if (fmt==="ttl") {
+        exec_action(action, out_from(ttl_data));
+      }
+      else if (fmt==="jsonld") { // json
+        var conv = new Convert_Turtle();
+        var text_data = await conv.to_jsonld([ttl_data], null, gData.baseURL);
+        exec_action(action, out_from(text_data, null, conv.skipped_error)); 
+      }
+      else {
+        var conv = new Convert_Turtle();
+        var text_data = await conv.to_rdf([ttl_data], null, gData.baseURL);
+        exec_action(action, out_from(text_data, null, conv.skipped_error)); 
+      }
     }
     else if (selectedTab==="#rdfa" && data.length > 0)
     {
@@ -1572,7 +1584,7 @@ async function save_data(action, fname, fmt, callback)
           exec_action(action, out_from(text_data, null, conv.skipped_error));
 
         } else if (fmt==="jsonld"){
-          var text_data = conv.to_jsonld(data, gData.baseURL);
+          var text_data = await conv.to_jsonld(data, gData.baseURL);
           exec_action(action, out_from(text_data, null, conv.skipped_error));
         }
       }

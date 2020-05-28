@@ -18,35 +18,48 @@
  *
  */
 
-Fix_Nano = function (start_id) {
-  this.callback = null;
-  this._pos = 0;
-  this._output = null;
-  this.start_id = 0;
-  if (start_id!==undefined)
-    this.start_id = start_id;
-  this._tokens = 0;
-  this._bad_data = false;
-};
+class Fix_Nano {
+  constructor(start_id) 
+  {
+    this.start_id = 0;
+    if (start_id!==undefined)
+      this.start_id = start_id;
+    this._tokens = 0;
+    this._bad_data = false;
+  }
 
-Fix_Nano.prototype = {
 
-  parse : function(textData, callback) {
-    this.callback = callback;
+  async parse(textData) 
+  {
+    var output = [];
+
+    for(var i=0; i < textData.length; i++) 
+    {
+      var str = await this._parse_1(textData[i]);
+      if (str)
+        output.push(str);
+    }
+    return output;
+  }
+
+
+  async _parse_1(textData) 
+  {
     var self = this;
+    var _output = '';
 
-    if (this._pos < textData.length) {
+    return new Promise(function (resolve, reject) {
       try {
         var lexer = N3.Lexer({ lineMode: false });
-        var ttl_data = textData[self._pos];
+        var ttl_data = textData;
         var tok0;
         var tok1;
 
         lexer.tokenize(ttl_data, function (error, token) {
           if (token) {
-            if (self._tokens ==0) {
+            if (self._tokens == 0) {
               tok0 = token;
-            } else if (self._tokens ==1) {
+            } else if (self._tokens == 1) {
               tok1 = token;
             }
           }
@@ -92,50 +105,41 @@ Fix_Nano.prototype = {
           }
 
           if (self._tokens==2 && !self._bad_data) {
-              if (self._output === null)
-                self._output = [];
-              self._output.push(textData[self._pos]);
+              _output = textData;
           }
 
           if (token && !error && !self._bad_data)
             self._tokens++;
 
           if (error || (token && token.type==="eof")) {
-            self._pos++;
             self._tokens = 0;
             self._bad_data = false;
-            if (self._pos < textData.length)
-               self.parse(textData, self.callback);
-            else
-               self.callback(self._output);
+            resolve(_output);
           }
         });
 
       } catch (ex) {
-        self.callback(null);
+        resolve('');
       }
-    } else {
-        self.callback(self._output);
-    }
+    });
+  }
 
-  },
 }
 
 
 
-Handle_Microdata = function (make_ttl) {
-  this.callback = null;
-  this._make_ttl = false;
-  if (make_ttl)
-    this._make_ttl = make_ttl;
-};
+class Handle_Microdata {
+  constructor(make_ttl) {
+    this._make_ttl = false;
+    if (make_ttl)
+      this._make_ttl = make_ttl;
+  }
 
-Handle_Microdata.prototype = {
-  parse : function(jsonData, docURL, callback) {
-    this.callback = callback;
+  parse(jsonData, docURL) 
+  {
     var self = this;
     var ret_data = null;
-    var error = null;
+
     try
     {
       var conv = new MicrodataJSON_Converter();
@@ -145,57 +149,71 @@ Handle_Microdata.prototype = {
         ret_data = new TTL_Gen(docURL).load(out_data);
       else
         ret_data = new HTML_Gen(docURL).load(out_data);
+
+      return {data:ret_data, errors:[]};
     }
     catch (ex) {
-      error = ex.toString();
+      return {data:null, errors:[ex.toString()]};
     }
-    self.callback(error, ret_data);
   }
 
 }
 
 
+class Handle_Turtle {
+  constructor(start_id, make_ttl) 
+  {
+    this.baseURI = null;
+    this.start_id = 0;
+    if (start_id!==undefined)
+      this.start_id = start_id;
+    this.ns = new Namespace();
+    this.ns_pref = null;
+    this.ns_pref_size = 0;
+    this.skip_error = true;
+    this.skipped_error = [];
+    this._pattern = /([0-9]*).$/gm;
+    this._make_ttl = false;
+    if (make_ttl)
+      this._make_ttl = make_ttl;
+  }
 
-Handle_Turtle = function (start_id, make_ttl) {
-  this.callback = null;
-  this.baseURI = null;
-  this._pos = 0;
-  this._output = null;
-  this.start_id = 0;
-  if (start_id!==undefined)
-    this.start_id = start_id;
-  this.ns = new Namespace();
-  this.ns_pref = null;
-  this.ns_pref_size = 0;
-  this.skip_error = true;
-  this.skipped_error = [];
-  this._pattern = /([0-9]*).$/gm;
-  this._make_ttl = false;
-  if (make_ttl)
-    this._make_ttl = make_ttl;
-};
 
-Handle_Turtle.prototype = {
-
-  parse_nano : function(textData, docURL, callback) {
+  async parse_nano(textData, docURL) {
     this.ns_pref = this.ns.get_ns_desc();
     this.ns_pref_size = Object.keys(this.ns.ns_list).length;
-    this.parse(textData, docURL, callback);
-  },
+    return await this.parse(textData, docURL);
+  }
 
-  parse : function(textData, docURL, callback) {
-    this.callback = callback;
+  async parse(textData, docURL) 
+  {
+    this.baseURI = docURL;
+    var output = this._make_ttl ? [] : '';
+
+    for(var i=0; i < textData.length; i++)
+    {
+      var data = await this._parse_1(textData[i], docURL);
+      if (this._make_ttl)
+        output.push(data);
+      else
+        output += data;
+    }
+    return {data:output, errors: this.skipped_error};
+  }
+
+  async _parse_1(textData, docURL) 
+  {
     this.baseURI = docURL;
     var self = this;
 
-    if (this._pos < textData.length) {
+    return new Promise(function (resolve, reject) {
       try {
         var store = new N3DataConverter();
         var parser = N3.Parser({baseIRI:self.baseURI, format:'text/n3'});
-        var ttl_data = textData[self._pos];
+        var ttl_data = textData;
 
-        if (this.ns_pref!==null)
-          ttl_data = this.ns_pref + ttl_data;
+        if (self.ns_pref!==null)
+          ttl_data = self.ns_pref + ttl_data;
 
         parser.parse(ttl_data,
           function (error, tr, prefixes) {
@@ -212,17 +230,13 @@ Handle_Turtle.prototype = {
 
               if (self.skip_error) {
                 self.skipped_error.push(error);
-                self._pos++;
 
-                if (self._pos < textData.length)
-                  self.parse(textData, docURL, self.callback);
-                else
-                  self.callback(null, self._output);
+                resolve('');
               }
               else
               {
                 self.error = error;
-                self.callback(self.error, null);
+                reject(self.error);
               }
 
             }
@@ -234,173 +248,115 @@ Handle_Turtle.prototype = {
             else {
 
               var triples = store.output;
+              var output;
 
               if (self._make_ttl) {
-                if (self._output===null)
-                  self._output = [];
-
                 var ttl_data =  new TTL_Gen(docURL).load(triples, self.start_id);
-                self._output.push(ttl_data==null?"":ttl_data);
+                output = ttl_data==null?'':ttl_data;
               }
               else
               {
-                if (self._output===null)
-                  self._output = "";
-
                 var html_str =  new HTML_Gen(docURL).load(triples, self.start_id);
-                self._output += (html_str==null?"":html_str);
+                output = html_str==null?'':html_str;
               }
-
-              self._pos++;
 
               if (triples!==null && triples.length!==undefined)
                 self.start_id+= triples.length;
 
-              if (self._pos < textData.length)
-                self.parse(textData, docURL, self.callback);
-              else
-                self.callback(null, self._output);
+              resolve(output);
             }
           });
       } catch (ex) {
-        self.callback(ex.toString(), null);
-      }
-    } else {
-        self.callback(null, this._output);
-    }
-
-  },
-
-
-}
-
-
-
-
-Handle_JSONLD = function (make_ttl) {
-  this.callback = null;
-  this._pos = 0;
-  this._output = null;
-  this.start_id = 0;
-  this.skip_error = true;
-  this.skipped_error = [];
-  this._make_ttl = false;
-  if (make_ttl)
-    this._make_ttl = make_ttl;
-};
-
-Handle_JSONLD.prototype = {
-
-  parse : function(textData, docURL, callback) {
-    this.callback = callback;
-    var self = this;
-
-    function handle_error(error)
-    {
-      if (self.skip_error)
-      {
-        self.skipped_error.push(""+error);
-        self._pos++;
-
-        if (self._pos < textData.length)
-          self.parse(textData, docURL, self.callback);
-        else
-          self.callback(null, self._output);
-      }
-      else {
-          self.callback(""+error, null);
-      }
-    }
-
-
-    if (this._pos < textData.length)
-    {
-      try {
-        jsonld_data = JSON.parse(textData[this._pos]);
-        if (jsonld_data != null) {
-          jsonld.expand(jsonld_data, {base:docURL},
-            function(error, expanded) {
-              if (error) {
-                handle_error(error);
-              }
-              else {
-                jsonld.toRDF(expanded, {base:docURL, format: 'application/nquads', includeRelativeUrls: true},
-                  function(error, nquads) {
-                    if (error) {
-                      handle_error(error);
-                    }
-                    else {
-                      var handler = new Handle_Turtle(self.start_id, self._make_ttl);
-                      handler.skip_error = false;
-                      handler.parse([nquads], docURL, function(error, html_data) {
-                        if (error) {
-                          handle_error(error);
-                        }
-                        else {
-                          if (self._output===null)
-                            self._output = "";
-
-                          self._output += html_data;
-                          self._output += "\n\n";
-                          self._pos++;
-                          self.start_id += handler.start_id;
-
-                          if (self._pos < textData.length)
-                            self.parse(textData, docURL, self.callback);
-                          else
-                            self.callback(null, self._output);
-                        }
-                      });
-                    }
-                });
-              }
-            })
+        if (self.skip_error)  {
+          self.skipped_error.push(""+ex.toString());
+          resolve('');
         }
-        else
-          self.callback(null, null);
-      } catch (ex) {
-        handle_error(ex.toString());
+        else 
+          reject(ex.toString());
       }
-
-    } else {
-       self.callback(null, this._output);
-    }
-
+    });
   }
 
+}
+
+
+
+class Handle_JSONLD {
+  constructor(make_ttl) 
+  {
+    this.start_id = 0;
+    this.skip_error = true;
+    this.skipped_error = [];
+    this._make_ttl = false;
+    if (make_ttl)
+      this._make_ttl = make_ttl;
+  }
+
+  async parse(textData, docURL)
+  {
+    var output = '';
+    var self = this;
+
+    for(var i=0; i < textData.length; i++)
+    {
+      try {
+        var jsonld_data = JSON.parse(textData[i]);
+        if (jsonld_data != null) {
+          var expanded = await jsonld.expand(jsonld_data, {base:docURL});
+          var nquads = await jsonld.toRDF(expanded, {base:docURL, format: 'application/nquads', includeRelativeUrls: true});
+
+          var handler = new Handle_Turtle(self.start_id, self._make_ttl);
+          handler.skip_error = false;
+          var ret = await handler.parse([nquads], docURL);
+          if (ret.errors.length > 0) {
+            self.skipped_error = self.skipped_error.concat(ret.errors);
+          } else {
+            output += ret.data;
+            output += "\n\n";
+
+            self.start_id += handler.start_id;
+          }
+        }
+      } catch (ex) {
+        if (self.skip_error)
+          self.skipped_error.push(""+ex.toString());
+        else 
+          throw ex;
+      }
+    }
+    return {data:output, errors: this.skipped_error};
+  }
 
 }
 
 
-Handle_JSON = function (make_ttl) {
-  this.s_id = '_:s'+Date.now().toString(16)+'_';
-  this.id = 0;
-  this.callback = null;
-  this._pos = 0;
-  this._output = null;
-  this.start_id = 0;
-  this.skip_error = true;
-  this.skipped_error = [];
-  this._make_ttl = false;
-  if (make_ttl)
-    this._make_ttl = make_ttl;
-  this.baseURL = '';
-  this.rep1 = /\(/g;
-  this.rep2 = /\)/g 
-};
 
-Handle_JSON.prototype = {
+class Handle_JSON {
+  constructor(make_ttl) 
+  {
+    this.s_id = '_:s'+Date.now().toString(16)+'_';
+    this.id = 0;
+    this.start_id = 0;
+    this.skip_error = true;
+    this.skipped_error = [];
+    this._make_ttl = false;
+    if (make_ttl)
+      this._make_ttl = make_ttl;
+    this.baseURL = '';
+    this.rep1 = /\(/g;
+    this.rep2 = /\)/g 
+  }
 
-  gen_subj : function() {
+  gen_subj() {
     this.id++;
     return this.s_id+this.id;
-  },
+  }
 
-  encodeURI: function(v) {
+  encodeURI(v) {
     return encodeURIComponent(v).replace(this.rep1,'%28').replace(this.rep2,'%29');
-  },
+  }
 
-  handle_simple : function(b, subj, p, o) 
+  handle_simple(b, subj, p, o) 
   {
     if (o === null )
       return; // ignore
@@ -419,9 +375,9 @@ Handle_JSON.prototype = {
     } else {
       b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}" .`);
     }
-  },
+  }
 
-  handle_arr : function(b, subj, p, o) 
+  handle_arr(b, subj, p, o) 
   {
     if (o === null )
       return; // ignore
@@ -433,10 +389,10 @@ Handle_JSON.prototype = {
     } else {
       this.handle_simple(b, subj, p, o);
     }
-  },
+  }
 
 
-  handle_obj : function(b, subj, obj)
+  handle_obj(b, subj, obj)
   {
     if (obj === null )
       return; // ignore
@@ -465,38 +421,22 @@ Handle_JSON.prototype = {
     } else {
       this.handle_simple(b, subj, 'p', obj);
     } 
-  },
+  }
   
   
-  parse : function(textData, docURL, callback) {
-    this.callback = callback;
+  async parse(textData, docURL) 
+  {
     this.baseURL = docURL;
     var self = this;
+    var output = '';
 
-    function handle_error(error)
-    {
-      if (self.skip_error)
-      {
-        self.skipped_error.push(""+error);
-        self._pos++;
-
-        if (self._pos < textData.length)
-          self.parse(textData, docURL, self.callback);
-        else
-          self.callback(null, self._output);
-      }
-      else {
-          self.callback(""+error, null);
-      }
-    }
-
-
-    if (this._pos < textData.length)
+    for(var x=0; x < textData.length; x++)
     {
       try {
         var buf = [];
-        json_data = JSON.parse(textData[this._pos]);
-        if (json_data != null) {
+        var json_data = JSON.parse(textData[x]);
+        if (json_data != null) 
+        {
           if (Array.isArray(json_data)) {
             for(var i=0; i < json_data.length; i++)
               self.handle_obj(buf, self.gen_subj(), json_data[i]);
@@ -507,180 +447,160 @@ Handle_JSON.prototype = {
           var ttl_data = buf.join('\n');
           var handler = new Handle_Turtle(self.start_id, self._make_ttl);
           handler.skip_error = false;
-          handler.parse([ttl_data], docURL, function(error, html_data) {
-            if (error) {
-              handle_error(error);
-            }
-            else {
-              if (self._output===null)
-                self._output = "";
+          var ret = await handler.parse([ttl_data], docURL);
+          if (ret.errors.length > 0) {
+            self.skipped_error = self.skipped_error.concat(ret.errors);
+          } else {
+            output += ret.data;
+            output += "\n\n";
 
-              self._output += html_data;
-              self._output += "\n\n";
-              self._pos++;
-              self.start_id += handler.start_id;
-
-              if (self._pos < textData.length)
-                self.parse(textData, docURL, self.callback);
-              else
-                self.callback(null, self._output);
-            }
-          });
+            self.start_id += handler.start_id;
+          }
         }
-        else
-          self.callback(null, null);
       } catch (ex) {
-        handle_error(ex.toString());
+        if (self.skip_error)
+          self.skipped_error.push(""+ex.toString());
+        else 
+          throw ex;
       }
-
-    } else {
-       self.callback(null, this._output);
     }
-  },
-}
-
-
-
-
-Handle_RDFa = function () {
-  this.callback = null;
-};
-
-Handle_RDFa.prototype = {
-
-  parse : function(data, docURL, callback) {
-    this.callback = callback;
-
-    var self = this;
-    try {
-      var str = new HTML_Gen(docURL).load(data);
-      self.callback(null, str);
-    } catch (ex) {
-      self.callback(ex.toString(), null);
-    }
+    return {data:output, errors: this.skipped_error};
   }
 
 }
 
 
 
+class Handle_RDFa {
+  constructor()
+  {
+  }
+
+  parse(data, docURL) 
+  {
+    var str = new HTML_Gen(docURL).load(data);
+    return {data:str, errors: []};
+  }
+}
 
 
 
 //Convert N3 data to internal format
-function N3DataConverter(options) {
-  this._LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
-  this.RDF_PREFIX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
-  this.RDF_TYPE   = this.RDF_PREFIX + 'type';
-  this.xsdString  = 'http://www.w3.org/2001/XMLSchema#string',
-  this.output = [];
-}
+class N3DataConverter {
+  constructor(options) 
+  {
+    this._LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
+    this.RDF_PREFIX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+    this.RDF_TYPE   = this.RDF_PREFIX + 'type';
+    this.xsdString  = 'http://www.w3.org/2001/XMLSchema#string',
+    this.output = [];
+  }
 
-N3DataConverter.prototype = {
-
-  _IriOrBlank: function (entity) {
+  _IriOrBlank(entity) {
     // A blank node or list is represented as-is
     if (entity.termType !== 'NamedNode')
       return 'id' in entity ? entity.id : '_:' + entity.value;
     // Escape special characters
     return entity.value;
-  },
-
-  addTriple: function (n_subj, n_pred, n_obj)
-  {
-      var s = null;
-      var o = null;
-      var subj = this._IriOrBlank(n_subj);
-      var pred = this._IriOrBlank(n_pred);
-      var obj = (n_obj.termType==="Literal") ? n_obj.value : this._IriOrBlank(n_obj);
-
-      for(var i=0; i < this.output.length; i++)
-        if (this.output[i].s === subj) {
-          s = this.output[i];
-          break;
-        }
-
-      if (s == null) {
-        s = {s:subj, n: this.output.length+1};
-        this.output.push(s);
-      }
-
-      if (s.props === undefined)
-        s.props = new Object();
-      if (s.props_obj === undefined)
-        s.props_obj = new Object();
-
-      var p = s.props[pred];
-      var p_obj = s.props_obj[pred];
-      if  (p === undefined) {
-         s.props[pred] = [];
-         s.props_obj[pred] = {};
-      }
-
-      p = s.props[pred];
-      p_obj = s.props_obj[pred];
-
-      if (!p_obj[obj])
-      {
-        p_obj[obj]=1;
-
-        if (n_obj.termType==="Literal") {
-          p.push({
-             value:n_obj.value,
-             type: (n_obj.datatypeString!==this.xsdString) ? n_obj.datatypeString : "",
-             lang: n_obj.language
-            });
-        } else {
-          p.push({iri :obj});
-        }
-      }
-
   }
+
+  addTriple(n_subj, n_pred, n_obj)
+  {
+    var s = null;
+    var o = null;
+    var subj = this._IriOrBlank(n_subj);
+    var pred = this._IriOrBlank(n_pred);
+    var obj = (n_obj.termType==="Literal") ? n_obj.value : this._IriOrBlank(n_obj);
+
+    for(var i=0; i < this.output.length; i++)
+      if (this.output[i].s === subj) {
+        s = this.output[i];
+        break;
+      }
+
+    if (s == null) {
+      s = {s:subj, n: this.output.length+1};
+      this.output.push(s);
+    }
+
+    if (s.props === undefined)
+      s.props = new Object();
+    if (s.props_obj === undefined)
+      s.props_obj = new Object();
+
+    var p = s.props[pred];
+    var p_obj = s.props_obj[pred];
+    if  (p === undefined) {
+       s.props[pred] = [];
+       s.props_obj[pred] = {};
+    }
+
+    p = s.props[pred];
+    p_obj = s.props_obj[pred];
+
+    if (!p_obj[obj])
+    {
+      p_obj[obj]=1;
+
+      if (n_obj.termType==="Literal") {
+        p.push({
+           value:n_obj.value,
+           type: (n_obj.datatypeString!==this.xsdString) ? n_obj.datatypeString : "",
+           lang: n_obj.language
+          });
+      } else {
+        p.push({iri :obj});
+      }
+    }
+  }
+
 }
+
 
 
 //Convert Microdata JSON to internal format
-function MicrodataJSON_Converter(options) {
-  this._LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
-  this.RDF_PREFIX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
-  this.RDF_TYPE   = this.RDF_PREFIX + 'type';
-  this.output = [];
-  this.last_Bnode = 0;
-  this.baseURI;
-}
-
-MicrodataJSON_Converter.prototype = {
-  transform: function (json, baseURI)
+class MicrodataJSON_Converter {
+  constructor(options) 
   {
-      this.baseURI = baseURI;
-      var self = this;
-      var out = [];
+    this._LiteralMatcher = /^"([^]*)"(?:\^\^(.+)|@([\-a-z]+))?$/i;
+    this.RDF_PREFIX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+    this.RDF_TYPE   = this.RDF_PREFIX + 'type';
+    this.output = [];
+    this.last_Bnode = 0;
+    this.baseURI;
+  }
 
-      for(var i=0; i < json.items.length; i++)
-      {
-        var item = json.items[i];
-        var rc = this.expand_item(item);
-        out.push(rc.data);
-        out = out.concat(rc.data_add);
-      }
+  transform(json, baseURI)
+  {
+    this.baseURI = baseURI;
+    var self = this;
+    var out = [];
 
-      for(var i=0; i < out.length; i++)
-      {
-        out[i]["n"] = i+1;
-        if (!out[i].s)
-          out[i]["s"] = baseURI;
-      }
+    for(var i=0; i < json.items.length; i++)
+    {
+      var item = json.items[i];
+      var rc = this.expand_item(item);
+      out.push(rc.data);
+      out = out.concat(rc.data_add);
+    }
 
-      return out;
-  },
+    for(var i=0; i < out.length; i++)
+    {
+      out[i]["n"] = i+1;
+      if (!out[i].s)
+        out[i]["s"] = baseURI;
+    }
 
-  new_bnode : function()
+    return out;
+  }
+
+  new_bnode()
   {
     this.last_Bnode++;
     return "_:bb"+this.last_Bnode;
-  },
+  }
 
-  expand_item : function(item)
+  expand_item(item)
   {
     var self =this;
     var out = { };
@@ -707,7 +627,6 @@ MicrodataJSON_Converter.prototype = {
         id_ns = ns_list.has_known_ns(String(item.type));
       }
     }
-
 
     $.each(item, function(key, val)
      {
@@ -842,48 +761,27 @@ MicrodataJSON_Converter.prototype = {
 }
 
 
-Handle_RDF_XML = function (start_id) {
-  this.callback = null;
-  this.baseURI = null;
-  this._pos = 0;
-  this._output = null;
-  this.start_id = 0;
-  if (start_id!==undefined)
-    this.start_id = start_id;
-  this.skip_error = true;
-  this.skipped_error = [];
-};
 
-Handle_RDF_XML.prototype = {
+class Handle_RDF_XML {
+  constructor(start_id) 
+  {
+    this.start_id = 0;
+    if (start_id!==undefined)
+      this.start_id = start_id;
+    this.skip_error = true;
+    this.skipped_error = [];
+  }
 
-  parse : function(textData, baseURL, callback) {
-    this.callback = callback;
-    this.baseURI = baseURL;
+  async parse(textData, baseURL) 
+  {
     var self = this;
+    var output = '';
 
-
-    function handle_error(error)
+    for(var i=0; i < textData.length; i++)
     {
-      if (self.skip_error)
-      {
-        self.skipped_error.push(""+error);
-        self._pos++;
-
-        if (self._pos < textData.length)
-          self.parse(textData, baseURL, self.callback);
-        else
-          self.callback(null, self._output);
-      }
-      else {
-          self.callback(""+error, null);
-      }
-    }
-
-
-    if (this._pos < textData.length) {
       try {
         var store=$rdf.graph();
-        var rdf_data = textData[self._pos];
+        var rdf_data = textData[i];
 
         $rdf.parse(rdf_data, store, baseURL, 'application/rdf+xml');
 
@@ -891,83 +789,52 @@ Handle_RDF_XML.prototype = {
 
         var handler = new Handle_Turtle();
         handler.skip_error = false;
-        handler.parse([ttl], baseURL, function(error, html_data) {
-          if (error) {
-            handle_error(error.toString());
-          }
-          else {
-            if (self._output===null)
-              self._output = "";
+        var ret = await handler.parse([ttl], baseURL);
+        if (ret.errors.length > 0) {
+          self.skipped_error = self.skipped_error.concat(ret.errors);
+        } else {
+          output += ret.data;
+          output += "\n\n";
 
-            self._output += html_data;
-            self._output += "\n\n";
-            self._pos++;
-            self.start_id += handler.start_id;
-
-            if (self._pos < textData.length)
-              self.parse(textData, baseURL, self.callback);
-            else
-              self.callback(null, self._output);
-          }
-        });
+          self.start_id += handler.start_id;
+        }
 
       } catch (ex) {
-        handle_error(ex.toString());
+        if (self.skip_error)
+          self.skipped_error.push(""+ex.toString());
+        else 
+          throw ex;
       }
     }
-    else {
-      self.callback(null, self._output);
-    }
-  },
+    return {data:output, errors: this.skipped_error};
+  }
+
 }
 
 
-Handle_CSV = function (start_id) {
-  this.callback = null;
-  this.baseURI = null;
-  this._pos = 0;
-  this._output = null;
-  this._output_ttl = [];
-  this.start_id = 0;
-  if (start_id!==undefined)
-    this.start_id = start_id;
-  this.skip_error = true;
-  this.skipped_error = [];
 
-};
+class Handle_CSV {
+  constructor(start_id) 
+  {
+    this._output_ttl = [];
+    this.start_id = 0;
+    if (start_id!==undefined)
+      this.start_id = start_id;
+    this.skip_error = true;
+    this.skipped_error = [];
+  }
 
-Handle_CSV.prototype = {
-
-  parse : function(textData, baseURL, callback) {
-    this.callback = callback;
-    this.baseURI = baseURL;
+  async parse(textData, baseURL) 
+  {
     var self = this;
+    var output = '';
 
-
-    function handle_error(error)
+    for(var x=0; x < textData.length; x++)
     {
-      if (self.skip_error)
-      {
-        self.skipped_error.push(""+error);
-        self._pos++;
-
-        if (self._pos < textData.length)
-          self.parse(textData, baseURL, self.callback);
-        else
-          self.callback(null, self._output, self._output_ttl);
-      }
-      else {
-          self.callback(""+error, null, self._output_ttl);
-      }
-    }
-
-    if (this._pos < textData.length) {
       try {
-        var text = textData[self._pos];
+        var text = textData[x];
         if (text.trim().length <= 0) {
-           self._pos++;
-           self.parse(textData, baseURL, self.callback);
-           return;
+          continue;
         }
          
         var ttl = '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n'
@@ -975,8 +842,7 @@ Handle_CSV.prototype = {
                  +'@prefix : <#> . \n\n';
         var res = Papa.parse(text, {skipEmptyLines:true, dynamicTyping:true});
         if (res.errors && res.errors.length > 0) {
-            handle_error(res.errors[0].message);
-            return;
+            throw new Exception(res.errors[0].message);
         }
 
         var col = res.data[0];
@@ -1037,34 +903,25 @@ Handle_CSV.prototype = {
 
         var handler = new Handle_Turtle();
         handler.skip_error = false;
-        handler.parse([ttl], baseURL, function(error, html_data) {
-          if (error) {
-            handle_error(error.toString());
-          }
-          else {
-            if (self._output===null)
-              self._output = "";
+        var ret = await handler.parse([ttl], baseURL);
+        if (ret.errors.length > 0) {
+          self.skipped_error = self.skipped_error.concat(ret.errors);
+        } else {
+          output += ret.data;
+          output += "\n\n";
 
-            self._output += html_data;
-            self._output += "\n\n";
-            self._pos++;
-            self.start_id += handler.start_id;
-
-            if (self._pos < textData.length)
-              self.parse(textData, baseURL, self.callback);
-            else
-              self.callback(null, self._output, self._output_ttl);
-          }
-        });
+          self.start_id += handler.start_id;
+        }
 
       } catch (ex) {
-        handle_error(ex.toString());
+        if (self.skip_error)
+          self.skipped_error.push(""+ex.toString());
+        else 
+          throw ex;
       }
     }
-    else {
-      self.callback(null, self._output, self._output_ttl);
-    }
-  },
-
+    return {data:output, ttl_data:self._output_ttl ,errors: this.skipped_error};
+  }
 
 }
+

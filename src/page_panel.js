@@ -269,7 +269,7 @@ function load_data_from_url(loc)
 
 
 
-function start_parse_data(data_text, data_type, data_url, ext)
+async function start_parse_data(data_text, data_type, data_url, ext)
 {
   var test_xml = /^\s*<\?xml/gi;
   var test_rdf = /^\s*<rdf:RDF/gi;
@@ -305,48 +305,33 @@ function start_parse_data(data_text, data_type, data_url, ext)
       var ns = new Namespace();
       handler.ns_pref = ns.get_ns_desc();
       handler.ns_pref_size = Object.keys(ns.ns_list).length;
-      handler.skip_error = false;
-      handler.parse([data_text], baseURL,
-        function(error, html_data) {
-          show_Data(error, html_data);
-      });
+      var ret = await handler.parse([data_text], baseURL);
+      show_Data(ret.errors, ret.data);
     }
   else if (data_type==="jsonld")
     {
       var handler = new Handle_JSONLD();
-      handler.skip_error = false;
-      handler.parse([data_text], baseURL,
-        function(error, html_data) {
-          show_Data(error, html_data);
-      });
+      var ret = await handler.parse([data_text], baseURL);
+      show_Data(ret.errors, ret.data);
     }
   else if (data_type==="rdf")
     {
       var handler = new Handle_RDF_XML();
-      handler.skip_error = false;
-      handler.parse([data_text], baseURL,
-        function(error, html_data) {
-          show_Data(error, html_data);
-      });
+      var ret = await handler.parse([data_text], baseURL);
+      show_Data(ret.errors, ret.data);
     }
   else if (data_type==="json")
     {
       var handler = new Handle_JSON();
-      handler.skip_error = false;
-      handler.parse([data_text], baseURL,
-        function(error, html_data) {
-          show_Data(error, html_data);
-      });
+      var ret = await handler.parse([data_text], baseURL);
+      show_Data(ret.errors, ret.data);
     }
   else if (data_type==="csv")
     {
       var handler = new Handle_CSV();
-      handler.skip_error = false;
-      handler.parse([data_text], baseURL,
-        function(error, html_data, ttl_data) {
-          gData.ttl_data = ttl_data;
-          show_Data(error, html_data);
-      });
+      var ret = await handler.parse([data_text], baseURL);
+      gData.ttl_data = ret.ttl_data;
+      show_Data(ret.errors, ret.data);
     }
   else
     {
@@ -425,7 +410,7 @@ function show_Data(data_error, html_data)
       $(`#${tabname}_items #docdata_view`).remove();
       $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
       html = "";
-      if (data_error) {
+      if (data_error.length > 0) {
         html += create_err_msg(title, data_error);
       } else {
         html += html_data;

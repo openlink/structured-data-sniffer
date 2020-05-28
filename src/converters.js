@@ -32,18 +32,12 @@ class Convert_Turtle{
   {
     var self = this;
     var handler = new Handle_Turtle(0, true);
+    var ret = await handler.parse(ttlData, baseURL);
 
-    return new Promise(function (resolve, reject) {
-      handler.parse(ttlData, baseURL,
-        function(error, data) {
-          if (error)
-            self.skipped_error.push(error);
+    if (ret.errors.length>0)
+      self.skipped_error = self.skipped_error.concat(ret.errors);
 
-          self.skipped_error = self.skipped_error.concat(handler.skipped_error);
-
-          resolve(data);
-        });
-    });
+    return ret.data;
   }
 
   async _fix_nano_ttl(ttlData, nanoData, baseURL) 
@@ -51,21 +45,16 @@ class Convert_Turtle{
     var self = this;
     if (nanoData!==null && nanoData.length > 0) {
       var handler = new Handle_Turtle(0, true);
-      return new Promise(function (resolve, reject) {
+      var ret = await handler.parse_nano(nanoData, baseURL);
 
-        handler.parse_nano(nanoData, baseURL,
-          function(error, data) {
-            if (error)
-              self.skipped_error.push(error);
+      if (ret.errors.length>0)
+        self.skipped_error = self.skipped_error.concat(ret.errors);
 
-            self.skipped_error = self.skipped_error.concat(handler.skipped_error);
+      if (ret.data && ret.data.length > 0)
+        ttlData = ttlData.concat(ret.data);
 
-            if (data)
-              ttlData = ttlData.concat(data);
-
-            resolve(ttlData);
-          });
-      });
+      return ttlData;
+      
     } else {
       return ttlData;
     }
@@ -142,39 +131,36 @@ class Convert_Turtle{
             else {
               var context = prefixes;
 
-              store.end(function (error, ttl_text) {
+              store.end(async function (error, ttl_text) {
 
                 if (error) {
                   self.skipped_error.push(error);
                   resolve('');
                 }
 
-                jsonld.fromRDF(ttl_text, {format: 'application/nquads'},
-                   function(error, doc)
-                   {
-                     if (error) {
-                       self.skipped_error.push(error+(error.details?JSON.stringify(error.details,undefined, 2):""));
-                       resolve('');
-                     }
-                     else {
-                       jsonld.compact(doc, context, function(error, compacted) {
-                         if (error) {
-                           self.skipped_error.push(error);
-                           //resolve('');
-                           var json = {'@context':context, '@graph':doc};
-                           resolve(JSON.stringify(json, null, 2));
-                         }
-                         else {
-                           resolve(JSON.stringify(compacted, null, 2));
-                         }
-                       });
-                     }
-                   });
+                try {
+                  var doc = await jsonld.fromRDF(ttl_text, {format: 'application/nquads'});
+               
+                  try {
+                    var compacted = await jsonld.compact(doc, context);
+                    resolve(JSON.stringify(compacted, null, 2));
+
+                  } catch (ex) {
+                    self.skipped_error.push(ex.toString());
+                    var json = {'@context':context, '@graph':doc};
+                    resolve(JSON.stringify(json, null, 2));
+                  }
+
+                } catch (ex) {
+//??                  self.skipped_error.push(error+(error.details?JSON.stringify(error.details,undefined, 2):""));
+                  self.skipped_error.push(ex.toString());
+                  resolve('');
+                }
               });
             }
           });
       } catch (ex) {
-        this.skipped_error.push(""+ex.toString());
+        self.skipped_error.push(""+ex.toString());
         resolve('');
       }
     });
@@ -240,7 +226,6 @@ class Convert_RDF_XML {
 
 class Convert_JSONLD {
   constructor() {
-    this._output = [];
     this.start_id = 0;
     this.skipped_error = [];
   }
@@ -251,36 +236,24 @@ class Convert_JSONLD {
 
     for(var i=0; i < textData.length; i++)
     {
-      var str = await this._to_ttl(textData[i], baseURL);
-      output = output.concat(str);
+      try {
+        var handler = new Handle_JSONLD(true);
+        var ret = await handler.parse([textData[i]], baseURL);
+
+        if (ret.errors.length > 0) 
+          self.skipped_error.push(""+error);
+
+        if (ret.data.length > 0)
+          output.push(ret.data);
+
+      } catch (ex) {
+        self.skipped_error.push(ex.toString());
+      }
     }
     return output;
   }
 
   
-  async _to_ttl(textData, baseURL) 
-  {
-    var self = this;
-
-    return new Promise(function (resolve, reject) {
-      try {
-        var handler = new Handle_JSONLD(true);
-        handler.parse([textData], baseURL, function(error, html_data) {
-          if (error) {
-            self.skipped_error.push(""+error);
-            resolve('');
-          }
-          resolve(html_data?html_data:'');
-
-        });
-      } catch (ex) {
-        self.skipped_error.push(""+ex);
-        resolve('');
-      }
-    });
-  }
-
-
   async to_rdf(textData, baseURL)
   {
     var output = [];
@@ -317,7 +290,6 @@ class Convert_JSONLD {
 
 class Convert_JSON {
   constructor() {
-    this._output = [];
     this.start_id = 0;
     this.skipped_error = [];
   }
@@ -336,26 +308,21 @@ class Convert_JSON {
 
   async _to_ttl(textData, baseURL) 
   {
-    var self = this;
+    var output = '';
+    try {
+      var handler = new Handle_JSON(true);
+      var ret = await handler.parse([textData], baseURL);
 
-    return new Promise(function (resolve, reject) {
-      try {
-        var handler = new Handle_JSON(true);
-        handler.parse([textData], baseURL, function(error, html_data) {
-          if (error) {
-            self.skipped_error.push(""+error);
-            resolve('');
-          }
-          resolve(html_data?html_data:'');
+      if (ret.errors.length > 0) 
+        self.skipped_error.push(""+error);
+      else
+        output = ret.data;
 
-        });
-      } catch (ex) {
-        self.skipped_error.push(""+ex);
-        resolve('');
-      }
-    });
+    } catch (ex) {
+      self.skipped_error.push(ex.toString());
+    }
+    return output;
   }
-
 
 
   async to_rdf(textData, baseURL)
@@ -390,7 +357,8 @@ class Convert_JSON {
   }
 
 
-  async to_jsonld(textData, baseURL) {
+  async to_jsonld(textData, baseURL) 
+  {
     var output = [];
 
     for(var i=0; i < textData.length; i++)
@@ -400,8 +368,8 @@ class Convert_JSON {
 
         var conv = new Convert_Turtle();
         var str = await conv.to_jsonld([ttl_data], null, baseURL);
-
-        output.push(str);
+        if (str.length > 0)
+          output.push(str[0]);
       } catch (ex) {
         this.skipped_error.push(""+ex.toString());
       }

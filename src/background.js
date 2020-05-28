@@ -324,13 +324,6 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
         else {
           Browser.api.tabs.update(d.tabId, { url: _url });
           return { cancel: true };
-/**
-          if (v_cancel)
-            Browser.api.tabs.update(d.tabId, { url: _url });
-          else
-            Browser.openTab(_url);
-          return { "responseHeaders":d.responseHeaders };
-**/
         }
     }
   }
