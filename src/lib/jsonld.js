@@ -11450,9 +11450,10 @@ function _objectToRDF(item, issuer, dataset, graphTerm, rdfDirection) {
       if (!types.isDouble(value)) {
         value = parseFloat(value);
       } // canonical double representation
+      //??      object.value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
 
 
-      object.value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
+      object.value = value.toString();
       object.datatype.value = datatype || XSD_DOUBLE;
     } else if (types.isNumber(value)) {
       object.value = value.toFixed(0);
