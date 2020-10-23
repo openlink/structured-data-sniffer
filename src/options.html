@@ -48,6 +48,9 @@
 	ul#icons {margin: 0; padding: 0;}
 	ul#icons li {margin: 2px; position: relative; padding: 4px 0; cursor: pointer; float: left;  list-style: none;}
 	ul#icons span.ui-icon {float: left; margin: 0 4px;}
+	div.ritem {display:flex; flex-direction:row; align-items: baseline; padding-top:5px;}
+	div.r1item {display:flex; flex-direction:row; align-items: baseline; padding-top:5px; padding-left:10px}
+	.ml5 {margin-left:5px}
     </style>
 
 
@@ -96,123 +99,89 @@
           <div style="display:flex; flex-direction: column; align-self: flex-start;">
 
            <div>
-             <table>
-              <tr>
-               <td>UI&nbsp;Terminology:</td>
-               <td>
-                 <SELECT id="uiterm-mode" style="WIDTH: 300px" >
-                   <OPTION id="ui-eav" selected>Entity, Attribute, Value</OPTION>
-                   <OPTION id="ui-spo">Subject, Predicate, Object</OPTION>
-                 </SELECT>
-               </td>
-              </tr>
-             </table>
-             <table>
-              <tr>
-               <td><input id="chk_pref_user" type="checkbox"></td>
-               <td>Preferred&nbsp;User&nbsp;ID:</td>
-               <td>
-                 <SELECT id="pref_user" style="WIDTH: 350px" >
-                 </SELECT>
-               </td>
-               <td> <input id="call_edit_users" value="Edit" type="button"> </td>
-              </tr>
-             </table>
-             <table>
-              <tr>
-               <td><input id="chk_show_action_for_url_with_params" type="checkbox"></td>
-               <td>Activate&nbsp;OSDS&nbsp;icon&nbsp;for&nbsp;all&nbsp;URLs&nbsp;with&nbsp;query&nbsp;segment/parameters</td>
-              </tr>
-             </table>
+             <div class="ritem">
+               UI&nbsp;Terminology:
+               <SELECT class="ml5" id="uiterm-mode" style="WIDTH: 300px" >
+                 <OPTION id="ui-eav" selected>Entity, Attribute, Value</OPTION>
+                 <OPTION id="ui-spo">Subject, Predicate, Object</OPTION>
+               </SELECT>
+             </div>
+             <div class="ritem">
+               <input id="chk_pref_user" type="checkbox">
+               Preferred&nbsp;User&nbsp;ID:
+               <SELECT class="ml5" id="pref_user" style="WIDTH: 350px" >
+               </SELECT>
+               <input class="ml5" id="call_edit_users" value="Edit" type="button">
+             </div>
+             <div class="ritem">
+               <input id="chk_show_action_for_url_with_params" type="checkbox">
+               Activate&nbsp;OSDS&nbsp;icon&nbsp;for&nbsp;all&nbsp;URLs&nbsp;with&nbsp;query&nbsp;segment/parameters
+             </div>
 
              <hr/>
 
-             <table>
-              <tr>
-               <td><input id="chk_try_handle_all" type="checkbox"></td>
-               <td>Visualize&nbsp;Content&nbsp;at&nbsp;Load&nbsp;Time</td>
-              </tr>
-             </table>
-             <table>
-              <tr>
-               <td style="WIDTH: 10px"></td>
-               <td><input id="chk_try_handle_xml" type="checkbox"></td>
-               <td>Best Effort XML to RDF Transformation</td>
-              </tr>
-              <tr>
-               <td></td>
-               <td><input id="chk_try_handle_csv" type="checkbox"></td>
-               <td>Best Effort CSV to RDF Transformation</td>
-              </tr>
-              <tr>
-               <td></td>
-               <td><input id="chk_try_handle_json" type="checkbox"></td>
-               <td>Best Effort JSON to RDF Transformation</td>
-              </tr>
-             </table>
+             <div class="ritem">
+               <input id="chk_try_handle_all" type="checkbox">
+               Visualize&nbsp;Content&nbsp;at&nbsp;Load&nbsp;Time
+             </div>
+             <div class="r1item">
+               <input id="chk_try_handle_xml" type="checkbox">
+               Best Effort XML to RDF Transformation
+             </div>
+             <div class="r1item">
+               <input id="chk_try_handle_csv" type="checkbox">
+               Best Effort CSV to RDF Transformation
+             </div>
+             <div class="r1item">
+               <input id="chk_try_handle_json" type="checkbox">
+               Best Effort JSON to RDF Transformation
+             </div>
 
              <hr/>
            </div>
-
 
            <div>
              <div> LOD Cloud Lookup & Upload </div>
              <p/>
-               <table>
-                <tr>
-                 <td>Service Type :</td>
-                 <td>
-                   <SELECT id="import-srv" style="WIDTH: 345px" >
-                     <OPTION id="describe" selected>URIBurner Describe</OPTION>
-                     <OPTION id="describe-ssl">URIBurner Describe TLS</OPTION>
-                     <OPTION id="about">URIBurner About</OPTION>
-                     <OPTION id="about-ssl">URIBurner About TLS</OPTION>
-                     <OPTION id="custom">Custom</OPTION>
-                   </SELECT>
-                 </td>
-                </tr>
-               </table>
+             <div class="ritem">
+               Service Type :
+               <SELECT class="ml5" id="import-srv" style="WIDTH: 345px" >
+                 <OPTION id="describe" selected>URIBurner Describe</OPTION>
+                 <OPTION id="describe-ssl">URIBurner Describe TLS</OPTION>
+                 <OPTION id="about">URIBurner About</OPTION>
+                 <OPTION id="about-ssl">URIBurner About TLS</OPTION>
+                 <OPTION id="custom">Custom</OPTION>
+               </SELECT>
+             </div>
 
-               <table>
-                <tr id="import-url-bcast">
-                 <td> URL: </td>
-                 <td> <input id="import-url" style="WIDTH: 518px"> </td>
-                </tr>
-               </table>
+             <div class="ritem" id="import-url-bcast">
+               URL:
+               <input class="ml5" id="import-url" style="WIDTH: 518px">
+             </div>
 
-               <p>
-                 <input id="import-set-def" value="Revert to Defaults" type="button">
-               </p>
+             <p>
+             <input id="import-set-def" value="Revert to Defaults" type="button">
+             </p>
 
-               <hr/>
+             <hr/>
            </div>
-
 
 
            <div>
              <div>Annotation (Read-Write) Service</div>
              <p/>
-               <table>
-                <tr>
-                 <td > Default&nbsp;Storage&nbsp;Document&nbsp;URL: </td>
-                 <td> <input id="rww-store-url" style="WIDTH: 345px"> </td>
-                </tr>
-                <tr>
-                  <table>
-                    <tr><td>
-                      Editor Service URL:
-                    </td></tr>
-                    <tr><td>
-                      <textarea id="rww-edit-url" style="width: 550px; height: 47px">
-                      </textarea>
-                    </td></tr>
-                  </table>
-                </tr>
-               </table>
-
-               <p>
-                 <input id="rww-set-def" value="Revert to Defaults" type="button">
-               </p>
+             <div class="ritem">
+                Default&nbsp;Storage&nbsp;Document&nbsp;URL:
+               <input class="ml5" id="rww-store-url" style="WIDTH: 345px">
+             </div>
+             <div style="padding-top:5px;">
+              Editor Service URL:
+              <textarea id="rww-edit-url" style="width: 550px; height: 47px">
+              </textarea>
+             </div>
+             <p>
+               <input id="rww-set-def" value="Revert to Defaults" type="button">
+             </p>
            </div>
 
           </div>
@@ -220,29 +189,25 @@
 
         <div id="tabs-2">
           <div style="display:flex; flex-direction: column; align-self: flex-start;">
-            <table>
-             <tr>
-              <td> URL: </td>
-              <td> <input id="sparql-url" style="WIDTH: 495px"> </td>
-             </tr>
-
-             <tr>
-              <td>Query:</td>
-              <td>
-                <SELECT id="sparql-cmd" style="WIDTH: 355px" >
+             <div class="ritem">
+              URL:
+              <input id="sparql-url" style="WIDTH: 495px;margin-left:20px;">
+             </div>
+             <div class="ritem">
+              Query:&nbsp;
+                <SELECT class="ml5" id="sparql-cmd" style="WIDTH: 355px" >
                   <OPTION id="select" selected>SELECT ...</OPTION>
                   <OPTION id="describe">DESCRIBE ...</OPTION>
                   <OPTION id="construct">CONSTRUCT ...</OPTION>
                 </SELECT>
-              </td>
-             </tr>
-            </table>
-            <div style="width: 550px; height: 450px">
+             </div>
+          
+            <div style="width: 550px; height: 450px; padding-top:5px">
                 <textarea id="sparql-query" style="width: 550px; height: 450px">
                 </textarea>
             </div>
             <p>
-              <input id="sparql-set-def" value="Revert to Defaults" type="button">
+            <input id="sparql-set-def" value="Revert to Defaults" type="button">
             </p>
           </div>
         </div>
@@ -259,26 +224,20 @@
                <tr>
                  <td style="text-align:right;">SpongeMode: </td>
                  <td> 
-                   <table style="border-spacing:0px;">
-                     <tr>
-                       <td>
+                   <div style="display:flex; flex-direction:row;">
                          <SELECT id="super-links-sponge" style="WIDTH: 200px" >
                            <OPTION id="describe" >URIBurner Describe</OPTION>
                            <OPTION id="describe-ssl" SELECTED>URIBurner Describe TLS</OPTION>
                            <OPTION id="about">URIBurner About</OPTION>
                            <OPTION id="about-ssl">URIBurner About TLS</OPTION>
                          </SELECT>
-                       </td>
-                       <td>
-                         <SELECT id="super-links-sponge-mode" style="WIDTH: 200px" >
+                         <SELECT class="ml5" id="super-links-sponge-mode" style="WIDTH: 200px" >
                            <OPTION id="xxx" selected>Use local Cache</OPTION>
                            <OPTION id="soft">Automatic Cache Invalidation</OPTION>
                            <OPTION id="add">Add to Cache</OPTION>
                            <OPTION id="replace">Force Cache Invalidation</OPTION>
                          </SELECT>
-                       </td>
-                     </tr>
-                   </table>
+                   </div>
                  </td>
               </tr>
                <tr>
