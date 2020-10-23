@@ -170,9 +170,9 @@ var POSH = (function () {
 
         if (o.indexOf("\n")!=-1 || o.indexOf("\r")!=-1) {
           qv = "'''";
-          o = o.replace(/\\/g,'\\\\');
+          o = o.replace(/\\/g,'\\\\').replace(/\"/g,"\\\"");
         } else {
-          o = o.replace(/\\/g,'\\\\').replace(/\'/g,"''");
+          o = o.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
         }
 
         triples += node2str(s)+" "+node2str(p)+" ";
