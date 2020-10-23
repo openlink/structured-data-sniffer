@@ -312,7 +312,7 @@
 
 
         if (ret.ttl.length > 0 || ret.jsonld.length > 0 || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0  )
-            return ret; //??{ttl: ttl_ret, jsonld: jsonld_ret, rdf: rdf_ret, json: json_ret, csv: csv_ret};
+            return ret; 
         else
             return null;
     }
