@@ -318,10 +318,12 @@ class Handle_JSONLD {
           }
         }
       } catch (ex) {
-        if (self.skip_error)
-          self.skipped_error.push(""+ex.toString());
-        else 
-          throw ex;
+        if (textData.replace(/\s/g, '').length > 1) {
+          if (self.skip_error)
+            self.skipped_error.push(""+ex.toString());
+          else 
+            throw ex;
+        }
       }
     }
     return {data:output, errors: this.skipped_error};
@@ -356,6 +358,19 @@ class Handle_JSON {
     return encodeURIComponent(v).replace(this.rep1,'%28').replace(this.rep2,'%29');
   }
 
+  str2obj_val(s) {
+    var qv = '"';
+
+    if (s.indexOf("\n")!=-1 || s.indexOf("\r")!=-1) {
+      qv = "'''";
+      s = s.replace(/\\/g,'\\\\').replace(/\"/g,"\\\"");
+    } else {
+      s = s.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
+    }
+
+    return qv+s+qv;
+  }
+
   handle_simple(b, subj, p, o) 
   {
     if (o === null )
@@ -369,11 +384,11 @@ class Handle_JSON {
       else
         b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#double> .`);
     } else if (typeof o === 'string') {
-      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}" .`);
+      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${this.str2obj_val(o)} .`);
     } else if (typeof o === 'boolean') {
       b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#boolean> .`);
     } else {
-      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}" .`);
+      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${this.str2obj_val(o)} .`);
     }
   }
 
@@ -894,7 +909,16 @@ class Handle_CSV {
           var s = '[\n';
           for(var j=0; j < d.length; j++) {
             var val = d[j];
-            s += '<#'+col[j]+'> "'+d[j]+'"^^xsd:'+col_type[j]+' ;\n' ;
+            var qv = '"';
+
+            if (val.indexOf("\n")!=-1 || val.indexOf("\r")!=-1) {
+              qv = "'''";
+              val = val.replace(/\\/g,'\\\\').replace(/\"/g,"\\\"");
+            } else {
+              val = val.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
+            }
+
+            s += '<#'+col[j]+'> '+qv+val+qv+'^^xsd:'+col_type[j]+' ;\n' ;
           }
           ttl += s +'].\n\n';
         }
