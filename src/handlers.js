@@ -444,6 +444,7 @@ class Handle_JSON {
     this.baseURL = docURL;
     var self = this;
     var output = '';
+    var json_text = [];
 
     for(var x=0; x < textData.length; x++)
     {
@@ -452,6 +453,12 @@ class Handle_JSON {
         var json_data = JSON.parse(textData[x]);
         if (json_data != null) 
         {
+          try {
+            json_text.push(JSON.stringify(json_data, null, 2));
+          } catch(e) {
+            json_text.push(textData[x]);
+          }
+
           if (Array.isArray(json_data)) {
             for(var i=0; i < json_data.length; i++)
               self.handle_obj(buf, self.gen_subj(), json_data[i]);
@@ -479,7 +486,7 @@ class Handle_JSON {
           throw ex;
       }
     }
-    return {data:output, errors: this.skipped_error};
+    return {data:output, text:json_text, errors: this.skipped_error};
   }
 
 }

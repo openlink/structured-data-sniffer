@@ -324,6 +324,7 @@ async function start_parse_data(data_text, data_type, data_url, ext)
     {
       var handler = new Handle_JSON();
       var ret = await handler.parse([data_text], baseURL);
+      gData.text = ret.text;
       show_Data(ret.errors, ret.data);
     }
   else if (data_type==="csv")

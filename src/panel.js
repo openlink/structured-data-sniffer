@@ -514,7 +514,7 @@ async function check_Json_Nano(val)
       handler.start_id = val.start_id;
       var ret = await handler.parse(val.d.json_nano.text, gData.baseURL);
 
-      gData.json_nano.json_text = val.d.json_nano.text;
+      gData.json_nano.json_text = ret.text;
 
       if (ret.errors.length > 0)
         val.d.json.error = val.d.json.error.concat(ret.errors);
