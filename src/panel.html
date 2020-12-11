@@ -2,7 +2,7 @@
 <!--
     This file is part of the OpenLink Structured Data Sniffer
 
-    Copyright (C) 2015-2019 OpenLink Software
+    Copyright (C) 2015-2020 OpenLink Software
 
     This project is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -38,6 +38,7 @@
         <script type="text/javascript" src="lib/codemirror.js"></script>
         <script type="text/javascript" src="lib/yasqe.js"></script>
         <script type="text/javascript" src="lib/oidc-web.min.js"></script>
+        <script type="text/javascript" src="lib/papaparse.js"></script>
 
 
 
@@ -45,20 +46,42 @@
         <script type="text/javascript" src="utils.js"></script>
         <script type="text/javascript" src="OidcWebid.js"></script>
         <script type="text/javascript" src="settings.js"></script>
-        <script type="text/javascript" src="panel.js"></script>
         <script type="text/javascript" src="handlers.js"></script>
         <script type="text/javascript" src="converters.js"></script>
         <script type="text/javascript" src="ttl_gen.js"></script>
         <script type="text/javascript" src="html_gen.js"></script>
-        <script type="text/javascript" src="webrequest.js"></script>
-        <link rel="stylesheet" href="sniffer.css" />
+        <script type="text/javascript" src="panel.js"></script>
+
+        <link rel="stylesheet" href="dataview.css" />
 
         <style type="text/css">
           .popup { font: 70% "Trebuchet MS", sans-serif; }
+
+          body.sniffer {
+            width: 760px;
+            height: 580px;
+          }
+
+          div.content {
+            overflow: auto;
+            width: 755px;
+            height: 530px;
+            border: 1px solid lightgray;
+          }
+
         </style>
 
     </head>
     <body class="sniffer">
+
+      <div class="super_links_msg" style="display:none; font-size: 14px; flex-direction: row; height:20px; padding: 10px 10px 10px 20px;"> 
+        <div style="width:16px;">
+          <img src="images/throbber.gif" class="super_links_img">
+        </div>
+        <div>&nbsp;Preparing&nbsp;Super&nbsp;Links</div>
+      </div>
+
+
       <div class="popup" id="alert-dlg" title="Info">
         <p id="alert-msg" style="font-size: 14px;">
         </p>
@@ -88,8 +111,9 @@
           <td>
             <SELECT id="save-fmt" style="WIDTH: 100px" >
               <OPTION id="ttl" selected>Turtle</OPTION>
-              <OPTION id="json">JSON-LD</OPTION>
+              <OPTION id="jsonld">JSON-LD</OPTION>
               <OPTION id="rdf">RDF/XML</OPTION>
+              <OPTION id="json">JSON</OPTION>
             </SELECT>
           </td>
          </tr>
@@ -108,11 +132,26 @@
         </table>
       </div>
 
+      <div class="popup" id="login-dlg" title="Login via Solid provider">
+        <p/>
+
+        <table id="oidc-login1" style="font-size: 14px;">
+         <tr >
+          <td> <button id="oidc-login-btn1">Login</button> </td>
+          <td> <a id="oidc-webid1" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
+         </tr>
+
+        </table>
+      </div>
+
 
       <div class="top"></div>
 
       <table class="btn_block">
        <tr>
+        <td class="action_btn">
+         <input type="image" id="login_btn" src="images/slogin24.png" width="24" height="24" title="Solid Login">
+        </td>
         <td class="action_btn">
          <input type="image" id="slink_btn" src="images/slink24.png" width="24" height="24" title="Super Links">
         </td>
@@ -148,6 +187,8 @@
           <li><a href="#rdfa" title="Metadata encoded using RDFa Notation">RDFa</a></li>
           <li><a href="#rdf" title="Metadata encoded using RDF/XML Notation">RDF/XML</a></li>
           <li><a href="#posh" title="Metadata encoded using Plain Old Semantic HTML Notation">POSH</a></li>
+          <li><a href="#json" title="Metadata encoded using JSON Notation">JSON</a></li>
+          <li><a href="#csv" title="Metadata encoded using CSV Notation">CSV</a></li>
         </ul>
       </div>
 
@@ -256,6 +297,24 @@
         </div>
 
         <div id="posh_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="json_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="csv_items">
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>

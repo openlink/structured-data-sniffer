@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2020 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -18,10 +18,30 @@
  *
  */
 
+.super_links_msg {
+	display: none;
+	position: fixed;
+	border: 2px solid #000;
+	border-radius: 2px;
+	width: 200px;
+	height: 20px;
+	top:50px;
+	left: 200px;
+	background: khaki;
+	color: black;
+ 	z-index: 2147483647;
+	padding: 5px 10px 10px 20px;
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+.super_links_img {
+	width: 16px;
+	height: 16px;
+}
+
 input[type="image"] {
   outline: none !important;
 }
-
 
 #docdata_view{
 }
@@ -32,11 +52,12 @@ table.wait {
 
 table.docdata {
   border: 1px solid #000;
-  width:100%;
+  width:735px;
   table-layout: fixed;
   font-size: 12px;
   word-wrap:break-word;
 }
+
 
 table.docdata > tbody {
   border: none;
@@ -62,24 +83,24 @@ table.docdata > tbody > tr > td.major {
 
 table.docdata > tbody > tr > td.typeid {
   font-weight: bold;
-  background-color: #f1f0ee; 
+  background-color: #f1f0ee;
 }
 
 
-
+/***
 body.sniffer {
-    width: 99%;
-    height: 96%;
+    width: 760px;
+    height: 580px;
 }
 
 
 div.content {
     overflow: auto;
-    width: 99%;
-    height: 96%;
+    width: 755px;
+    height: 530px;
     border: 1px solid lightgray;
 }
-
+***/
 
 div#header {
     height: 15px;
@@ -103,6 +124,7 @@ div#header {
 }
 
 
+
 .bottom_block {
     display: flex;
     flex-direction: row;
@@ -112,6 +134,7 @@ div#header {
     margin-top: 5px;
     color: gray;
     font-size: 10px;
+
 }
 
 .bottom_block_left {
@@ -120,39 +143,34 @@ div#header {
 }
 
 
-
-ul#tabs { 
-    font-size: 12px; 
-    list-style-type: none; 
-    margin: 10px 0 0 0; 
-    padding: 0 0 0.3em 0; 
+ul#tabs {
+    font-size: 12px;
+    list-style-type: none;
+    margin: 10px 0 0 0;
+    padding: 0 0 0.3em 0;
 }
 
-ul#tabs li { 
-    display: inline; 
+ul#tabs li {
+    display: inline;
 }
 
-ul#tabs li a { 
-    color: #42454a; 
-    background-color: #dedbde; 
-    border: 1px solid #c9c3ba; 
-    border-bottom: none; 
-    padding: 0.5em 0.5em 0 0.5em; 
-    text-decoration: none; 
+ul#tabs li a {
+    color: #42454a;
+    background-color: #dedbde;
+    border: 1px solid #c9c3ba;
+    border-bottom: none;
+    padding: 0.5em 0.5em 0 0.5em;
+    text-decoration: none;
 }
 
-ul#tabs li a:hover { 
-    background-color: #f1f0ee; 
+ul#tabs li a:hover {
+    background-color: #f1f0ee;
 }
 
-ul#tabs li a.selected { 
-    color: blue; 
-    background-color: #f1f0ee; 
-    font-weight: bold; 
-    padding: 0.7em 0.5em 0 0.5em; 
+ul#tabs li a.selected {
+    color: blue;
+    background-color: #f1f0ee;
+    font-weight: bold;
+    padding: 0.7em 0.5em 0 0.5em;
 }
 
-/**
-div.tabContent { border: 1px solid #c9c3ba; padding: 0.5em; background-color: #f1f0ee; }
-div.tabContent.hide { display: none; }
-**/

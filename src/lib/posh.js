@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2020 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -126,27 +126,20 @@ var POSH = (function () {
       }
 
 
-      function s_startWith(str, val) {
-        if (str)
-          return str.lastIndexOf(val, 0) === 0;
-        else
-          return false;
-      }
-
       function node2str(n)
       {
         if (n.length==0)
         {
           return "<#this>";
         }
-        else if (s_startWith(n, "http://") 
-                 || s_startWith(n, "https://")
-                 || s_startWith(n, "mailto:")
+        else if (n.startsWith("http://") 
+                 || n.startsWith("https://")
+                 || n.startsWith("mailto:")
                 )
         {
           return "<"+n+">";
         }
-        else if (s_startWith(n, "#"))
+        else if (n.startsWith("#"))
         {
           return "<"+encodeURI(n)+">";
         }
@@ -173,27 +166,36 @@ var POSH = (function () {
 
       function addTriple(s, p, o, obj_is_Literal)
       {
+        var qv = '"';
+
+        if (o.indexOf("\n")!=-1 || o.indexOf("\r")!=-1) {
+          qv = "'''";
+          o = o.replace(/\\/g,'\\\\').replace(/\"/g,"\\\"");
+        } else {
+          o = o.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
+        }
+
         triples += node2str(s)+" "+node2str(p)+" ";
+
         if (obj_is_Literal) {
-          triples += '"'+o+'"';
+          triples += qv+o+qv;
         }
         else {
-          o = o.replace(/\\/g,'\\\\').replace(/\"/g,'\\\"');
           if (o==="<>" || o==="<#this>")
             triples += o;
-          else if (s_startWith(o, "http://") 
-                 || s_startWith(o, "https://")
-                 || s_startWith(o, "mailto:")
+          else if (o.startsWith("http://") 
+                 || o.startsWith("https://")
+                 || o.startsWith("mailto:")
                 )
             triples += "<"+o+">";
-          else if (s_startWith(o, "#"))
+          else if (o.startsWith("#"))
             triples += "<"+encodeURI(o)+">";
           else if (o.lastIndexOf(":")!=-1) 
           {
             var arr = o.split(":");
             var pref_link = self.namespace.ns_list[arr[0]];
             if (!pref_link) {//unknown prefix
-              triples += '"'+o+'"';
+              triples += qv+o+qv;
             } else {
               var p = self.prefixes[arr[0]];
               if (!p)
@@ -202,7 +204,7 @@ var POSH = (function () {
             }
           }
           else
-            triples += '"'+o+'"';
+            triples += qv+o+qv;
         }
 
         triples += " .\n";
@@ -235,7 +237,7 @@ var POSH = (function () {
            var property = el.getAttribute("property");
 
            var val = null;
-           var add_dog = s_startWith(content,"@")?"@":"";
+           var add_dog = content.startsWith("@")?"@":"";
 
            if (name) {
              if (add_dog.length>0)
@@ -283,18 +285,18 @@ var POSH = (function () {
         {
           return n;
         }
-        else if (s_startWith(n, "http://") 
-                 || s_startWith(n, "https://")
-                 || s_startWith(n, "mailto:")
+        else if (n.startsWith("http://") 
+                 || n.startsWith("https://")
+                 || n.startsWith("mailto:")
                 )
         {
           return n;
         }
-        else if (s_startWith(n, "#"))
+        else if (n.startsWith("#"))
         {
           return baseURI+n;
         }
-        else if (s_startWith(n, "/"))
+        else if (n.startsWith("/"))
         {
           return baseOrigin+n;
         }
@@ -332,7 +334,7 @@ var POSH = (function () {
            var name = el.getAttribute("name");
            var content = el.getAttribute("content");
 
-           if (name && s_startWith(name, "twitter:")) {
+           if (name && name.startsWith("twitter:")) {
              if (!twittercard) {
                twittercard = true;
                handleTwitterCard();

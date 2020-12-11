@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2020 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -25,7 +25,7 @@ class Settings {
 //  this.def_rww_edit_url = "http://linkeddata.uriburner.com/rdf-editor/#/editor?newDocument=true&statement:entity={url}&view=statements";
     this.def_rww_edit_url = "https://linkeddata.uriburner.com/rdf-editor/#/editor?data={data}&view=statements";
 
-    this.def_sparql_url = "https://linkeddata.uriburner.com/sparql/?query={query}";
+    this.def_sparql_url = "https://linkeddata.uriburner.com/sparql/?query={query}&text=text%2Fx-html%2Btr";
     this.def_sparql_cmd = "select";
 
     this.def_sparql_qry_spo = "DEFINE get:soft \"soft\" \n"+
@@ -51,6 +51,7 @@ class Settings {
     this.def_super_links_timeout = 30000000;
 
     this.def_super_links_query = ''
+/***
   +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
   +'PREFIX schema: <http://schema.org/> \n'
   +' \n'
@@ -102,7 +103,105 @@ class Settings {
   +' }  \n'
   +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider  \n'
   +'ORDER BY DESC (2) \n';
-
+***/
+/***
+  +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
+  +'PREFIX schema: <http://schema.org/> \n'
+  +' \n'
+  +'SELECT DISTINCT  sample(?extract) as ?sample ?extract ?extractLabel ?associationLabel ?entityTypeLabel ?entityType ?p as ?association ?providerLabel ?provider \n'
+  +'WHERE {  \n'
+  +'       GRAPH <{url}>  \n'
+  +'         {  \n'
+  +'           # ?source ( skos:related|schema:about|schema:mentions ) ?extract .  \n'
+  +'           ?source ?p ?extract.  \n'
+  +'           # filter (?source = <https://linkeddata.uriburner.com/about/id/entity/https/www.microstrategy.com/us/product/analytics/hypercards>)  \n'
+  +'           filter (?p in ( skos:related, schema:about, schema:mentions)) \n'
+  +'           # ?source ( skos:related|schema:about) ?extract .  \n'
+  +'           ?extract a ?entityType ;  \n'
+  +'           # ?extract a oplattr:NamedEntity ;  \n'
+  +'  \n'
+  +'           <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ;  \n'
+  +'           (rdfs:label | schema:name | foaf:name | schema:headline) ?extractLabel .  \n'
+  +'  \n'
+  +'           OPTIONAL {?provider foaf:name|schema:name ?providerLabel} .  \n'
+  +'  \n'
+  +'           # FILTER (?p in (skos:related, schema:about, schema:mentions))  \n'
+  +'           FILTER (! contains(str(?entityType),"Tag"))  \n'
+  +'         }  \n'
+  +'  \n'
+  +'         ## Subquery for obtaining relation (statement predicate) labels  \n'
+  +'  \n'
+  +'         { SELECT ?p ?associationLabel  \n'
+  +'           WHERE { \n'
+  +'	              quad map virtrdf:DefaultQuadMap { \n'
+  +'                  GRAPH ?g1  \n'
+  +'                    {  \n'
+  +'                       ?p rdfs:label|schema:name ?associationLabel .  \n'
+  +'                       FILTER (?p in (skos:related, schema:about, schema:mentions))   \n'
+  +'                       FILTER (LANG(?associationLabel) = "{lang}")   \n'
+  +'                    }   \n'
+  +'                  }   \n'
+  +'                 }  \n'
+  +'         }  \n'
+  +'  \n'
+  +'         ## Subquery for obtaining type-oriented relation (statement predicate) labels  \n'
+  +'  \n'
+  +'         { SELECT ?entityType ?entityTypeLabel  \n'
+  +'           WHERE { \n' 
+  +'	              quad map virtrdf:DefaultQuadMap { \n'
+  +'                  GRAPH ?g2  \n'
+  +'                    {  \n'
+  +'                      ?entityType rdfs:label|schema:name ?entityTypeLabel .   \n'
+  +'                      FILTER (LANG(?entityTypeLabel) = "{lang}")   \n'
+  +'                    }   \n'
+  +'                  }  \n'
+  +'                 }  \n'
+  +'         }  \n'
+  +' }  \n'
+  +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider  \n'
+  +'ORDER BY DESC (2) \n';
+***/
+  +'prefix oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
+  +'prefix schema: <http://schema.org/>  \n'
+  +'select distinct  \n'
+  +'       # sample(?extract) as ?sample  \n'
+  +'       ?extract ?extractLabel  \n'
+  +'       ?entityType bif:regexp_substr("[^/#]+$", ?entityType, 0) as ?entityTypeLabel  \n'
+  +'       ?p as ?association ?associationLabel  \n'
+  +'       ?provider ?providerLabel  \n'
+  +'where  \n'
+  +'{   \n'
+  +'graph <{url}>   \n'
+  +'  {     \n'
+  +'    ?source ?p ?extract.     \n'
+  +'    ?extract \n'
+  +'      a ?entityType ;    \n'
+  +'      oplattr:providedBy ?provider ;   \n'
+  +'      (rdfs:label | schema:name | foaf:name | schema:headline) ?extractLabel .   \n'
+  +'    optional { ?provider foaf:name | schema:name ?providerLabel } . \n'
+  +'    filter (?p in ( skos:related, schema:about, schema:mentions))   \n'
+  +'    filter (!contains(str(?entityType),"Tag"))   \n'
+  +'  }   \n'
+  +'  ## Obtain relation (statement predicate) labels   \n'
+  +'  optional \n'
+  +'  { \n'
+  +'    { \n'
+  +'      graph <http://www.w3.org/2004/02/skos/core>  \n'
+  +'      {  \n'
+  +'        ?p rdfs:label | schema:name ?associationLabel .  \n'
+  +'      }   \n'
+  +'    } \n'
+  +'    union \n'
+  +'    { \n'
+  +'      graph <http://schema.org/>  \n'
+  +'      {  \n'
+  +'        ?p rdfs:label | schema:name ?associationLabel .  \n'
+  +'      }   \n'
+  +'    } \n'
+  +'    #filter (lang(?associationLabel) = "{lang}")   \n'
+  +'  } \n'
+  +'} \n'
+  +'order by ?extractLabel ?entityType \n';
     this._data = (data!== undefined && data!==null) ? data:null;
   }
 
@@ -150,6 +249,15 @@ class Settings {
       case "ext.osds.handle_xml":
           val = "1";
           break;
+      case "ext.osds.handle_csv":
+          val = "1";
+          break;
+      case "ext.osds.handle_json":
+          val = "1";
+          break;
+      case "ext.osds.handle_all":
+          val = "1";
+          break;
       case "ext.osds.uiterm.mode":
           val = "ui-eav"
           break;
@@ -176,6 +284,15 @@ class Settings {
           break;
       case "ext.osds.super_links.timeout":
           val = this.def_super_links_timeout;
+          break;
+      case "ext.osds.super-links-highlight":
+          val = "first";
+          break;
+      case "ext.osds.super-links-sponge-mode":
+          val = "xxx";
+          break;
+      case "ext.osds.super-links-sponge":
+          val = "describe-ssl";
           break;
     }
     return val;
@@ -339,7 +456,7 @@ class Settings {
   {
     var h_url = '';
     var docURL;
-    var _mode = '';
+    var _mode = null;
 
     if (_url.endsWith('?'))
       _url = _url.substring(0, _url.length-1);

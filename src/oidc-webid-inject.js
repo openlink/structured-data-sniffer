@@ -25,11 +25,12 @@ async function recvMessage(event)
   if (session && idp) {
     var s_client = localStorage.getItem('oidc.clients.'+idp);
 
-    if (s_client) {
-      await save_data('oidc.session', s_session);
+    if (s_client)
       await save_data('oidc.clients.'+idp, s_client);
-      Browser.api.runtime.sendMessage({cmd:'store_updated', key:'oidc.session'});
 
+    if (session) {
+      await save_data('oidc.session', s_session);
+      Browser.api.runtime.sendMessage({cmd:'store_updated', key:'oidc.session'});
     }
   }    
 

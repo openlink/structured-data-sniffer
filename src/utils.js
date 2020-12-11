@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2020 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -194,6 +194,33 @@ Rest_Cons.prototype = {
     }
   },
 
+}
+
+
+async function getCurWin()
+{
+  if (Browser.isChromeWebExt) {
+    return new Promise(function (resolve, reject) {
+      Browser.api.windows.getCurrent({}, (w) => {
+        resolve(w)
+      });
+    })
+  } else {
+    return Browser.api.windows.getCurrent({});
+  }
+}
+
+async function getCurTab()
+{
+  if (Browser.isChromeWebExt) {
+    return new Promise(function (resolve, reject) {
+      Browser.api.tabs.query({active:true, currentWindow:true}, (t) => {
+        resolve(t)
+      });
+    })
+  } else {
+    return Browser.api.tabs.query({active:true, currentWindow:true});
+  }
 }
 
 

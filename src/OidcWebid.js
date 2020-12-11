@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2020 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -243,7 +243,7 @@ function getGraph(url)
       var docURI = (url.indexOf('#') >= 0)?url.slice(0, url.indexOf('#')):url;
       f.nowOrWhenFetched(docURI,undefined,function(ok, body, xhr) {
           if (!ok) {
-              reject({status: xhr.status, xhr: xhr});
+              reject({status: (xhr? xhr.status :0), xhr: xhr});
           } else {
               resolve(g);
           }

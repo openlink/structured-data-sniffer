@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2020 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -149,7 +149,7 @@
             }
             else {
               var sval = self.iri2html(obj.iri);
-              var td_class = obj.typeid!==undefined?" class='typeid'":"";
+              var td_class = obj.typeid!==undefined || key===self.ns.RDF_TYPE ?" class='typeid'":"";
               str += `<tr class='data_row'>
                         <td ${td_class}> ${key_str} </td>
                         <td ${td_class} > ${sval} </td>
@@ -226,7 +226,10 @@
     check_link : function (val, is_key) 
     {
       var s_val = String(val);
-      if ( s_val.match(/^http(s)?:\/\//) ) {
+      var t_val = val;
+
+      if ( s_val.match(/^http(s)?:\/\//) ) 
+      {
         if ( s_val.match(/\.(jpg|png|gif)$/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
@@ -235,10 +238,11 @@
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
         } 
-        return `<a href="${val}"> ${val} </a>`;
+        return `<a href="${val}"> ${this.decodeURI(val)} </a>`;
       } 
-      else if ( s_val.match(/^mailto:/) ) {
-        return `<a href="${val}"> ${val} </a>`;
+      else if ( s_val.match(/^mailto:/) ) 
+      {
+        return `<a href="${val}"> ${this.decodeURI(val)} </a>`;
       }
       return this.pre(val);
     },
@@ -247,16 +251,12 @@
     pref_link : function (val, pref) 
     {
       var data = val.substring(pref.link.length);
-      return `<a href="${val}" title="${val}"> ${pref.ns}:${data}</a>`;
+      return `<a href="${val}" title="${val}"> ${pref.ns}:${this.decodeURI(data)}</a>`;
     },
 
     pre : function (text) 
     {
       return sanitize_str(text);
-    },
-
-    s_startWith : function (str, val) {
-        return str.lastIndexOf(val, 0) === 0;
     },
 
     is_BNode : function (str) {
@@ -271,10 +271,10 @@
     },
 
     check_subst : function(uri) {
-      if (this.s_startWith(uri, this.docURI)) {
+      if (uri.startsWith(this.docURI)) {
         var s = uri.substr(this.docURI.length);
         if (s[0]==="#") {
-          var v = '<a href="' + uri + '" title="' + uri + '">' +s.substr(1)+ '</a>';
+          var v = '<a href="' + uri + '" title="' + uri + '">' +this.decodeURI(s)+ '</a>';
           return {rc:true, val:v};
         }
         else
@@ -283,11 +283,19 @@
       else {
         var anc_name = this.subst_list[uri];
         if (anc_name) {
-          var v = `<a href="${uri}" title="${uri}"> ${anc_name}</a>`;
+          var v = `<a href="${uri}" title="${uri}"> ${this.decodeURI(anc_name)}</a>`;
           return {rc:true, val:v};
         }
         else
           return {rc:false};
+      }
+    },
+
+    decodeURI : function(val) {
+      try {
+        return decodeURI(val);
+      } catch (ex) {
+        return val; 
       }
     },
 

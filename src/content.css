@@ -1,23 +1,21 @@
 .super_links_msg {
-	display: none;
+        all: initial;
+	display: flex;
+	line-height: normal;
+	flex-direction: row; 
 	position: fixed;
 	border: 2px solid #000;
 	border-radius: 2px;
 	width: 200px;
-	height: 40px;
+	height: 20px;
 	top:4px;
 	left: 4px;
 	background: khaki;
 	color: black;
  	z-index: 2147483647;
-	padding: 5px 10px 10px 20px;
+	padding: 10px 10px 10px 20px;
 	font-family: Arial, Helvetica, sans-serif;
-}
-
-.super_links_msg_td {
-	font-size: 14px; 
-	border-style:none; 
-	padding:0px;
+	font-size: 14px;
 }
 
 .super_links_img {
@@ -27,21 +25,34 @@
 
 
 .super_links_popup {
+        all: initial;
 	position: absolute;
 	display: none;
 	border: 2px solid #000;
-	border-radius: 10px;
-	width: 720px;
-	height: 205px;
+	border-radius: 4px; 
+	width: 910px;
+	height: 305px;
 	background: #fff;
 	color: black;
  	z-index: 2147483647;
-	padding: 10px 10px 10px 10px;
+        marging: 2px;
+        marging-bottom: 10px;
 	font-family: Arial, Helvetica, sans-serif;
+	line-height: normal;
+}
+.super_links_popup-title {
+	width: 100%;
+	height: 18px;
+	background-color: #0000a0;
+	color: white;
+	border-bottom: 1px solid #000;
+	position: relative;
+	cursor: move;
+        font-size: 14px;
 }
 .super_links_popup-content {
-	width: 700px;
-	height: 180px;
+	width: 100%;
+	height: calc(100% - 10px - 16px - 6px);
 	overflow: auto;
 }
 
@@ -55,34 +66,22 @@ a.super_link_mark {
 .super_links_popup_close {
 	background: #606061;
 	color: #FFFFFF;
-	line-height: 25px;
+	line-height: 20px;
 	position: absolute;
-	top:-15px;
-	right: -10px;
-	width: 24px;
+	top:-3px;
+	right: -3px;
+	width: 20px;
 	text-align: center;
 	text-decoration: none;
 	font-weight: bold;
-	-webkit-border-radius: 12px;
-	-moz-border-radius: 12px;
-	border-radius: 12px;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
 	-moz-box-shadow: 1px 1px 3px #000;
 	-webkit-box-shadow: 1px 1px 3px #000;
 	box-shadow: 1px 1px 3px #000;
 }
 .super_links_popup_close:hover { background: #00d9ff; }
-
-
-/**
-.close:hover,
-.close:focus {
-    background: #00d9ff;
-    color: #000;
-    text-decoration: none;
-    cursor: pointer;
-}
-**/
-
 
 table.super_links_table a { color: blue; text-decoration:underline; }
 table.super_links_table a:link { color: blue; }
@@ -90,91 +89,86 @@ table.super_links_table a:visited { color: purple; }
 table.super_links_table a:hover  { color: blue; }
 table.super_links_table a:active { color: blue; }
 
-/**
-   #link_bar a:link { color:#d0d0d0; background-color:#0000a0; }
-    #link_bar a:visited { color:#c0c0c0; background-color:#0000a0; }
-    #link_bar a:hover { color:#ffffff; background-color:#000060; }
-    #link_bar a:active { color:#f0f0f0; background-color:#00ff00; }
-**/
 
-
-/*table headers*/
-table.super_links_table > thead > tr > th,
-table.super_links_table > thead > tr > td {
-  background-color: #dce9f9;
-  background-image: -webkit-gradient(linear, left top, left bottom, from(#ebf3fc), to(#dce9f9));
-  background-image: -webkit-linear-gradient(top, #ebf3fc, #dce9f9);
-  background-image: -moz-linear-gradient(top, #ebf3fc, #dce9f9);
-  background-image: -ms-linear-gradient(top, #ebf3fc, #dce9f9);
-  background-image: -o-linear-gradient(top, #ebf3fc, #dce9f9);
-  background-image: linear-gradient(to bottom, #ebf3fc, #dce9f9);
-  -webkit-box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
-  -moz-box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
-  box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
-  border-top: none;
-  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+table.super_links_table {
+  font-family: 'trebuchet MS' , 'Lucida sans' , Arial;
+  font-size: 13px;
+  min-width: 100%;
+  width: auto;
+  flex: 1;
+  display: grid;
+  border-collapse: collapse;
+  /* These are just initial values which are overriden using JavaScript when a column is resized */
+  grid-template-columns: 
+    minmax(100px, 1.5fr)
+    minmax(100px, 2.5fr)
+    minmax(100px, 4fr)
+    minmax(100px, 2fr);
 }
 
-
-/* Sparql table css based on Bootstrap */
-table.super_links_table
-{
-  background-color: transparent;
-  border: 1px solid #dddddd;
-  border-collapse: separate;
-  *border-collapse: collapse;
-  border-left: 0;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
-  border-radius: 4px;
-  border-spacing: 0;
-  font-family: 'trebuchet MS' , 'Lucida sans' , Arial;
-  font-size: 14px;
-  color: #444;
+table.super_links_table thead,
+table.super_links_table tbody,
+table.super_links_table tr {
+  display: contents;
 }
 
 table.super_links_table th,
 table.super_links_table td {
-  padding: 4px 5px;
-  line-height: 20px;
-  text-align: left;
-  vertical-align: top;
+  padding: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   border-top: 1px solid #dddddd;
   border-left: 1px solid #dddddd;
 }
+
 table.super_links_table th {
+  position: sticky;
+  top: 0;
+  background: #6c7ae0;
+  text-align: left;
   font-weight: bold;
+  color: white;
 }
-table.super_links_table tr:hover > td,
-table.super_links_table tr:hover > th {
-  background-color: #fbf8e9;
-/*  background-color: #f5f5f5;*/
+
+
+.super_links_table-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: black;
+  opacity: 0;
+  width: 3px;
+  cursor: col-resize;
 }
-table.super_links_table tbody:first-child tr:first-child th,
-table.super_links_table tbody:first-child tr:first-child td {
-  border-top: 0;
+
+.super_links_table-resize-handle:hover,
+/* The following selector is needed so the handle is visible during resize even if the mouse isn't over the handle anymore */
+.super_links_table-header--being-resized .super_links_table-resize-handle {
+  opacity: 0.5;
 }
-table.super_links_table tbody:first-child tr:first-child > td:first-child,
-table.super_links_table tbody:first-child tr:first-child > th:first-child {
-  -webkit-border-top-left-radius: 4px;
-  -moz-border-radius-topleft: 4px;
-  border-top-left-radius: 4px;
+
+.super_links_popup-resizer {
+  width: 10px;
+  height: 10px;
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  cursor: se-resize;
 }
-table.super_links_table tbody:first-child tr:first-child > td:last-child,
-table.super_links_table tbody:first-child tr:first-child > th:last-child {
-  -webkit-border-top-right-radius: 4px;
-  -moz-border-radius-topright: 4px;
-  border-top-right-radius: 4px;
+
+table.super_links_table th:hover .super_links_table-resize-handle {
+  opacity: 0.3;
 }
-table.super_links_table tbody:last-child tr:last-child > td:first-child,
-table.super_links_table tbody:last-child tr:last-child > th:first-child {
-  -webkit-border-bottom-left-radius: 4px;
-  -moz-border-radius-bottomleft: 4px;
-  border-bottom-left-radius: 4px;
+
+table.super_links_table td {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  color: #808080;
 }
-table.super_links_table tbody:last-child tr:last-child > td:last-child,
-table.super_links_table tbody:last-child tr:last-child > th:last-child {
-  -webkit-border-bottom-right-radius: 4px;
-  -moz-border-radius-bottomright: 4px;
-  border-bottom-right-radius: 4px;
+
+table.super_links_table tr:nth-child(even) td {
+  background: #f8f6ff;
 }
+

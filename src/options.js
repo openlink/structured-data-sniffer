@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2020 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -23,7 +23,7 @@ var yasqe_slinks = null;
 var yasqe_srv = null;
 
 $(function(){
-	// Tabs
+  // Tabs
 
   gPref = new Settings();
 
@@ -94,6 +94,7 @@ $(function(){
 	 yasqe_srv.setValue(createSparqlQuery(cmd));
   });
 
+  $('#chk_try_handle_all').change(changeHandleAll);
   $('#OK_btn').click(savePref);
   $('#Cancel_btn').click(closeOptions);
 
@@ -110,6 +111,13 @@ $(function(){
 
 });
 
+function changeHandleAll()
+{
+   var v = $('#chk_try_handle_all').is(':checked')? false : true;
+     $('#chk_try_handle_xml').prop('disabled', v);
+     $('#chk_try_handle_csv').prop('disabled', v);
+     $('#chk_try_handle_json').prop('disabled', v);
+}
 
 function closeOptions()
 {
@@ -201,8 +209,9 @@ function setSuperLinksDefaults()
           $('#super-links-timeout').val(gPref.def_super_links_timeout);
           yasqe_slinks.setValue(gPref.def_super_links_query);
           DOM.qSel('#super-links-sponge #describe-ssl').selected = true;
-          DOM.qSel('#super-links-sponge-mode #soft').selected = true;
+          DOM.qSel('#super-links-sponge-mode #xxx').selected = true;
           DOM.qSel('#super-links-viewer #html-fb').selected = true;
+          DOM.qSel('#super-links-highlight #all').selected = true;
 
           $(this).dialog( "close" );
         },
@@ -266,6 +275,19 @@ function loadPref()
     if (chk_xml && chk_xml==="1")
       $("#chk_try_handle_xml").attr('checked','checked');
 
+    var chk_csv = gPref.getValue("ext.osds.handle_csv");
+    if (chk_csv && chk_csv==="1")
+      $("#chk_try_handle_csv").attr('checked','checked');
+
+    var chk_json = gPref.getValue("ext.osds.handle_json");
+    if (chk_json && chk_json==="1")
+      $("#chk_try_handle_json").attr('checked','checked');
+
+    var chk_all = gPref.getValue("ext.osds.handle_all");
+    if (chk_all && chk_all==="1")
+      $("#chk_try_handle_all").attr('checked','checked');
+
+    changeHandleAll();
 
     var import_url = gPref.getValue("ext.osds.import.url");
     var import_srv = gPref.getValue("ext.osds.import.srv");
@@ -308,6 +330,10 @@ function loadPref()
     var viewer = gPref.getValue("ext.osds.super-links-viewer");
     if (viewer)
       DOM.qSel('#super-links-viewer #'+viewer).selected = true;
+
+    var mode = gPref.getValue("ext.osds.super-links-highlight");
+    if (mode)
+      DOM.qSel('#super-links-highlight #'+mode).selected = true;
 }
 
 
@@ -322,6 +348,9 @@ function savePref()
    gPref.setValue("ext.osds.pref.show_action", $('#chk_show_action_for_url_with_params').is(':checked')?"1":"0");
 
    gPref.setValue("ext.osds.handle_xml", $('#chk_try_handle_xml').is(':checked')?"1":"0");
+   gPref.setValue("ext.osds.handle_csv", $('#chk_try_handle_csv').is(':checked')?"1":"0");
+   gPref.setValue("ext.osds.handle_json", $('#chk_try_handle_json').is(':checked')?"1":"0");
+   gPref.setValue("ext.osds.handle_all", $('#chk_try_handle_all').is(':checked')?"1":"0");
 
 //   gPref.setValue("ext.osds.pref.user", $('#pref_user').val().trim());
 
@@ -358,6 +387,9 @@ function savePref()
 
    v = DOM.qSel('#super-links-viewer option:checked').id;
    gPref.setValue("ext.osds.super-links-viewer", v);
+
+   v = DOM.qSel('#super-links-highlight option:checked').id;
+   gPref.setValue("ext.osds.super-links-highlight", v);
 
    closeOptions();
 }
@@ -499,5 +531,6 @@ function save_users_data()
 var DOM = {};
 
 DOM.qSel = (sel) => { return document.querySelector(sel); };
+DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
 DOM.iSel = (id) => { return document.getElementById(id); };
 

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2020 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -1783,13 +1783,9 @@ Namespace.prototype = {
   
   has_known_ns : function (str) 
   {
-    function s_startWith(str, val) {
-     return str.lastIndexOf(val, 0) === 0;
-    }
-
     var rc = null;
     $.each(this.ns_list, function(pref, link_url) {
-      if (s_startWith(String(str),link_url)) {
+      if (String(str).startsWith(link_url)) {
         rc = { ns:pref, link:link_url };
         return false;
       } 

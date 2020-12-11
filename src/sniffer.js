@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2020 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -31,14 +31,14 @@
     var posh_Text = null;
     var rdfa_subjects = null;
     var rdf_Text = null;
-    var ttl_nano_Text = null;
-    var json_nano_Text = null;
-    var rdf_nano_Text = null;
+    var nano = {ttl:null, jsonld:null, rdf:null, json:null, csv:null};
     var data_found = false;
 
     var ttl_nano_pattern = /(## (Nanotation|Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle) +(End|Stop) ##)(.*)/gmi;
-    var json_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
-    var rdf_nano_pattern = /(## RDF\/XML +Start ##)((.|\n|\r)*?)((## RDF\/XML +(End|Stop) ##))(.*)/gmi;
+    var jsonld_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
+    var json_nano_pattern = /(## JSON +Start ##)((.|\n|\r)*?)((## JSON +(End|Stop) ##))(.*)/gmi;
+    var csv_nano_pattern = /(## CSV +Start ##)((.|\n|\r)*?)((## CSV +(End|Stop) ##))(.*)/gmi;
+    var rdf_nano_pattern = /(## RDF(\/|-)XML +Start ##)((.|\n|\r)*?)((## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
 
 
     function getSelectionString(el, win) {
@@ -155,9 +155,7 @@
 
     function sniff_nanotation() {
         var doc_Texts = [];
-        var ttl_ret = [];
-        var json_ret = [];
-        var rdf_ret = [];
+        var ret = {ttl:[], jsonld:[], json:[], rdf:[], csv:[]};
 
         function isWhitespace(c) {
             var cc = c.charCodeAt(0);
@@ -192,10 +190,12 @@
                 var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
                 var p2 = /^ *#/;
                 var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
-                var p4 = /## +(RDF\/XML) +(Start|End|Stop) *##/;
+                var p4 = /## +(RDF(\/|-)XML) +(Start|End|Stop) *##/;
+                var p5 = /## +(JSON) +(Start|End|Stop) *##/;
+                var p6 = /## +(CSV) +(Start|End|Stop) *##/;
 
                 s_split.forEach(function (item, i, arr) {
-                    if (item.length > 0 && (!p2.test(item) || p1.test(item) || p3.test(item) || p4.test(item)))
+                    if (item.length > 0 && (!p2.test(item) || p1.test(item) || p3.test(item) || p4.test(item) || p5.test(item) || p6.test(item)))
                         s_doc += item + "\n";
                 });
 
@@ -208,7 +208,7 @@
 
                     var str = ndata[3];
                     if (str.length > 0)
-                        ttl_ret.push(str);
+                       ret.ttl.push(str);
                 }
 
                 //try get Turtle Nano in CurlyBraces { ... }
@@ -230,7 +230,7 @@
                     }
                     else if (ch == '}') {
                         inCurly--;
-                        ttl_ret.push(str);
+                        ret.ttl.push(str);
                         str = "";
                     }
                     else if (inCurly > 0) {
@@ -240,7 +240,7 @@
 
                 //try get JSON-LD Nano
                 while (true) {
-                    var ndata = json_nano_pattern.exec(s_doc);
+                    var ndata = jsonld_nano_pattern.exec(s_doc);
                     if (ndata == null)
                         break;
 
@@ -256,7 +256,7 @@
                         }
 
                         if (add)
-                            json_ret.push(str);
+                            ret.jsonld.push(str);
                     }
                 }
 
@@ -266,9 +266,44 @@
                     if (ndata == null)
                         break;
 
+                    var str = ndata[3];
+                    if (str.length > 0) {
+                        ret.rdf.push(str);
+                    }
+                }
+
+                //try get JSON Nano
+                while (true) {
+                    var ndata = json_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
                     var str = ndata[2];
                     if (str.length > 0) {
-                        rdf_ret.push(str);
+                        var add = false;
+                        for (var c = 0; c < str.length; c++) {
+                            add = (str[c] === "{" || str[c] === "[") ? true : false;
+                            if (add)
+                                break;
+                            if (!isWhitespace(str[c]))
+                                break;
+                        }
+
+                        if (add)
+                            ret.json.push(str);
+                    }
+                }
+
+
+                //try get CSV Nano
+                while (true) {
+                    var ndata = csv_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
+                    var str = ndata[2];
+                    if (str.length > 0) {
+                        ret.csv.push(str);
                     }
                 }
 
@@ -276,8 +311,8 @@
         }
 
 
-        if (ttl_ret.length > 0 || json_ret.length > 0 || rdf_ret.length > 0)
-            return {ttl: ttl_ret, json: json_ret, rdf: rdf_ret};
+        if (ret.ttl.length > 0 || ret.jsonld.length > 0 || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0  )
+            return ret; 
         else
             return null;
     }
@@ -353,10 +388,8 @@
             if (!data_found) {
                 var ret = sniff_nanotation();
                 if (ret) {
-                    ttl_nano_Text = (ret.ttl.length > 0) ? ret.ttl : null;
-                    json_nano_Text = (ret.json.length > 0) ? ret.json : null;
-                    rdf_nano_Text = (ret.rdf.length > 0) ? ret.rdf : null;
                     data_found = true;
+                    nano = ret;
                 }
             }
 
@@ -382,7 +415,6 @@
 
     function sniff_Data() {
         try {
-
             micro_items = jQuery('[itemscope]').not(jQuery('[itemscope] [itemscope]'));
 
             if (posh_Text === null) {
@@ -446,14 +478,9 @@
                 }
             }
 
-            ttl_nano_Text === null;
-            json_nano_Text === null;
-            rdf_nano_Text === null;
             var ret = sniff_nanotation();
             if (ret) {
-                ttl_nano_Text = (ret.ttl.length > 0) ? ret.ttl : null;
-                json_nano_Text = (ret.json.length > 0) ? ret.json : null;
-                rdf_nano_Text = (ret.rdf.length > 0) ? ret.rdf : null;
+                nano = ret;
             }
 
         } catch (e) {
@@ -601,169 +628,72 @@
     }
 
 
-    function fetchWithTimeout(url, options, timeout) 
-    {
-      return Promise.race([
-        fetch(url, options),
-        new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), timeout)
-        )
-      ]);
-    }
 
-
-    async function add_super_links(sender, links_query, links_timeout)
+    async function add_super_links(sender, data)
     {
-      if (g_super_links==null) {
+      var settings = new SettingsProxy();
+      var highlight_mode = await settings.getValue('ext.osds.super-links-highlight');
+
+      if ($(".super_links_popup").length == 0) {
          $('body').append(
            `<div class="super_links_popup" >
+             <div class="super_links_popup-title"> &nbsp;Super Links </div>
              <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
              <div class="super_links_popup-content"></div>
+             <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
             </div> 
-            <div class="super_links_msg" style="display:flex; font-size: 14px; flex-direction: row; height:40px; padding: 10px 10px 10px 20px;"> 
+            <div class="super_links_msg"> 
               <div style="width:16px;">
                 <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
               </div>
-              <div>&nbsp;Preparing&nbsp;Super&nbsp;Links</div>
+              <div>&nbsp;Applying&nbsp;Super&nbsp;Links</div>
             </div>`
          );
       }
 
-      var settings = new SettingsProxy();
-      var sponge_type = await settings.getValue('ext.osds.super-links-sponge');
-      var sponge_mode = await settings.getValue('ext.osds.super-links-sponge-mode');
-      var url_sponge;
-
-      if (sponge_type) {
-          url_sponge = settings.createSpongeCmdFor(sponge_type, sponge_mode, location.href);
-      } else {
-        var rc = location.href.match(/^((\w+):\/)?\/?(.*)$/);
-        url_sponge = "https://linkeddata.uriburner.com/about/html/http/"+rc[3]+"?sponger:get=add";
-      }
-
       $(".super_links_msg").css("display","flex");
 
-      var options = {
-           headers: {
-              'Accept': 'text/html',
-              'Cache-control': 'no-cache'
-           },
-           credentials: 'include',
-          };
-
-      try  {
-        var rc = await fetchWithTimeout(url_sponge, options, 30000);
-        if (rc.ok && rc.status == 200) {
-          if (rc.redirected && rc.url.lastIndexOf("https://linkeddata.uriburner.com/rdfdesc/login.vsp", 0) === 0) {
-            alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
-            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            document.location.href = redir;
-            return;
-          }
-          exec_super_links_query(links_query, links_timeout);
-
-        } else {
-          if (rc.status==401 || rc.status==403) {
-            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            document.location.href = redir;
-            return;
-          } else {
-            alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
-            exec_super_links_query(links_query, links_timeout);
-          }
+      try {
+        var val = JSON.parse(data);
+        g_super_links = val.results.bindings;
+        var list = {};
+        for(var i=0; i < g_super_links.length; i++) {
+          var s = g_super_links[i].extractLabel.value;
+          g_super_links[i]._id = s.toLowerCase();
+          list[s]=0;
         }
 
-      } catch(e) {
-        $(".super_links_msg").css("display","none");
-        alert("Sponge "+e);
-        console.log(e);
-      }
-    }
-
-
-    async function exec_super_links_query(links_query, links_timeout)
-    {
-      var url = new URL(location.href);
-      url.hash = '';
-      //url.search = '';
-      var iri = url.toString();
-
-      var br_lang = navigator.language || navigator.userLanguage;
-      if (br_lang && br_lang.length>0) {
-        var i = br_lang.indexOf('-');
-        if (i!=-1)
-           br_lang = br_lang.substr(0,i);
-      } else {
-        br_lang = 'en';
-      }
-
-      var url_links = "https://linkeddata.uriburner.com/sparql";
-      var links_sparql_query = (new Settings()).createSuperLinksQuery(links_query, iri, br_lang);
-
-      $(".super_links_msg").css("display","flex");
-
-      var get_url = new URL(url_links);
-      var params = get_url.searchParams;
-      params.append('format', 'text/csv');
-      params.append('query', links_sparql_query);
-      params.append('CXML_redir_for_subjs', 121);
-      params.append('timeout', links_timeout);
-      params.append('_', Date.now());
-
-      var options = {
-            headers: {
-              'Accept': 'text/plain',
-              'Cache-control': 'no-cache'
-            },
-            credentials: 'include',
-          };
-
-      try  {
-        var rc = await fetchWithTimeout(get_url, options, links_timeout);
-        if (rc.ok && rc.status == 200) {
-          try {
-            var data = await rc.text();
-            var jso = Papa.parse(data,{header: true, skipEmptyLines: true});
-            g_super_links = jso.data;
-            var labels = [];
-            for(var i=0; i < g_super_links.length; i++) {
-              var label = g_super_links[i].extractLabel || '';
-              labels.push(label);
-              g_super_links[i]._id = label.toLowerCase();
+        var keys = Object.keys(list); 
+        for(var i=0; i< keys.length; i++) {
+          var s = keys[i];
+          for(var j=0; j < keys.length; j++) {
+            if (j != i && keys[j].indexOf(s) != -1) {
+              list[s] = 1;
+              break;
             }
-
-            mark_strings(labels);
-          } catch(e) {
-            console.log(e);
-          } finally {
-            $(".super_links_msg").css("display","none");
           }
-
-        } else {
-          $(".super_links_msg").css("display","none");
-          if (rc.status==401 || rc.status==403) {
-            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            document.location.href = redir;
-            return;
-          } else {
-            alert("Could not load data from: "+url_links+"\nError: "+rc.status);
-          }
-/***
-          if (rc.status == 403) {
-            alert("Could not execute SPARQL query againts: "+url_links+"\nTry Login and execute query again");
-            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            document.location.href = redir;
-          } else {
-            alert("Could not load data from: "+url_links+"\nError: "+rc.status);
-          }
-***/
         }
 
+        var labels = [];
+        for(var i=0; i< keys.length; i++) {
+          var s = keys[i];
+          if (list[s] === 0)
+            labels.push(s);
+        }
+        for(var i=0; i< keys.length; i++) {
+          var s = keys[i];
+          if (list[s] !== 0)
+            labels.push(s);
+        }
+
+        mark_strings(labels, highlight_mode);
       } catch(e) {
-        $(".super_links_msg").css("display","none");
-        alert("Could not load data from: "+url_links+"\n"+e);
+        console.log(e);
       } finally {
-        $(".super_links_msg").css("display","none");
+        function close_msg() {
+            $(".super_links_msg").css("display","none");
+        }
+        setTimeout(close_msg, 2000);
       }
     }
 
@@ -838,7 +768,6 @@
       var viewer_mode = await settings.getValue('ext.osds.super-links-viewer');
 
       async function create_href(url) {
-         // http://linkeddata.uriburner.com/about/id/entity/https/thenextweb.com/hardfork/2019/02/05/facebook-is-doing-something-with-blockchain-but-nobody-knows-what/#babelfy_bn%3A03624775n_ED31AF22-2E19-11E9-B5EB-80FD74DC2BE9       
          if (viewer_mode==='html-fb')
            return await settings.createImportUrl(url);
          else
@@ -854,16 +783,16 @@
           var v = lst[i];
 
           try {
-            var extract = v.extract?v.extract:null;
-            var prov = v.provider?v.provider:null;
+            var extract = v.extract?v.extract.value:null;
+            var prov = v.provider?v.provider.value:null;
             if (extract && prov) {
-              var extLabel = v.extractLabel?v.extractLabel:'';
-              var provName = v.providerLabel?v.providerLabel:prov;
-              var entityType = v.entityType;
-              var entityTypeLabel = v.entityTypeLabel?v.entityTypeLabel:entityType;
+              var extLabel = v.extractLabel?v.extractLabel.value:'';
+              var provName = v.providerLabel?v.providerLabel.value:prov;
+              var entityType = v.entityType.value;
+              var entityTypeLabel = v.entityTypeLabel?v.entityTypeLabel.value:entityType;
 
               var association = v.association.value;
-              var associationLabel = v.associationLabel?v.associationLabel:association;
+              var associationLabel = v.associationLabel?v.associationLabel.value:association;
               var extract_href = await create_href(extract);
 
               tdata += 
@@ -876,86 +805,88 @@
           } catch(e) {}
         }
 
+
         $('.super_links_popup-content')
            .append('<table class="super_links_table">'
                +'<thead><tr>'
-               +'<th style="max-width:190px;">Word</th>'
-               +'<th style="max-width:95px;">Association</th>'
-               +'<th style="max-width:285px;width:100%;">Source</th>'
-               +'<th style="max-width:300px;">Type</th>'
+               +'<th> Word <span class="super_links_table-resize-handle"/></th>'
+               +'<th> Association <span class="super_links_table-resize-handle"/></th>'
+               +'<th> Source <span class="super_links_table-resize-handle"/></th>'
+               +'<th> Type <span class="super_links_table-resize-handle"/></th>'
                +'</tr></thead>'
                 +'<tbody>'+tdata+'</tbody>'
                 +'</table>');
         $('.super_links_popup').show();
+
+        var popup = DOM.qSel('.super_links_popup');
+        const columns_css = ['minmax(100px, 1.5fr)', 'minmax(100px, 2.5fr)', 'minmax(100px, 4fr)', 'minmax(100px, 2fr)'];
+        makeResizableTable('table.super_links_table', columns_css, '.super_links_popup');
+
+        dragElement(popup, DOM.qSel('.super_links_popup-title'));
+        makeResizable(popup, DOM.qSel('.super_links_popup-resizer'));
+
         positionPopupOnPage(ev);
       }
     }
 
 
-    function mark_strings(keyword)
+    function mark_strings(keywords, highlight_mode)
     {
-      var terms = {};
-      var options = {
+      $("body").unmark();
+
+      for(var i=0; i < keywords.length; i++)
+      {
+        var keyword = keywords[i];
+        var word;
+        var options = {
             "element": "a",  //"a"
             "className": "super_link_mark",
             "exclude": ["a"],
             "separateWordSearch": false,
-            "acrossElements": true,
-            "accuracy": "exactly",
-//!            "diacritics": true,
+            "acrossElements": false,
+            "accuracy": {
+               "value": "exactly",
+               "limiters": ":;.,’'\"-–—‒_(){}[]!+=".split("")
+             },
             "diacritics": false,
-            "iframes": false,
-            "iframesTimeout": 5000,
             "caseSensitive": false,
             "ignoreJoiners": false,
-            "filter": function(textNode, foundTerm, totalCounter){
+            "filter": function(textNode, foundTerm, totalCounter, termCount){
                       // textNode is the text node which contains the found term
                       // foundTerm is the found search term
                       // totalCounter is a counter indicating the total number of all marks
                       // at the time of the function call
-                 var count = terms[foundTerm];
-                 if (count===undefined) {
-                    terms[foundTerm]=1;
-                    return true;
-                 } else {
-                    terms[foundTerm]=count+1;
-                    return (count >= 1)? false: true;
-                 } 
+                 word = foundTerm.toLowerCase();
+                 return (termCount > 0 && highlight_mode==='first')? false: true;
             },
             "each": function(node){
                 // node is the marked DOM element
                 $(node).attr("href","");
+                $(node).attr("mark_id",keyword.toLowerCase());
+
             },
-            "done": function(counter){
+          };
 
-                $('.super_links_popup_close').click(function(e){
-                    $('.super_links_popup').hide();
-                    return false;
-                 });
+        $("body").mark(keyword, options);
+      }
 
-                $('.super_link_mark').click(function(ev){
-                    var label = ev.target.innerText.toLowerCase();
-                    var lst = [];
-                    for (var i=0; i < g_super_links.length; i++) {
-                      if (g_super_links[i]._id.indexOf(label)!=-1)
-                        lst.push(g_super_links[i]);
-                    }
+      $('.super_links_popup_close').click(function(e){
+          $('.super_links_popup').hide();
+          return false;
+       });
 
-                    create_popup_table(lst, ev);
-                    return false;
-                 });
-            }
-        };
+      $('.super_link_mark').click(function(ev){
+          var mark_id = ev.target.getAttribute('mark_id');
+          var lst = [];
+          for (var i=0; i < g_super_links.length; i++) {
+            if (g_super_links[i]._id.indexOf(mark_id)!=-1)
+              lst.push(g_super_links[i]);
+          }
 
-
-      $("body").unmark({
-        done: function() {
-          $("body").mark(keyword, options);
-        }
-      });
+          create_popup_table(lst, ev);
+          return false;
+       });
     }
-
-
 
 
     jQuery(document).ready(function () {
@@ -964,19 +895,15 @@
 
             is_data_exist();
             if (!data_found) {
-                setTimeout(is_data_exist, 3000);
+                window.setTimeout(is_data_exist, 3000);
             }
 
 
             function request_doc_data() {
                 scan_frames();
 
-                function prepared_data() {
-                    sniff_Data();
-                    send_doc_data();
-                }
-
-                setTimeout(prepared_data, 500);
+                sniff_Data();
+                send_doc_data();
             }
 
 
@@ -986,12 +913,15 @@
                     doc_URL: document.location.href,
                     micro: {data: null},
                     jsonld: {text: null},
+                    json: {text: null},
                     rdfa: {data: null, ttl: null},
                     rdf: {text: null},
                     turtle: {text: null},
                     ttl_nano: {text: null},
+                    jsonld_nano: {text: null},
                     json_nano: {text: null},
                     rdf_nano: {text: null},
+                    csv_nano: {text: null},
                     posh: {text: null}
                 };
 
@@ -1006,19 +936,24 @@
                 docData.rdf.text = rdf_Text;
                 docData.rdfa.data = rdfa.data;
                 docData.rdfa.ttl = rdfa.ttl;
-                docData.ttl_nano.text = ttl_nano_Text;
-                docData.json_nano.text = json_nano_Text;
-                docData.rdf_nano.text = rdf_nano_Text;
                 docData.posh.text = posh_Text;
+
+                docData.ttl_nano.text = nano.ttl;
+                docData.jsonld_nano.text = nano.jsonld;
+                docData.json_nano.text = nano.json;
+                docData.rdf_nano.text = nano.rdf;
+                docData.csv_nano.text = nano.csv;
 
                 if ((microdata.items && microdata.items.length > 0)
                     || (json_ld_Text && json_ld_Text.length > 0)
                     || (turtle_Text  && turtle_Text.length > 0)
                     || (rdf_Text     && rdf_Text.length > 0)
                     || (rdfa.data    && rdfa.data.length > 0)
-                    || (ttl_nano_Text && ttl_nano_Text.length > 0)
-                    || (json_nano_Text && json_nano_Text.length > 0)
-                    || (rdf_nano_Text && rdf_nano_Text.length > 0)
+                    || (nano.ttl     && nano.ttl.length > 0)
+                    || (nano.jsonld  && nano.jsonld.length > 0)
+                    || (nano.json    && nano.json.length > 0)
+                    || (nano.rdf     && nano.rdf.length > 0)
+                    || (nano.csv     && nano.csv.length > 0)
                     || (posh_Text    && posh_Text.length > 0)
                    )
                   data_exists = true;
@@ -1038,18 +973,161 @@
                 if (request.property == "doc_data")
                     request_doc_data();
                 else if (request.property == "open_tab")
-                    request_open_tab(request.url, sender)
-                else if (request.property == "super_links")
-                    add_super_links(sender, request.query, request.timeout)
-//                else
-//                    sendResponse({});  // stop
-            });
+                    request_open_tab(request.url, sender);
+                else if (request.property == "super_links_data")
+                    add_super_links(sender, request.data);
 
+                sendResponse({});  // stop
+            });
 
         } catch (e) {
             console.log("OSDS:" + e);
         }
     });
+
+  var DOM = {};
+  DOM.qSel = (sel) => { return document.querySelector(sel); };
+  DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
+  DOM.iSel = (id) => { return document.getElementById(id); };
+
+  function makeResizableTable(tableId, columns_css, containerId) {
+     var table = DOM.qSel(tableId);
+     var popup = DOM.qSel(containerId);
+     var headerResized;
+     const columns = [];
+
+     table.style.gridTemplateColumns = columns_css.join(' ');
+
+     function onMouseMove(e)
+     {
+       window.requestAnimationFrame(() => {
+         // Calculate the desired width
+         if (headerResized===null)
+           return;
+
+         var horizontalScrollOffset = document.documentElement.scrollLeft;
+         const width = (horizontalScrollOffset + e.clientX) - popup.offsetLeft - headerResized.offsetLeft;
+       
+         // Update the column object with the new size value
+         const column = columns.find(({ header }) => header === headerResized);
+         column.size = Math.max(100, width) + 'px'; // Enforce our minimum
+  
+         // For the other headers which don't have a set width, fix it to their computed width
+         columns.forEach((column) => {
+           if(column.size.startsWith('minmax')){ // isn't fixed yet (it would be a pixel value otherwise)
+             column.size = parseInt(column.header.clientWidth, 10) + 'px';
+           }
+         })
+
+         // Update the column sizes
+         // Reminder: grid-template-columns sets the width for all columns in one value
+         table.style.gridTemplateColumns = columns
+           .map(({ header, size }) => size)
+           .join(' ');
+       });
+     }
+
+     function onMouseUp(e)
+     {
+        if (headerResized)
+           headerResized.classList.remove('super_links_table-header--being-resized');
+
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        headerResized.classList.remove('super_links_table-header--being-resized');
+        headerResized = null;
+     }
+
+
+     var lst = DOM.qSelAll(tableId+' th');
+     var i = 0;
+
+     for(const header of lst)
+     {
+       columns.push({ 
+         header, 
+         size: columns_css[i],
+       });
+
+       header.querySelector('.super_links_table-resize-handle').onmousedown = (e) => {
+          headerResized = e.target.parentNode;
+          window.addEventListener('mousemove', onMouseMove);
+          window.addEventListener('mouseup', onMouseUp);
+          headerResized.classList.add('super_links_table-header--being-resized');
+       } 
+     }
+  }
+
+
+  function dragElement(el, elHeader) {
+    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+    if (elHeader) {
+      // if present, the header is where you move the DIV from:
+      elHeader.onmousedown = onMouseDown;
+    } else {
+      // otherwise, move the DIV from anywhere inside the DIV:
+      el.onmousedown = onMouseDown;
+    }
+
+    function onMouseDown(e) {
+      e = e || window.event;
+      e.preventDefault();
+      // get the mouse cursor position at startup:
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    }
+
+    function onMouseMove(e) {
+      e = e || window.event;
+      e.preventDefault();
+      // calculate the new cursor position:
+      pos1 = pos3 - e.clientX;
+      pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      // set the element's new position:
+      el.style.top = (el.offsetTop - pos2) + "px";
+      el.style.left = (el.offsetLeft - pos1) + "px";
+    }
+
+    function onMouseUp() {
+      // stop moving when mouse button is released:
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+  }
+
+  function makeResizable(el, elResizer) 
+  {
+    var orig_height = 0;
+    var orig_width = 0;
+    var orig_mouse_x = 0;
+    var orig_mouse_y = 0;
+
+    elResizer.onmousedown = (e) => {
+        e.preventDefault();
+        orig_width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
+        orig_height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
+        orig_mouse_x = e.pageX;
+        orig_mouse_y = e.pageY;
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    }
+    
+    function onMouseMove(e) {
+      el.style.width = Math.max(orig_width + (e.pageX - orig_mouse_x), 600) + 'px';
+      el.style.height = Math.max(orig_height + (e.pageY - orig_mouse_y), 150) + 'px';
+    }
+    
+    function onMouseUp() {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+  }
 
 
 })();
