@@ -1,4 +1,6 @@
-# OpenLink Structured Data Sniffer
+# Deprecated Repository for OpenLink Structured Data Sniffer
+
+## Please refer to [the new primary repository for this extension](https://github.com/OpenLinkSoftware/OSDS_extension).
 
 *This respository is primarily focused on developers.  You may want to also look 
 at [the more user-/consumer-focused site](http://osds.openlinksw.com/).*
