@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -187,12 +187,12 @@
                 var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
                 var s_split = txt.split(eoln);
                 var s_doc = "";
-                var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
+                var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/i;
                 var p2 = /^ *#/;
-                var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
-                var p4 = /## +(RDF(\/|-)XML) +(Start|End|Stop) *##/;
-                var p5 = /## +(JSON) +(Start|End|Stop) *##/;
-                var p6 = /## +(CSV) +(Start|End|Stop) *##/;
+                var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/i;
+                var p4 = /## +(RDF(\/|-)XML) +(Start|End|Stop) *##/i;
+                var p5 = /## +(JSON) +(Start|End|Stop) *##/i;
+                var p6 = /## +(CSV) +(Start|End|Stop) *##/i;
 
                 s_split.forEach(function (item, i, arr) {
                     if (item.length > 0 && (!p2.test(item) || p1.test(item) || p3.test(item) || p4.test(item) || p5.test(item) || p6.test(item)))
@@ -631,6 +631,9 @@
 
     async function add_super_links(sender, data)
     {
+      if (!data)
+        return;
+
       var settings = new SettingsProxy();
       var highlight_mode = await settings.getValue('ext.osds.super-links-highlight');
 

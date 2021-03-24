@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -22,6 +22,12 @@ var POSH = (function () {
 
   'use strict';
 
+  function fixedEncodeURIComponent (str) {
+    return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
+      return '%' + c.charCodeAt(0).toString(16);
+    });
+  }
+
 
   function POSH(uriStr) {
     this.terms = {};
@@ -36,8 +42,8 @@ var POSH = (function () {
         "wdrs": "http://www.w3.org/2007/05/powder-s#",
 
 	"opltw": "http://www.openlinksw.com/schemas/twitter#",
-	"schema":"http://schema.org/",
-	"schemavideo":"http://schema.org/VideoObject#",
+	"schema":"https://schema.org/",
+	"schemavideo":"https://schema.org/VideoObject#",
         "formats": "http://www.w3.org/ns/formats/",
 	"geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
 
@@ -148,7 +154,7 @@ var POSH = (function () {
           var arr = n.split(":");
           var pref_link = self.namespace.ns_list[arr[0]];
           if (!pref_link) //unknown prefix
-             return "xhv:"+encodeURIComponent(n);
+             return "xhv:"+fixedEncodeURIComponent(n);
           else {
              var p = self.prefixes[arr[0]];
              if (!p)
@@ -160,7 +166,7 @@ var POSH = (function () {
           var s = self.terms[n];
           if (s)
             return s;
-          return "xhv:"+encodeURIComponent(n);
+          return "xhv:"+fixedEncodeURIComponent(n);
         }
       }
 
@@ -200,7 +206,7 @@ var POSH = (function () {
               var p = self.prefixes[arr[0]];
               if (!p)
                 self.prefixes[arr[0]] = pref_link;
-              triples += arr[0]+":"+encodeURIComponent(o.substring(arr[0].length+1));
+              triples += arr[0]+":"+fixedEncodeURIComponent(o.substring(arr[0].length+1));
             }
           }
           else

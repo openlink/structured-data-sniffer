@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -19,9 +19,10 @@
  */
   
 
-  TTL_Gen = function(_docURI) {
+  TTL_Gen = function(_docURI, for_query) {
     this.ns = new Namespace();
     this.docURI = _docURI;
+    this.for_query = for_query;
     this.prefixes = {};
     
     this.escape    = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
@@ -54,11 +55,21 @@
             str += subj +" "+props[j]+" .\n";
         }
       }
-      var ret = "";
-      $.each(this.prefixes, function(key, val){
-        ret += "@prefix "+key+": <"+val+"> .\n";
-      });
-      return ret+str;
+
+      if (this.for_query) {
+        var pref = "";
+        $.each(this.prefixes, function(key, val){
+          pref += "prefix "+key+": <"+val+"> \n";
+        });
+
+        return {pref, ttl: str};
+      } else {
+        var ret = "";
+        $.each(this.prefixes, function(key, val){
+          ret += "@prefix "+key+": <"+val+"> .\n";
+        });
+        return ret+str;
+      }
     },
 
 

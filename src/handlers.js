@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -161,7 +161,7 @@ class Handle_Microdata {
 
 
 class Handle_Turtle {
-  constructor(start_id, make_ttl) 
+  constructor(start_id, make_ttl, for_query) 
   {
     this.baseURI = null;
     this.start_id = 0;
@@ -176,6 +176,7 @@ class Handle_Turtle {
     this._make_ttl = false;
     if (make_ttl)
       this._make_ttl = make_ttl;
+    this.for_query = for_query;
   }
 
 
@@ -251,7 +252,7 @@ class Handle_Turtle {
               var output;
 
               if (self._make_ttl) {
-                var ttl_data =  new TTL_Gen(docURL).load(triples, self.start_id);
+                var ttl_data =  new TTL_Gen(docURL, self.for_query).load(triples, self.start_id);
                 output = ttl_data==null?'':ttl_data;
               }
               else
@@ -302,6 +303,12 @@ class Handle_JSONLD {
       try {
         var jsonld_data = JSON.parse(textData[i]);
         if (jsonld_data != null) {
+          try {
+            var txt = JSON.stringify(jsonld_data, null, 2);
+            if (txt)
+              textData[i] = txt;
+          } catch (e) {}
+
           var expanded = await jsonld.expand(jsonld_data, {base:docURL});
           var nquads = await jsonld.toRDF(expanded, {base:docURL, format: 'application/nquads', includeRelativeUrls: true});
 
@@ -318,7 +325,7 @@ class Handle_JSONLD {
           }
         }
       } catch (ex) {
-        if (textData.replace(/\s/g, '').length > 1) {
+        if (textData[i].replace(/\s/g, '').length > 1) {
           if (self.skip_error)
             self.skipped_error.push(""+ex.toString());
           else 
@@ -915,7 +922,7 @@ class Handle_CSV {
           var d = res.data[i];
           var s = '[\n';
           for(var j=0; j < d.length; j++) {
-            var val = d[j];
+            var val = ''+d[j];
             var qv = '"';
 
             if (val.indexOf("\n")!=-1 || val.indexOf("\r")!=-1) {

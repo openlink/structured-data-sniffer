@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -20,7 +20,8 @@
 
 class Settings {
   constructor(data) {
-    this.def_import_url = "https://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
+//    this.def_import_url = "https://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
+    this.def_import_url = "https://linkeddata.uriburner.com/describe/?url={url}";
     this.def_import_srv = "describe-ssl";
 //  this.def_rww_edit_url = "http://linkeddata.uriburner.com/rdf-editor/#/editor?newDocument=true&statement:entity={url}&view=statements";
     this.def_rww_edit_url = "https://linkeddata.uriburner.com/rdf-editor/#/editor?data={data}&view=statements";
@@ -51,116 +52,7 @@ class Settings {
     this.def_super_links_timeout = 30000000;
 
     this.def_super_links_query = ''
-/***
-  +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
-  +'PREFIX schema: <http://schema.org/> \n'
-  +' \n'
-  +'SELECT DISTINCT  sample(?extract) as ?sample ?extract ?extractLabel ?associationLabel ?entityTypeLabel ?entityType ?p as ?association ?providerLabel ?provider \n'
-  +'WHERE {  \n'
-  +'       GRAPH <{url}>  \n'
-  +'         {  \n'
-  +'           # ?source ( skos:related|schema:about|schema:mentions ) ?extract .  \n'
-  +'           ?source ?p ?extract.  \n'
-  +'           # filter (?source = <https://linkeddata.uriburner.com/about/id/entity/https/www.microstrategy.com/us/product/analytics/hypercards>)  \n'
-  +'           filter (?p in ( skos:related, schema:about, schema:mentions)) \n'
-  +'           # ?source ( skos:related|schema:about) ?extract .  \n'
-  +'           ?extract a ?entityType ;  \n'
-  +'           # ?extract a oplattr:NamedEntity ;  \n'
-  +'  \n'
-  +'           <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ;  \n'
-  +'           (rdfs:label | schema:name | foaf:name | schema:headline) ?extractLabel .  \n'
-  +'  \n'
-  +'           OPTIONAL {?provider foaf:name|schema:name ?providerLabel} .  \n'
-  +'  \n'
-  +'           # FILTER (?p in (skos:related, schema:about, schema:mentions))  \n'
-  +'           FILTER (! contains(str(?entityType),"Tag"))  \n'
-  +'         }  \n'
-  +'  \n'
-  +'         ## Subquery for obtaining relation (statement predicate) labels  \n'
-  +'  \n'
-  +'         { SELECT ?p ?associationLabel  \n'
-  +'           WHERE { \n'
-  +'                  GRAPH ?g1 \n'
-  +'                    { \n'
-  +'                       ?p rdfs:label|schema:name ?associationLabel . \n'
-  +'                       FILTER (?p in (skos:related, schema:about, schema:mentions))  \n'
-  +'                       FILTER (LANG(?associationLabel) = "{lang}")  \n'
-  +'                    }  \n'
-  +'                 }  \n'
-  +'         }  \n'
-  +'  \n'
-  +'         ## Subquery for obtaining type-oriented relation (statement predicate) labels  \n'
-  +'  \n'
-  +'         { SELECT ?entityType ?entityTypeLabel  \n'
-  +'           WHERE { \n' 
-  +'                  GRAPH ?g2 \n'
-  +'                    { \n'
-  +'                      ?entityType rdfs:label|schema:name ?entityTypeLabel .  \n'
-  +'                      FILTER (LANG(?entityTypeLabel) = "{lang}")  \n'
-  +'                    }  \n'
-  +'                 }  \n'
-  +'           }  \n'
-  +' }  \n'
-  +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider  \n'
-  +'ORDER BY DESC (2) \n';
-***/
-/***
-  +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
-  +'PREFIX schema: <http://schema.org/> \n'
-  +' \n'
-  +'SELECT DISTINCT  sample(?extract) as ?sample ?extract ?extractLabel ?associationLabel ?entityTypeLabel ?entityType ?p as ?association ?providerLabel ?provider \n'
-  +'WHERE {  \n'
-  +'       GRAPH <{url}>  \n'
-  +'         {  \n'
-  +'           # ?source ( skos:related|schema:about|schema:mentions ) ?extract .  \n'
-  +'           ?source ?p ?extract.  \n'
-  +'           # filter (?source = <https://linkeddata.uriburner.com/about/id/entity/https/www.microstrategy.com/us/product/analytics/hypercards>)  \n'
-  +'           filter (?p in ( skos:related, schema:about, schema:mentions)) \n'
-  +'           # ?source ( skos:related|schema:about) ?extract .  \n'
-  +'           ?extract a ?entityType ;  \n'
-  +'           # ?extract a oplattr:NamedEntity ;  \n'
-  +'  \n'
-  +'           <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ;  \n'
-  +'           (rdfs:label | schema:name | foaf:name | schema:headline) ?extractLabel .  \n'
-  +'  \n'
-  +'           OPTIONAL {?provider foaf:name|schema:name ?providerLabel} .  \n'
-  +'  \n'
-  +'           # FILTER (?p in (skos:related, schema:about, schema:mentions))  \n'
-  +'           FILTER (! contains(str(?entityType),"Tag"))  \n'
-  +'         }  \n'
-  +'  \n'
-  +'         ## Subquery for obtaining relation (statement predicate) labels  \n'
-  +'  \n'
-  +'         { SELECT ?p ?associationLabel  \n'
-  +'           WHERE { \n'
-  +'	              quad map virtrdf:DefaultQuadMap { \n'
-  +'                  GRAPH ?g1  \n'
-  +'                    {  \n'
-  +'                       ?p rdfs:label|schema:name ?associationLabel .  \n'
-  +'                       FILTER (?p in (skos:related, schema:about, schema:mentions))   \n'
-  +'                       FILTER (LANG(?associationLabel) = "{lang}")   \n'
-  +'                    }   \n'
-  +'                  }   \n'
-  +'                 }  \n'
-  +'         }  \n'
-  +'  \n'
-  +'         ## Subquery for obtaining type-oriented relation (statement predicate) labels  \n'
-  +'  \n'
-  +'         { SELECT ?entityType ?entityTypeLabel  \n'
-  +'           WHERE { \n' 
-  +'	              quad map virtrdf:DefaultQuadMap { \n'
-  +'                  GRAPH ?g2  \n'
-  +'                    {  \n'
-  +'                      ?entityType rdfs:label|schema:name ?entityTypeLabel .   \n'
-  +'                      FILTER (LANG(?entityTypeLabel) = "{lang}")   \n'
-  +'                    }   \n'
-  +'                  }  \n'
-  +'                 }  \n'
-  +'         }  \n'
-  +' }  \n'
-  +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider  \n'
-  +'ORDER BY DESC (2) \n';
-***/
+  +'DEFINE get:soft "soft" \n'
   +'prefix oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
   +'prefix schema: <http://schema.org/>  \n'
   +'select distinct  \n'

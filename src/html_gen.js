@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -29,7 +29,7 @@
     this.subst_list = {
       "http://www.w3.org/1999/02/22-rdf-syntax-ns#label": "Label",
             "http://www.w3.org/2000/01/rdf-schema#label": "Label",
-                                "http://schema.org/name": "Name",
+                                "https://schema.org/name": "Name",
           "http://www.w3.org/2004/02/skos/core#altLabel": "AltLabel",
          "http://www.w3.org/2004/02/skos/core#prefLabel": "PrefLabel",
     };

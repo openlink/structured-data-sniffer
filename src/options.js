@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -24,6 +24,7 @@ var yasqe_srv = null;
 
 $(function(){
   // Tabs
+  document.getElementById("c_year").innerText = new Date().getFullYear();
 
   gPref = new Settings();
 

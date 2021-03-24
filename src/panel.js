@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -226,6 +226,8 @@ async function loadPopup()
 
 $(document).ready(function ()
 { 
+  document.getElementById("c_year").innerText = new Date().getFullYear();
+
   loadPopup()
 });
 
@@ -986,9 +988,9 @@ async function request_superlinks(doc_url)
       return await exec_super_links_query(doc_url, links_query, links_timeout);
 
     } else {
-      if (rc.status==401 || rc.status==403) {
+      if (rc.status==401 || rc.status==403 || rc.status==404) {
         Browser.openTab(REDIR_URL);
-        alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
+        alert("Sponge error:"+rc.status+"\nLogin to https://linkeddata.uriburner.com and call SupeLinks again");
         return;
       } else {
         alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
@@ -1049,15 +1051,29 @@ async function exec_super_links_query(doc_url, links_query, links_timeout)
   try  {
     var rc = await fetchWithTimeout(get_url, options, links_timeout);
     if (rc.ok && rc.status == 200) {
+      var data;
       try {
-        var data = await rc.text();
-        return data;
-
+        data = await rc.text();
       } catch(e) {
         console.log(e);
       } finally {
         $(".super_links_msg").css("display","none");
       }
+
+      if (data) {
+        try {
+          var val = JSON.parse(data);
+          var links = val.results.bindings;
+          if (links.length == 0) {
+            alert("Empty SuperLinks resultSet was received from server");
+            return null;
+          }
+        } catch(e) {
+          console.log(e);
+        }
+      }
+      
+      return data;
 
     } else {
       $(".super_links_msg").css("display","none");
@@ -1228,6 +1244,16 @@ function Download_exec_update_state()
   else
     filename = "rdf_data.rdf";
 
+  if (cmd ==="sparqlupload") {
+    $('#save-filename').hide();    
+    $('#save-fmt-item').hide();    
+    $('#save-sparql-item').show();    
+  } else {
+    $('#save-filename').show();    
+    $('#save-fmt-item').show();    
+    $('#save-sparql-item').hide();    
+  }
+
   var oidc_url = document.getElementById('oidc-url');
   oidc_url.value = (gOidc.storage || '') + (filename || '');
 
@@ -1310,7 +1336,7 @@ async function Download_exec()
 
     var dlg = $( "#save-confirm" ).dialog({
       resizable: true,
-      width:500,
+      width:520,
       height:300,
       modal: true,
       buttons: {
@@ -1336,8 +1362,11 @@ async function Download_exec()
 
 async function save_data(action, fname, fmt, callback)
 {
+  var sparqlendpoint = $('#save-sparql-endpoint').val().trim();
+  var sparql_graph = $('#save-sparql-graph').val().trim();
 
-  function out_from(data, error, skipped_error)
+
+  function out_from(for_query, data, error, skipped_error)
   {
     var retdata = {txt:"", error:""};
     var outdata = [];
@@ -1350,16 +1379,20 @@ async function save_data(action, fname, fmt, callback)
         outdata.push(data);
     }
 
-    if (error)
+    if (error) {
       errors.push("\n"+error);
+    }
 
     if (skipped_error && skipped_error.length>0) {
-      errors.push("\n");
       errors = errors.concat(skipped_error);
     }
 
-    for(var i=0; i < outdata.length; i++)
-      retdata.txt += outdata[i]+"\n\n";
+    if (for_query) {
+      retdata.txt = outdata;
+    } else {
+      for(var i=0; i < outdata.length; i++)
+        retdata.txt += outdata[i]+"\n\n";
+    }
 
     for(var i=0; i < errors.length; i++)
       retdata.error += errors[i]+"\n\n";
@@ -1367,72 +1400,92 @@ async function save_data(action, fname, fmt, callback)
     return retdata;
   }
 
-  function exec_action(action, retdata)
+  async function exec_action(action, rc)
   {
-    if (action==="export-rww") {
-      if (retdata.error.length > 0) {
-        showInfo(retdata.error);
-      } else {
-        if (callback)
-          callback(retdata.txt);
+    if (action==="sparqlupload") {
+     retdata = out_from(true, rc.data, rc.error, rc.skipped_error);
+     await upload_to_sparql(retdata, sparqlendpoint, sparql_graph);
+    } else {
+
+      retdata = out_from(false, rc.data, rc.error, rc.skipped_error);
+
+      if (action==="export-rww") {
+        if (retdata.error.length > 0) {
+          showInfo(retdata.error);
+        } else {
+          if (callback)
+            callback(retdata.txt);
+        }
       }
-    }
-    else if (action==="filesave") {
-      blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
-      saveAs(blob, fname);
-    }
-    else if (action==="fileupload") {
-     var contentType = "text/plain;charset=utf-8";
+      else if (action==="filesave") {
+        blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, fname);
+      }
+      else if (action==="fileupload") {
+       var contentType = "text/plain;charset=utf-8";
 
-     if (fmt==="jsonld")
-       contentType = "application/ld+json;charset=utf-8";
-     else if (fmt==="json")
-       contentType = "application/json;charset=utf-8";
-     else if (fmt==="rdf")
-       contentType = "application/rdf+xml;charset=utf-8";
-     else
-       contentType = "text/turtle;charset=utf-8";
+       if (fmt==="jsonld")
+         contentType = "application/ld+json;charset=utf-8";
+       else if (fmt==="json")
+         contentType = "application/json;charset=utf-8";
+       else if (fmt==="rdf")
+         contentType = "application/rdf+xml;charset=utf-8";
+       else
+         contentType = "text/turtle;charset=utf-8";
 
-      putResource(gOidc.fetch, fname, retdata.txt, contentType, null)
-        .then(response => {
-          showInfo('Saved');
-        })
-        .catch(error => {
-          console.error('Error saving document', error)
+        putResource(gOidc.fetch, fname, retdata.txt, contentType, null)
+          .then(response => {
+            showInfo('Saved');
+          })
+          .catch(error => {
+            console.error('Error saving document', error)
 
-          let message
+            let message
 
-          switch (error.status) {
-            case 0:
-            case 405:
-              message = 'this location is not writable'
-              break
-            case 401:
-            case 403:
-              message = 'you do not have permission to write here'
-              break
-            case 406:
-              message = 'enter a name for your resource'
-              break
-            default:
-              message = error.message
-              break
-          }
-          showInfo('Unable to save:' +message);
-        })
-    }
-    else {
-      selectTab("#src");
-      src_view.setValue(retdata.txt + retdata.error+"\n");
+            switch (error.status) {
+              case 0:
+              case 405:
+                message = 'this location is not writable'
+                break
+              case 401:
+              case 403:
+                message = 'you do not have permission to write here'
+                break
+              case 406:
+                message = 'enter a name for your resource'
+                break
+              default:
+                message = error.message
+                break
+            }
+            showInfo('Unable to save:' +message);
+          })
+      }
+      else {
+        selectTab("#src");
+        src_view.setValue(retdata.txt + retdata.error+"\n");
+      }
     }
   }
 
+  
+  
   try{
     var data = [];
     var quad_data = [];
     var blob = null;
     var src_fmt = null;
 
+    if (action === "sparqlupload") {
+      fmt = "ttl";
+
+      if (!sparqlendpoint || sparqlendpoint.length < 1) {
+        showInfo('SPARQL endpoint is empty');
+        return;
+      }
+    }
+    
+    
     if (selectedTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.jsonld_nano.json_text!==null)) {
       src_fmt = "jsonld";
 
@@ -1495,7 +1548,7 @@ async function save_data(action, fname, fmt, callback)
       var handler = new Handle_Microdata(true);
       var ret = handler.parse(JSON.parse(data[0]), gData.baseURL);
       if (ret.errors.length > 0) {
-        exec_action(action, out_from(error));
+        exec_action(action, {data:null, error:ret.errors, skipped_error:null});
         return;
       }
       if (ret.data==null)
@@ -1504,17 +1557,17 @@ async function save_data(action, fname, fmt, callback)
       var ttl_data = ret.data;
 
       if (fmt==="ttl") {
-        exec_action(action, out_from(ttl_data));
+        exec_action(action, {data:ttl_data, error:null, skipped_errors:null});
       }
       else if (fmt==="jsonld") { // json
         var conv = new Convert_Turtle();
         var text_data = await conv.to_jsonld([ttl_data], null, gData.baseURL);
-        exec_action(action, out_from(text_data, null, conv.skipped_error)); 
+        exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error}); 
       }
       else {
         var conv = new Convert_Turtle();
         var text_data = await conv.to_rdf([ttl_data], null, gData.baseURL);
-        exec_action(action, out_from(text_data, null, conv.skipped_error)); 
+        exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error}); 
       }
     }
     else if (selectedTab==="#rdfa" && data.length > 0)
@@ -1522,23 +1575,23 @@ async function save_data(action, fname, fmt, callback)
       var handler = new Convert_Turtle();
       var ttl_data = await handler.fix_ttl(data, gData.baseURL);
       if (handler.skipped_error.length > 0) {
-        exec_action(action, out_from(null, error, handler.skipped_error));
+        exec_action(action, {data:null, error, skipped_error:handler.skipped_error});
         return;
       }
       if (ttl_data && ttl_data.length > 0) 
       {
           if (fmt==="ttl") {
-            exec_action(action, out_from(ttl_data));
+            exec_action(action, {data:ttl_data, error:null, skipped_error});
           }
           else if (fmt==="jsonld") { // json
             var conv = new Convert_Turtle();
             var text_data = await conv.to_jsonld(ttl_data, null, gData.baseURL);
-            exec_action(action, out_from(text_data, null, conv.skipped_error));
+            exec_action(action, {data: text_data, error:null, skipped_error:conv.skipped_error});
           }
           else {
             var conv = new Convert_Turtle();
             var text_data = await conv.to_rdf(ttl_data, null, gData.baseURL);
-            exec_action(action, out_from(text_data, null, conv.skipped_error));
+            exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
           }
       }
     }
@@ -1548,57 +1601,123 @@ async function save_data(action, fname, fmt, callback)
         var conv = new Convert_Turtle();
         if (fmt==="jsonld") {
           var text_data = await conv.to_jsonld(data, quad_data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         } else if (fmt==="rdf") {
           var text_data = await conv.to_rdf(data, quad_data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         }
       }
       else if (src_fmt==="jsonld"){
         var conv = new Convert_JSONLD();
         if (fmt==="ttl"){
           var text_data = await conv.to_ttl(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          exec_action(action, {data: text_data, error:null, skipped_error:conv.skipped_error});
         } else if (fmt==="rdf"){
           var text_data = await conv.to_rdf(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         }
       }
       else if (src_fmt==="json"){
         var conv = new Convert_JSON();
         if (fmt==="ttl"){
           var text_data = await conv.to_ttl(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         } else if (fmt==="rdf"){
           var text_data = await conv.to_rdf(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         } else if (fmt==="jsonld"){
           var text_data = await conv.to_jsonld(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         }
       }
       else if (src_fmt==="rdf"){
         var conv = new Convert_RDF_XML();
         if (fmt==="ttl") {
           var text_data = await conv.to_ttl(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
 
         } else if (fmt==="jsonld"){
           var text_data = await conv.to_jsonld(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         }
       }
     } else {
       data = data.concat(quad_data);
-      exec_action(action, out_from(data));
+      exec_action(action, {data, error:null, skipped_error:null});
     }
 
   } catch(ex) {
     showInfo(ex);
   }
-
-
 }
+
+
+async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
+{
+  if (data.error.length > 0) {
+     showInfo(data.error);
+     return;
+  }
+
+  var handler = new Convert_Turtle();
+  var ttl_data = await handler.prepare_query(data.txt, gData.baseURL);
+
+  for(var i=0; i < ttl_data.length; i++) {
+
+    var contentType = "application/sparql-update;utf-8";
+
+    var rc;
+    var query = ttl_data[i].pref+'\n';
+
+    query += sparql_graph.length > 1
+              ? 'INSERT INTO GRAPH <' + sparql_graph + '> \n{\n' + ttl_data[i].ttl + '\n }'
+              : 'INSERT DATA { '+ttl_data[i].ttl+' }';
+
+    var options = {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/sparql-update;utf-8'
+      },
+      credentials: 'include',
+      body: query
+    }
+
+    try {
+      rc = await gOidc.fetch(sparqlendpoint, options);
+      if (!rc.ok) {
+        var message;
+        switch(rc.status) {
+          case 0:
+          case 405:
+            message = 'this location is not writable'
+            break
+          case 401:
+          case 403:
+            message = 'you do not have permission to write here'
+            break
+          case 406:
+            message = 'enter a name for your resource'
+            break
+          default:
+            message = error.message
+            break
+        }
+        showInfo('Unable to save:' +message);
+        return;
+      }
+    } catch (e) {
+      console.log(e);
+      showInfo('Unable to save:' +e.toString());
+      return;
+    }
+
+  }
+  
+  showInfo('Saved');
+}
+
+
+
 
 
 

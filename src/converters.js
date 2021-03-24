@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -26,6 +26,19 @@ class Convert_Turtle{
     this.baseURI = null;
     this.skipped_error = [];
   }
+
+  async prepare_query(ttlData, baseURL)
+  {
+    var self = this;
+    var handler = new Handle_Turtle(0, true, true);
+    var ret = await handler.parse(ttlData, baseURL);
+
+    if (ret.errors.length>0)
+      self.skipped_error = self.skipped_error.concat(ret.errors);
+
+    return ret.data;
+  }
+
 
 
   async fix_ttl(ttlData, baseURL)

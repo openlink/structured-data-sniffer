@@ -2,7 +2,7 @@
 <!--
     This file is part of the OpenLink Structured Data Sniffer
 
-    Copyright (C) 2015-2020 OpenLink Software
+    Copyright (C) 2015-2021 OpenLink Software
 
     This project is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -97,6 +97,7 @@
               <OPTION id="view" selected>View Raw Data</OPTION>
               <OPTION id="filesave">Download Raw Data</OPTION>
               <OPTION id="fileupload">Upload Raw Data</OPTION>
+              <OPTION id="sparqlupload">Upload to SPARQL endpoint</OPTION>
             </SELECT>
           </td>
          </tr>
@@ -106,7 +107,7 @@
           <td> <input id="save-filename" style="WIDTH: 300px"> </td>
          </tr>
 
-         <tr>
+         <tr id="save-fmt-item">
           <td>Format:</td>
           <td>
             <SELECT id="save-fmt" style="WIDTH: 100px" >
@@ -119,6 +120,16 @@
          </tr>
         </table>
 
+        <table id="save-sparql-item" style="font-size: 14px;">
+         <tr>
+          <td> Save&nbsp;To&nbsp;SPARQL: </td>
+          <td> <input id="save-sparql-endpoint" style="WIDTH: 360px"> </td>
+         </tr>
+         <tr>
+          <td> Graph&nbsp;Name: </td>
+          <td> <input id="save-sparql-graph" style="WIDTH: 360px"> </td>
+         </tr>
+        </table>
         <table id="oidc-login" style="font-size: 14px;">
          <tr >
           <td> <button id="oidc-login-btn">Login</button> </td>
@@ -128,7 +139,6 @@
           <td> Save&nbsp;To&nbsp;URL: </td>
           <td> <input id="oidc-url" style="WIDTH: 380px"> </td>
          </tr>
-
         </table>
       </div>
 
@@ -332,7 +342,7 @@
         </div>
 
         <div>
-          Copyright&nbsp;&copy;&nbsp;2015-2019 
+          Copyright&nbsp;&copy;&nbsp;2015-<span id="c_year">2021</span> 
           <a href="http://www.openlinksw.com"> OpenLink&nbsp;Software </a>
         </div>
       </div>
