@@ -696,7 +696,7 @@ async function save_data(action, fname, fmt, callback)
   }
 
 
-  function exec_action(action, rc)
+  async function exec_action(action, rc)
   {
     if (action==="sparqlupload") {
      retdata = out_from(true, rc.data, rc.error, rc.skipped_error);
