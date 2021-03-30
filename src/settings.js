@@ -28,26 +28,32 @@ class Settings {
 
     this.def_sparql_url = "https://linkeddata.uriburner.com/sparql/?query={query}&format=text%2Fx-html%2Btr";
     this.def_sparql_cmd = "select";
-
     this.def_sparql_qry_spo = "DEFINE get:soft \"soft\" \n"+
-                            "SELECT DISTINCT ?s AS ?subject  ?p AS ?predicate ?o AS ?object \n"+
-                            "FROM <{url}> \n"+
-                            "WHERE { ?s ?p ?o \n"+
-                            "       FILTER (CONTAINS(str(?p),'mainEntity') \n"+
-                            "               OR CONTAINS(str(?p),'primaryTopic')\n"+
-                            "               OR CONTAINS(str(?p),'topic')\n"+
-                            "               OR CONTAINS(str(?p),'mentions')) \n"+
-                            "      } LIMIT 100\n";
-
+                              "SELECT (SAMPLE(?s) AS ?SubjectID) \n"+
+                              "       (COUNT(*) AS ?count) \n"+
+                              "       (?o AS ?SubjectTypeID) \n"+
+                              "FROM <{url}> \n"+
+                              "WHERE { \n"+
+                              "        ?s a ?o . \n"+
+                              "        FILTER (CONTAINS(STR(?o),'schema')) \n"+
+                              "      } \n"+
+                              "GROUP BY ?o \n"+
+                              "ORDER BY DESC (?count) \n"+
+                              "LIMIT 50 ";
+    
     this.def_sparql_qry_eav = "DEFINE get:soft \"soft\" \n"+
-                            "SELECT DISTINCT ?s AS ?entity  ?p AS ?attribute ?o AS ?value \n"+
-                            "FROM <{url}> \n"+
-                            "WHERE { ?s ?p ?o \n"+
-                            "       FILTER (CONTAINS(str(?p),'mainEntity') \n"+
-                            "               OR CONTAINS(str(?p),'primaryTopic')\n"+
-                            "               OR CONTAINS(str(?p),'topic')\n"+
-                            "               OR CONTAINS(str(?p),'mentions')) \n"+
-                            "      } LIMIT 100\n";
+                              "SELECT (SAMPLE(?s) AS ?EntityID) \n"+
+                              "       (COUNT(*) AS ?count) \n"+
+                              "       (?o AS ?EntityTypeID) \n"+
+                              "FROM <{url}> \n"+
+                              "WHERE { \n"+
+                              "        ?s a ?o . \n"+
+                              "        FILTER (CONTAINS(STR(?o),'schema')) \n"+
+                              "      } \n"+
+                              "GROUP BY ?o \n"+
+                              "ORDER BY DESC (?count) \n"+
+                              "LIMIT 50 ";
+
 
     this.def_super_links_timeout = 30000000;
 
