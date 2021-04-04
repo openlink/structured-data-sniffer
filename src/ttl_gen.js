@@ -61,6 +61,7 @@
         $.each(this.prefixes, function(key, val){
           pref += "prefix "+key+": <"+val+"> \n";
         });
+        pref += "prefix : <#> \n";
 
         return {pref, ttl: str};
       } else {
@@ -68,6 +69,7 @@
         $.each(this.prefixes, function(key, val){
           ret += "@prefix "+key+": <"+val+"> .\n";
         });
+        ret += "@prefix : <#> .\n";
         return ret+str;
       }
     },
@@ -125,7 +127,8 @@
          return this.VBNode2BNode(value);
        }
        else if (this.is_BNode(value)) {
-         return this.pre(value);
+         //BNode as is => return this.pre(value);
+         return this.pre(value.substring(1));
        }
        else {
          var pref = this.ns.has_known_ns(value);
@@ -200,14 +203,27 @@
     },
 
     is_BNode : function (str) {
-        return (str.lastIndexOf("_:", 0) === 0);
+        return str.startsWith("_:");
     },
     is_VBNode : function (str) {
-        return (str.lastIndexOf("nodeID://", 0) === 0 || str.lastIndexOf("nodeid://", 0) === 0);
+        return (str.startsWith("nodeID://") || str.startsWith("nodeid://"));
+    },
+
+    VBNode2BNode : function (str) {
+        //return "_:nodeID"+this.pre(str.substr(9));
+        return ":nodeID"+this.pre(str.substr(9));
+    },
+
+/*** BNode as is
+    is_BNode : function (str) {
+        return str.startsWith("_:");
+    },
+    is_VBNode : function (str) {
+        return (str.startsWith("nodeID://") || str.startsWith("nodeid://"));
     },
 
     VBNode2BNode : function (str) {
         return "_:nodeID"+this.pre(str.substr(9));
     },
-
+****/
   }

@@ -638,6 +638,7 @@ class MicrodataJSON_Converter {
     var i_props = null;
     var props = {};
     var id_ns = null;
+    var id_type = this.baseURI.toString();
 
     retVal.data = out;
     retVal.data_add = out_add;
@@ -645,6 +646,7 @@ class MicrodataJSON_Converter {
 
     //try get current NS
     if (item.type!==undefined) {
+      id_type = item.type;
       var ns_list = new Namespace();
       if ($.isArray(item.type)) {
         for(var i=0; i<item.type.length; i++) {
@@ -652,8 +654,11 @@ class MicrodataJSON_Converter {
           if (id_ns)
             break;
         }
+        if (!id_ns && item.type.length > 0)
+          id_type = String(item.type[0]);
       } else {
         id_ns = ns_list.has_known_ns(String(item.type));
+        id_type = String(item.type);
       }
     }
 
@@ -743,10 +748,16 @@ class MicrodataJSON_Converter {
       $.each(i_props, function(key, val)
       {
         if (key.indexOf(':') === -1) {
-          if (id_ns)
+          if (id_ns) {
             key = id_ns.link+key;
-          else
-            key = ":"+key;
+          }
+          else {
+            var last = id_type[id_type.length-1];
+            if (last==='#' || last==='/')
+              key = id_type + key;
+            else 
+              key = id_type + '#' + key;
+          }
         }
 
        var v = [];
@@ -907,13 +918,13 @@ class Handle_CSV {
 
         for (var i=0; i < col.length; i++) {
           col[i] = encodeURIComponent(col[i]).replace(rep1,'%28').replace(rep2,'%29');
-          ttl += '<#'+col[i]+'> rdf:domain : .\n';
+          ttl += ':'+col[i]+' rdf:domain : .\n';
         }
 
         ttl += '\n';
 
         for (var i=0; i < col.length; i++) {
-          ttl += '<#'+col[i]+'> rdf:range xsd:'+col_type[i]+' .\n';
+          ttl += ':'+col[i]+' rdf:range xsd:'+col_type[i]+' .\n';
         }
 
         ttl += '\n';
@@ -932,7 +943,7 @@ class Handle_CSV {
               val = val.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
             }
 
-            s += '<#'+col[j]+'> '+qv+val+qv+'^^xsd:'+col_type[j]+' ;\n' ;
+            s += ':'+col[j]+' '+qv+val+qv+'^^xsd:'+col_type[j]+' ;\n' ;
           }
           ttl += s +'].\n\n';
         }

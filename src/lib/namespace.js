@@ -78,6 +78,7 @@ Namespace = function() {
         "fn": "http://www.ontologydesignpatterns.org/ont/framenet/tbox/",
         "xhtml": "http://www.w3.org/1999/xhtml#",
         "schema": "http://schema.org/",
+//        "schema": "https://schema.org/",
         "aiiso": "http://purl.org/vocab/aiiso/schema#",
         "http": "http://www.w3.org/2011/http#",
         "rr": "http://www.w3.org/ns/r2rml#",

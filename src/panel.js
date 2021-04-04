@@ -235,10 +235,10 @@ $(document).ready(function ()
 // Trap any link clicks and open them in the current tab.
 $(document).on('click', 'a', function(e) {
   function check_URI(uri) {
-    if (doc_URL[doc_URL.length-1]==="#")
-      return uri.lastIndexOf(doc_URL,0) === 0;
+    if (gData.baseURL[gData.baseURL.length-1]==="#")
+      return uri.startsWith(gData.baseURL);
     else
-      return uri.lastIndexOf(doc_URL+'#',0) === 0;
+      return uri.startsWith(gData.baseURL+'#');
   }
 
 
@@ -253,7 +253,7 @@ $(document).on('click', 'a', function(e) {
   url.hash = '';
   url = url.toString();
 
-  if (href.lastIndexOf(url+"#sc", 0) === 0) {
+  if (href.startsWith(url+"#sc")) {
     return true;
   }
   else if (check_URI(href) && hashName) {
@@ -1581,7 +1581,7 @@ async function save_data(action, fname, fmt, callback)
       if (ttl_data && ttl_data.length > 0) 
       {
           if (fmt==="ttl") {
-            exec_action(action, {data:ttl_data, error:null, skipped_error});
+            exec_action(action, {data:ttl_data, error:null, skipped_error:null});
           }
           else if (fmt==="jsonld") { // json
             var conv = new Convert_Turtle();
@@ -1654,6 +1654,8 @@ async function save_data(action, fname, fmt, callback)
 
 async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
 {
+  const _fetch = gOidc.fetch || fetch;;
+
   if (data.error.length > 0) {
      showInfo(data.error);
      return;
@@ -1683,23 +1685,23 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
     }
 
     try {
-      rc = await gOidc.fetch(sparqlendpoint, options);
+      rc = await _fetch(sparqlendpoint, options);
       if (!rc.ok) {
         var message;
         switch(rc.status) {
           case 0:
           case 405:
-            message = 'this location is not writable'
+            message = ''+rc.status +' this location is not writable'
             break
           case 401:
           case 403:
-            message = 'you do not have permission to write here'
+            message = ''+rc.status +' you do not have permission to write here'
             break
           case 406:
-            message = 'enter a name for your resource'
+            message = ''+rc.status +' enter a name for your resource'
             break
           default:
-            message = error.message
+            message = ''+rc.status +' '+rc.statusText;
             break
         }
         showInfo('Unable to save:' +message);

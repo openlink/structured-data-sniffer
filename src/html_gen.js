@@ -65,7 +65,31 @@
         //fill id_list
         for(var i=0; i < n_data.length; i++) 
         {
+          var subj = n_data[i].s;
           id_list[n_data[i].s] = start_id+i+1;
+
+          //replace bNode with IRI
+          if (this.is_BNode(subj))
+            n_data[i].s = this.docURI + "#" + subj.substring(2);
+          else if (this.is_VBNode(subj))
+            n_data[i].s = this.docURI + "#nodeID" + subj.substring(9);
+
+          $.each(n_data[i].props, (key, val) => {
+
+              for(var j=0; j < val.length; j++) {
+                var obj = val[j];
+                if (obj.iri) {
+                  if (this.is_BNode(obj.iri)) {
+                    n_data[i].props[key][j].iri = this.docURI + "#" + obj.iri.substring(2);
+                  }
+                  else if (this.is_VBNode(obj.iri)) {
+                    n_data[i].props[key][j].iri = this.docURI + "#nodeID" + obj.iri.substring(9);
+                  }
+                }
+              }
+          });
+          //end replace bNode with IRI
+        
         }
 
 
@@ -139,7 +163,7 @@
             var iri = obj.iri;
             var entity_id = id_list[iri];
             //nodeID://
-            if (entity_id!==undefined && self.is_BNode(iri)) {
+            if (entity_id!==undefined && (self.is_BNode(iri) || self.is_VBNode(iri))) {
               str += `<tr class='data_row'>
                          <td> ${key_str} </td>
                          <td class='major'>
@@ -230,11 +254,11 @@
 
       if ( s_val.match(/^http(s)?:\/\//) ) 
       {
-        if ( s_val.match(/\.(jpg|png|gif)$/) ) {
+        if ( s_val.match(/\.(jpg|png|gif|svg)$/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
         } 
-        if ( s_val.match(/\.(jpg|png|gif)[?#].*/) ) {
+        if ( s_val.match(/\.(jpg|png|gif|svg)[?#].*/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
         } 
@@ -259,15 +283,21 @@
       return sanitize_str(text);
     },
 
-    is_BNode : function (str) {
-        return (str.lastIndexOf("_:", 0) === 0 || str.lastIndexOf("nodeID://", 0) === 0 || str.lastIndexOf("nodeid://", 0) === 0);
+    is_BNode : function (str) 
+    {
+        return str.startsWith("_:");
+    },
+
+    is_VBNode : function (str) 
+    {
+        return (str.startsWith("nodeID://") || str.startsWith("nodeid://"));
     },
 
     check_URI : function(uri) {
       if (this.docURI[this.docURI.length-1]==="#")
-        return uri.lastIndexOf(this.docURI,0) === 0;
+        return uri.startsWith(this.docURI);
       else
-        return uri.lastIndexOf(this.docURI+'#',0) === 0;
+        return uri.startsWith(this.docURI+'#');
     },
 
     check_subst : function(uri) {

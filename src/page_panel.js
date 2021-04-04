@@ -168,10 +168,10 @@ $(document).ready(function()
 // Trap any link clicks and open them in the current tab.
 $(document).on('click', 'a', function(e) {
   function check_URI(uri) {
-    if (doc_URL[doc_URL.length-1]==="#")
-      return uri.lastIndexOf(doc_URL,0) === 0;
+    if (baseURL[baseURL.length-1]==="#")
+      return uri.startsWith(baseURL);
     else
-      return uri.lastIndexOf(doc_URL+'#',0) === 0;
+      return uri.baseURL(baseURL+'#');
   }
 
 
@@ -854,6 +854,8 @@ async function save_data(action, fname, fmt, callback)
 
 async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
 {
+  const _fetch = gOidc.fetch || fetch;;
+
   if (data.error.length > 0) {
      showInfo(data.error);
      return;
@@ -883,23 +885,23 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
     }
 
     try {
-      rc = await gOidc.fetch(sparqlendpoint, options);
+      rc = await _fetch(sparqlendpoint, options);
       if (!rc.ok) {
         var message;
         switch(rc.status) {
           case 0:
           case 405:
-            message = 'this location is not writable'
+            message = ''+rc.status +' this location is not writable'
             break
           case 401:
           case 403:
-            message = 'you do not have permission to write here'
+            message = ''+rc.status +' you do not have permission to write here'
             break
           case 406:
-            message = 'enter a name for your resource'
+            message = ''+rc.status +' enter a name for your resource'
             break
           default:
-            message = error.message
+            message = ''+rc.status +' '+rc.statusText;
             break
         }
         showInfo('Unable to save:' +message);
