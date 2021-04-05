@@ -567,6 +567,8 @@ function Download_exec_update_state()
 
 async function Download_exec()
 {
+  $('#save-sparql-graph').val(doc_URL);
+
   $('#save-action').change(function() {
     Download_exec_update_state();
   });
