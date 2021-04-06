@@ -656,48 +656,47 @@
 
       $(".super_links_msg").css("display","flex");
 
-      try {
-        var val = JSON.parse(data);
-        g_super_links = val.results.bindings;
-        var list = {};
-        for(var i=0; i < g_super_links.length; i++) {
-          var s = g_super_links[i].extractLabel.value;
-          g_super_links[i]._id = s.toLowerCase();
-          list[s]=0;
-        }
+      setTimeout(() => {
+        try {
+          var val = JSON.parse(data);
+          g_super_links = val.results.bindings;
+          var list = {};
+          for(var i=0; i < g_super_links.length; i++) {
+            var s = g_super_links[i].extractLabel.value;
+            g_super_links[i]._id = s.toLowerCase();
+            list[s]=0;
+          }
 
-        var keys = Object.keys(list); 
-        for(var i=0; i< keys.length; i++) {
-          var s = keys[i];
-          for(var j=0; j < keys.length; j++) {
-            if (j != i && keys[j].indexOf(s) != -1) {
-              list[s] = 1;
-              break;
+          var keys = Object.keys(list); 
+          for(var i=0; i< keys.length; i++) {
+            var s = keys[i];
+            for(var j=0; j < keys.length; j++) {
+              if (j != i && keys[j].indexOf(s) != -1) {
+                list[s] = 1;
+                break;
+              }
             }
           }
-        }
 
-        var labels = [];
-        for(var i=0; i< keys.length; i++) {
-          var s = keys[i];
-          if (list[s] === 0)
-            labels.push(s);
-        }
-        for(var i=0; i< keys.length; i++) {
-          var s = keys[i];
-          if (list[s] !== 0)
-            labels.push(s);
-        }
+          var labels = [];
+          for(var i=0; i< keys.length; i++) {
+            var s = keys[i];
+            if (list[s] === 0)
+              labels.push(s);
+          }
+          for(var i=0; i< keys.length; i++) {
+            var s = keys[i];
+            if (list[s] !== 0)
+              labels.push(s);
+          }
 
-        mark_strings(labels, highlight_mode);
-      } catch(e) {
-        console.log(e);
-      } finally {
-        function close_msg() {
-            $(".super_links_msg").css("display","none");
+          mark_strings(labels, highlight_mode);
+        } catch(e) {
+          console.log(e);
+        } finally {
+          setTimeout(()=> $(".super_links_msg").css("display","none"), 2000);
         }
-        setTimeout(close_msg, 2000);
-      }
+      }, 200);
     }
 
 

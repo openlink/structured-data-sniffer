@@ -1146,9 +1146,7 @@ function Rww_exec()
 function Sparql_exec()
 {
   if (doc_URL!==null) {
-      var u = new URL(doc_URL);
-      u.hash = '';
-      u.search = '';
+     var u = new URL(doc_URL);
      var _url = (new Settings()).createSparqlUrl(u.toString());
      Browser.openTab(_url, gData.tab_index);
   }
