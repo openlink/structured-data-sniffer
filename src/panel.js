@@ -1404,7 +1404,11 @@ async function save_data(action, fname, fmt, callback)
   {
     if (action==="sparqlupload") {
      retdata = out_from(true, rc.data, rc.error, rc.skipped_error);
-     await upload_to_sparql(retdata, sparqlendpoint, sparql_graph);
+     var rc = await upload_to_sparql(retdata, sparqlendpoint, sparql_graph);
+     if (rc && document.querySelector('#save-sparql-check-res').checked) {
+        var _url = (new Settings()).createSparqlUrl(sparql_graph, sparqlendpoint);
+        Browser.openTab(_url, gData.tab_index);
+     }
     } else {
 
       retdata = out_from(false, rc.data, rc.error, rc.skipped_error);
@@ -1658,7 +1662,7 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
 
   if (data.error.length > 0) {
      showInfo(data.error);
-     return;
+     return false;
   }
 
   var handler = new Convert_Turtle();
@@ -1705,17 +1709,18 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
             break
         }
         showInfo('Unable to save:' +message);
-        return;
+        return false;
       }
     } catch (e) {
       console.log(e);
       showInfo('Unable to save:' +e.toString());
-      return;
+      return false;
     }
 
   }
   
   showInfo('Saved');
+  return true;
 }
 
 

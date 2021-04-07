@@ -40,8 +40,34 @@
           n_data.length > 0) 
       {
         var str = "";
-        //fill id_list
 
+        this.bnodes = {};
+        if (this.for_query) {
+          for(var i=0; i < n_data.length; i++) 
+          {
+            var subj = n_data[i].s;
+            var isBNode = false;
+
+            if (this.is_VBNode(subj)) {
+              this.bnodes[subj] = this.VBNode2BNode(subj);
+              isBNode = true;
+            }
+            else if (this.is_BNode(subj)) {
+              this.bnodes[subj] = this.pre(subj.substring(1));
+              isBNode = true;
+            }
+
+            if (isBNode) {
+              $.each(n_data[i].props, (key, val) => {
+                if (key === this.ns.RDF_TYPE && val.length > 0) {
+                  this.bnodes[subj] = this.create_iri_for_type(val[0]);
+                }
+              });
+            }
+          }
+        }
+        
+        //fill id_list
         for(var i=0; i < n_data.length; i++) 
         {
           var item = n_data[i];
@@ -91,44 +117,80 @@
 
         for(var i=0; i<val.length; i++) 
         {
-          var obj_str = "";
-          var obj = val[i];
-          if (obj.iri) {
-            var iri = obj.iri;
-            obj_str = self.format_id(obj.iri);
-          } 
-          else {
-            var v = obj.value;
-            if (obj.type) {
-              var pref = self.ns.has_known_ns(obj.type);
-              if (pref!=null) {
-                self.prefixes[pref.ns]=pref.link;
-                obj_str = self.obj_value(v) +"^^"+self.pref_link(obj.type, pref);
-              }
-              else
-                obj_str = self.obj_value(v) +"^^<"+obj.type+">";
-            }
-            else if (obj.lang){
-              obj_str = self.obj_value(v)+'@'+obj.lang;
-            } 
-            else {
-              obj_str = self.obj_value(v);
-            }
-          }
-          ret.push(pred_str +" "+obj_str);
+          ret.push(pred_str +" "+self.format_obj(val[i]));
         } 
       });
       return ret;
     },
 
+
+    create_iri_for_type: function(obj)
+    {
+      if (obj.iri && !this.is_VBNode(obj.iri) && !this.is_BNode(obj.iri)) {
+        var value = obj.iri;
+        var pref = this.ns.has_known_ns(value);
+        if (pref!=null) {
+          var data = value.substring(pref.link.length);
+          var len = data.length;
+          if (data[len-1]==="/") 
+            data = data.substr(0, data.length-1);
+
+          if (data.indexOf("/")!==-1)
+            return "<"+value+">";
+          else
+            return ":"+this.pre(data);
+        }
+        else
+          return "<"+this.pre(value)+">";
+      } else 
+        return null;
+    },
+
+
+    format_obj: function(obj)
+    {
+      var obj_str = "";
+      if (obj.iri) {
+        var iri = obj.iri;
+        obj_str = this.format_id(obj.iri);
+      } 
+      else {
+        var v = obj.value;
+        if (obj.type) {
+          var pref = this.ns.has_known_ns(obj.type);
+          if (pref!=null) {
+            this.prefixes[pref.ns]=pref.link;
+            obj_str = this.obj_value(v) +"^^"+this.pref_link(obj.type, pref);
+          }
+          else
+            obj_str = this.obj_value(v) +"^^<"+obj.type+">";
+        }
+        else if (obj.lang){
+          obj_str = this.obj_value(v)+'@'+obj.lang;
+        } 
+        else {
+          obj_str = this.obj_value(v);
+        }
+      }
+      return obj_str;
+    },
+
+
     format_id : function (value) 
     {
        if (this.is_VBNode(value)) {
-         return this.VBNode2BNode(value);
+         var s = this.bnodes[value];
+         if (s)
+           return s;
+         else
+           return this.VBNode2BNode(value);
        }
        else if (this.is_BNode(value)) {
-         //BNode as is => return this.pre(value);
-         return this.pre(value.substring(1));
+         var s = this.bnodes[value];
+         if (s)
+           return s;
+         else
+           return this.pre(value.substring(1));
        }
        else {
          var pref = this.ns.has_known_ns(value);
@@ -214,16 +276,4 @@
         return ":nodeID"+this.pre(str.substr(9));
     },
 
-/*** BNode as is
-    is_BNode : function (str) {
-        return str.startsWith("_:");
-    },
-    is_VBNode : function (str) {
-        return (str.startsWith("nodeID://") || str.startsWith("nodeid://"));
-    },
-
-    VBNode2BNode : function (str) {
-        return "_:nodeID"+this.pre(str.substr(9));
-    },
-****/
   }

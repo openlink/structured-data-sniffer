@@ -189,7 +189,8 @@ Rest_Cons.prototype = {
       this.yasqe.obj.setValue(this.yasqe.val+"\n");
     }
     else {
-      this.yasqe.obj.setValue("\n");
+      if (this.yasqe.obj)
+        this.yasqe.obj.setValue("\n");
       $(".yasqe").hide();
     }
   },

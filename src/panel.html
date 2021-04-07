@@ -68,6 +68,7 @@
             height: 530px;
             border: 1px solid lightgray;
           }
+ 	  div.ritem {display:flex; flex-direction:row; align-items: baseline; padding-top:5px;}
 
         </style>
 
@@ -120,16 +121,25 @@
          </tr>
         </table>
 
-        <table id="save-sparql-item" style="font-size: 14px;">
-         <tr>
-          <td> Save&nbsp;To&nbsp;SPARQL: </td>
-          <td> <input id="save-sparql-endpoint" style="WIDTH: 360px" value="https://linkeddata.uriburner.com/sparql"> </td>
-         </tr>
-         <tr>
-          <td> Graph&nbsp;Name: </td>
-          <td> <input id="save-sparql-graph" style="WIDTH: 360px" value="urn:records:test"> </td>
-         </tr>
-        </table>
+        <div id="save-sparql-item" style="font-size: 14px;">
+         <table style="font-size: 14px;">
+          <tr>
+           <td> Save&nbsp;To&nbsp;SPARQL: </td>
+           <td> <input id="save-sparql-endpoint" style="WIDTH: 360px" value="https://linkeddata.uriburner.com/sparql"> </td>
+          </tr>
+          <tr>
+           <td> Graph&nbsp;Name: </td>
+           <td> <input id="save-sparql-graph" style="WIDTH: 360px" value="urn:records:test"> </td>
+          </tr>
+         </table>
+         <p/>
+         <div class="ritems" style="font-size: 14px;" >
+           <input id="save-sparql-check-res" type="checkbox" checked >
+           Execute&nbsp;Sample&nbsp;SPARQL&nbsp;Query&nbsp;after&nbsp;upload
+         </div>
+        </div>
+
+
         <table id="oidc-login" style="font-size: 14px;">
          <tr >
           <td> <button id="oidc-login-btn">Login</button> </td>

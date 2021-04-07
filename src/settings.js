@@ -235,13 +235,18 @@ class Settings {
   }
 
 
-  createSparqlUrl(curUrl)
+  createSparqlUrl(curUrl, endpoint)
   {
     var sparql_url = this.getValue('ext.osds.sparql.url');
     var query = this.getValue('ext.osds.sparql.query');
 
     query = encodeURIComponent(query.replace(/{url}/g, curUrl));
-    return sparql_url.replace(/{query}/g, query);
+
+    if (endpoint) {
+      return endpoint+'?query='+query+'&format=text%2Fx-html%2Btr';
+    } else {
+      return sparql_url.replace(/{query}/g, query);
+    }
   }
 
   createSuperLinksQuery(query, curUrl, lang)
