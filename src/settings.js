@@ -237,17 +237,35 @@ class Settings {
 
   createSparqlUrl(curUrl, endpoint)
   {
+    function ltrim(str) { return str.replace(/^\s+/,""); }
+
     var sparql_url = this.getValue('ext.osds.sparql.url');
     var query = this.getValue('ext.osds.sparql.query');
 
-    query = encodeURIComponent(query.replace(/{url}/g, curUrl));
 
     if (endpoint) {
+      var lines = query.split('\n');
+
+      for (var i=0; i< lines.length; i++) {
+        var s = ltrim(lines[i]).toUpperCase();
+        if (s.startsWith('DEFINE '))
+          lines[i] = '# '+lines[i];
+
+        if (s.startsWith('SELECT ') || s.startsWith('CONSTRUCT ') || s.startsWith('ASK ') || s.startsWith('DESCRIBE '))
+          break;
+      }
+
+      query = lines.join('\n');
+      query = encodeURIComponent(query.replace(/{url}/g, curUrl));
+
       return endpoint+'?query='+query+'&format=text%2Fx-html%2Btr';
-    } else {
+    } 
+    else {
+      query = encodeURIComponent(query.replace(/{url}/g, curUrl));
       return sparql_url.replace(/{query}/g, query);
     }
   }
+
 
   createSuperLinksQuery(query, curUrl, lang)
   {
