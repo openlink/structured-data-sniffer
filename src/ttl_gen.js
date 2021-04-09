@@ -41,7 +41,9 @@
       {
         var str = "";
 
+        //rename bnodes based on rdf:type relation
         this.bnodes = {};
+        this.bnode_types = {};
         for(var i=0; i < n_data.length; i++) 
           {
             var subj = n_data[i].s;
@@ -59,7 +61,17 @@
             if (isBNode) {
               $.each(n_data[i].props, (key, val) => {
                 if (key === this.ns.RDF_TYPE && val.length > 0) {
-                  this.bnodes[subj] = this.create_iri_for_type(val[0]);
+                  var type_name = this.create_iri_for_type(val[0]);
+                  var id = this.bnode_types[type_name];
+
+                  if (id!==undefined)
+                    id++;
+                  else
+                    id = 0;
+                
+                  this.bnodes[subj] = type_name +( id>0 ? '_'+id : '');
+                  this.bnode_types[type_name] = id;
+
                 }
               });
             }
