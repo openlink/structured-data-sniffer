@@ -69,7 +69,7 @@
                   else
                     id = 0;
                 
-                  this.bnodes[subj] = type_name +( id>0 ? '_'+id : '');
+                  this.bnodes[subj] = this.create_iri_for_type(val[0], id);
                   this.bnode_types[type_name] = id;
 
                 }
@@ -134,8 +134,9 @@
     },
 
 
-    create_iri_for_type: function(obj)
+    create_iri_for_type: function(obj, id)
     {
+      var sid = (id && id > 0) ? '_'+id : '';
       if (obj.iri && !this.is_VBNode(obj.iri) && !this.is_BNode(obj.iri)) {
         var value = obj.iri;
         var pref = this.ns.has_known_ns(value);
@@ -146,12 +147,12 @@
             data = data.substr(0, data.length-1);
 
           if (data.indexOf("/")!==-1)
-            return "<"+value+">";
+            return "<"+value+sid+">";
           else
-            return ":"+this.pre(data);
+            return ":"+this.pre(data+sid);
         }
         else
-          return "<"+this.pre(value)+">";
+          return "<"+this.pre(value+sid)+">";
       } else 
         return null;
     },
