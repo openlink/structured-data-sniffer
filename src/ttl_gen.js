@@ -42,8 +42,7 @@
         var str = "";
 
         this.bnodes = {};
-        if (this.for_query) {
-          for(var i=0; i < n_data.length; i++) 
+        for(var i=0; i < n_data.length; i++) 
           {
             var subj = n_data[i].s;
             var isBNode = false;
@@ -65,7 +64,6 @@
               });
             }
           }
-        }
         
         //fill id_list
         for(var i=0; i < n_data.length; i++) 

@@ -41,7 +41,7 @@
     {
       var expanded = null;
       var id_list = {};
-
+   
       if (start_id===undefined)
         start_id = 0;
 
@@ -62,6 +62,31 @@
           n_data.length > 0) 
       {
         var str = "";
+
+        this.bnodes = {};
+        for(var i=0; i < n_data.length; i++) 
+        {
+          var subj = n_data[i].s;
+          var isBNode = false;
+
+          if (this.is_VBNode(subj)) {
+            this.bnodes[subj] = this.docURI + "#nodeID" + subj.substring(9);
+            isBNode = true;
+          }
+          else if (this.is_BNode(subj)) {
+            this.bnodes[subj] = this.docURI + "#" + subj.substring(2);
+            isBNode = true;
+          }
+
+          if (isBNode) {
+            $.each(n_data[i].props, (key, val) => {
+              if (key === this.ns.RDF_TYPE && val.length > 0) {
+                this.bnodes[subj] = this.create_iri_for_type(val[0]);
+              }
+            });
+          }
+        }
+
         //fill id_list
         for(var i=0; i < n_data.length; i++) 
         {
@@ -69,10 +94,20 @@
           id_list[n_data[i].s] = start_id+i+1;
 
           //replace bNode with IRI
-          if (this.is_BNode(subj))
-            n_data[i].s = this.docURI + "#" + subj.substring(2);
-          else if (this.is_VBNode(subj))
-            n_data[i].s = this.docURI + "#nodeID" + subj.substring(9);
+          if (this.is_BNode(subj)) {
+            var s = this.bnodes[subj];
+            if (s)
+              n_data[i].s = s;
+            else
+              n_data[i].s = this.docURI + "#" + subj.substring(2);
+          }
+          else if (this.is_VBNode(subj)) {
+            var s = this.bnodes[subj];
+            if (s)
+              n_data[i].s = s;
+            else
+              n_data[i].s = this.docURI + "#nodeID" + subj.substring(9);
+          }
 
           $.each(n_data[i].props, (key, val) => {
 
@@ -80,10 +115,18 @@
                 var obj = val[j];
                 if (obj.iri) {
                   if (this.is_BNode(obj.iri)) {
-                    n_data[i].props[key][j].iri = this.docURI + "#" + obj.iri.substring(2);
+                    var s = this.bnodes[obj.iri];
+                    if (s)
+                      n_data[i].props[key][j].iri = s;
+                    else
+                      n_data[i].props[key][j].iri = this.docURI + "#" + obj.iri.substring(2);
                   }
                   else if (this.is_VBNode(obj.iri)) {
-                    n_data[i].props[key][j].iri = this.docURI + "#nodeID" + obj.iri.substring(9);
+                    var s = this.bnodes[obj.iri];
+                    if (s)
+                      n_data[i].props[key][j].iri = s;
+                    else
+                      n_data[i].props[key][j].iri = this.docURI + "#nodeID" + obj.iri.substring(9);
                   }
                 }
               }
@@ -205,6 +248,29 @@
       });
       return str;
     },
+
+    create_iri_for_type: function(obj)
+    {
+      if (obj.iri && !this.is_VBNode(obj.iri) && !this.is_BNode(obj.iri)) {
+        var value = obj.iri;
+        var pref = this.ns.has_known_ns(value);
+        if (pref!=null) {
+          var data = value.substring(pref.link.length);
+          var len = data.length;
+          if (data[len-1]==="/") 
+            data = data.substr(0, data.length-1);
+
+          if (data.indexOf("/")!==-1)
+            return value;
+          else
+            return this.docURI +"#"+data;
+        }
+        else
+          return value;
+      } else 
+        return null;
+    },
+
 
     format_id : function (value, id_list) 
     {
