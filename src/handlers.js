@@ -182,7 +182,7 @@ class Handle_Turtle {
 
   async parse_nano(textData, docURL) {
     this.ns_pref = this.ns.get_ns_desc();
-    this.ns_pref_size = Object.keys(this.ns.ns_list).length;
+    this.ns_pref_size = this.ns.get_ns_size();
     return await this.parse(textData, docURL);
   }
 
@@ -647,17 +647,17 @@ class MicrodataJSON_Converter {
     //try get current NS
     if (item.type!==undefined) {
       id_type = item.type;
-      var ns_list = new Namespace();
+      var namespace = new Namespace();
       if ($.isArray(item.type)) {
         for(var i=0; i<item.type.length; i++) {
-          id_ns = ns_list.has_known_ns(String(item.type[i]));
+          id_ns = namespace.has_known_ns(String(item.type[i]));
           if (id_ns)
             break;
         }
         if (!id_ns && item.type.length > 0)
           id_type = String(item.type[0]);
       } else {
-        id_ns = ns_list.has_known_ns(String(item.type));
+        id_ns = namespace.has_known_ns(String(item.type));
         id_type = String(item.type);
       }
     }
@@ -753,10 +753,23 @@ class MicrodataJSON_Converter {
           }
           else {
             var last = id_type[id_type.length-1];
-            if (last==='#' || last==='/')
+            if (last==='#' || last==='/') {
               key = id_type + key;
-            else 
-              key = id_type + '#' + key;
+            } else {
+              var u = new URL(id_type);
+              if (u.hash) {
+                u.hash = key;
+                key = u.toString();
+              } else if (u.pathname === '/') {
+                u.pathname = key;
+                key = u.toString();
+              } else {
+                var lst = u.pathname.split('/');
+                lst[lst.length-1] = key;
+                u.pathname = lst.join('/');
+                key = u.toString();
+              }
+            }
           }
         }
 

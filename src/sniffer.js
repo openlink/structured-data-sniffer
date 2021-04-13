@@ -550,6 +550,7 @@
 
         var rdfa = null;
         var rdfa_ttl = null;
+        var namespace = new Namespace();
 
         ///Convert RDFa data to internal format
         if (rdfa_subjects != null && rdfa_subjects.length > 0) {
@@ -567,12 +568,21 @@
                 s.props = new Object();
 
                 for (var j = 0; j < plist.length; j++) {
-                    var p = s.props[plist[j]];
-                    if (p === undefined)
-                        s.props[plist[j]] = [];
+                    var prop = plist[j];
+                    if (prop.lastIndexOf(":")!=-1) {
+                      var arr = prop.split(":");
+                      var pref_link = namespace.has_known_prefix(arr[0]);
+                      if (pref_link) {
+                        prop = pref_link + arr[1];
+                      }
+                    }
 
-                    p = s.props[plist[j]];
-                    p_triple = " " + iri2str(fmt(plist[j]));
+                    var p = s.props[prop];
+                    if (p === undefined)
+                        s.props[prop] = [];
+
+                    p = s.props[prop];
+                    p_triple = " " + iri2str(fmt(prop));
 
                     var vlist = document.data.getObjects(rdfa_subjects[i], plist[j]);
                     for (var z = 0; z < vlist.length; z++) {

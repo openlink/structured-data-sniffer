@@ -91,7 +91,7 @@
                 else
                   id = 0;
                 
-                this.bnodes[subj] = type_name +( id>0 ? '_'+id : '');
+                this.bnodes[subj] = this.create_iri_for_type(val[0], id);
                 this.bnode_types[type_name] = id;
               }
             });
@@ -260,8 +260,9 @@
       return str;
     },
 
-    create_iri_for_type: function(obj)
+    create_iri_for_type: function(obj, id)
     {
+      var sid = (id && id > 0) ? '_'+id : '';
       if (obj.iri && !this.is_VBNode(obj.iri) && !this.is_BNode(obj.iri)) {
         var value = obj.iri;
         var pref = this.ns.has_known_ns(value);
@@ -269,15 +270,30 @@
           var data = value.substring(pref.link.length);
           var len = data.length;
           if (data[len-1]==="/") 
-            data = data.substr(0, data.length-1);
+            data = data.substr(0, len-1);
 
-          if (data.indexOf("/")!==-1)
-            return value;
-          else
-            return this.docURI +"#"+data;
+          if (data.indexOf("/")!==-1) {
+            var lst = data.split('/');
+            data = lst.length>0 ? lst[lst.length-1] : "";
+            if (!data)
+              data = "b";
+          }
+          
+          return this.docURI +"#"+data+sid;
         }
-        else
-          return value;
+        else {
+          var u = new URL(value);
+          if (u.hash) {
+            return this.docURI +"#"+u.hash+sid;
+          } else {
+            var lst = u.pathname.split('/');
+            var data = lst.length>0 ? lst[lst.length-1] : "";
+            if (!data)
+              data = "b";
+
+            return this.docURI +"#"+data+sid;
+          }
+        }
       } else 
         return null;
     },

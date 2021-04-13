@@ -306,7 +306,7 @@ async function start_parse_data(data_text, data_type, data_url, ext)
       var handler = new Handle_Turtle();
       var ns = new Namespace();
       handler.ns_pref = ns.get_ns_desc();
-      handler.ns_pref_size = Object.keys(ns.ns_list).length;
+      handler.ns_pref_size = ns.get_ns_size();
       var ret = await handler.parse([data_text], baseURL);
       show_Data(ret.errors, ret.data);
     }

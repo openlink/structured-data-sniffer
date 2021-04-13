@@ -77,10 +77,10 @@ Namespace = function() {
         "cyc": "http://sw.opencyc.org/concept/",
         "fn": "http://www.ontologydesignpatterns.org/ont/framenet/tbox/",
         "xhtml": "http://www.w3.org/1999/xhtml#",
-        "schema": "http://schema.org/",
-//        "schema": "https://schema.org/",
+        "schema": ["http://schema.org/", "https://schema.org/"],
+//??        "schema": "http://schema.org/",
         "aiiso": "http://purl.org/vocab/aiiso/schema#",
-        "http": "http://www.w3.org/2011/http#",
+//??        "http": "http://www.w3.org/2011/http#",
         "rr": "http://www.w3.org/ns/r2rml#",
         "cc": "http://creativecommons.org/ns#",
         "wot": "http://xmlns.com/wot/0.1/",
@@ -1768,6 +1768,8 @@ Namespace = function() {
  bif	 bif:
  sql	 sql:
 **/
+  this.ns_list_size = Object.keys(this.ns_list).length;
+
 }
 
 
@@ -1776,25 +1778,72 @@ Namespace.prototype = {
   {
     var s = "";
     $.each(this.ns_list, function(pref, link_url) {
-      s += "@prefix "+pref+": <"+link_url+"> .\n";
+      if (Array.isArray(link_url))
+        s += "@prefix "+pref+": <"+link_url[0]+"> .\n";
+      else
+        s += "@prefix "+pref+": <"+link_url+"> .\n";
+
       return true;
     });
     return s;
+  },
+
+  get_ns_size : function()
+  {
+    return this.ns_list_size;
   },
   
   has_known_ns : function (str) 
   {
     var rc = null;
     $.each(this.ns_list, function(pref, link_url) {
-      if (String(str).startsWith(link_url)) {
-        rc = { ns:pref, link:link_url };
-        return false;
-      } 
+      if (Array.isArray(link_url)) {
+        for(var i=0; i < link_url.length; i++) {
+          if (String(str).startsWith(link_url[i])) {
+            rc = { ns:pref, link:link_url[i] };
+            return false;
+          } 
+        }
+      } else {
+        if (String(str).startsWith(link_url)) {
+          rc = { ns:pref, link:link_url };
+          return false;
+        } 
+      }
+
       return true;
     });
     return rc;
   },
   
+  has_known_prefix : function(pref)
+  {
+    var pref_link = this.ns_list[pref];
+    if (pref_link) {
+      if (Array.isArray(pref_link))
+        return pref_link[0];
+      else
+        return pref_link;
+    }
+    else
+      return null;
+  },
+
+  gen_prefixes : function()
+  {
+    var prefixes = {};
+    $.each(this.ns_list, function(pref, link_url) {
+      if (Array.isArray(link_url))
+        prefixes[pref] = link_url[0];
+      else
+        prefixes[pref] = link_url;
+
+      return true;
+    });
+    return prefixes;
+  }
+
+
 }
   
   

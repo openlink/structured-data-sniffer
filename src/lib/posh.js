@@ -152,7 +152,7 @@ var POSH = (function () {
         else if (n.lastIndexOf(":")!=-1)
         {
           var arr = n.split(":");
-          var pref_link = self.namespace.ns_list[arr[0]];
+          var pref_link = self.namespace.has_known_prefix(arr[0]);
           if (!pref_link) //unknown prefix
              return "xhv:"+fixedEncodeURIComponent(n);
           else {
@@ -199,7 +199,7 @@ var POSH = (function () {
           else if (o.lastIndexOf(":")!=-1) 
           {
             var arr = o.split(":");
-            var pref_link = self.namespace.ns_list[arr[0]];
+            var pref_link = self.namespace.has_known_prefix(arr[0]);
             if (!pref_link) {//unknown prefix
               triples += qv+o+qv;
             } else {

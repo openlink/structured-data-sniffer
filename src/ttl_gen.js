@@ -118,7 +118,7 @@
         
       var ret = [];
       var self = this;
-      $.each(props, function(key, val){
+      $.each(props, (key, val) => {
         if ((only_rdf_type && key!==self.ns.RDF_TYPE)
             || (!only_rdf_type && key===self.ns.RDF_TYPE))
           return;
@@ -144,15 +144,29 @@
           var data = value.substring(pref.link.length);
           var len = data.length;
           if (data[len-1]==="/") 
-            data = data.substr(0, data.length-1);
+            data = data.substr(0, len-1);
 
-          if (data.indexOf("/")!==-1)
-            return "<"+value+sid+">";
-          else
-            return ":"+this.pre(data+sid);
+          if (data.indexOf("/")!==-1) {
+            var lst = data.split('/');
+            data = lst.length>0 ? lst[lst.length-1] : "";
+            if (!data)
+              data = "b";
+          }
+          return ":"+this.pre(data+sid);
         }
-        else
-          return "<"+this.pre(value+sid)+">";
+        else {
+          var u = new URL(value);
+          if (u.hash) {
+            return ":"+this.pre(u.hash+sid);
+          } else {
+            var lst = u.pathname.split('/');
+            var data = lst.length>0 ? lst[lst.length-1] : "";
+            if (!data)
+              data = "b";
+
+            return ":"+this.pre(data+sid);
+          }
+        }
       } else 
         return null;
     },
