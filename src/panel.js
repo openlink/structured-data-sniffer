@@ -989,8 +989,8 @@ async function request_superlinks(doc_url)
 
     } else {
       if (rc.status==401 || rc.status==403 || rc.status==404) {
-        Browser.openTab(REDIR_URL);
         alert("Sponge error:"+rc.status+"\nLogin to https://linkeddata.uriburner.com and call SupeLinks again");
+        Browser.openTab(REDIR_URL);
         return;
       } else {
         alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
