@@ -24,11 +24,13 @@
     this.docURI = _docURI;
     this.for_query = for_query;
     this.prefixes = {};
+    this.use_prefixes = for_query ? false : true;
     
     this.escape    = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
     this.escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
     this.escapeReplacements = { '\\': '\\\\', '"': '\\"', '\t': '\\t',
                            '\n': '\\n', '\r': '\\r', '\b': '\\b', '\f': '\\f' };
+    this.test_esc = /[!'()*&?#$,:@=;+.\/]/g;
   };
 
   TTL_Gen.prototype = {
@@ -97,7 +99,7 @@
         $.each(this.prefixes, function(key, val){
           pref += "prefix "+key+": <"+val+"> \n";
         });
-        pref += "prefix : <#> \n";
+//??        pref += "prefix : <#> \n";
 
         return {pref, ttl: str};
       } else {
@@ -105,7 +107,7 @@
         $.each(this.prefixes, function(key, val){
           ret += "@prefix "+key+": <"+val+"> .\n";
         });
-        ret += "@prefix : <#> .\n";
+//??        ret += "@prefix : <#> .\n";
         return ret+str;
       }
     },
@@ -139,7 +141,7 @@
       var sid = (id && id > 0) ? '_'+id : '';
       if (obj.iri && !this.is_VBNode(obj.iri) && !this.is_BNode(obj.iri)) {
         var value = obj.iri;
-        var pref = this.ns.has_known_ns(value);
+        var pref = this.use_prefixes ? this.ns.has_known_ns(value) : null;
         if (pref!=null) {
           var data = value.substring(pref.link.length);
           var len = data.length;
@@ -152,7 +154,7 @@
             if (!data)
               data = "b";
           }
-          return ":"+this.pre(data+sid);
+          return this.docURI+"#"+fixedEncodeURIComponent(this.pre(data+sid));
         }
         else {
           var u = new URL(value);
@@ -164,7 +166,7 @@
             if (!data)
               data = "b";
 
-            return ":"+this.pre(data+sid);
+            return this.docURI+"#"+this.pre(data+sid);
           }
         }
       } else 
@@ -182,7 +184,7 @@
       else {
         var v = obj.value;
         if (obj.type) {
-          var pref = this.ns.has_known_ns(obj.type);
+          var pref = this.use_prefixes ? this.ns.has_known_ns(obj.type) :  null;
           if (pref!=null) {
             this.prefixes[pref.ns]=pref.link;
             obj_str = this.obj_value(v) +"^^"+this.pref_link(obj.type, pref);
@@ -206,19 +208,19 @@
        if (this.is_VBNode(value)) {
          var s = this.bnodes[value];
          if (s)
-           return s;
+           return "<"+s+">";
          else
-           return this.VBNode2BNode(value);
+           return "<"+this.VBNode2BNode(value)+">";
        }
        else if (this.is_BNode(value)) {
          var s = this.bnodes[value];
          if (s)
-           return s;
+           return "<"+s+">";
          else
-           return this.pre(value.substring(1));
+           return "<"+this.pre(value.substring(2))+">";
        }
        else {
-         var pref = this.ns.has_known_ns(value);
+         var pref = this.use_prefixes ? this.ns.has_known_ns(value) : null;
          if (pref!=null) {
            this.prefixes[pref.ns]=pref.link;
            return this.pref_link(value, pref);
@@ -255,10 +257,10 @@
       if (data[len-1]==="/") 
         data = data.substr(0, data.length-1);
 
-      if (data.indexOf("/")!==-1)
+      if (data.indexOf("/")!==-1 || this.test_esc.test(data))
         return "<"+val+">";
       else
-        return pref.ns+":"+this.pre(data);
+        return pref.ns+":"+fixedEncodeURIComponent(this.pre(data));
     },
 
     pre : function (value) 
@@ -298,7 +300,7 @@
 
     VBNode2BNode : function (str) {
         //return "_:nodeID"+this.pre(str.substr(9));
-        return ":nodeID"+this.pre(str.substr(9));
+        return this.docURI +"#nodeID"+this.pre(str.substr(9));
     },
 
   }

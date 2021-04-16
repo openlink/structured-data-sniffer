@@ -21,6 +21,23 @@
 Namespace = function() {
   this.RDF_PREFIX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
   this.RDF_TYPE   = this.RDF_PREFIX + 'type';
+  this.ns_list_colon = {
+        "dbc": "http://dbpedia.org/resource/Category:",
+        "dbt": "http://dbpedia.org/resource/Template:",
+        "category": "http://dbpedia.org/resource/Category:",
+        "dbptmpl": "http://dbpedia.org/resource/Template:",
+        "dbrc": "http://dbpedia.org/resource/Category:",
+        "dbcat": "http://dbpedia.org/resource/Category:",
+        "nsogi": "http://prefix.cc/nsogi:",
+        "chebi": "http://bio2rdf.org/chebi:",
+        "hgnc": "http://bio2rdf.org/hgnc:",
+        "pubmed": "http://bio2rdf.org/pubmed_vocabulary:",
+        "affymetrix": "http://bio2rdf.org/affymetrix_vocabulary:",
+        "call": "http://webofcode.org/wfn/call:",
+        "condition": "http://www.kinjal.com/condition:",
+//??        "bgcat": "http://bg.dbpedia.org/resource/?????????:",
+  };
+
   this.ns_list = {
     "virtcxml": "http://www.openlinksw.com/schemas/virtcxml#",
      "virtrdf": "http://www.openlinksw.com/schemas/virtrdf#",
@@ -225,7 +242,6 @@ Namespace = function() {
         "tmo": "http://www.semanticdesktop.org/ontologies/2008/05/20/tmo#",
         "space": "http://purl.org/net/schemas/space/",
         "room": "http://vocab.deri.ie/rooms#",
-        "nsogi": "http://prefix.cc/nsogi:",
         "java": "http://www.w3.org/2007/uwa/context/java.owl#",
         "politico": "http://www.rdfabout.com/rdf/schema/politico/",
         "ya": "http://blogs.yandex.ru/schema/foaf/",
@@ -659,7 +675,6 @@ Namespace = function() {
         "hydra": "http://www.w3.org/ns/hydra/core#",
         "visit": "http://purl.org/net/vocab/2004/07/visit#",
         "dnb": "http://d-nb.info/gnd/",
-        "dbc": "http://dbpedia.org/resource/Category:",
         "zem": "http://s.zemanta.com/ns#",
         "units": "http://eulersharp.sourceforge.net/2003/03swap/unitsExtension#",
         "skip": "http://skipforward.net/skipforward/resource/",
@@ -703,7 +718,6 @@ Namespace = function() {
         "semtweet": "http://semantictweet.com/",
         "cogs": "http://vocab.deri.ie/cogs#",
         "isothes": "http://purl.org/iso25964/skos-thes#",
-        "category": "http://dbpedia.org/resource/Category:",
         "uco": "http://purl.org/uco/ns#",
         "out": "http://ontologies.hypios.com/out#",
         "spatial": "http://geovocab.org/spatial#",
@@ -818,7 +832,6 @@ Namespace = function() {
         "hcard": "http://purl.org/uF/hCard/terms/",
         "dive": "http://scubadive.networld.to/dive.rdf#",
         "iso": "http://purl.org/iso25964/skos-thes#",
-        "hgnc": "http://bio2rdf.org/hgnc:",
         "transit": "http://vocab.org/transit/terms/",
         "bing": "http://bing.com/schema/media/",
         "hxl": "http://hxl.humanitarianresponse.info/ns/#",
@@ -919,7 +932,6 @@ Namespace = function() {
         "vocab": "http://rdf.ontology2.com/vocab#",
         "lodac": "http://lod.ac/ns/lodac#",
         "moby": "http://www.mygrid.org.uk/mygrid-moby-service#",
-        "chebi": "http://bio2rdf.org/chebi:",
         "hg": "http://www.holygoat.co.uk/owl/redwood/0.1/tags/",
         "dpl": "http://dbpedialite.org/things/",
         "mime": "http://purl.org/NET/mediatypes/",
@@ -1120,12 +1132,10 @@ Namespace = function() {
         "amalgame": "http://purl.org/vocabularies/amalgame#",
         "rdau": "http://rdaregistry.info/Elements/u/",
         "fincaselaw": "http://purl.org/finlex/schema/oikeus/",
-        "pubmed": "http://bio2rdf.org/pubmed_vocabulary:",
         "cold": "http://purl.org/configurationontology#",
         "olad": "http://openlad.org/vocab#",
         "osspr": "http://data.ordnancesurvey.co.uk/ontology/spatialrelations/",
         "itsmo": "http://ontology.it/itsmo/v1#",
-        "dbt": "http://dbpedia.org/resource/Template:",
         "doco": "http://purl.org/spar/doco/",
         "worldbank": "http://worldbank.270a.info/dataset/",
         "emoca": "http://ns.inria.fr/emoca#",
@@ -1159,7 +1169,6 @@ Namespace = function() {
         "msr": "http://www.telegraphis.net/ontology/measurement/measurement#",
         "mp": "http://jicamaro.info/mp#",
         "rdac": "http://rdaregistry.info/Elements/c/",
-        "dbptmpl": "http://dbpedia.org/resource/Template:",
         "odapp": "http://vocab.deri.ie/odapp#",
         "bsb": "http://lod.b3kat.de/title/",
         "gastro": "http://www.ebsemantics.net/gastro#",
@@ -1261,7 +1270,6 @@ Namespace = function() {
         "asgv": "http://aims.fao.org/aos/agrovoc/",
         "opencyc": "http://sw.opencyc.org/concept/",
         "app": "http://jmvanel.free.fr/ontology/software_applications.n3#",
-        "dbrc": "http://dbpedia.org/resource/Category:",
         "pproc": "http://contsem.unizar.es/def/sector-publico/pproc#",
         "geop": "http://aims.fao.org/aos/geopolitical.owl#",
         "location": "http://sw.deri.org/2006/07/location/loc#",
@@ -1312,7 +1320,6 @@ Namespace = function() {
         "wfn": "http://webofcode.org/wfn/",
         "msm": "http://iserve.kmi.open.ac.uk/ns/msm#",
         "pco": "http://purl.org/procurement/public-contracts#",
-        "call": "http://webofcode.org/wfn/call:",
         "gaf": "http://groundedannotationframework.org/",
         "travel": "http://www.co-ode.org/roberts/travel.owl#",
         "vext": "http://ldf.fi/void-ext#",
@@ -1402,7 +1409,6 @@ Namespace = function() {
         "ll": "http://lodlaundromat.org/resource/",
         "cl": "http://advene.org/ns/cinelab/",
         "physo": "http://merlin.phys.uni.lodz.pl/onto/physo/physo.owl#",
-        "dbcat": "http://dbpedia.org/resource/Category:",
         "voidext": "http://rdfs.org/ns/void-ext#",
         "wn30": "http://purl.org/vocabularies/princeton/wn30/",
         "bbcprov": "http://www.bbc.co.uk/ontologies/provenance/",
@@ -1464,7 +1470,6 @@ Namespace = function() {
         "scoro": "http://purl.org/spar/scoro/",
         "gm": "http://def.seegrid.csiro.au/isotc211/iso19107/2003/geometry#",
         "locah": "http://data.archiveshub.ac.uk/def/",
-//??        "bgcat": "http://bg.dbpedia.org/resource/?????????:",
         "swpm": "http://spi-fm.uca.es/spdef/models/deployment/swpm/1.0#",
         "reegle": "http://reegle.info/schema#",
         "oplcert": "http://www.openlinksw.com/schemas/cert#",
@@ -1509,7 +1514,6 @@ Namespace = function() {
         "rdacct": "http://rdaregistry.info/termList/CollTitle/",
         "olca": "http://www.lingvoj.org/olca#",
         "dpc": "http://hospee.org/ontologies/dpc/",
-        "affymetrix": "http://bio2rdf.org/affymetrix_vocabulary:",
         "lio": "http://purl.org/net/lio#",
         "rdagd": "http://rdaregistry.info/termList/gender/",
         "bner": "http://datos.bne.es/resource/",
@@ -1552,7 +1556,6 @@ Namespace = function() {
         "lsd": "http://linkedwidgets.org/statisticaldata/ontology/",
         "rdafnm": "http://rdaregistry.info/termList/FormNoteMus/",
         "emtr": "http://purl.org/NET/ssnext/electricmeters#",
-        "condition": "http://www.kinjal.com/condition:",
         "rdacc": "http://rdaregistry.info/termList/RDAColourContent/",
         "bgdbp": "http://bg.dbpedia.org/property/",
         "clirio": "http://clirio.kaerle.com/clirio.owl#",
@@ -1768,7 +1771,7 @@ Namespace = function() {
  bif	 bif:
  sql	 sql:
 **/
-  this.ns_list_size = Object.keys(this.ns_list).length;
+  this.ns_list_size = Object.keys(this.ns_list).length + Object.keys(this.ns_list_colon).length;
 
 }
 
@@ -1777,6 +1780,16 @@ Namespace.prototype = {
   get_ns_desc : function()
   {
     var s = "";
+
+    $.each(this.ns_list_colon, function(pref, link_url) {
+      if (Array.isArray(link_url))
+        s += "@prefix "+pref+": <"+link_url[0]+"> .\n";
+      else
+        s += "@prefix "+pref+": <"+link_url+"> .\n";
+
+      return true;
+    });
+
     $.each(this.ns_list, function(pref, link_url) {
       if (Array.isArray(link_url))
         s += "@prefix "+pref+": <"+link_url[0]+"> .\n";
@@ -1785,6 +1798,7 @@ Namespace.prototype = {
 
       return true;
     });
+
     return s;
   },
 
@@ -1796,6 +1810,27 @@ Namespace.prototype = {
   has_known_ns : function (str) 
   {
     var rc = null;
+    $.each(this.ns_list_colon, function(pref, link_url) {
+      if (Array.isArray(link_url)) {
+        for(var i=0; i < link_url.length; i++) {
+          if (String(str).startsWith(link_url[i])) {
+            rc = { ns:pref, link:link_url[i] };
+            return false;
+          } 
+        }
+      } else {
+        if (String(str).startsWith(link_url)) {
+          rc = { ns:pref, link:link_url };
+          return false;
+        } 
+      }
+
+      return true;
+    });
+
+    if (rc)
+      return rc;
+
     $.each(this.ns_list, function(pref, link_url) {
       if (Array.isArray(link_url)) {
         for(var i=0; i < link_url.length; i++) {
@@ -1813,25 +1848,48 @@ Namespace.prototype = {
 
       return true;
     });
+
     return rc;
   },
   
   has_known_prefix : function(pref)
   {
+    var rc = null;
+  
+    var pref_link = this.ns_list_colon[pref];
+    if (pref_link) {
+      if (Array.isArray(pref_link))
+        rc = pref_link[0];
+      else
+        rc = pref_link;
+
+      return rc;
+    }
+
     var pref_link = this.ns_list[pref];
     if (pref_link) {
       if (Array.isArray(pref_link))
-        return pref_link[0];
+        rc = pref_link[0];
       else
-        return pref_link;
+        rc = pref_link;
     }
-    else
-      return null;
+
+    return rc;
   },
 
   gen_prefixes : function()
   {
     var prefixes = {};
+
+    $.each(this.ns_list_colon, function(pref, link_url) {
+      if (Array.isArray(link_url))
+        prefixes[pref] = link_url[0];
+      else
+        prefixes[pref] = link_url;
+
+      return true;
+    });
+
     $.each(this.ns_list, function(pref, link_url) {
       if (Array.isArray(link_url))
         prefixes[pref] = link_url[0];
@@ -1840,6 +1898,7 @@ Namespace.prototype = {
 
       return true;
     });
+
     return prefixes;
   }
 

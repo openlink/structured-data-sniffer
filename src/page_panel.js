@@ -935,7 +935,7 @@ function showInfo(msg)
     height:180,
     modal: true,
     buttons: {
-      Cancel: function() {
+      "OK": function() {
         $(this).dialog('destroy');
       }
     }

@@ -56,6 +56,19 @@ class Convert_Turtle{
   async _fix_nano_ttl(ttlData, nanoData, baseURL) 
   {
     var self = this;
+    var data = [];
+
+    if (ttlData && ttlData.length > 0) {
+      var handler = new Handle_Turtle(0, true);
+      var ret = await handler.parse(ttlData, baseURL);
+
+      if (ret.errors.length>0)
+        self.skipped_error = self.skipped_error.concat(ret.errors);
+
+      if (ret.data && ret.data.length > 0)
+        data = data.concat(ret.data);
+    }
+
     if (nanoData!==null && nanoData.length > 0) {
       var handler = new Handle_Turtle(0, true);
       var ret = await handler.parse_nano(nanoData, baseURL);
@@ -64,13 +77,10 @@ class Convert_Turtle{
         self.skipped_error = self.skipped_error.concat(ret.errors);
 
       if (ret.data && ret.data.length > 0)
-        ttlData = ttlData.concat(ret.data);
-
-      return ttlData;
-      
-    } else {
-      return ttlData;
+        data = data.concat(ret.data);
     }
+
+    return data;
   }
 
   async to_jsonld(ttlData, nanoData, baseURL) 
@@ -109,7 +119,7 @@ class Convert_Turtle{
 
       $rdf.parse(ttl_data, store, baseURL, 'text/turtle');
 
-      return $rdf.serialize(undefined, store, baseURL, "application/rdf+xml");
+      return $rdf.serialize(undefined, store, baseURL, 'application/rdf+xml');
     } catch (ex) {
       this.skipped_error.push(""+ex.toString());
       return '';

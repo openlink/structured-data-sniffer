@@ -252,7 +252,7 @@ class Handle_Turtle {
               var output;
 
               if (self._make_ttl) {
-                var ttl_data =  new TTL_Gen(docURL, self.for_query).load(triples, self.start_id);
+                var ttl_data = new TTL_Gen(docURL, self.for_query).load(triples, self.start_id);
                 output = ttl_data==null?'':ttl_data;
               }
               else

@@ -22,13 +22,6 @@ var POSH = (function () {
 
   'use strict';
 
-  function fixedEncodeURIComponent (str) {
-    return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
-      return '%' + c.charCodeAt(0).toString(16);
-    });
-  }
-
-
   function POSH(uriStr) {
     this.terms = {};
     this.terms["description"] = "schema:description";
