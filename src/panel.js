@@ -914,13 +914,14 @@ async function SuperLinks_exec()
           if (tabs.length > 0) {
 
             var data = await request_superlinks(tabs[0].url);
-
-            Browser.api.tabs.sendMessage(tabs[0].id, 
-              {
-                property: 'super_links_data',
-                data : data
-              });
-            window.close();
+            if (data) {
+              Browser.api.tabs.sendMessage(tabs[0].id, 
+                {
+                  property: 'super_links_data',
+                  data : data
+                });
+              window.close();
+            }
           }
         });
     } else {
@@ -929,14 +930,16 @@ async function SuperLinks_exec()
         if (tabs.length > 0) {
           var data = await request_superlinks(tabs[0].url);
 
-          Browser.api.tabs.sendMessage(tabs[0].id, 
-            {
-              property: 'super_links_data',
-              data : data
-            },
-            function(response) {
-            });
-          window.close();
+          if (data) {
+            Browser.api.tabs.sendMessage(tabs[0].id, 
+              {
+                property: 'super_links_data',
+                data : data
+              },
+              function(response) {
+              });
+            window.close();
+          }
         }
       });
     }
@@ -982,13 +985,12 @@ async function request_superlinks(doc_url)
       if (rc.redirected && rc.url.lastIndexOf(LOGIN_URL, 0) === 0) {
         alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
         Browser.openTab(REDIR_URL);
-        alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
-        return;
+        return null;
       }
       return await exec_super_links_query(doc_url, links_query, links_timeout);
 
     } else {
-      if (rc.status==401 || rc.status==403 || rc.status==404) {
+      if (rc.status==401 || rc.status==403) {
         alert("Sponge error:"+rc.status+"\nLogin to https://linkeddata.uriburner.com and call SupeLinks again");
         Browser.openTab(REDIR_URL);
         return;
@@ -1365,7 +1367,6 @@ async function save_data(action, fname, fmt, callback)
   var sparqlendpoint = $('#save-sparql-endpoint').val().trim();
   var sparql_graph = $('#save-sparql-graph').val().trim();
 
-
   function out_from(for_query, data, error, skipped_error)
   {
     var retdata = {txt:"", error:""};
@@ -1404,10 +1405,16 @@ async function save_data(action, fname, fmt, callback)
   {
     if (action==="sparqlupload") {
      retdata = out_from(true, rc.data, rc.error, rc.skipped_error);
+
      var rc = await upload_to_sparql(retdata, sparqlendpoint, sparql_graph);
      if (rc && document.querySelector('#save-sparql-check-res').checked) {
         var _url = (new Settings()).createSparqlUrl(sparql_graph, sparqlendpoint);
-        Browser.openTab(_url, gData.tab_index);
+        var tabs = await getCurTab();
+      
+        if (tabs.length > 0) 
+          Browser.api.tabs.create({'url':_url, 'index': tabs[0].index+1});
+        else
+          Browser.api.tabs.create({'url':_url});
      }
     } else {
 
@@ -1469,6 +1476,7 @@ async function save_data(action, fname, fmt, callback)
         selectTab("#src");
         src_view.setValue(retdata.txt + retdata.error+"\n");
       }
+
     }
   }
 
@@ -1552,7 +1560,7 @@ async function save_data(action, fname, fmt, callback)
       var handler = new Handle_Microdata(true);
       var ret = handler.parse(JSON.parse(data[0]), gData.baseURL);
       if (ret.errors.length > 0) {
-        exec_action(action, {data:null, error:ret.errors, skipped_error:null});
+        await exec_action(action, {data:null, error:ret.errors, skipped_error:null});
         return;
       }
       if (ret.data==null)
@@ -1561,17 +1569,17 @@ async function save_data(action, fname, fmt, callback)
       var ttl_data = ret.data;
 
       if (fmt==="ttl") {
-        exec_action(action, {data:ttl_data, error:null, skipped_errors:null});
+        await exec_action(action, {data:ttl_data, error:null, skipped_errors:null});
       }
       else if (fmt==="jsonld") { // json
         var conv = new Convert_Turtle();
         var text_data = await conv.to_jsonld([ttl_data], null, gData.baseURL);
-        exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error}); 
+        await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error}); 
       }
       else {
         var conv = new Convert_Turtle();
         var text_data = await conv.to_rdf([ttl_data], null, gData.baseURL);
-        exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error}); 
+        await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error}); 
       }
     }
     else if (selectedTab==="#rdfa" && data.length > 0)
@@ -1579,23 +1587,22 @@ async function save_data(action, fname, fmt, callback)
       var handler = new Convert_Turtle();
       var ttl_data = await handler.fix_ttl(data, gData.baseURL);
       if (handler.skipped_error.length > 0) {
-        exec_action(action, {data:null, error, skipped_error:handler.skipped_error});
-        return;
-      }
-      if (ttl_data && ttl_data.length > 0) 
+        await exec_action(action, {data:null, error, skipped_error:handler.skipped_error});
+      } 
+      else if (ttl_data && ttl_data.length > 0) 
       {
           if (fmt==="ttl") {
-            exec_action(action, {data:ttl_data, error:null, skipped_error:null});
+            await exec_action(action, {data:ttl_data, error:null, skipped_error:null});
           }
           else if (fmt==="jsonld") { // json
             var conv = new Convert_Turtle();
             var text_data = await conv.to_jsonld(ttl_data, null, gData.baseURL);
-            exec_action(action, {data: text_data, error:null, skipped_error:conv.skipped_error});
+            await exec_action(action, {data: text_data, error:null, skipped_error:conv.skipped_error});
           }
           else {
             var conv = new Convert_Turtle();
             var text_data = await conv.to_rdf(ttl_data, null, gData.baseURL);
-            exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
+            await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
           }
       }
     }
@@ -1605,49 +1612,49 @@ async function save_data(action, fname, fmt, callback)
         var conv = new Convert_Turtle();
         if (fmt==="jsonld") {
           var text_data = await conv.to_jsonld(data, quad_data, gData.baseURL);
-          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
+          await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         } else if (fmt==="rdf") {
           var text_data = await conv.to_rdf(data, quad_data, gData.baseURL);
-          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
+          await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         }
       }
       else if (src_fmt==="jsonld"){
         var conv = new Convert_JSONLD();
         if (fmt==="ttl"){
           var text_data = await conv.to_ttl(data, gData.baseURL);
-          exec_action(action, {data: text_data, error:null, skipped_error:conv.skipped_error});
+          await exec_action(action, {data: text_data, error:null, skipped_error:conv.skipped_error});
         } else if (fmt==="rdf"){
           var text_data = await conv.to_rdf(data, gData.baseURL);
-          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
+          await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         }
       }
       else if (src_fmt==="json"){
         var conv = new Convert_JSON();
         if (fmt==="ttl"){
           var text_data = await conv.to_ttl(data, gData.baseURL);
-          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
+          await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         } else if (fmt==="rdf"){
           var text_data = await conv.to_rdf(data, gData.baseURL);
-          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
+          await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         } else if (fmt==="jsonld"){
           var text_data = await conv.to_jsonld(data, gData.baseURL);
-          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
+          await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         }
       }
       else if (src_fmt==="rdf"){
         var conv = new Convert_RDF_XML();
         if (fmt==="ttl") {
           var text_data = await conv.to_ttl(data, gData.baseURL);
-          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
+          await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
 
         } else if (fmt==="jsonld"){
           var text_data = await conv.to_jsonld(data, gData.baseURL);
-          exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
+          await exec_action(action, {data:text_data, error:null, skipped_error:conv.skipped_error});
         }
       }
     } else {
       data = data.concat(quad_data);
-      exec_action(action, {data, error:null, skipped_error:null});
+      await exec_action(action, {data, error:null, skipped_error:null});
     }
 
   } catch(ex) {
