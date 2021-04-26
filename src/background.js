@@ -18,6 +18,8 @@
  *
  */
 
+(function () {
+
 var pages = {};
 var setting = new Settings();
 var ext_url = Browser.api.extension.getURL("page_panel.html");
@@ -333,35 +335,6 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
 
 
 
-if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
-  try {
-    Browser.api.browserAction.disable();
-  } catch(e) {}
-}
-
-
-//Chrome API
-//wait data from extension
-Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
-{
-  try {
-    if (request.cmd === "close_oidc_web")
-    {
-      var curWin = await getCurWin();
-      var curTab = await getCurTab();
-      if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
-          && curTab[0].url === request.url) {
-        Browser.api.tabs.remove(curTab[0].id);
-      }
-    }
-    
-  } catch(e) {
-    console.log("OSDS: onMsg="+e);
-  }
-
-});
-
-
 
 var tabsBrowserAction = {};
 
@@ -405,7 +378,7 @@ function setPageAction(tabId, show)
 }
 
 
-Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
     if (request.property === "status")
@@ -455,6 +428,12 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
         sendResponse({'cmd': request.cmd, 'opened':false});
       }
     }
+    else if (request.cmd === "actionSuperLinks")
+    {
+      var curTab = await getCurTab();
+      if (curTab.length > 0)
+        actionSuperLinks(null, curTab[0]);
+    }
 /**
     else
     {
@@ -466,3 +445,92 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
   }
 
 });
+
+
+////////// Context Menu
+
+if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
+  try {
+    Browser.api.browserAction.disable();
+
+    Browser.api.contextMenus.create(
+        {"title": "Super Links", 
+         "contexts":["page"],
+         "onclick": actionSuperLinks});
+  
+  } catch(e) {}
+}
+
+var gSuperLinks = null;
+
+async function actionSuperLinks(info, tab) {
+  var msg = 
+       { 
+         throbber_show: function (txt) {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_show', message: txt });
+         },
+         throbber_hide: function () {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_hide' });
+         }
+       }
+
+  var slinks = new SuperLinks(tab.url, tab.id, msg);
+  gSuperLinks = slinks;
+
+  var rc = await slinks.check_login();
+
+  if (rc) {
+    var data = await slinks.request_superlinks();
+    if (data) {
+      slinks.apply_super_links(data);
+      gSuperLInks = null;
+    }
+  }
+}
+
+
+
+//Chrome API
+//wait data from extension
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
+{
+  try {
+    if (request.cmd === "close_oidc_web")
+    {
+      var curWin = await getCurWin();
+      var curTab = await getCurTab();
+      if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
+          && curTab[0].url === request.url) {
+        Browser.api.tabs.remove(curTab[0].id);
+      }
+
+    }
+    else if (request.cmd === "close_oidc_web_slogin")
+    {
+      var curWin = await getCurWin();
+      var curTab = await getCurTab();
+      if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
+          && curTab[0].url === request.url) {
+        Browser.api.tabs.remove(curTab[0].id);
+      }
+
+      if (gSuperLinks) {
+        var slinks = gSuperLinks;
+        if (slinks.state) {
+          slinks.reexec();
+        } else {
+          gSuperLInks = null;
+        }
+      }
+
+    }
+    
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
+
+
+
+})();

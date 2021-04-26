@@ -21,7 +21,8 @@
 
 (function () {
 
-const prefix = "oidc-webid:";
+const prefix_oidc = "oidc-webid:";
+const prefix_oidc_slogin = "oidc-webid-slogin:";
 
 window.addEventListener("message", recvMessage, false);
 
@@ -31,7 +32,7 @@ async function recvMessage(event)
   var session = null;
   var idp = null;
 
-  if (!String(event.data).startsWith("oidc-webid:"))
+  if (!String(event.data).startsWith(prefix_oidc) && !String(event.data).startsWith(prefix_oidc_slogin))
     return;
 
   var s_session = localStorage.getItem('oidc.session');
@@ -40,8 +41,11 @@ async function recvMessage(event)
   } catch(e) {
   }
 
-  if (session)
+  if (session) {
     idp = session.issuer;
+    if (idp.endsWith('/'))
+      idp = idp.substring(0, idp.length-1);
+  }
 
   if (session && idp) {
     var s_client = localStorage.getItem('oidc.clients.'+idp);
@@ -55,9 +59,11 @@ async function recvMessage(event)
     }
   }    
 
-
   setTimeout(function (){
-     Browser.api.runtime.sendMessage({cmd:'close_oidc_web', url: document.location.href});
+     if (String(event.data).startsWith(prefix_oidc_slogin))
+       Browser.api.runtime.sendMessage({cmd:'close_oidc_web_slogin', url: document.location.href});
+     else
+       Browser.api.runtime.sendMessage({cmd:'close_oidc_web', url: document.location.href});
   }, 1500);
 }
 

@@ -1,6 +1,6 @@
 .super_links_msg {
         all: initial;
-	display: flex;
+	display: none;
 	line-height: normal;
 	flex-direction: row; 
 	position: fixed;

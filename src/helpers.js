@@ -1,0 +1,261 @@
+/*
+ *  This file is part of the OpenLink Structured Data Sniffer
+ *
+ *  Copyright (C) 2015-2021 OpenLink Software
+ *
+ *  This project is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License as published by the
+ *  Free Software Foundation; only version 2 of the License, dated June 1991.
+ *
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *  General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ */
+
+
+class SuperLinks {
+  constructor(url, tabId, messages)
+  {
+    this.oidc = new OidcWeb();
+    this.doc_url = url;
+    this.tabId = tabId;
+    this.messages = messages;
+    this.state = 'init';
+    this.ss_idp = 'https://linkeddata.uriburner.com';
+  }
+
+  async check_login()
+  {
+    try {
+      this.messages.throbber_show("&nbsp;Initializing...");
+      await this.oidc.checkSession();
+      if (this.oidc.webid) {
+        if (!this.oidc.isSessionForIdp(this.ss_idp))
+          await this.oidc.logout();
+      }
+      if (!this.oidc.webid) {
+        this.state = 'login';
+        this.oidc.login2();
+        return false;
+      }
+      return true;
+    } finally {
+      this.messages.throbber_hide();
+    }
+  }
+
+  
+  fetchWithTimeout(url, options, timeout) 
+  {
+    const _ffetch = this.oidc.fetch || fetch;;
+
+    return Promise.race([
+      _ffetch(url, options),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), timeout)
+      )
+    ]);
+  }
+
+
+
+  async request_superlinks()
+  {
+    this.state = 'sponge';
+
+    var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
+    var REDIR_URL = LOGIN_URL + "?returnto="+this.doc_url;
+    
+    var setting = new Settings();
+    var sponge_type = setting.getValue('ext.osds.super-links-sponge');
+    var sponge_mode = setting.getValue('ext.osds.super-links-sponge-mode');
+    var url_sponge;
+  
+    if (sponge_type) {
+      url_sponge = setting.createSpongeCmdFor(sponge_type, sponge_mode, this.doc_url);
+    } else {
+      var rc = this.doc_url.match(/^((\w+):\/)?\/?(.*)$/);
+      url_sponge = "https://linkeddata.uriburner.com/about/html/http/"+rc[3]+"?sponger:get=add";
+    }
+  
+
+    this.messages.throbber_show("&nbsp;Preparing&nbsp;Super&nbsp;Links");
+  
+    var options = {
+         headers: {
+            'Accept': 'text/html',
+            'Cache-control': 'no-cache'
+         },
+         credentials: 'include',
+        };
+  
+    try  {
+      var rc = await this.fetchWithTimeout(url_sponge, options, 30000);
+      if (rc.ok && rc.status == 200) {
+        if (rc.redirected && rc.url.lastIndexOf(LOGIN_URL, 0) === 0) {
+          this.messages.throbber_hide();
+          alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
+          this.check_login(); // Browser.openTab(REDIR_URL);
+          return null;
+        }
+        return await this.exec_super_links_query();
+  
+      } else {
+        if (rc.status==401 || rc.status==403) {
+          this.messages.throbber_hide();
+          alert("Sponge error:"+rc.status+"\nLogin to https://linkeddata.uriburner.com and call SupeLinks again");
+          this.check_login(); // Browser.openTab(REDIR_URL);
+          return null;
+        } else {
+          alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
+          return await this.exec_super_links_query();
+        }
+      }
+  
+    } catch(e) {
+      this.messages.throbber_hide();
+      alert("Sponge "+e);
+      console.log(e);
+    }
+  
+    return null;
+  }
+
+
+  async exec_super_links_query()
+  {
+    this.state = 'query';
+
+    var SPARQL_URL = "https://linkeddata.uriburner.com/sparql";
+    var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
+    var REDIR_URL = LOGIN_URL + "?returnto="+this.doc_url;
+
+    var setting = new Settings();
+    var links_query = setting.getValue("ext.osds.super_links.query");
+    var links_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
+
+    
+    var url = new URL(this.doc_url);
+    url.hash = '';
+    //url.search = '';
+    var iri = url.toString();
+  
+    var br_lang = navigator.language || navigator.userLanguage;
+    if (br_lang && br_lang.length>0) {
+      var i = br_lang.indexOf('-');
+      if (i!=-1)
+         br_lang = br_lang.substr(0,i);
+    } else {
+      br_lang = 'en';
+    }
+  
+    var links_sparql_query = (new Settings()).createSuperLinksQuery(links_query, iri, br_lang);
+  
+    this.messages.throbber_show("&nbsp;Preparing&nbsp;Super&nbsp;Links");
+  
+    var get_url = new URL(SPARQL_URL);
+    var params = get_url.searchParams;
+    params.append('format', 'application/json');
+    params.append('query', links_sparql_query);
+    params.append('CXML_redir_for_subjs', 121);
+    params.append('timeout', links_timeout);
+    params.append('_', Date.now());
+  
+    var options = {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-control': 'no-cache'
+          },
+          credentials: 'include',
+        };
+  
+    try  {
+      var rc = await this.fetchWithTimeout(get_url, options, links_timeout);
+      if (rc.ok && rc.status == 200) {
+        var data;
+        try {
+          data = await rc.text();
+        } catch(e) {
+          console.log(e);
+        } finally {
+          this.messages.throbber_hide();
+        }
+  
+        if (data) {
+          try {
+            var val = JSON.parse(data);
+            var links = val.results.bindings;
+            if (links.length == 0) {
+              alert("Empty SuperLinks resultSet was received from server");
+              return null;
+            }
+          } catch(e) {
+            console.log(e);
+          }
+        }
+        
+        this.state = null;
+        return data;
+  
+      } else {
+        this.messages.throbber_hide();
+        if (rc.status==401 || rc.status==403) {
+          alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
+          this.check_login(); // Browser.openTab(REDIR_URL);
+          return null;
+        } else {
+          this.state = 'init';
+          alert("Could not load data from: "+SPARQL_URL+"\nError: "+rc.status);
+          return null;
+        }
+      }
+  
+    } catch(e) {
+      this.messages.throbber_hide();
+      this.state = 'init';
+      alert("Could not load data from: "+SPARQL_URL+"\n"+e);
+      return null;
+    } finally {
+      this.messages.throbber_hide();
+    }
+  }
+
+  apply_super_links(data)
+  {
+    if (data)
+      Browser.api.tabs.sendMessage(this.tabId, { property: 'super_links_data', data : data });
+  }
+
+  async reexec()
+  {
+    if (this.state === 'init') {
+      var rc = await slinks.check_login();
+      if (rc) {
+        var data = await this.request_superlinks();
+        if (data) {
+          this.apply_super_links(data);
+        }
+      }
+    } 
+    else if (this.state === 'sponge' || this.state === 'login') 
+    {
+      var data = await this.request_superlinks();
+      if (data) {
+        this.apply_super_links(data);
+      }
+    } 
+    else if (this.state === 'query') 
+    {
+      var data = await this.exec_super_links_query();
+      if (data) {
+        this.apply_super_links(data);
+      }
+    }
+  }
+}

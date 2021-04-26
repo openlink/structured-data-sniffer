@@ -659,11 +659,12 @@
               <div style="width:16px;">
                 <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
               </div>
-              <div>&nbsp;Applying&nbsp;Super&nbsp;Links</div>
+              <div id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
             </div>`
          );
       }
 
+      DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = '&nbsp;Applying&nbsp;Super&nbsp;Links';
       $(".super_links_msg").css("display","flex");
 
       setTimeout(() => {
@@ -988,158 +989,41 @@
                     request_open_tab(request.url, sender);
                 else if (request.property == "super_links_data")
                     add_super_links(sender, request.data);
+                else if (request.property == "super_links_msg_show") {
+                    if (request.message) {
+                      DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = request.message;
+                      $(".super_links_msg").css("display","flex");
+                    }
+                }
+                else if (request.property == "super_links_msg_hide") {
+                    $(".super_links_msg").css("display","none");
+                }
 
                 sendResponse({});  // stop
             });
 
+
+            if ($(".super_links_popup").length == 0) {
+               $('body').append(
+                 `<div class="super_links_popup" >
+                   <div class="super_links_popup-title"> &nbsp;Super Links </div>
+                   <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
+                   <div class="super_links_popup-content"></div>
+                   <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
+                  </div> 
+                  <div class="super_links_msg"> 
+                    <div style="width:16px;">
+                      <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
+                    </div>
+                    <div id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
+                  </div>`
+               );
+            }
+        
         } catch (e) {
             console.log("OSDS:" + e);
         }
     });
-
-  var DOM = {};
-  DOM.qSel = (sel) => { return document.querySelector(sel); };
-  DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
-  DOM.iSel = (id) => { return document.getElementById(id); };
-
-  function makeResizableTable(tableId, columns_css, containerId) {
-     var table = DOM.qSel(tableId);
-     var popup = DOM.qSel(containerId);
-     var headerResized;
-     const columns = [];
-
-     table.style.gridTemplateColumns = columns_css.join(' ');
-
-     function onMouseMove(e)
-     {
-       window.requestAnimationFrame(() => {
-         // Calculate the desired width
-         if (headerResized===null)
-           return;
-
-         var horizontalScrollOffset = document.documentElement.scrollLeft;
-         const width = (horizontalScrollOffset + e.clientX) - popup.offsetLeft - headerResized.offsetLeft;
-       
-         // Update the column object with the new size value
-         const column = columns.find(({ header }) => header === headerResized);
-         column.size = Math.max(100, width) + 'px'; // Enforce our minimum
-  
-         // For the other headers which don't have a set width, fix it to their computed width
-         columns.forEach((column) => {
-           if(column.size.startsWith('minmax')){ // isn't fixed yet (it would be a pixel value otherwise)
-             column.size = parseInt(column.header.clientWidth, 10) + 'px';
-           }
-         })
-
-         // Update the column sizes
-         // Reminder: grid-template-columns sets the width for all columns in one value
-         table.style.gridTemplateColumns = columns
-           .map(({ header, size }) => size)
-           .join(' ');
-       });
-     }
-
-     function onMouseUp(e)
-     {
-        if (headerResized)
-           headerResized.classList.remove('super_links_table-header--being-resized');
-
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
-        headerResized.classList.remove('super_links_table-header--being-resized');
-        headerResized = null;
-     }
-
-
-     var lst = DOM.qSelAll(tableId+' th');
-     var i = 0;
-
-     for(const header of lst)
-     {
-       columns.push({ 
-         header, 
-         size: columns_css[i],
-       });
-
-       header.querySelector('.super_links_table-resize-handle').onmousedown = (e) => {
-          headerResized = e.target.parentNode;
-          window.addEventListener('mousemove', onMouseMove);
-          window.addEventListener('mouseup', onMouseUp);
-          headerResized.classList.add('super_links_table-header--being-resized');
-       } 
-     }
-  }
-
-
-  function dragElement(el, elHeader) {
-    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-    if (elHeader) {
-      // if present, the header is where you move the DIV from:
-      elHeader.onmousedown = onMouseDown;
-    } else {
-      // otherwise, move the DIV from anywhere inside the DIV:
-      el.onmousedown = onMouseDown;
-    }
-
-    function onMouseDown(e) {
-      e = e || window.event;
-      e.preventDefault();
-      // get the mouse cursor position at startup:
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-    }
-
-    function onMouseMove(e) {
-      e = e || window.event;
-      e.preventDefault();
-      // calculate the new cursor position:
-      pos1 = pos3 - e.clientX;
-      pos2 = pos4 - e.clientY;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      // set the element's new position:
-      el.style.top = (el.offsetTop - pos2) + "px";
-      el.style.left = (el.offsetLeft - pos1) + "px";
-    }
-
-    function onMouseUp() {
-      // stop moving when mouse button is released:
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    }
-  }
-
-  function makeResizable(el, elResizer) 
-  {
-    var orig_height = 0;
-    var orig_width = 0;
-    var orig_mouse_x = 0;
-    var orig_mouse_y = 0;
-
-    elResizer.onmousedown = (e) => {
-        e.preventDefault();
-        orig_width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
-        orig_height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
-        orig_mouse_x = e.pageX;
-        orig_mouse_y = e.pageY;
-
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-    }
-    
-    function onMouseMove(e) {
-      el.style.width = Math.max(orig_width + (e.pageX - orig_mouse_x), 600) + 'px';
-      el.style.height = Math.max(orig_height + (e.pageY - orig_mouse_y), 150) + 'px';
-    }
-    
-    function onMouseUp() {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    }
-  }
 
 
 })();

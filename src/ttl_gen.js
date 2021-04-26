@@ -255,7 +255,7 @@
       var len = data.length;
 
       if (data[len-1]==="/") 
-        data = data.substr(0, data.length-1);
+        data = data.substring(0, data.length-1);
 
       if (data.indexOf("/")!==-1 || this.test_esc.test(data))
         return "<"+val+">";

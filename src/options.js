@@ -529,9 +529,3 @@ function save_users_data()
   gPref.setValue('ext.osds.pref.user.list', JSON.stringify(list, undefined, 2));
 }
 
-var DOM = {};
-
-DOM.qSel = (sel) => { return document.querySelector(sel); };
-DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
-DOM.iSel = (id) => { return document.getElementById(id); };
-

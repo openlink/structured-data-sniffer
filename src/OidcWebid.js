@@ -32,6 +32,7 @@ OidcWeb = function(data) {
   const options = { solid: true };
   this.authClient = new OIDCWebClient(options);
   this.login_url = 'https://openlinksoftware.github.io/oidc-web/login.html#relogin';
+  this.login2_url = 'https://openlinksoftware.github.io/oidc-web/login.html';
 }
 
 
@@ -67,6 +68,20 @@ OidcWeb.prototype = {
      window.open(this.login_url, 'Login', settings);
   },
 
+  login2: function() {
+     const width = 650;
+     const height = 400;
+     const left = window.screenX + (window.innerWidth - width) / 2;
+     const top = window.screenY + (window.innerHeight - height) / 2;
+     const settings = `width=${width},height=${height},left=${left},top=${top}`;
+     window.open(this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin', 'Login', settings);
+  },
+
+  isSessionForIdp: function(idp)
+  {
+    return (this.session && this.session.issuer.startsWith(idp));
+  },
+  
   checkSession: async function() 
   {
     try {

@@ -232,3 +232,21 @@ function fixedEncodeURIComponent (str) {
 }
 
 
+function fetchWithTimeout(url, options, timeout) 
+{
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), timeout)
+    )
+  ]);
+}
+
+var DOM = {};
+DOM.qSel = (sel) => { return document.querySelector(sel); };
+DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
+DOM.iSel = (id) => { return document.getElementById(id); };
+
+
+
+
