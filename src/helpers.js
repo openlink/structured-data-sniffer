@@ -51,6 +51,12 @@ class SuperLinks {
   }
 
   
+  async logout()
+  {
+    await this.oidc.logout();
+  }
+
+  
   fetchWithTimeout(url, options, timeout) 
   {
     const _ffetch = this.oidc.fetch || fetch;;
@@ -101,6 +107,7 @@ class SuperLinks {
         if (rc.redirected && rc.url.lastIndexOf(LOGIN_URL, 0) === 0) {
           this.messages.throbber_hide();
           alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
+          this.logout();
           this.check_login(); // Browser.openTab(REDIR_URL);
           return null;
         }
@@ -110,6 +117,7 @@ class SuperLinks {
         if (rc.status==401 || rc.status==403) {
           this.messages.throbber_hide();
           alert("Sponge error:"+rc.status+"\nLogin to https://linkeddata.uriburner.com and call SupeLinks again");
+          this.logout();
           this.check_login(); // Browser.openTab(REDIR_URL);
           return null;
         } else {
@@ -207,6 +215,7 @@ class SuperLinks {
         this.messages.throbber_hide();
         if (rc.status==401 || rc.status==403) {
           alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
+          this.logout();
           this.check_login(); // Browser.openTab(REDIR_URL);
           return null;
         } else {

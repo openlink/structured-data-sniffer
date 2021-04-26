@@ -56,7 +56,7 @@
               isBNode = true;
             }
             else if (this.is_BNode(subj)) {
-              this.bnodes[subj] = this.pre(subj.substring(1));
+              this.bnodes[subj] = this.docURI+'#'+this.pre(subj.substring(2));
               isBNode = true;
             }
 
@@ -217,7 +217,7 @@
          if (s)
            return "<"+s+">";
          else
-           return "<"+this.pre(value.substring(2))+">";
+           return "<"+this.docURI+'#'+this.pre(value.substring(2))+">";
        }
        else {
          var pref = this.use_prefixes ? this.ns.has_known_ns(value) : null;

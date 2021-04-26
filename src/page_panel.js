@@ -640,7 +640,7 @@ async function Download_exec()
           var fmt = $('#save-fmt option:selected').attr('id');
           var fname = action ==='fileupload' ? $('#oidc-url').val().trim(): $('#save-filename').val().trim();
           save_data(action, fname, fmt)
-           .then(() => {$(this).dialog( "destroy" )});
+           .then(() => {$('#save-confirm').dialog( "destroy" )});
         },
         Cancel: function() {
           $(this).dialog( "destroy" );
