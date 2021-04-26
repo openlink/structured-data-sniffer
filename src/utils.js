@@ -242,6 +242,10 @@ function fetchWithTimeout(url, options, timeout)
   ]);
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 var DOM = {};
 DOM.qSel = (sel) => { return document.querySelector(sel); };
 DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };

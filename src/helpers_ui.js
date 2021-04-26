@@ -18,6 +18,7 @@
  *
  */
 
+  
   function makeResizableTable(tableId, columns_css, containerId) {
      var table = DOM.qSel(tableId);
      var popup = DOM.qSel(containerId);

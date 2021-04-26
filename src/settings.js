@@ -56,6 +56,8 @@ class Settings {
 
 
     this.def_super_links_timeout = 30000000;
+    this.def_super_links_retries = 3;
+    this.def_super_links_retries_timeout = 2;
 
     this.def_super_links_query = ''
   +'DEFINE get:soft "soft" \n'
@@ -183,6 +185,15 @@ class Settings {
       case "ext.osds.super_links.timeout":
           val = this.def_super_links_timeout;
           break;
+
+      case "ext.osds.super_links.retries":
+          val = this.def_super_links_retries;
+          break;
+
+      case "ext.osds.super_links.retries_timeout":
+          val = this.def_super_links_retries_timeout;
+          break;
+      
       case "ext.osds.super-links-highlight":
           val = "first";
           break;

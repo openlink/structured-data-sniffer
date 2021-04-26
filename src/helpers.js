@@ -65,7 +65,7 @@ class SuperLinks {
 
 
 
-  async request_superlinks()
+  async request_superlinks(iter)
   {
     this.state = 'sponge';
 
@@ -85,7 +85,7 @@ class SuperLinks {
     }
   
 
-    this.messages.throbber_show("&nbsp;Preparing&nbsp;Super&nbsp;Links");
+    this.messages.throbber_show("&nbsp;Sponge&nbsp;Super&nbsp;Links");
   
     var options = {
          headers: {
@@ -104,7 +104,7 @@ class SuperLinks {
           this.check_login(); // Browser.openTab(REDIR_URL);
           return null;
         }
-        return await this.exec_super_links_query();
+        return await this.exec_super_links_query(iter);
   
       } else {
         if (rc.status==401 || rc.status==403) {
@@ -114,7 +114,7 @@ class SuperLinks {
           return null;
         } else {
           alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
-          return await this.exec_super_links_query();
+          return await this.exec_super_links_query(iter);
         }
       }
   
@@ -128,7 +128,7 @@ class SuperLinks {
   }
 
 
-  async exec_super_links_query()
+  async exec_super_links_query(iter)
   {
     this.state = 'query';
 
@@ -157,7 +157,7 @@ class SuperLinks {
   
     var links_sparql_query = (new Settings()).createSuperLinksQuery(links_query, iri, br_lang);
   
-    this.messages.throbber_show("&nbsp;Preparing&nbsp;Super&nbsp;Links");
+    this.messages.throbber_show("&nbsp;Preparing&nbsp;Super&nbsp;Links&nbsp;"+iter);
   
     var get_url = new URL(SPARQL_URL);
     var params = get_url.searchParams;
@@ -192,7 +192,7 @@ class SuperLinks {
             var val = JSON.parse(data);
             var links = val.results.bindings;
             if (links.length == 0) {
-              alert("Empty SuperLinks resultSet was received from server");
+//              alert("Empty SuperLinks resultSet was received from server");
               return null;
             }
           } catch(e) {
@@ -237,25 +237,87 @@ class SuperLinks {
     if (this.state === 'init') {
       var rc = await slinks.check_login();
       if (rc) {
-        var data = await this.request_superlinks();
-        if (data) {
-          this.apply_super_links(data);
-        }
+        return await this.mexec();
       }
     } 
     else if (this.state === 'sponge' || this.state === 'login') 
     {
-      var data = await this.request_superlinks();
-      if (data) {
-        this.apply_super_links(data);
-      }
+      return await this.mexec();
     } 
     else if (this.state === 'query') 
     {
-      var data = await this.exec_super_links_query();
+      return await this.mexec_query();
+    }
+    return false;
+  }
+
+
+  async mexec()
+  {
+    var setting = new Settings();
+    var retries = setting.getValue("ext.osds.super_links.retries");
+    var rtimeout = setting.getValue("ext.osds.super_links.retries_timeout");
+
+    if (retries < 3)
+      retries = 3;
+
+    if (rtimeout < 2)
+      rtimeout = 2;
+
+    var data = null;
+
+    for(var i=0; i < retries; i++)
+    {
+      if (i == 0)
+         data = await this.request_superlinks(i+1);
+      else
+         data = await this.exec_super_links_query(i+1);
+
       if (data) {
         this.apply_super_links(data);
+        return true;
+      } 
+      else {
+        await sleep(rtimeout * 1000);
       }
     }
+
+    if (!data)
+      alert("Empty SuperLinks resultSet was received from server");
+
+    return false;
   }
+
+  async mexec_query()
+  {
+    var setting = new Settings();
+    var retries = setting.getValue("ext.osds.super_links.retries");
+    var rtimeout = setting.getValue("ext.osds.super_links.retries_timeout");
+
+    if (retries < 3)
+      retries = 3;
+
+    if (rtimeout < 2)
+      rtimeout = 2;
+
+    var data = null;
+
+    for(var i=0; i < retries; i++)
+    {
+      data = await this.exec_super_links_query(i+1);
+      if (data) {
+        this.apply_super_links(data);
+        return true;
+      } 
+      else {
+        await sleep(rtimeout * 1000);
+      }
+    }
+
+    if (!data)
+      alert("Empty SuperLinks resultSet was received from server");
+
+    return false;
+  }
+
 }

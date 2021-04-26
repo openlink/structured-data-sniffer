@@ -480,11 +480,9 @@ async function actionSuperLinks(info, tab) {
   var rc = await slinks.check_login();
 
   if (rc) {
-    var data = await slinks.request_superlinks();
-    if (data) {
-      slinks.apply_super_links(data);
+    rc = await slinks.mexec();
+    if (rc)
       gSuperLInks = null;
-    }
   }
 }
 
@@ -516,8 +514,10 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
       if (gSuperLinks) {
         var slinks = gSuperLinks;
-        if (slinks.state) {
-          slinks.reexec();
+        if (slinks && slinks.state) {
+          var rc = await slinks.reexec();
+          if (rc)
+            gSuperLInks = null;
         } else {
           gSuperLInks = null;
         }

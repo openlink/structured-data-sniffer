@@ -114,7 +114,7 @@ $(function(){
 
 function changeHandleAll()
 {
-   var v = $('#chk_try_handle_all').is(':checked')? false : true;
+   var v = DOM.iSel('chk_try_handle_all').checked ? false : true;
      $('#chk_try_handle_xml').prop('disabled', v);
      $('#chk_try_handle_csv').prop('disabled', v);
      $('#chk_try_handle_json').prop('disabled', v);
@@ -143,7 +143,7 @@ function setImportDefaults()
 
           DOM.qSel('#import-srv #'+gPref.def_import_srv).selected=true;
           var h_url = gPref.createDefaultImportCmdFor(gPref.def_import_srv, gPref.def_import_url.trim());
-          $('#import-url').val(h_url);
+          DOM.iSel('import-url').value = h_url;
           enableCtrls();
 
           $(this).dialog( "close" );
@@ -164,8 +164,8 @@ function setRWWDefaults()
       buttons: {
         "OK": function() {
 
-          $('#rww-store-url').val("");
-          $('#rww-edit-url').val(gPref.def_rww_edit_url);
+          DOM.iSel('rww-store-url').value = "";
+          DOM.iSel('rww-edit-url').value = gPref.def_rww_edit_url;
 
           $(this).dialog( "close" );
         },
@@ -186,7 +186,7 @@ function setSparqlDefaults()
         "OK": function() {
 
           DOM.qSel('#sparql-cmd #'+gPref.def_sparql_cmd).selected=true;
-          $('#sparql-url').val(gPref.def_sparql_url);
+          DOM.iSel('sparql-url').value = gPref.def_sparql_url;
 	  yasqe_srv.setValue(createSparqlQuery(gPref.def_sparql_cmd));
 
           $(this).dialog( "close" );
@@ -207,12 +207,15 @@ function setSuperLinksDefaults()
       modal: true,
       buttons: {
         "OK": function() {
-          $('#super-links-timeout').val(gPref.def_super_links_timeout);
+          DOM.iSel('super-links-timeout').value = gPref.def_super_links_timeout;
           yasqe_slinks.setValue(gPref.def_super_links_query);
           DOM.qSel('#super-links-sponge #describe-ssl').selected = true;
           DOM.qSel('#super-links-sponge-mode #xxx').selected = true;
           DOM.qSel('#super-links-viewer #html-fb').selected = true;
           DOM.qSel('#super-links-highlight #all').selected = true;
+
+          DOM.iSel('super-links-retries').value = gPref.def_super_links_retries;
+          DOM.iSel('super-links-retries-timeout').value = gPref.def_super_links_retries_timeout;
 
           $(this).dialog( "close" );
         },
@@ -261,32 +264,25 @@ function loadPref()
     var uiterm_mode = gPref.getValue("ext.osds.uiterm.mode");
     DOM.qSel('#uiterm-mode #'+uiterm_mode).selected=true;
 
-
     var chk_user = gPref.getValue("ext.osds.pref.user.chk");
-    if (chk_user && chk_user==="1")
-      $("#chk_pref_user").attr('checked','checked');
+    DOM.iSel("chk_pref_user").checked = (chk_user==="1");
 
     load_pref_user();
 
     var chk_action = gPref.getValue("ext.osds.pref.show_action");
-    if (chk_action && chk_action==="1")
-      $("#chk_show_action_for_url_with_params").attr('checked','checked');
+    DOM.iSel("chk_show_action_for_url_with_params").checked = (chk_action==="1");
 
     var chk_xml = gPref.getValue("ext.osds.handle_xml");
-    if (chk_xml && chk_xml==="1")
-      $("#chk_try_handle_xml").attr('checked','checked');
+    DOM.iSel("chk_try_handle_xml").checked = (chk_xml==="1");
 
     var chk_csv = gPref.getValue("ext.osds.handle_csv");
-    if (chk_csv && chk_csv==="1")
-      $("#chk_try_handle_csv").attr('checked','checked');
+    DOM.iSel("chk_try_handle_csv").checked = (chk_csv==="1");
 
     var chk_json = gPref.getValue("ext.osds.handle_json");
-    if (chk_json && chk_json==="1")
-      $("#chk_try_handle_json").attr('checked','checked');
+    DOM.iSel("chk_try_handle_json").checked = (chk_json==="1");
 
     var chk_all = gPref.getValue("ext.osds.handle_all");
-    if (chk_all && chk_all==="1")
-      $("#chk_try_handle_all").attr('checked','checked');
+    DOM.iSel("chk_try_handle_all").checked = (chk_all==="1");
 
     changeHandleAll();
 
@@ -294,31 +290,29 @@ function loadPref()
     var import_srv = gPref.getValue("ext.osds.import.srv");
 
     DOM.qSel('#import-srv #'+import_srv).selected=true;
-    $('#import-url').val(import_url);
+    DOM.iSel('import-url').value = import_url;
 
 
     var rww_edit_url = gPref.getValue("ext.osds.rww.edit.url");
     if (rww_edit_url)
-        $('#rww-edit-url').val(rww_edit_url);
+        DOM.iSel('rww-edit-url').value = rww_edit_url;
 
     var rww_store_url = gPref.getValue("ext.osds.rww.store.url");
     if (rww_store_url)
-        $('#rww-store-url').val(rww_store_url);
+        DOM.iSel('rww-store-url').value = rww_store_url;
 
 
     var sparql_url = gPref.getValue("ext.osds.sparql.url");
-    $('#sparql-url').val(sparql_url);
+    DOM.iSel('sparql-url').value = sparql_url;
 
     var sparql_cmd = gPref.getValue("ext.osds.sparql.cmd");
-    $('#'+sparql_cmd,'#sparql-cmd').attr('selected','selected');
     DOM.qSel('#sparql-cmd #'+sparql_cmd).selected=true;
 
 
     yasqe_srv.setValue(gPref.getValue("ext.osds.sparql.query")+"\n");
     yasqe_slinks.setValue(gPref.getValue("ext.osds.super_links.query")+"\n");
 
-    var super_timeout = gPref.getValue("ext.osds.super_links.timeout");
-    $('#super-links-timeout').val(super_timeout);
+    DOM.iSel('super-links-timeout').value = gPref.getValue("ext.osds.super_links.timeout");
 
     var sponge = gPref.getValue("ext.osds.super-links-sponge");
     if (sponge)
@@ -335,48 +329,49 @@ function loadPref()
     var mode = gPref.getValue("ext.osds.super-links-highlight");
     if (mode)
       DOM.qSel('#super-links-highlight #'+mode).selected = true;
+
+    DOM.iSel('super-links-retries').value = gPref.getValue("ext.osds.super_links.retries");
+    DOM.iSel('super-links-retries-timeout').value = gPref.getValue("ext.osds.super_links.retries_timeout");
 }
 
 
 
 function savePref()
 {
-   var uiterm_mode = $('#uiterm-mode option:selected').attr('id');
+   var uiterm_mode = DOM.qSel('#uiterm-mode option:checked').id;
    gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
 
-   gPref.setValue("ext.osds.pref.user.chk", $('#chk_pref_user').is(':checked')?"1":"0");
+   gPref.setValue("ext.osds.pref.user.chk", DOM.iSel('chk_pref_user').checked?"1":"0");
 
-   gPref.setValue("ext.osds.pref.show_action", $('#chk_show_action_for_url_with_params').is(':checked')?"1":"0");
+   gPref.setValue("ext.osds.pref.show_action", DOM.iSel('chk_show_action_for_url_with_params').checked?"1":"0");
 
-   gPref.setValue("ext.osds.handle_xml", $('#chk_try_handle_xml').is(':checked')?"1":"0");
-   gPref.setValue("ext.osds.handle_csv", $('#chk_try_handle_csv').is(':checked')?"1":"0");
-   gPref.setValue("ext.osds.handle_json", $('#chk_try_handle_json').is(':checked')?"1":"0");
-   gPref.setValue("ext.osds.handle_all", $('#chk_try_handle_all').is(':checked')?"1":"0");
-
-//   gPref.setValue("ext.osds.pref.user", $('#pref_user').val().trim());
+   gPref.setValue("ext.osds.handle_xml", DOM.iSel('chk_try_handle_xml').checked?"1":"0");
+   gPref.setValue("ext.osds.handle_csv", DOM.iSel('chk_try_handle_csv').checked?"1":"0");
+   gPref.setValue("ext.osds.handle_json",DOM.iSel('chk_try_handle_json').checked?"1":"0");
+   gPref.setValue("ext.osds.handle_all", DOM.iSel('chk_try_handle_all').checked?"1":"0");
 
    var pref_user = $('#pref_user option:selected').text();
    gPref.setValue("ext.osds.pref.user", pref_user);
 
 
-   var import_srv = $('#import-srv option:selected').attr('id');
+   var import_srv = DOM.qSel('#import-srv option:checked').id;
    gPref.setValue("ext.osds.import.srv", import_srv);
-   gPref.setValue("ext.osds.import.url", $('#import-url').val().trim());
+   gPref.setValue("ext.osds.import.url", DOM.iSel('import-url').value.trim());
 
 
-   gPref.setValue("ext.osds.rww.edit.url", $('#rww-edit-url').val().trim());
-   gPref.setValue("ext.osds.rww.store.url", $('#rww-store-url').val().trim());
+   gPref.setValue("ext.osds.rww.edit.url", DOM.iSel('rww-edit-url').value.trim());
+   gPref.setValue("ext.osds.rww.store.url", DOM.iSel('rww-store-url').value.trim());
 
 
-   var sparql_cmd = $('#sparql-cmd option:selected').attr('id');
+   var sparql_cmd = DOM.qSel('#sparql-cmd option:checked').id;
    gPref.setValue("ext.osds.sparql.cmd", sparql_cmd);
-   gPref.setValue("ext.osds.sparql.url", $('#sparql-url').val().trim());
+   gPref.setValue("ext.osds.sparql.url", DOM.iSel('sparql-url').value.trim());
 
    gPref.setValue("ext.osds.sparql.query", yasqe_srv.getValue());
 
    gPref.setValue("ext.osds.super_links.query", yasqe_slinks.getValue());
 
-   var timeout = $('#super-links-timeout').val().trim();
+   var timeout = DOM.iSel('super-links-timeout').value.trim();
    gPref.setValue("ext.osds.super_links.timeout", parseInt(timeout, 10));
 
    var v; 
@@ -392,6 +387,12 @@ function savePref()
    v = DOM.qSel('#super-links-highlight option:checked').id;
    gPref.setValue("ext.osds.super-links-highlight", v);
 
+   v = DOM.iSel('super-links-retries').value.trim();
+   gPref.setValue("ext.osds.super_links.retries", parseInt(v, 10));
+
+   v = DOM.iSel('super-links-retries-timeout').value.trim();
+   gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
+
    closeOptions();
 }
 
@@ -399,11 +400,11 @@ function savePref()
 
 function enableCtrls()
 {
-    var srv = $('#import-srv option:selected').attr('id');
-    var h_url = (new Settings).createDefaultImportCmdFor(srv, $('#import-url').val().trim());
+    var srv = DOM.qSel('#import-srv option:checked').id;
+    var h_url = (new Settings).createDefaultImportCmdFor(srv, DOM.iSel('import-url').value.trim());
 
     $('#import-url-bcast').show();
-    $('#import-url').val(h_url);
+    DOM.iSel('import-url').value = h_url;
 };
 
 
@@ -411,7 +412,7 @@ function enableCtrls()
 function createSparqlQuery(cmd)
 {
     var query = "";
-    var uiterm_mode = $('#uiterm-mode option:selected').attr('id');
+    var uiterm_mode = DOM.qSel('#uiterm-mode option:checked').id;
 
     switch (cmd) {
       case 'select':
