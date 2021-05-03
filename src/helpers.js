@@ -128,7 +128,13 @@ class SuperLinks {
   
     } catch(e) {
       this.messages.throbber_hide();
-      alert("Sponge "+e);
+      if (e.statusCode == 403 || e.statusCode == 401) {
+        this.logout();
+        alert("Sponge error:"+e.statusCode+"\nLogin to https://linkeddata.uriburner.com and call SupeLinks again");
+        this.check_login(); // Browser.openTab(REDIR_URL);
+      } else {
+        alert("Sponge "+e);
+      }
       console.log(e);
     }
   
@@ -228,7 +234,13 @@ class SuperLinks {
     } catch(e) {
       this.messages.throbber_hide();
       this.state = 'init';
-      alert("Could not load data from: "+SPARQL_URL+"\n"+e);
+      if (e.statusCode == 403 || e.statusCode == 401) {
+        this.logout();
+        alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
+        this.check_login(); // Browser.openTab(REDIR_URL);
+      } else {
+        alert("Could not load data from: "+SPARQL_URL+"\n"+e);
+      }
       return null;
     } finally {
       this.messages.throbber_hide();
@@ -282,6 +294,9 @@ class SuperLinks {
       else
          data = await this.exec_super_links_query(i+1);
 
+      if (this.state === 'login')
+        break;
+
       if (data) {
         this.apply_super_links(data);
         return true;
@@ -314,6 +329,10 @@ class SuperLinks {
     for(var i=0; i < retries; i++)
     {
       data = await this.exec_super_links_query(i+1);
+
+      if (this.state === 'login')
+        break;
+
       if (data) {
         this.apply_super_links(data);
         return true;
