@@ -27,7 +27,6 @@ OidcWeb = function(data) {
   this.webid = null;
   this.storage = null;
   this.session = null;
-  this.fetch = fetch;
 
   const options = { solid: true };
   this.authClient = new OIDCWebClient(options);
@@ -55,7 +54,6 @@ OidcWeb.prototype = {
       this.webid = null;
       this.storage = null;
       this.session = null;
-      this.fetch = fetch;
     }
   },
 
@@ -113,7 +111,6 @@ OidcWeb.prototype = {
 
       this.session = await this.authClient.currentSession()
       this.webid = (this.session.hasCredentials()) ? this.session.idClaims.sub : null;
-      this.fetch = (this.webid) ? this.session.fetch : null;
 
       if (prev_webid !== this.webid && this.webid) {
         this.storage = (new URL(this.webid)).origin + '/';
@@ -176,10 +173,9 @@ OidcWeb.prototype = {
 }
 
 
-function putResource (_fetch, url, data, contentType, links, options = {}) 
+function putResource (oidc, url, data, contentType, links, options = {}) 
 {
   const DEFAULT_CONTENT_TYPE = 'text/html; charset=utf-8'
-  const _ffetch = _fetch || fetch;;
   const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
 
   if (!url) {
@@ -204,7 +200,7 @@ function putResource (_fetch, url, data, contentType, links, options = {})
 
   options.headers['Link'] = links
 
-  return _ffetch(url, options)
+  return oidc.fetch(url, options)
 
     .then(response => {
       if (!response.ok) {  // not a 2xx level response

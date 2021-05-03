@@ -530,6 +530,7 @@ function Download_exec_update_state()
     $('#save-file').show();
   else
     $('#save-file').hide();
+
   if (cmd==='fileupload') {
     $('#oidc-login').show();
   } else {
@@ -738,7 +739,7 @@ async function save_data(action, fname, fmt, callback)
        else
          contentType = "text/turtle;charset=utf-8";
 
-        putResource(gOidc.fetch, fname, retdata.txt, contentType, null)
+        putResource(gOidc, fname, retdata.txt, contentType, null)
           .then(response => {
             showInfo('Saved');
           })
@@ -778,6 +779,16 @@ async function save_data(action, fname, fmt, callback)
     var data = [];
     var src_fmt = null;
 
+    if (action === "sparqlupload") {
+      fmt = "ttl";
+
+      if (!sparqlendpoint || sparqlendpoint.length < 1) {
+        showInfo('SPARQL endpoint is empty');
+        return;
+      }
+    }
+    
+    
     if (gData.type==="jsonld" && gData.text!==null) {
       src_fmt = "jsonld";
       data = data.concat(gData.text);
@@ -863,8 +874,6 @@ async function save_data(action, fname, fmt, callback)
 
 async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
 {
-  const _fetch = gOidc.fetch || fetch;;
-
   if (data.error.length > 0) {
      showInfo(data.error);
      return false;
@@ -894,7 +903,8 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
     }
 
     try {
-      rc = await _fetch(sparqlendpoint, options);
+      rc = await gOidc.fetch(sparqlendpoint, options);
+
       if (!rc.ok) {
         var message;
         switch(rc.status) {

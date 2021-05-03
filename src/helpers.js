@@ -59,10 +59,8 @@ class SuperLinks {
   
   fetchWithTimeout(url, options, timeout) 
   {
-    const _ffetch = this.oidc.fetch || fetch;;
-
     return Promise.race([
-      _ffetch(url, options),
+      this.oidc.fetch(url, options),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error('timeout')), timeout)
       )
@@ -81,6 +79,7 @@ class SuperLinks {
     var setting = new Settings();
     var sponge_type = setting.getValue('ext.osds.super-links-sponge');
     var sponge_mode = setting.getValue('ext.osds.super-links-sponge-mode');
+    var links_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
     var url_sponge;
   
     if (sponge_type) {
@@ -91,7 +90,7 @@ class SuperLinks {
     }
   
 
-    this.messages.throbber_show("&nbsp;Sponge&nbsp;Super&nbsp;Links");
+    this.messages.throbber_show("&nbsp;Retrieving&nbsp;Information");
   
     var options = {
          headers: {
@@ -102,11 +101,11 @@ class SuperLinks {
         };
   
     try  {
-      var rc = await this.fetchWithTimeout(url_sponge, options, 30000);
+      var rc = await this.fetchWithTimeout(url_sponge, options, 60000);  //links_timeout); //  30000);
       if (rc.ok && rc.status == 200) {
         if (rc.redirected && rc.url.lastIndexOf(LOGIN_URL, 0) === 0) {
           this.messages.throbber_hide();
-          alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
+          alert("Could not retrieving information for current page with: "+url_sponge+"\nTry Login and execute sponge again");
           this.logout();
           this.check_login(); // Browser.openTab(REDIR_URL);
           return null;
