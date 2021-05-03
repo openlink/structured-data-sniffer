@@ -96,6 +96,11 @@ OidcWeb.prototype = {
     return (this.session && this.session.issuer.startsWith(idp));
   },
   
+  fetch: async function(url, options)
+  {
+    return this.authClient.authFetch(url, options);
+  },
+
   checkSession: async function() 
   {
     try {

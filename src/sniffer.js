@@ -674,8 +674,9 @@
           var list = {};
           for(var i=0; i < g_super_links.length; i++) {
             var s = g_super_links[i].extractLabel.value;
-            g_super_links[i]._id = s.toLowerCase();
-            list[s]=0;
+            var sl = s.toLowerCase();
+            g_super_links[i]._id = sl;
+            list[sl]=0;
           }
 
           var keys = Object.keys(list); 
