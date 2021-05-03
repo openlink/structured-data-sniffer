@@ -910,13 +910,28 @@ class Handle_CSV {
             var v = res.data[1][i];
             if (typeof v === 'number') {
               var is_int = 1;
+              var v_type = 'integer';
               for(var r=1; r < res.data.length; r++) {
-                if (res.data[r][i] % 1 !== 0) {
-                  is_int = 0;
+                v = res.data[r][i];
+                if (v) {
+                  if (typeof v === 'number') {
+                    if (is_int == 1 && (v % 1) !== 0) {
+                      is_int = 0;
+                      v_type = 'decimal;'
+                    }
+                  } 
+                  else {
+                    is_int = -1;
+                    v_type = 'string';
+                    break;
+                  }
+
+                } else {
+                  v_type = 'string';
                   break;
                 }
               }
-              col_type.push(is_int?'integer':'decimal');
+              col_type.push(v_type);
             } else if (typeof v === 'boolean') {
               col_type.push('boolean'); 
             } else if (typeof v === 'string') {
@@ -928,7 +943,9 @@ class Handle_CSV {
               col_type.push('string');
             }
           }
+
         }
+
         ttl += '\n';
 
         var rep1 = /\(/g;
@@ -951,7 +968,7 @@ class Handle_CSV {
           var d = res.data[i];
           var s = '[\n';
           for(var j=0; j < d.length; j++) {
-            var val = ''+d[j];
+            var val = d[j] ? ''+d[j] : '';
             var qv = '"';
 
             if (val.indexOf("\n")!=-1 || val.indexOf("\r")!=-1) {

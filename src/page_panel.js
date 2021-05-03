@@ -880,7 +880,7 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
   }
 
   var handler = new Convert_Turtle();
-  var ttl_data = await handler.prepare_query(data.txt, gData.baseURL);
+  var ttl_data = await handler.prepare_query(data.txt, baseURL);
 
   for(var i=0; i < ttl_data.length; i++) {
 
