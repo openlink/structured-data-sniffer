@@ -161,6 +161,7 @@ $(document).ready(function()
 
   load_data_from_url(document.location);
 
+  jQuery('#ext_ver').text('\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version);
 
 });
 
@@ -596,6 +597,8 @@ async function Download_exec()
   var fmt = "jsonld";
 
 
+  $('#save-fmt #json').prop('disabled', true);
+
   if (gData.type == "jsonld" && gData.text) {
     filename = "jsonld_data.txt";
     fmt = "jsonld";
@@ -611,7 +614,7 @@ async function Download_exec()
   else if (gData.type == "json" && gData.text) {
     filename = "json_data.txt";
     fmt = "json";
-//??    $('#save-fmt #json').prop('disabled', false);
+    $('#save-fmt #json').prop('disabled', false);
   }
   else if (gData.type == "csv" && gData.ttl_data) {
     filename = "turtle_data.txt";

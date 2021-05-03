@@ -397,6 +397,10 @@ class Handle_JSON {
     } else {
       b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${this.str2obj_val(o)} .`);
     }
+
+    b.push(`${subj} a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .`);
+    b.push(`${subj} <http://schema.org/name> "#${p}" .`);
+    b.push(`${subj} <http://www.w3.org/2007/05/powder-s#describedby> <${this.baseURL}#this> .`);
   }
 
   handle_arr(b, subj, p, o) 
@@ -487,6 +491,7 @@ class Handle_JSON {
           }
         }
       } catch (ex) {
+        json_text.push(textData[x]);
         if (self.skip_error)
           self.skipped_error.push(""+ex.toString());
         else 
@@ -931,7 +936,7 @@ class Handle_CSV {
 
         for (var i=0; i < col.length; i++) {
           col[i] = encodeURIComponent(col[i]).replace(rep1,'%28').replace(rep2,'%29');
-          ttl += ':'+col[i]+' rdf:domain : .\n';
+          ttl += ':'+col[i]+' rdf:domain :this .\n';
         }
 
         ttl += '\n';

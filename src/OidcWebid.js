@@ -74,7 +74,23 @@ OidcWeb.prototype = {
      const left = window.screenX + (window.innerWidth - width) / 2;
      const top = window.screenY + (window.innerHeight - height) / 2;
      const settings = `width=${width},height=${height},left=${left},top=${top}`;
-     window.open(this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin', 'Login', settings);
+
+     const url = this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin';
+
+     if (Browser.isFirefoxWebExt) {
+       Browser.api.windows.create({
+         url,
+         type: 'popup',
+         height,
+         width,
+         top,
+         left,
+         allowScriptsToClose : true
+       });
+
+     } else {
+       window.open(url, 'Login', settings);
+     }
   },
 
   isSessionForIdp: function(idp)
