@@ -172,7 +172,7 @@ $(document).on('click', 'a', function(e) {
     if (baseURL[baseURL.length-1]==="#")
       return uri.startsWith(baseURL);
     else
-      return uri.baseURL(baseURL+'#');
+      return uri.startsWith(baseURL+'#');
   }
 
 
@@ -884,54 +884,12 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
 
   for(var i=0; i < ttl_data.length; i++) {
 
-    var contentType = "application/sparql-update;utf-8";
+    var ret = await exec_sparql(sparqlendpoint, sparql_graph, ttl_data[i].prefixes, ttl_data[i].triples, baseURL);
 
-    var rc;
-    var query = ttl_data[i].pref+'\n';
-
-    query += sparql_graph.length > 1
-              ? 'INSERT INTO GRAPH <' + sparql_graph + '> \n{\n' + ttl_data[i].ttl + '\n }'
-              : 'INSERT DATA { '+ttl_data[i].ttl+' }';
-
-    var options = {
-      method: 'POST',
-      headers: {
-        'Content-type': 'application/sparql-update;utf-8'
-      },
-      credentials: 'include',
-      body: query
-    }
-
-    try {
-      rc = await gOidc.fetch(sparqlendpoint, options);
-
-      if (!rc.ok) {
-        var message;
-        switch(rc.status) {
-          case 0:
-          case 405:
-            message = ''+rc.status +' this location is not writable'
-            break
-          case 401:
-          case 403:
-            message = ''+rc.status +' you do not have permission to write here'
-            break
-          case 406:
-            message = ''+rc.status +' enter a name for your resource'
-            break
-          default:
-            message = ''+rc.status +' '+rc.statusText;
-            break
-        }
-        showInfo('Unable to save:' +message);
-        return false;
-      }
-    } catch (e) {
-      console.log(e);
-      showInfo('Unable to save:' +e.toString());
+    if (!ret.rc) {
+      showInfo('Unable to save:' +ret.error);
       return false;
     }
-
   }
   
   showInfo('Saved');

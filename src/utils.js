@@ -198,6 +198,108 @@ Rest_Cons.prototype = {
 }
 
 
+//====== Upload data to SPARQL server
+async function exec_sparql(sparqlendpoint, sparql_graph, prefixes, triples, docURI)
+{
+  var pref = "";
+  var max_bytes = 64000;
+  var pref_len = 10;
+  var pref_sz;
+  var insert_cmd = sparql_graph.length > 1
+                 ? 'INSERT INTO GRAPH <' + sparql_graph + '> {\n'
+                 : 'INSERT DATA { \n';
+
+  pref += "base <"+docURI+"> \n";
+  pref += "prefix : <#> \n";
+
+  pref_sz = pref.length;
+
+  for(var key in prefixes) {
+    var item = "prefix "+key+": <"+prefixes[key]+"> \n";
+    pref += item;
+    pref_len++;
+    pref_sz += item.length;
+  }
+  
+  var max_len = 10000 - pref_len;
+  var count = 0;
+  var data = [];
+  var qry_sz = pref_sz;
+  for(var i=0; i < triples.length; i++) 
+  {
+    if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_len) {
+      var ret = await send_sparql(sparqlendpoint, pref + "\n" + insert_cmd + data.join('\n') + ' }');
+      if (!ret.rc)
+        return ret;
+
+      count = 0;
+      data = [];
+      qry_sz = pref_sz;
+    }
+
+    data.push(triples[i]);
+    count++;
+    qry_sz += triples[i].length + 1;
+
+  }
+
+  if (count > 0) 
+  {
+    var ret = await send_sparql(sparqlendpoint, pref + "\n" + insert_cmd + data.join('\n') + ' }');
+    if (!ret.rc)
+      return ret;
+  }
+
+  return {rc: true};
+}
+
+
+async function send_sparql(sparqlendpoint, query)
+{
+    var contentType = "application/sparql-update;utf-8";
+    var ret;
+    var options = {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/sparql-update;utf-8'
+      },
+      credentials: 'include',
+      body: query
+    }
+
+    try {
+      ret = await gOidc.fetch(sparqlendpoint, options);
+
+      if (!ret.ok) {
+        var message;
+        switch(ret.status) {
+          case 0:
+          case 405:
+            message = ''+ret.status +' this location is not writable'
+            break
+          case 401:
+          case 403:
+            message = ''+ret.status +' you do not have permission to write here'
+            break
+          case 406:
+            message = ''+ret.status +' enter a name for your resource'
+            break
+          default:
+            message = ''+ret.status +' '+ret.statusText;
+            break
+        }
+        return {rc:false, error: message} ;
+      }
+    } catch (e) {
+      return {rc:false, error:e.toString() };
+    }
+
+  return {rc: true};
+}
+
+
+
+
 async function getCurWin()
 {
   if (Browser.isChromeWebExt) {

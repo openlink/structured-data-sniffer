@@ -353,7 +353,8 @@ class Handle_JSON {
       this._make_ttl = make_ttl;
     this.baseURL = '';
     this.rep1 = /\(/g;
-    this.rep2 = /\)/g 
+    this.rep2 = /\)/g;
+    this.jprops = {}; 
   }
 
   gen_subj() {
@@ -387,20 +388,21 @@ class Handle_JSON {
 
     if (typeof o === 'number') {
       if (o % 1 === 0)
-        b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#int> .`);
+        b.push(`${subj} :${this.encodeURI(p)} "${o}"^^<${xsd}#int> .`);
       else
-        b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#double> .`);
+        b.push(`${subj} :${this.encodeURI(p)} "${o}"^^<${xsd}#double> .`);
     } else if (typeof o === 'string') {
-      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${this.str2obj_val(o)} .`);
+      b.push(`${subj} :${this.encodeURI(p)} ${this.str2obj_val(o)} .`);
     } else if (typeof o === 'boolean') {
-      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#boolean> .`);
+      b.push(`${subj} :${this.encodeURI(p)} "${o}"^^<${xsd}#boolean> .`);
     } else {
-      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${this.str2obj_val(o)} .`);
+      b.push(`${subj} :${this.encodeURI(p)} ${this.str2obj_val(o)} .`);
     }
 
     b.push(`${subj} a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .`);
-    b.push(`${subj} <http://schema.org/name> "#${p}" .`);
-    b.push(`${subj} <http://www.w3.org/2007/05/powder-s#describedby> <${this.baseURL}#this> .`);
+    b.push(`${subj} <http://schema.org/name> :${this.encodeURI(p)} .`);
+    b.push(`${subj} <http://www.w3.org/2007/05/powder-s#describedby> :this .`);
+    this.jprops[p] = 1;
   }
 
   handle_arr(b, subj, p, o) 
@@ -410,7 +412,7 @@ class Handle_JSON {
 
     if (typeof o === 'object') {
       var s = this.gen_subj();
-      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${s} .`);
+      b.push(`${subj} :${this.encodeURI(p)} ${s} .`);
       this.handle_obj(b, s, o);
     } else {
       this.handle_simple(b, subj, p, o);
@@ -437,7 +439,7 @@ class Handle_JSON {
             }
           } else if (v!== null) {
             var s = this.gen_subj();
-            b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${s} .`);
+            b.push(`${subj} :${this.encodeURI(p)} ${s} .`);
             this.handle_obj(b, s, v);
           }
         } else {
@@ -477,7 +479,14 @@ class Handle_JSON {
             self.handle_obj(buf, self.gen_subj(), json_data);
           }
 
-          var ttl_data = buf.join('\n');
+          var lst = Object.keys(this.jprops);
+          for(var i=0; i < lst.length; i++) {
+            buf.push(`:${lst[i]} a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> . `);
+          }
+
+          var ttl_data = '@prefix : <#> .\n' 
+                        +':Thing a <http://www.w3.org/2002/07/owl#Thing> .\n'
+                        + buf.join('\n');
           var handler = new Handle_Turtle(self.start_id, self._make_ttl);
           handler.skip_error = false;
           var ret = await handler.parse([ttl_data], docURL);

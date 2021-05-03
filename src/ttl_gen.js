@@ -22,9 +22,10 @@
   TTL_Gen = function(_docURI, for_query) {
     this.ns = new Namespace();
     this.docURI = _docURI;
+    this.docURI_pref = _docURI+'#';
     this.for_query = for_query;
     this.prefixes = {};
-    this.use_prefixes = for_query ? false : true;
+    this.use_prefixes = true;
     
     this.escape    = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
     this.escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
@@ -42,6 +43,7 @@
           n_data.length > 0) 
       {
         var str = "";
+        var triples = [];
 
         //rename bnodes based on rdf:type relation
         this.bnodes = {};
@@ -56,7 +58,7 @@
               isBNode = true;
             }
             else if (this.is_BNode(subj)) {
-              this.bnodes[subj] = this.docURI+'#'+this.pre(subj.substring(2));
+              this.bnodes[subj] = this.pre(subj.substring(2));
               isBNode = true;
             }
 
@@ -89,26 +91,37 @@
           props = props.concat(this.format_props(item.props, true));
           props = props.concat(this.format_props(item.props, false));
 
-          for(var j=0; j < props.length; j++)
+          for(var j=0; j < props.length; j++) {
             str += subj +" "+props[j]+" .\n";
+            triples.push(subj +" "+props[j]+" .");
+          }
         }
       }
 
       if (this.for_query) {
         var pref = "";
+
+        pref += "base <"+this.docURI+"> \n";
+        pref += "prefix : <#> \n";
+
         $.each(this.prefixes, function(key, val){
           pref += "prefix "+key+": <"+val+"> \n";
         });
-//??        pref += "prefix : <#> \n";
 
-        return {pref, ttl: str};
-      } else {
-        var ret = "";
+        return {pref, ttl: str, triples, prefixes: this.prefixes};
+
+      } 
+      else {
+        var pref = "";
+
+        pref += "@base <"+this.docURI+"> .\n";
+        pref += "@prefix : <#> .\n";
+
         $.each(this.prefixes, function(key, val){
-          ret += "@prefix "+key+": <"+val+"> .\n";
+          pref += "@prefix "+key+": <"+val+"> .\n";
         });
-//??        ret += "@prefix : <#> .\n";
-        return ret+str;
+
+        return pref+"\n"+str;
       }
     },
 
@@ -154,19 +167,19 @@
             if (!data)
               data = "b";
           }
-          return this.docURI+"#"+fixedEncodeURIComponent(this.pre(data+sid));
+          return fixedEncodeURIComponent(this.pre(data+sid));
         }
         else {
           var u = new URL(value);
           if (u.hash) {
-            return ":"+this.pre(u.hash+sid);
+            return this.pre(u.hash+sid);
           } else {
             var lst = u.pathname.split('/');
             var data = lst.length>0 ? lst[lst.length-1] : "";
             if (!data)
               data = "b";
 
-            return this.docURI+"#"+this.pre(data+sid);
+            return this.pre(data+sid);
           }
         }
       } else 
@@ -208,16 +221,16 @@
        if (this.is_VBNode(value)) {
          var s = this.bnodes[value];
          if (s)
-           return "<"+s+">";
+           return ":"+s;
          else
-           return "<"+this.VBNode2BNode(value)+">";
+           return ":"+this.VBNode2BNode(value);
        }
        else if (this.is_BNode(value)) {
          var s = this.bnodes[value];
          if (s)
-           return "<"+s+">";
+           return ":"+s;
          else
-           return "<"+this.docURI+'#'+this.pre(value.substring(2))+">";
+           return ":"+this.pre(value.substring(2));
        }
        else {
          var pref = this.use_prefixes ? this.ns.has_known_ns(value) : null;
@@ -226,7 +239,13 @@
            return this.pref_link(value, pref);
          }
          else
-           return "<"+this.pre(value)+">";
+         {
+           if (value.startsWith(this.docURI_pref)) {
+             return ":"+this.pre(value.substring(this.docURI_pref.length));      
+           }
+           else
+             return "<"+this.pre(value)+">";      
+         }
        }
     },
 
@@ -300,7 +319,7 @@
 
     VBNode2BNode : function (str) {
         //return "_:nodeID"+this.pre(str.substr(9));
-        return this.docURI +"#nodeID"+this.pre(str.substr(9));
+        return "nodeID"+this.pre(str.substr(9));
     },
 
   }
