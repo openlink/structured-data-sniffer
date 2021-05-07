@@ -19,13 +19,14 @@
  */
   
 
-  HTML_Gen = function(_docURI) {
+  HTML_Gen = function(_docURI, bnode_types) {
     this.ns = new Namespace();
     this.uimode = "";
     this.SubjName = "Subject";
     this.PredName = "Predicate";
     this.ObjName  = "Object";
     this.docURI = _docURI;
+    this.bnode_types = bnode_types || {};
     this.subst_list = {
       "http://www.w3.org/1999/02/22-rdf-syntax-ns#label": "Label",
             "http://www.w3.org/2000/01/rdf-schema#label": "Label",
@@ -65,7 +66,6 @@
 
         //rename bnodes based on rdf:type relation
         this.bnodes = {};
-        this.bnode_types = {};
         for(var i=0; i < n_data.length; i++) 
         {
           var subj = n_data[i].s;

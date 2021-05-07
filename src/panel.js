@@ -417,7 +417,7 @@ async function check_Microdata(val)
       try {
         var handler = new Handle_Microdata();
         gData.micro.json_text = [JSON.stringify(val.d.micro.data, undefined, 2)];
-        var ret = handler.parse(val.d.micro.data, gData.baseURL);
+        var ret = handler.parse(val.d.micro.data, gData.baseURL, val.bnode_types);
 
         if (ret.errors.length > 0)
           val.d.micro.error = val.d.micro.error.concat(ret.errors);
@@ -425,15 +425,15 @@ async function check_Microdata(val)
         if (ret.data)
           val.d.micro.expanded = ret.data;
 
-        return {d:val.d, start_id:0};
+        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
       } catch(ex) {
         val.d.micro.error.push(ex.toString());
-        return {d:val.d, start_id:0};
+        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
       }
     }
     else
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 }
 
 
@@ -445,7 +445,7 @@ async function check_JSON_LD(val)
   {
     try {
       var handler = new Handle_JSONLD();
-      var ret = await handler.parse(val.d.jsonld.text, gData.baseURL);
+      var ret = await handler.parse(val.d.jsonld.text, gData.baseURL, val.bnode_types);
 
       gData.jsonld.json_text = val.d.jsonld.text;
 
@@ -458,16 +458,16 @@ async function check_JSON_LD(val)
         else
           val.d.jsonld.expanded = ret.data;
       }
-      return {d:val.d, start_id:handler.start_id};
+      return {d:val.d, start_id:handler.start_id, bnode_types:val.bnode_types};
 
     } catch(ex) {
       val.d.jsonld.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -479,7 +479,7 @@ async function check_JsonLD_Nano(val)
     try {
       var handler = new Handle_JSONLD();
       handler.start_id = val.start_id;
-      var ret = await handler.parse(val.d.jsonld_nano.text, gData.baseURL);
+      var ret = await handler.parse(val.d.jsonld_nano.text, gData.baseURL, val.bnode_types);
 
       gData.jsonld_nano.json_text = val.d.jsonld_nano.text;
 
@@ -492,16 +492,16 @@ async function check_JsonLD_Nano(val)
         else
           val.d.jsonld.expanded = ret.data;
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
       
     } catch(ex) {
       val.d.jsonld.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -514,7 +514,7 @@ async function check_Json_Nano(val)
     try {
       var handler = new Handle_JSON();
       handler.start_id = val.start_id;
-      var ret = await handler.parse(val.d.json_nano.text, gData.baseURL);
+      var ret = await handler.parse(val.d.json_nano.text, gData.baseURL, val.bnode_types);
 
       gData.json_nano.json_text = ret.text;
 
@@ -524,16 +524,16 @@ async function check_Json_Nano(val)
       if (ret.data)
         val.d.json.expanded = ret.data;
 
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch(ex) {
       val.d.json.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -544,7 +544,7 @@ async function check_Turtle(val)
   if (val.d.turtle.text!==null && val.d.turtle.text.length > 0)
   {
     try {
-      var handler = new Handle_Turtle();
+      var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
       var ret = await handler.parse(val.d.turtle.text, gData.baseURL);
 
       gData.turtle.ttl_text = val.d.turtle.text;
@@ -558,16 +558,16 @@ async function check_Turtle(val)
         else
           val.d.turtle.expanded = ret.data;
       }
-      return {d:val.d, start_id:handler.start_id};
+      return {d:val.d, start_id:handler.start_id, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.turtle.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -583,7 +583,7 @@ async function check_Turtle_Nano(val)
 
     if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0) {
       try {
-        var handler = new Handle_Turtle(val.start_id);
+        var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
         var ret = await handler.parse_nano(val.d.ttl_nano.text, gData.baseURL);
       
         gData.ttl_nano.ttl_text = val.d.ttl_nano.text;
@@ -598,19 +598,19 @@ async function check_Turtle_Nano(val)
             val.d.turtle.expanded = ret.data;
         }
 
-        return {d:val.d, start_id:0};
+        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
       } catch (ex) {
         val.d.turtle.error.push(ex.toString());
-        return {d:val.d, start_id:0};
+        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
       }
     }
     else
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -621,7 +621,7 @@ async function check_POSH(val)
   if (val.d.posh.text!==null && val.d.posh.text.length > 0)
   {
     try {
-      var handler = new Handle_Turtle();
+      var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
       var ret = await handler.parse([val.d.posh.text], gData.baseURL);
 
       gData.posh.ttl_text = val.d.posh.text;
@@ -632,16 +632,16 @@ async function check_POSH(val)
       if (ret.data) {
         val.d.posh.expanded = ret.data;
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.posh.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -653,7 +653,7 @@ async function check_RDFa(val)
   {
     try {
       var handler = new Handle_RDFa();
-      var ret = handler.parse(val.d.rdfa.data, gData.baseURL);
+      var ret = handler.parse(val.d.rdfa.data, gData.baseURL, val.bnode_types);
 
       if (ret.errors.length>0)
         val.d.rdfa.error = val.d.rdfa.error.concat(ret.errors);
@@ -662,16 +662,16 @@ async function check_RDFa(val)
         val.d.rdfa.expanded = ret.data;
         gData.rdfa.ttl_text = [val.d.rdfa.ttl];
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.rdfa.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -683,7 +683,7 @@ async function check_RDF_XML(val)
   {
     try {
       var handler = new Handle_RDF_XML();
-      var ret = await handler.parse(val.d.rdf.text, gData.baseURL);
+      var ret = await handler.parse(val.d.rdf.text, gData.baseURL, val.bnode_types);
 
       gData.rdf.text = val.d.rdf.text;
 
@@ -696,16 +696,16 @@ async function check_RDF_XML(val)
         else
           val.d.rdf.expanded = ret.data;
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.rdf.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -716,7 +716,7 @@ async function check_RDF_XML_Nano(val)
   {
     try {
       var handler = new Handle_RDF_XML();
-      var ret = await handler.parse(val.d.rdf_nano.text, gData.baseURL);
+      var ret = await handler.parse(val.d.rdf_nano.text, gData.baseURL, val.bnode_types);
 
       gData.rdf_nano.rdf_text = val.d.rdf_nano.text;
 
@@ -729,16 +729,16 @@ async function check_RDF_XML_Nano(val)
         else
           val.d.rdf.expanded = ret.data;
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.rdf.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -760,16 +760,16 @@ async function check_CSV_Nano(val)
       if (ret.data) {
         val.d.csv_nano.expanded = ret.data;
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.csv_nano.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -808,7 +808,7 @@ async function parse_Data(dData)
   url.search = '';
   gData.baseURL = url.toString();
 
-  var val = {d:dData, start_id:0};
+  var val = {d:dData, start_id:0, bnode_types:{}};
 
   try {
     val = await check_Microdata(val);
@@ -1459,26 +1459,13 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
      return false;
   }
 
-  var handler = new Convert_Turtle();
-
-  try {
-    show_throbber('&nbsp;Preparing&nbsp;data...');
-
-    var ttl_data = await handler.prepare_query(data.txt, gData.baseURL);
-
-    for(var i=0; i < ttl_data.length; i++) {
-
-      var ret = await exec_sparql(sparqlendpoint, sparql_graph, ttl_data[i].prefixes, ttl_data[i].triples, gData.baseURL);
-
-      if (!ret.rc) {
-        showInfo('Unable to save:' +ret.error);
-        return false;
-      }
-    }
-  } finally {
-    hide_throbber();
+  var saver = new Save2Sparql(sparqlendpoint, sparql_graph, gData.baseURL, gOidc);
+  var ret = await saver.upload_to_sparql(data);
+  if (!ret.rc) {
+    showInfo('Unable to save:' +ret.error);
+    return false;
   }
-  
+
   showInfo('Saved');
   return true;
 }

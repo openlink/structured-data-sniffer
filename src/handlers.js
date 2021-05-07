@@ -135,7 +135,7 @@ class Handle_Microdata {
       this._make_ttl = make_ttl;
   }
 
-  parse(jsonData, docURL) 
+  parse(jsonData, docURL, bnode_types) 
   {
     var self = this;
     var ret_data = null;
@@ -146,9 +146,9 @@ class Handle_Microdata {
       var out_data = conv.transform(jsonData, docURL);
 
       if (self._make_ttl)
-        ret_data = new TTL_Gen(docURL).load(out_data);
+        ret_data = new TTL_Gen(docURL, false, bnode_types).load(out_data);
       else
-        ret_data = new HTML_Gen(docURL).load(out_data);
+        ret_data = new HTML_Gen(docURL, bnode_types).load(out_data);
 
       return {data:ret_data, errors:[]};
     }
@@ -161,7 +161,7 @@ class Handle_Microdata {
 
 
 class Handle_Turtle {
-  constructor(start_id, make_ttl, for_query) 
+  constructor(start_id, make_ttl, for_query, bnode_types) 
   {
     this.baseURI = null;
     this.start_id = 0;
@@ -177,6 +177,7 @@ class Handle_Turtle {
     if (make_ttl)
       this._make_ttl = make_ttl;
     this.for_query = for_query;
+    this.bnode_types = bnode_types || {};
   }
 
 
@@ -252,12 +253,12 @@ class Handle_Turtle {
               var output;
 
               if (self._make_ttl) {
-                var ttl_data = new TTL_Gen(docURL, self.for_query).load(triples, self.start_id);
+                var ttl_data = new TTL_Gen(docURL, self.for_query, self.bnode_types).load(triples);
                 output = ttl_data==null?'':ttl_data;
               }
               else
               {
-                var html_str =  new HTML_Gen(docURL).load(triples, self.start_id);
+                var html_str =  new HTML_Gen(docURL).load(triples, self.start_id, self.bnode_types);
                 output = html_str==null?'':html_str;
               }
 
@@ -293,7 +294,7 @@ class Handle_JSONLD {
       this._make_ttl = make_ttl;
   }
 
-  async parse(textData, docURL)
+  async parse(textData, docURL, bnode_types)
   {
     var output = '';
     var self = this;
@@ -312,7 +313,7 @@ class Handle_JSONLD {
           var expanded = await jsonld.expand(jsonld_data, {base:docURL});
           var nquads = await jsonld.toRDF(expanded, {base:docURL, format: 'application/nquads', includeRelativeUrls: true});
 
-          var handler = new Handle_Turtle(self.start_id, self._make_ttl);
+          var handler = new Handle_Turtle(self.start_id, self._make_ttl, false, bnode_types);
           handler.skip_error = false;
           var ret = await handler.parse([nquads], docURL);
           if (ret.errors.length > 0) {
@@ -452,7 +453,7 @@ class Handle_JSON {
   }
   
   
-  async parse(textData, docURL) 
+  async parse(textData, docURL, bnode_types) 
   {
     this.baseURL = docURL;
     var self = this;
@@ -479,15 +480,15 @@ class Handle_JSON {
             self.handle_obj(buf, self.gen_subj(), json_data);
           }
 
-          var lst = Object.keys(this.jprops);
-          for(var i=0; i < lst.length; i++) {
-            buf.push(`:${lst[i]} a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> . `);
-          }
+//??          var lst = Object.keys(this.jprops);
+//??          for(var i=0; i < lst.length; i++) {
+//??            buf.push(`:${lst[i]} a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> . `);
+//??          }
 
           var ttl_data = '@prefix : <#> .\n' 
                         +':Thing a <http://www.w3.org/2002/07/owl#Thing> .\n'
                         + buf.join('\n');
-          var handler = new Handle_Turtle(self.start_id, self._make_ttl);
+          var handler = new Handle_Turtle(self.start_id, self._make_ttl, false, bnode_types);
           handler.skip_error = false;
           var ret = await handler.parse([ttl_data], docURL);
           if (ret.errors.length > 0) {
@@ -519,9 +520,9 @@ class Handle_RDFa {
   {
   }
 
-  parse(data, docURL) 
+  parse(data, docURL, bnode_types) 
   {
-    var str = new HTML_Gen(docURL).load(data);
+    var str = new HTML_Gen(docURL, bnode_types).load(data);
     return {data:str, errors: []};
   }
 }
@@ -839,7 +840,7 @@ class Handle_RDF_XML {
     this.skipped_error = [];
   }
 
-  async parse(textData, baseURL) 
+  async parse(textData, baseURL, bnode_types) 
   {
     var self = this;
     var output = '';
@@ -854,7 +855,7 @@ class Handle_RDF_XML {
 
         var ttl = $rdf.serialize(undefined, store, baseURL, "text/turtle");
 
-        var handler = new Handle_Turtle();
+        var handler = new Handle_Turtle(0, false, false, bnode_types);
         handler.skip_error = false;
         var ret = await handler.parse([ttl], baseURL);
         if (ret.errors.length > 0) {
@@ -891,7 +892,7 @@ class Handle_CSV {
     this.skipped_error = [];
   }
 
-  async parse(textData, baseURL) 
+  async parse(textData, baseURL, bnode_types) 
   {
     var self = this;
     var output = '';
@@ -991,7 +992,7 @@ class Handle_CSV {
 
         self._output_ttl.push(ttl);
 
-        var handler = new Handle_Turtle();
+        var handler = new Handle_Turtle(0, false, false, bnode_types);
         handler.skip_error = false;
         var ret = await handler.parse([ttl], baseURL);
         if (ret.errors.length > 0) {

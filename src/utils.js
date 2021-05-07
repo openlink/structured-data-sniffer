@@ -199,68 +199,100 @@ Rest_Cons.prototype = {
 
 
 //====== Upload data to SPARQL server
-async function exec_sparql(sparqlendpoint, sparql_graph, prefixes, triples, docURI)
-{
-  var pref = "";
-  var max_bytes = 64000;
-  var pref_len = 10;
-  var pref_sz;
-  var insert_cmd = sparql_graph.length > 1
-                 ? 'INSERT INTO GRAPH <' + sparql_graph + '> {\n'
+class Save2Sparql {
+  constructor(sparqlendpoint, sparql_graph, baseURI, oidc)
+  {
+    this.sparqlendpoint = sparqlendpoint;
+    this.sparql_graph = sparql_graph;
+    this.baseURI = baseURI;
+    this.oidc = oidc
+  }
+
+  async upload_to_sparql(data)
+  {
+
+    var handler = new Convert_Turtle();
+    try {
+      show_throbber('&nbsp;Preparing&nbsp;data...');
+      
+      var ttl_data = await handler.prepare_query(data.txt, this.baseURI);
+
+      for(var i=0; i < ttl_data.length; i++) {
+
+        var ret = await this.exec_sparql(ttl_data[i].prefixes, ttl_data[i].triples);
+
+        if (!ret.rc)
+          return ret;
+      }
+    } finally {
+      hide_throbber();
+    }
+  
+    return {rc:true};
+  }
+
+  async exec_sparql(prefixes, triples)
+  {
+    var pref = "";
+    var max_bytes = 64000;
+    var pref_len = 10;
+    var pref_sz;
+    var insert_cmd = this.sparql_graph.length > 1
+                 ? 'INSERT INTO GRAPH <' + this.sparql_graph + '> {\n'
                  : 'INSERT DATA { \n';
 
-  pref += "base <"+docURI+"> \n";
-  pref += "prefix : <#> \n";
+    pref += "base <"+this.baseURI+"> \n";
+    pref += "prefix : <#> \n";
 
-  pref_sz = pref.length;
+    pref_sz = pref.length;
 
-  for(var key in prefixes) {
-    var item = "prefix "+key+": <"+prefixes[key]+"> \n";
-    pref += item;
-    pref_len++;
-    pref_sz += item.length;
-  }
+    for(var key in prefixes) {
+      var item = "prefix "+key+": <"+prefixes[key]+"> \n";
+      pref += item;
+      pref_len++;
+      pref_sz += item.length;
+    }
   
-  var max_len = 10000 - pref_len;
-  var count = 0;
-  var data = [];
-  var qry_sz = pref_sz;
-  var z = 1;
-  for(var i=0; i < triples.length; i++) 
-  {
-    if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_len) {
-      show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+    var max_len = 10000 - pref_len;
+    var count = 0;
+    var data = [];
+    var qry_sz = pref_sz;
+    var z = 1;
+    for(var i=0; i < triples.length; i++) 
+    {
+      if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_len) {
+        show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
-      var ret = await send_sparql(sparqlendpoint, pref + "\n" + insert_cmd + data.join('\n') + ' }');
-      if (!ret.rc)
-        return ret;
+        var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
+        if (!ret.rc)
+          return ret;
 
-      count = 0;
-      data = [];
-      qry_sz = pref_sz;
+        count = 0;
+        data = [];
+        qry_sz = pref_sz;
+      }
+
+      data.push(triples[i]);
+      count++;
+      qry_sz += triples[i].length + 1;
+
     }
 
-    data.push(triples[i]);
-    count++;
-    qry_sz += triples[i].length + 1;
+    if (count > 0) 
+    {
+      show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
+      var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
+      if (!ret.rc)
+        return ret;
+    }
+
+    return {rc: true};
   }
 
-  if (count > 0) 
+
+  async send_sparql(query)
   {
-    show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
-
-    var ret = await send_sparql(sparqlendpoint, pref + "\n" + insert_cmd + data.join('\n') + ' }');
-    if (!ret.rc)
-      return ret;
-  }
-
-  return {rc: true};
-}
-
-
-async function send_sparql(sparqlendpoint, query)
-{
     var contentType = "application/sparql-update;utf-8";
     var ret;
     var options = {
@@ -273,7 +305,7 @@ async function send_sparql(sparqlendpoint, query)
     }
 
     try {
-      ret = await gOidc.fetch(sparqlendpoint, options);
+      ret = await this.oidc.fetch(this.sparqlendpoint, options);
 
       if (!ret.ok) {
         var message;
@@ -299,8 +331,12 @@ async function send_sparql(sparqlendpoint, query)
       return {rc:false, error:e.toString() };
     }
 
-  return {rc: true};
+    return {rc: true};
+  }
+
+
 }
+
 
 
 function show_throbber(msg)

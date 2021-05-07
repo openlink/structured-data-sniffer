@@ -30,19 +30,29 @@ class SuperLinks {
     this.ss_idp = 'https://linkeddata.uriburner.com';
   }
 
-  async check_login()
+  async check_login(relogin)
   {
     try {
       this.messages.throbber_show("&nbsp;Initializing...");
-      await this.oidc.checkSession();
-      if (this.oidc.webid) {
-        if (!this.oidc.isSessionForIdp(this.ss_idp))
-          await this.oidc.logout();
-      }
-      if (!this.oidc.webid) {
+      if (relogin) 
+      {
+        await this.oidc.logout();
         this.state = 'login';
         this.oidc.login2();
         return false;
+      } 
+      else 
+      {
+        await this.oidc.checkSession();
+        if (this.oidc.webid) {
+          if (!this.oidc.isSessionForIdp(this.ss_idp))
+            await this.oidc.logout();
+        }
+        if (!this.oidc.webid) {
+          this.state = 'login';
+          this.oidc.login2();
+          return false;
+        }
       }
       return true;
     } finally {
@@ -74,7 +84,7 @@ class SuperLinks {
     this.state = 'sponge';
 
     var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
-    var REDIR_URL = LOGIN_URL + "?returnto="+this.doc_url;
+//??--    var REDIR_URL = LOGIN_URL + "?returnto="+this.doc_url;
     
     var setting = new Settings();
     var sponge_type = setting.getValue('ext.osds.super-links-sponge');
@@ -107,7 +117,7 @@ class SuperLinks {
           this.messages.throbber_hide();
           alert("Could not retrieving information for current page with: "+url_sponge+"\nTrying Relogin and execute sponge again");
           this.logout();
-          this.check_login(); // Browser.openTab(REDIR_URL);
+          this.check_login(true); // Browser.openTab(REDIR_URL);
           return null;
         }
         return await this.exec_super_links_query(iter);
@@ -117,7 +127,7 @@ class SuperLinks {
           this.messages.throbber_hide();
           alert("Sponge error:"+rc.status+"\nTrying Relogin to https://linkeddata.uriburner.com and call SupeLinks again");
           this.logout();
-          this.check_login(); // Browser.openTab(REDIR_URL);
+          this.check_login(true); // Browser.openTab(REDIR_URL);
           return null;
         } else {
           alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
@@ -130,7 +140,7 @@ class SuperLinks {
       if (e.statusCode == 403 || e.statusCode == 401) {
         this.logout();
         alert("Sponge error:"+e.statusCode+"\nTrying Relogin to https://linkeddata.uriburner.com and call SupeLinks again");
-        this.check_login(); // Browser.openTab(REDIR_URL);
+        this.check_login(true); // Browser.openTab(REDIR_URL);
       } else {
         alert("Sponge "+e);
       }
@@ -146,8 +156,8 @@ class SuperLinks {
     this.state = 'query';
 
     var SPARQL_URL = "https://linkeddata.uriburner.com/sparql";
-    var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
-    var REDIR_URL = LOGIN_URL + "?returnto="+this.doc_url;
+//??--    var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
+//??--    var REDIR_URL = LOGIN_URL + "?returnto="+this.doc_url;
 
     var setting = new Settings();
     var links_query = setting.getValue("ext.osds.super_links.query");
@@ -221,7 +231,7 @@ class SuperLinks {
         if (rc.status==401 || rc.status==403) {
 //??          alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
           this.logout();
-          this.check_login(); // Browser.openTab(REDIR_URL);
+          this.check_login(true); // Browser.openTab(REDIR_URL);
           return null;
         } else {
           this.state = 'init';
@@ -236,7 +246,7 @@ class SuperLinks {
       if (e.statusCode == 403 || e.statusCode == 401) {
         this.logout();
         alert("Trying Relogin to https://linkeddata.uriburner.com and call SupeLinks again");
-        this.check_login(); // Browser.openTab(REDIR_URL);
+        this.check_login(true); // Browser.openTab(REDIR_URL);
       } else {
         alert("Could not load data from: "+SPARQL_URL+"\n"+e);
       }
@@ -305,8 +315,11 @@ class SuperLinks {
       }
     }
 
-    if (!data)
-      alert("Empty SuperLinks resultSet was received from server");
+    if (!data) {
+//??--      alert("Empty SuperLinks resultSet was received from server");
+      this.logout();
+      this.check_login(true);
+    }
 
     return false;
   }
@@ -341,8 +354,11 @@ class SuperLinks {
       }
     }
 
-    if (!data)
-      alert("Empty SuperLinks resultSet was received from server");
+    if (!data) {
+//??--      alert("Empty SuperLinks resultSet was received from server");
+      this.logout();
+      this.check_login(true);
+    }
 
     return false;
   }

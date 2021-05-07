@@ -19,7 +19,7 @@
  */
   
 
-  TTL_Gen = function(_docURI, for_query) {
+  TTL_Gen = function(_docURI, for_query, bnode_types) {
     this.ns = new Namespace();
     this.docURI = _docURI;
     this.docURI_pref = _docURI+'#';
@@ -32,6 +32,7 @@
     this.escapeReplacements = { '\\': '\\\\', '"': '\\"', '\t': '\\t',
                            '\n': '\\n', '\r': '\\r', '\b': '\\b', '\f': '\\f' };
     this.test_esc = /[!'()*&?#$,:@=;+.\/]/g;
+    this.bnode_types = bnode_types || {};
   };
 
   TTL_Gen.prototype = {
@@ -47,7 +48,6 @@
 
         //rename bnodes based on rdf:type relation
         this.bnodes = {};
-        this.bnode_types = {};
         for(var i=0; i < n_data.length; i++) 
           {
             var subj = n_data[i].s;

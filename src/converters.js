@@ -25,6 +25,7 @@ class Convert_Turtle{
   {
     this.baseURI = null;
     this.skipped_error = [];
+    this.bnode_types = {};
   }
 
   async prepare_query(ttlData, baseURL)
