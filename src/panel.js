@@ -1468,7 +1468,7 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
 
     for(var i=0; i < ttl_data.length; i++) {
 
-      var ret = exec_sparql(sparqlendpoint, sparql_graph, ttl_data[i].prefixes, ttl_data[i].triples, gData.baseURL);
+      var ret = await exec_sparql(sparqlendpoint, sparql_graph, ttl_data[i].prefixes, ttl_data[i].triples, gData.baseURL);
 
       if (!ret.rc) {
         showInfo('Unable to save:' +ret.error);
