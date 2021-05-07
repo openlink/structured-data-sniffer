@@ -225,9 +225,12 @@ async function exec_sparql(sparqlendpoint, sparql_graph, prefixes, triples, docU
   var count = 0;
   var data = [];
   var qry_sz = pref_sz;
+  var z = 1;
   for(var i=0; i < triples.length; i++) 
   {
     if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_len) {
+      show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+
       var ret = await send_sparql(sparqlendpoint, pref + "\n" + insert_cmd + data.join('\n') + ' }');
       if (!ret.rc)
         return ret;
@@ -245,6 +248,8 @@ async function exec_sparql(sparqlendpoint, sparql_graph, prefixes, triples, docU
 
   if (count > 0) 
   {
+    show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+
     var ret = await send_sparql(sparqlendpoint, pref + "\n" + insert_cmd + data.join('\n') + ' }');
     if (!ret.rc)
       return ret;
@@ -298,7 +303,17 @@ async function send_sparql(sparqlendpoint, query)
 }
 
 
+function show_throbber(msg)
+{
+  DOM.qSel('.throbber_msg #throbber_msg_text').innerHTML = msg;
+  $(".throbber_msg").css("display","flex");
+  sleep(100);
+}
 
+function hide_throbber()
+{
+  $(".throbber_msg").css("display","none");
+}
 
 async function getCurWin()
 {

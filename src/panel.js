@@ -1460,16 +1460,23 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
   }
 
   var handler = new Convert_Turtle();
-  var ttl_data = await handler.prepare_query(data.txt, gData.baseURL);
 
-  for(var i=0; i < ttl_data.length; i++) {
+  try {
+    show_throbber('&nbsp;Preparing&nbsp;data...');
 
-    var ret = exec_sparql(sparqlendpoint, sparql_graph, ttl_data[i].prefixes, ttl_data[i].triples, gData.baseURL);
+    var ttl_data = await handler.prepare_query(data.txt, gData.baseURL);
 
-    if (!ret.rc) {
-      showInfo('Unable to save:' +ret.error);
-      return false;
+    for(var i=0; i < ttl_data.length; i++) {
+
+      var ret = exec_sparql(sparqlendpoint, sparql_graph, ttl_data[i].prefixes, ttl_data[i].triples, gData.baseURL);
+
+      if (!ret.rc) {
+        showInfo('Unable to save:' +ret.error);
+        return false;
+      }
     }
+  } finally {
+    hide_throbber();
   }
   
   showInfo('Saved');

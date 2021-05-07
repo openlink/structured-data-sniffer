@@ -39,6 +39,33 @@
 	height: 16px;
 }
 
+
+.throbber_msg {
+        all: initial;
+	display: none;
+	line-height: normal;
+	flex-direction: row; 
+	position: fixed;
+	border: 2px solid #000;
+	border-radius: 2px;
+	width: 200px;
+	height: 20px;
+	top:4px;
+	left: 4px;
+	background: cyan;
+	color: black;
+ 	z-index: 2147483647;
+	padding: 10px 10px 10px 20px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+}
+
+.throbber_img {
+	width: 16px;
+	height: 16px;
+}
+
+
 input[type="image"] {
   outline: none !important;
 }
