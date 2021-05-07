@@ -344,7 +344,8 @@ class Handle_JSONLD {
 class Handle_JSON {
   constructor(make_ttl) 
   {
-    this.s_id = '_:s'+Date.now().toString(16)+'_';
+//    this.s_id = '_:s'+Date.now().toString(16)+'_';
+    this.s_id = ':this';
     this.id = 0;
     this.start_id = 0;
     this.skip_error = true;
@@ -386,24 +387,27 @@ class Handle_JSON {
       return; // ignore
 
     var xsd = 'http://www.w3.org/2001/XMLSchema';
+    var obj_type = `${xsd}#string`;
 
     if (typeof o === 'number') {
-      if (o % 1 === 0)
+      if (o % 1 === 0) {
         b.push(`${subj} :${this.encodeURI(p)} "${o}"^^<${xsd}#int> .`);
-      else
+        obj_type = `${xsd}#int`;
+      }
+      else {
         b.push(`${subj} :${this.encodeURI(p)} "${o}"^^<${xsd}#double> .`);
+        obj_type = `${xsd}#double`;
+      }
     } else if (typeof o === 'string') {
       b.push(`${subj} :${this.encodeURI(p)} ${this.str2obj_val(o)} .`);
     } else if (typeof o === 'boolean') {
       b.push(`${subj} :${this.encodeURI(p)} "${o}"^^<${xsd}#boolean> .`);
+      obj_type = `${xsd}#boolean`;
     } else {
       b.push(`${subj} :${this.encodeURI(p)} ${this.str2obj_val(o)} .`);
     }
 
-    b.push(`${subj} a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .`);
-    b.push(`${subj} <http://schema.org/name> :${this.encodeURI(p)} .`);
-    b.push(`${subj} <http://www.w3.org/2007/05/powder-s#describedby> :this .`);
-    this.jprops[p] = 1;
+    this.jprops[this.encodeURI(p)] = obj_type;
   }
 
   handle_arr(b, subj, p, o) 
@@ -429,6 +433,10 @@ class Handle_JSON {
     if (typeof obj === 'object') {
 
       var props = Object.keys(obj);
+
+      if (props.length > 0)
+        b.push(`${subj} a <http://www.w3.org/2002/07/owl#Thing> .`);
+
       for(var i=0; i < props.length; i++) {
         var p = props[i];
         var v = obj[p];
@@ -480,13 +488,17 @@ class Handle_JSON {
             self.handle_obj(buf, self.gen_subj(), json_data);
           }
 
-//??          var lst = Object.keys(this.jprops);
-//??          for(var i=0; i < lst.length; i++) {
-//??            buf.push(`:${lst[i]} a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> . `);
-//??          }
+          var lst = Object.keys(this.jprops);
+          for(var i=0; i < lst.length; i++) {
+            var p = lst[i];
+            var p_type = this.jprops[p];
+            buf.push(`[ a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> ;
+                      <http://schema.org/name> :${p} ;
+                      <http://www.w3.org/2000/01/rdf-schema#range> <${p_type}> ;
+                      <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.w3.org/2002/07/owl#Thing> ] .`);
+          }
 
           var ttl_data = '@prefix : <#> .\n' 
-                        +':Thing a <http://www.w3.org/2002/07/owl#Thing> .\n'
                         + buf.join('\n');
           var handler = new Handle_Turtle(self.start_id, self._make_ttl, false, bnode_types);
           handler.skip_error = false;
