@@ -963,12 +963,8 @@ class Handle_CSV {
         for (var i=0; i < col.length; i++) {
           col[i] = encodeURIComponent(col[i]).replace(rep1,'%28').replace(rep2,'%29');
           ttl += ':'+col[i]+' rdf:domain :this .\n';
-        }
-
-        ttl += '\n';
-
-        for (var i=0; i < col.length; i++) {
           ttl += ':'+col[i]+' rdf:range xsd:'+col_type[i]+' .\n';
+          ttl += ':'+col[i]+' a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .\n';
         }
 
         ttl += '\n';
@@ -976,6 +972,7 @@ class Handle_CSV {
         for(var i=1; i < res.data.length; i++) {
           var d = res.data[i];
           var s = '[\n';
+
           for(var j=0; j < d.length; j++) {
             var val = d[j] ? ''+d[j] : '';
             var qv = '"';
