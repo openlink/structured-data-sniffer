@@ -60,22 +60,38 @@ OidcWeb.prototype = {
   login: function() {
      const width = 650;
      const height = 400;
-     const left = window.screenX + (window.innerWidth - width) / 2;
-     const top = window.screenY + (window.innerHeight - height) / 2;
-     const settings = `width=${width},height=${height},left=${left},top=${top}`;
-     window.open(this.login_url, 'Login', settings);
+
+     if (Browser.isFirefoxWebExt) {
+       const left = window.screenX + (window.innerWidth - width) / 2;
+       const top = window.screenY + (window.innerHeight - height) / 2;
+
+       Browser.api.windows.create({
+         url: this.login_url,
+         type: 'popup',
+         height,
+         width,
+         top,
+         left,
+         allowScriptsToClose : true,
+         focused: true
+       });
+     }
+     else {
+       this.popupCenter({url: this.login_url, title:"Login", w:width, h:height});
+     }
+
   },
 
   login2: function() {
      const width = 650;
      const height = 400;
-     const left = window.screenX + (window.innerWidth - width) / 2;
-     const top = window.screenY + (window.innerHeight - height) / 2;
-     const settings = `width=${width},height=${height},left=${left},top=${top}`;
 
      const url = this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin';
 
      if (Browser.isFirefoxWebExt) {
+       const left = window.screenX + (window.innerWidth - width) / 2;
+       const top = window.screenY + (window.innerHeight - height) / 2;
+
        Browser.api.windows.create({
          url,
          type: 'popup',
@@ -83,13 +99,34 @@ OidcWeb.prototype = {
          width,
          top,
          left,
-         allowScriptsToClose : true
+         allowScriptsToClose : true,
+         focused: true
        });
 
      } else {
-       window.open(url, 'Login', settings);
+       this.popupCenter({url, title:"Login", w:width, h:height});
      }
   },
+
+  popupCenter: function({url, title, w, h})
+  {
+    // Fixes dual-screen position                         Most browsers      Firefox  
+    var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : screen.left;  
+    var dualScreenTop = window.screenTop != undefined ? window.screenTop : screen.top;  
+              
+    width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;  
+    height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;  
+              
+    var left = ((width / 2) - (w / 2)) + dualScreenLeft;  
+    var top = ((height / 2) - (h / 2)) + dualScreenTop;  
+    var newWindow = window.open(url, title, 'scrollbars=yes, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);  
+    
+    // Puts focus on the newWindow  
+    if (window.focus) {  
+        newWindow.focus();  
+    }  
+  },
+
 
   isSessionForIdp: function(idp)
   {
