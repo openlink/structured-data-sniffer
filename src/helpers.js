@@ -84,7 +84,6 @@ class SuperLinks {
     this.state = 'sponge';
 
     var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
-//??--    var REDIR_URL = LOGIN_URL + "?returnto="+this.doc_url;
     
     var setting = new Settings();
     var sponge_type = setting.getValue('ext.osds.super-links-sponge');
@@ -156,8 +155,6 @@ class SuperLinks {
     this.state = 'query';
 
     var SPARQL_URL = "https://linkeddata.uriburner.com/sparql";
-//??--    var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
-//??--    var REDIR_URL = LOGIN_URL + "?returnto="+this.doc_url;
 
     var setting = new Settings();
     var links_query = setting.getValue("ext.osds.super_links.query");
@@ -229,7 +226,6 @@ class SuperLinks {
       } else {
         this.messages.throbber_hide();
         if (rc.status==401 || rc.status==403) {
-//??          alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
           this.logout();
           this.check_login(true); // Browser.openTab(REDIR_URL);
           return null;
@@ -316,7 +312,6 @@ class SuperLinks {
     }
 
     if (!data) {
-//??--      alert("Empty SuperLinks resultSet was received from server");
       this.logout();
       this.check_login(true);
     }
