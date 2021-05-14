@@ -61,8 +61,8 @@ class Rest_Cons {
       _url.host = vlist[1];
     }
 
-    _url.pathname = DOM.iSel("rest_path").value
-    _url.hash = DOM.iSel("rest_hash").value
+    _url.pathname = DOM.iSel("rest_path").value;
+    _url.hash = DOM.iSel("rest_hash").value;
 
     if (this.yasqe.obj) {
       var val = this.yasqe.obj.getValue();
@@ -250,6 +250,10 @@ class Rest_Cons {
 
     n = DOM.iSel("rest_path");
     n.value = url.pathname;
+    n.oninput = (e) => { this.update() };
+
+    n = DOM.iSel("rest_hash");
+    n.value = decodeURIComponent(url.hash);
     n.oninput = (e) => { this.update() };
 
     $('#rest_add').button({
