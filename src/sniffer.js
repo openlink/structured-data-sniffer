@@ -983,6 +983,27 @@
 
 
             // wait data req from extension
+            if ($(".super_links_popup").length == 0) {
+               $('body').append(
+                 `<div class="super_links_popup" >
+                   <div class="super_links_popup-title"> &nbsp;Super Links </div>
+                   <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
+                   <div class="super_links_popup-content"></div>
+                   <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
+                  </div> 
+                  <div class="super_links_msg"> 
+                    <div style="width:16px;">
+                      <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
+                    </div>
+                    <div id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
+                  </div>
+                  <div id="super_links_snackbar">
+                    <div id="msg1"></div>
+                    <div id="msg2"></div>
+                  </div>`
+               );
+            }
+        
             Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 if (request.property == "doc_data")
                     request_doc_data();
@@ -999,32 +1020,34 @@
                 else if (request.property == "super_links_msg_hide") {
                     $(".super_links_msg").css("display","none");
                 }
+                else if (request.property == "super_links_snackbar") {
+                    if (request.msg1) {
+                      showSnackbar(request.msg1, request.msg2);
+                    }
+                }
 
                 sendResponse({});  // stop
             });
 
 
-            if ($(".super_links_popup").length == 0) {
-               $('body').append(
-                 `<div class="super_links_popup" >
-                   <div class="super_links_popup-title"> &nbsp;Super Links </div>
-                   <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
-                   <div class="super_links_popup-content"></div>
-                   <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
-                  </div> 
-                  <div class="super_links_msg"> 
-                    <div style="width:16px;">
-                      <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
-                    </div>
-                    <div id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
-                  </div>`
-               );
-            }
-        
         } catch (e) {
             console.log("OSDS:" + e);
         }
     });
+
+
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    async function showSnackbar(text1, text2) {
+        const tm = 15000;
+        var x = DOM.iSel("super_links_snackbar");
+        DOM.qSel("#super_links_snackbar #msg1").innerText = text1;
+        DOM.qSel("#super_links_snackbar #msg2").innerText = text2 || '';
+        x.className = "show";
+        setTimeout(function(){ x.className = x.className.replace("show", ""); }, tm);
+        await delay(tm);
+    }
 
 
 })();

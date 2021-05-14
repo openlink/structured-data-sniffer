@@ -471,7 +471,10 @@ async function actionSuperLinks(info, tab) {
          },
          throbber_hide: function () {
             Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_hide' });
-         }
+         },
+         snackbar_show: function (msg1, msg2) {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_snackbar', msg1, msg2 });
+         },
        }
 
   var slinks = new SuperLinks(tab.url, tab.id, msg);

@@ -34,6 +34,7 @@ class SuperLinks {
   {
     try {
       this.messages.throbber_show("&nbsp;Initializing...");
+
       if (relogin) 
       {
         await this.oidc.logout();
@@ -100,7 +101,7 @@ class SuperLinks {
   
 
     this.messages.throbber_show("&nbsp;Retrieving&nbsp;Information");
-  
+
     var options = {
          headers: {
             'Accept': 'text/html',
@@ -114,7 +115,8 @@ class SuperLinks {
       if (rc.ok && rc.status == 200) {
         if (rc.redirected && rc.url.lastIndexOf(LOGIN_URL, 0) === 0) {
           this.messages.throbber_hide();
-          alert("Could not retrieving information for current page with: "+url_sponge+"\nTrying Relogin and execute sponge again");
+//??          alert("Could not retrieving information for current page with: "+url_sponge+"\nTrying Relogin and execute sponge again");
+          this.messages.snackbar_show("Could not retrieving information for current page with: "+url_sponge,"Trying Relogin and execute sponge again"); 
           this.logout();
           this.check_login(true); // Browser.openTab(REDIR_URL);
           return null;
@@ -124,7 +126,8 @@ class SuperLinks {
       } else {
         if (rc.status==401 || rc.status==403) {
           this.messages.throbber_hide();
-          alert("Sponge error:"+rc.status+"\nTrying Relogin to https://linkeddata.uriburner.com and call SupeLinks again");
+//??          alert("Sponge error:"+rc.status+"\nTrying Relogin to https://linkeddata.uriburner.com and call SupeLinks again");
+          this.messages.snackbar_show("Sponge error:"+rc.status,"Trying Relogin and execute sponge again"); 
           this.logout();
           this.check_login(true); // Browser.openTab(REDIR_URL);
           return null;
@@ -138,7 +141,8 @@ class SuperLinks {
       this.messages.throbber_hide();
       if (e.statusCode == 403 || e.statusCode == 401) {
         this.logout();
-        alert("Sponge error:"+e.statusCode+"\nTrying Relogin to https://linkeddata.uriburner.com and call SupeLinks again");
+//??        alert("Sponge error:"+e.statusCode+"\nTrying Relogin to https://linkeddata.uriburner.com and call SupeLinks again");
+        this.messages.snackbar_show("Sponge error:"+e.statusCode,"Trying Relogin and execute sponge again"); 
         this.check_login(true); // Browser.openTab(REDIR_URL);
       } else {
         alert("Sponge "+e);
@@ -241,7 +245,8 @@ class SuperLinks {
       this.state = 'init';
       if (e.statusCode == 403 || e.statusCode == 401) {
         this.logout();
-        alert("Trying Relogin to https://linkeddata.uriburner.com and call SupeLinks again");
+//??        alert("Trying Relogin to https://linkeddata.uriburner.com and call SupeLinks again");
+        this.messages.snackbar_show("Fetch SuperLinks error:"+e.statusCode,"Trying Relogin and call SupeLinks again"); 
         this.check_login(true); // Browser.openTab(REDIR_URL);
       } else {
         alert("Could not load data from: "+SPARQL_URL+"\n"+e);
