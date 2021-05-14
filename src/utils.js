@@ -48,8 +48,19 @@ Rest_Cons.prototype = {
       return;
     }
 
-    var _url = (this.fix_restURI)? this.fix_restURI : new URL(this.doc_url);
-    _url.search = "";
+    var _url = new URL("http://t");
+    _url.protocol = DOM.iSel("rest_scheme").value;
+    var v = DOM.iSel("rest_auth").value;
+    var vlist = v.split('@');
+    if (vlist.length == 1) {
+      _url.host = vlist[0];
+    } else {
+      _url.username = vlist[0];
+      _url.host = vlist[1];
+    }
+
+    _url.pathname = DOM.iSel("rest_path").value
+    _url.hash = DOM.iSel("rest_hash").value
 
     if (this.yasqe.obj) {
       var val = this.yasqe.obj.getValue();
@@ -74,7 +85,7 @@ Rest_Cons.prototype = {
       _url = _url.replace(/%23\/editor\?/g, "#/editor\?");
     }
 
-    DOM.iSel("url_path").value = _url;
+    DOM.iSel("rest_url").value = _url;
   },
 
 
@@ -91,7 +102,7 @@ Rest_Cons.prototype = {
     }
 
     this.update();
-    var _url = DOM.iSel("url_path").value;
+    var _url = DOM.iSel("rest_url").value;
 
     if (tab_index) {
       Browser.openTab(_url, tab_index);
@@ -172,7 +183,8 @@ Rest_Cons.prototype = {
       return;
     }
 
-    $("#url_path").val(this.doc_url);
+//??--    this.doc_url = "https://john.doe@www.example.com:123/forum/questions/?tag=networking&order=newest#top";
+    DOM.iSel("rest_url").value = this.doc_url;
 
     var url = new URL(this.doc_url);
     var hash = url.hash;
@@ -184,7 +196,6 @@ Rest_Cons.prototype = {
 
     var params = url.searchParams;
     var count = 0;
-
     for(var pair of params.entries()) {
       var key = pair[0];
       var val = pair[1];
@@ -213,6 +224,25 @@ Rest_Cons.prototype = {
         this.yasqe.obj.setValue("\n");
       $(".yasqe").hide();
     }
+
+
+    url.search = "";
+
+    var n = DOM.iSel("rest_scheme");
+    n.value = url.protocol;
+    n.oninput = (e) => { this.update() };
+
+    n = DOM.iSel("rest_auth");
+    n.value = url.username ? url.username+'@'+ url.host : url.host;
+    n.oninput = (e) => { this.update() };
+
+    n = DOM.iSel("rest_path");
+    n.value = url.pathname;
+    n.oninput = (e) => { this.update() };
+
+    n = DOM.iSel("rest_hash");
+    n.value = url.hash;
+    n.oninput = (e) => { this.update() };
 
     $('#rest_add').button({
       icons: { primary: 'ui-icon-plusthick' },

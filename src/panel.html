@@ -240,12 +240,28 @@
             <button id="rest_exec" style="margin:10px; margin-left:15px;">Run</button>
             <button id="rest_exit" >Exit</button>
           </div>
-
           <div class="rest_path">
             <span style="margin:5px;margin-right:10px; width:3em">URL</span>
-            <input id="url_path" style="WIDTH: 100%; " readonly >
+            <input id="rest_url" style="WIDTH: 100%; background-color: #dce9f9; " readonly >
           </div>
-
+          <p/>
+          <div class="rest_path">
+            <span style="margin:5px;margin-right:10px; width:5em">Scheme</span>
+            <input id="rest_scheme" style="WIDTH: 100%; " >
+          </div>
+          <div class="rest_path">
+            <span style="margin:5px;margin-right:10px; width:5em">Authority</span>
+            <input id="rest_auth" style="WIDTH: 100%; " >
+          </div>
+          <div class="rest_path">
+            <span style="margin:5px;margin-right:10px; width:5em">Path</span>
+            <input id="rest_path" style="WIDTH: 100%; " >
+          </div>
+          <div class="rest_path">
+            <span style="margin:5px;margin-right:10px; width:5em">Fragment</span>
+            <input id="rest_hash" style="WIDTH: 100%; " >
+          </div>
+          <p/>
           <div id="rest_query">
             <div class="rest_query_title" >
               <span style="margin:5px;margin-right:10px; width:3em">Param</span>
