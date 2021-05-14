@@ -93,6 +93,7 @@ function showPopup(tabId)
 
   $('#rest_btn').click(function() {
     selectTab('#cons');
+    g_RestCons.load(doc_URL);
     g_RestCons.show();
     var node = DOM.iSel("rest_query");
     gMutationObserver.observe(node, {attributes:true, childList:true, subtree:true});

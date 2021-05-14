@@ -29,21 +29,22 @@ function sanitize_str(str) {
 }
 
 
-Rest_Cons = function () {
-  this.callback = null;
-  this.yasqe = {
+class Rest_Cons {
+  constructor()
+  {
+    this.callback = null;
+    this.yasqe = {
         obj : null,
         val : null,
         init: false,
       };
-  this.fix_restURI = null;
-  this.doc_url;
-};
+    this.fix_restURI = null;
+    this.doc_url;
+  }
 
 
-Rest_Cons.prototype = {
-
-  update: function() {
+  update() 
+  {
     if (!this.doc_url) {
       return;
     }
@@ -61,6 +62,7 @@ Rest_Cons.prototype = {
     }
 
     _url.pathname = DOM.iSel("rest_path").value
+    _url.hash = DOM.iSel("rest_hash").value
 
     if (this.yasqe.obj) {
       var val = this.yasqe.obj.getValue();
@@ -86,17 +88,19 @@ Rest_Cons.prototype = {
     }
 
     DOM.iSel("rest_url").value = _url;
-  },
+  }
 
 
-  show : function() {
+  show() 
+  {
     if (this.yasqe.obj && this.yasqe.val && !this.yasqe.init) {
       this.yasqe.obj.setValue(this.yasqe.val+"\n");
       this.yasqe.init = true;
     }
-  },
+  }
 
-  exec : function(tab_index) {  // rest_exec
+  exec(tab_index)
+  {
     if (!this.doc_url) {
       return;
     }
@@ -109,9 +113,10 @@ Rest_Cons.prototype = {
     } else {
       Browser.api.tabs.create({url:_url});
     }
-  },
+  }
 
-  del_row : function(e) {  // rest_del
+  del_row(e)
+  {
     //get the row we clicked on
     var row = $(e.currentTarget).parents('tr:first');
     var self = this;
@@ -133,21 +138,24 @@ Rest_Cons.prototype = {
       }
     });
     return true;
-  },
+  }
 
   
-  create_row : function(h,v) {  // createRestRow
+  create_row(h,v)
+  {
     return `<td width="12px"><button id="rest_del" class="rest_del">Del</button></td>
             <td><input id="h" style="WIDTH: 100%" value="${h}"></td>
-            <td><input id="v" style="WIDTH: 100%" value="${v}"></td>`;
-  },
+            <td><textarea id="v" style="WIDTH: 100%; height:3em">${v}</textarea></td>`;
+  }
 
 
-  add_empty_row : function() { //addRestEmpty
+  add_empty_row() 
+  {
     this.add_row('','');
-  },
+  }
 
-  add_row : function(h,v) {     //addRestParam
+  add_row(h,v) 
+  {
     var tbody = DOM.qSel("#rest_params tbody");
     var r = tbody.insertRow(-1);
     r.innerHTML = this.create_row(h, v);
@@ -159,18 +167,20 @@ Rest_Cons.prototype = {
     r.querySelector(".rest_del").onclick = (e) => { this.del_row(e) }
     r.querySelector("#h").oninput = (e) => { this.update() }
     r.querySelector("#v").oninput = (e) => { this.update() }
-  },
+  }
 
 
-  clear : function() { //delRest
+  clear() 
+  {
     var data = $('#users_data>tr');
     var data = $('#restData>tr');
     for(var i=0; i < data.length; i++) {
       $(data[i]).remove();
     }
-  },
+  }
 
-  load : function(doc_url) {
+  load(doc_url) 
+  {
     this.yasqe.val = null;
     this.fix_restURI = null;
     this.doc_url = doc_url;
@@ -194,6 +204,7 @@ Rest_Cons.prototype = {
       this.fix_restURI = url = new URL(tmp_url);
     }
 
+
     var params = url.searchParams;
     var count = 0;
     for(var pair of params.entries()) {
@@ -211,6 +222,7 @@ Rest_Cons.prototype = {
       }
       count++;
     }
+
 
     if (count == 0) {
       this.add_empty_row();
@@ -246,9 +258,23 @@ Rest_Cons.prototype = {
     });
     
     DOM.iSel("rest_add").onclick = (e) => { this.add_empty_row(); }
-  },
+  }
 
+
+  parse_params(search)
+  {
+    var params = [];
+    var s = search && search.length > 1 ? search.substring(1) : "";
+    var lst = s.split('&');
+    for(var v of lst) 
+    {
+       var lv = v.split('=');
+       params.push( [lv[0], decodeURIComponent(lv[1])] );
+    }
+    return params;
+  }
 }
+
 
 
 //====== Upload data to SPARQL server
