@@ -19,9 +19,12 @@
  */
   
 
-  TTL_Gen = function(_docURI, for_query, bnode_types) {
+  TTL_Gen = function(_docURI, for_query, bnode_types, skip_docpref) {
     this.ns = new Namespace();
     this.docURI = _docURI;
+
+    this.skip_docpref = skip_docpref;
+
     this.docURI_pref = _docURI+'#';
     this.for_query = for_query;
     this.prefixes = {};
@@ -115,7 +118,8 @@
         var pref = "";
 
         pref += "@base <"+this.docURI+"> .\n";
-        pref += "@prefix : <#> .\n";
+        if (!this.skip_docpref)
+          pref += "@prefix : <#> .\n";
 
         $.each(this.prefixes, function(key, val){
           pref += "@prefix "+key+": <"+val+"> .\n";
@@ -220,17 +224,17 @@
     {
        if (this.is_VBNode(value)) {
          var s = this.bnodes[value];
-         if (s)
-           return ":"+s;
-         else
-           return ":"+this.VBNode2BNode(value);
+         if (!s)
+           s = this.VBNode2BNode(value);
+         return this.skip_docpref ? "<"+this.docURI_pref + s +">"
+                                  : ":"+s;
        }
        else if (this.is_BNode(value)) {
          var s = this.bnodes[value];
-         if (s)
-           return ":"+s;
-         else
-           return ":"+this.pre(value.substring(2));
+         if (!s)
+           s = this.pre(value.substring(2));
+         return this.skip_docpref ? "<"+this.docURI_pref + s +">"
+                                  : ":"+s;
        }
        else {
          var pref = this.use_prefixes ? this.ns.has_known_ns(value) : null;
@@ -240,7 +244,7 @@
          }
          else
          {
-           if (value.startsWith(this.docURI_pref)) {
+           if (!this.skip_docpref && value.startsWith(this.docURI_pref)) {
              return ":"+this.pre(value.substring(this.docURI_pref.length));      
            }
            else

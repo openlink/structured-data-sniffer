@@ -161,7 +161,7 @@ class Handle_Microdata {
 
 
 class Handle_Turtle {
-  constructor(start_id, make_ttl, for_query, bnode_types) 
+  constructor(start_id, make_ttl, for_query, bnode_types, skip_docpref) 
   {
     this.baseURI = null;
     this.start_id = 0;
@@ -178,6 +178,7 @@ class Handle_Turtle {
       this._make_ttl = make_ttl;
     this.for_query = for_query;
     this.bnode_types = bnode_types || {};
+    this.skip_docpref = skip_docpref;
   }
 
 
@@ -253,7 +254,7 @@ class Handle_Turtle {
               var output;
 
               if (self._make_ttl) {
-                var ttl_data = new TTL_Gen(docURL, self.for_query, self.bnode_types).load(triples);
+                var ttl_data = new TTL_Gen(docURL, self.for_query, self.bnode_types, self.skip_docpref).load(triples);
                 output = ttl_data==null?'':ttl_data;
               }
               else

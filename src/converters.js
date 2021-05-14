@@ -54,13 +54,13 @@ class Convert_Turtle{
     return ret.data;
   }
 
-  async _fix_nano_ttl(ttlData, nanoData, baseURL) 
+  async _fix_nano_ttl(ttlData, nanoData, baseURL, skip_docpref) 
   {
     var self = this;
     var data = [];
 
     if (ttlData && ttlData.length > 0) {
-      var handler = new Handle_Turtle(0, true);
+      var handler = new Handle_Turtle(0, true, false, null, skip_docpref);
       var ret = await handler.parse(ttlData, baseURL);
 
       if (ret.errors.length>0)
@@ -86,7 +86,7 @@ class Convert_Turtle{
 
   async to_jsonld(ttlData, nanoData, baseURL) 
   {
-    var fixed_ttl = await this._fix_nano_ttl(ttlData, nanoData, baseURL);
+    var fixed_ttl = await this._fix_nano_ttl(ttlData, nanoData, baseURL, true);
     var output = [];
 
     for(var i=0; i < fixed_ttl.length; i++)
@@ -170,7 +170,6 @@ class Convert_Turtle{
                     resolve(JSON.stringify(compacted, null, 2));
 
                   } catch (ex) {
-                    self.skipped_error.push(ex.toString());
                     var json = {'@context':context, '@graph':doc};
                     resolve(JSON.stringify(json, null, 2));
                   }
