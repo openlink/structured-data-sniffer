@@ -224,30 +224,24 @@
         </div>
 
         <div id="cons_items" style="font-size: 13px;">
-          <table>
-            <tr>
-              <td>
-                <button id="rest_exec" style="margin:5px; margin-left:10px;">Run</button>
-              </td>
-              <td>
-                <button id="rest_exit" >Exit</button>
-              </td>
-            </tr>
-          </table>
-
-          <table id="rest_query" class="footable">
-            <tr style="background-color: #dce9f9; font-weight: bold;">
-              <td width="40px"> Param </td>
-              <td>
-                <input id="query_id" style="WIDTH: 100%; background-color: #dce9f9;">
-              </td>
-            </tr>
-          </table>
-          <table>
+          <div style="display:flex; flex-direction:row; align-items:baseline;">
+            <button id="rest_exec" style="margin:10px; margin-left:15px;">Run</button>
+            <button id="rest_exit" >Exit</button>
+          </div>
+          <div class="rest_path">
+            <span style="margin:5px;margin-right:10px; width:3em">URL</span>
+            <input id="url_path" style="WIDTH: 100%; " readonly >
+          </div>
+          <div id="rest_query">
+            <div class="rest_query_title" >
+              <span style="margin:5px;margin-right:10px; width:3em">Param</span>
+              <input id="query_id" style="WIDTH: 100%; background-color: #dce9f9;" >
+            </div>
             <textarea id="query_place" style="width: 100%; height: 100px">
             </textarea>
-          </table>
-          <table id="rest_query" class="footable">
+          </div>
+
+          <table id="rest_params" class="footable">
             <thead>
               <tr>
                 <th width="12px"></th>
@@ -258,12 +252,7 @@
             <tbody id="restData">
             </tbody>
           </table>
-          <table>
-            <tr >
-              <button style="margin:8px; margin-top:2px;" id="rest_add" class="rest_add">Add</button>
-            </tr>
-          </table>
-
+          <button style="margin:8px; margin-top:8px;" id="rest_add" class="rest_add">Add</button>
         </div>
 
         <div id="micro_items">

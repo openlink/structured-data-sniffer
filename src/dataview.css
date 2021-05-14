@@ -201,3 +201,21 @@ ul#tabs li a.selected {
     padding: 0.7em 0.5em 0 0.5em;
 }
 
+.rest_path {
+    display:flex; 
+    flex-direction:row; 
+    align-items:baseline;
+    background-color: #dce9f9; 
+    font-weight: bold; 
+    border: 1px solid #000; 
+    border-radius: 6px; 
+    border-color: lightgray;
+}
+
+.rest_query_title {
+    display:flex; 
+    flex-direction:row; 
+    align-items:baseline;
+    background-color: #dce9f9; 
+    font-weight: bold;
+}

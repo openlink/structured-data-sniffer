@@ -37,24 +37,18 @@ Rest_Cons = function () {
         init: false,
       };
   this.fix_restURI = null;
+  this.doc_url;
 };
 
 
 Rest_Cons.prototype = {
 
-  show : function() {
-    if (this.yasqe.obj && this.yasqe.val && !this.yasqe.init) {
-      this.yasqe.obj.setValue(this.yasqe.val+"\n");
-      this.yasqe.init = true;
-    }
-  },
-
-  exec : function(doc_URL, tab_index) {  // rest_exec
-    if (!doc_URL) {
+  update: function() {
+    if (!this.doc_url) {
       return;
     }
 
-    var _url = (this.fix_restURI)? this.fix_restURI : new URL(doc_URL);
+    var _url = (this.fix_restURI)? this.fix_restURI : new URL(this.doc_url);
     _url.search = "";
 
     if (this.yasqe.obj) {
@@ -80,6 +74,25 @@ Rest_Cons.prototype = {
       _url = _url.replace(/%23\/editor\?/g, "#/editor\?");
     }
 
+    DOM.iSel("url_path").value = _url;
+  },
+
+
+  show : function() {
+    if (this.yasqe.obj && this.yasqe.val && !this.yasqe.init) {
+      this.yasqe.obj.setValue(this.yasqe.val+"\n");
+      this.yasqe.init = true;
+    }
+  },
+
+  exec : function(tab_index) {  // rest_exec
+    if (!this.doc_url) {
+      return;
+    }
+
+    this.update();
+    var _url = DOM.iSel("url_path").value;
+
     if (tab_index) {
       Browser.openTab(_url, tab_index);
     } else {
@@ -89,7 +102,8 @@ Rest_Cons.prototype = {
 
   del_row : function(e) {  // rest_del
     //get the row we clicked on
-    var row = $(this).parents('tr:first');
+    var row = $(e.currentTarget).parents('tr:first');
+    var self = this;
 
     $('#alert-msg').prop('textContent','Delete row ?');
     $('#alert-dlg').dialog({
@@ -98,7 +112,8 @@ Rest_Cons.prototype = {
       modal: true,
       buttons: {
         'Yes': function() {
-            $(row).remove();
+            row.remove();
+            self.update()
             $(this).dialog( 'destroy' );
         },
         'No': function() {
@@ -110,12 +125,10 @@ Rest_Cons.prototype = {
   },
 
   
-  create_row : function() {  // createRestRow
-    return `<tr>
-              <td width="12px"><button id="rest_del" class="rest_del">Del</button></td>
-              <td><input id="h" style="WIDTH: 100%" value=""></td>
-              <td><input id="v" style="WIDTH: 100%" value=""></td>
-            </tr>`;
+  create_row : function(h,v) {  // createRestRow
+    return `<td width="12px"><button id="rest_del" class="rest_del">Del</button></td>
+            <td><input id="h" style="WIDTH: 100%" value="${h}"></td>
+            <td><input id="v" style="WIDTH: 100%" value="${v}"></td>`;
   },
 
 
@@ -123,18 +136,18 @@ Rest_Cons.prototype = {
     this.add_row('','');
   },
 
-
   add_row : function(h,v) {     //addRestParam
-    $('#restData').append(this.create_row());
-    $('#restData tr:last-child #h').val(h);
-    $('#restData tr:last-child #v').val(v);
-
+    var tbody = DOM.qSel("#rest_params tbody");
+    var r = tbody.insertRow(-1);
+    r.innerHTML = this.create_row(h, v);
 
     $('.rest_del').button({
       icons: { primary: 'ui-icon-minusthick' },
       text: false
     });
-    $('.rest_del').click(this.del_row);
+    r.querySelector(".rest_del").onclick = (e) => { this.del_row(e) }
+    r.querySelector("#h").oninput = (e) => { this.update() }
+    r.querySelector("#v").oninput = (e) => { this.update() }
   },
 
 
@@ -149,19 +162,23 @@ Rest_Cons.prototype = {
   load : function(doc_url) {
     this.yasqe.val = null;
     this.fix_restURI = null;
+    this.doc_url = doc_url;
+    $("#rest_query").hide();
 
     this.clear();
 
-    if (!doc_url) {
+    if (!this.doc_url) {
       this.add_empty_row();
       return;
     }
 
-    var url = new URL(doc_url);
+    $("#url_path").val(this.doc_url);
+
+    var url = new URL(this.doc_url);
     var hash = url.hash;
     // check for RDF Editor URL
     if (hash.lastIndexOf("#/editor?", 0) === 0) {
-      var tmp_url = doc_url.replace(/#\/editor\?/g, "%23/editor?");
+      var tmp_url = this.doc_url.replace(/#\/editor\?/g, "%23/editor?");
       this.fix_restURI = url = new URL(tmp_url);
     }
 
@@ -172,8 +189,11 @@ Rest_Cons.prototype = {
       var key = pair[0];
       var val = pair[1];
       if (key === "query" || key === "qtxt") {
+        $("#rest_query").show();
         this.yasqe.val = val;
-        $("#query_id").val(key);
+        var n = DOM.iSel("query_id");
+        n.value = key;
+        n.oninput = (e) => { this.update() };
       }
       else {
         this.add_row(key, val);
@@ -193,6 +213,13 @@ Rest_Cons.prototype = {
         this.yasqe.obj.setValue("\n");
       $(".yasqe").hide();
     }
+
+    $('#rest_add').button({
+      icons: { primary: 'ui-icon-plusthick' },
+      text: false
+    });
+    
+    DOM.iSel("rest_add").onclick = (e) => { this.add_empty_row(); }
   },
 
 }

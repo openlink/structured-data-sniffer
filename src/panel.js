@@ -47,6 +47,7 @@ var gData = {
       };
 var src_view = null;
 var g_RestCons = new Rest_Cons();
+var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.update())
 var gOidc = new OidcWeb();
 
 
@@ -93,6 +94,8 @@ function showPopup(tabId)
   $('#rest_btn').click(function() {
     selectTab('#cons');
     g_RestCons.show();
+    var node = DOM.iSel("rest_query");
+    gMutationObserver.observe(node, {attributes:true, childList:true, subtree:true});
   });
 
   $('#download_btn').click(Download_exec);
@@ -166,19 +169,13 @@ function showPopup(tabId)
     g_RestCons.load(doc_URL);
 
   $('#rest_exec').click(function() {
-    g_RestCons.exec(doc_URL, gData.tab_index);
+    g_RestCons.exec(gData.tab_index);
   });
   $('#rest_exit').click(function(){
+    gMutationObserver.disconnect();
     if (prevSelectedTab)
       selectTab(prevSelectedTab);
     return false;
-  });
-  $('#rest_add').button({
-    icons: { primary: 'ui-icon-plusthick' },
-    text: false
-  });
-  $('#rest_add').click(function() {
-    g_RestCons.add_empty_row();
   });
 
   $('#src_exit').click(function(){
@@ -1053,7 +1050,9 @@ function Download_exec_update_state()
 
 async function Download_exec()
 {
-  $('#save-sparql-graph').val(doc_URL);
+  var _url = new URL(doc_URL);
+  _url.hash = "osds";
+  $('#save-sparql-graph').val(_url.toString());
 
   $('#save-action').change(function() {
     Download_exec_update_state();
