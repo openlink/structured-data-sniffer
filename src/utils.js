@@ -48,7 +48,8 @@ Rest_Cons.prototype = {
       return;
     }
 
-    var _url = new URL("http://t");
+    var _url = new URL(this.doc_url);
+    _url.search = "";
     _url.protocol = DOM.iSel("rest_scheme").value;
     var v = DOM.iSel("rest_auth").value;
     var vlist = v.split('@');
@@ -60,7 +61,6 @@ Rest_Cons.prototype = {
     }
 
     _url.pathname = DOM.iSel("rest_path").value
-    _url.hash = DOM.iSel("rest_hash").value
 
     if (this.yasqe.obj) {
       var val = this.yasqe.obj.getValue();
@@ -238,10 +238,6 @@ Rest_Cons.prototype = {
 
     n = DOM.iSel("rest_path");
     n.value = url.pathname;
-    n.oninput = (e) => { this.update() };
-
-    n = DOM.iSel("rest_hash");
-    n.value = url.hash;
     n.oninput = (e) => { this.update() };
 
     $('#rest_add').button({
