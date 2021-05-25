@@ -378,7 +378,7 @@ function setPageAction(tabId, show)
 }
 
 
-Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
+Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
 {
   try {
     if (request.property === "status")
@@ -428,7 +428,23 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
         sendResponse({'cmd': request.cmd, 'opened':false});
       }
     }
-    else if (request.cmd === "actionSuperLinks")
+/**
+    else
+    {
+      sendResponse({}); // stop
+    }
+**/
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
+
+
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
+{
+  try {
+    if (request.cmd === "actionSuperLinks")
     {
       var curTab = await getCurTab();
       if (curTab.length > 0)
@@ -445,7 +461,6 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
   }
 
 });
-
 
 ////////// Context Menu
 

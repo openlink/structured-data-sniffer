@@ -482,7 +482,6 @@ class SettingsProxy {
           });
         });
     } else {
-
       var resp = await Browser.api.runtime.sendMessage({'cmd': 'getPref', 'key':key});
       var val = null;
       if (resp.val && resp.key === key)

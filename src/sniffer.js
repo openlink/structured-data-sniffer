@@ -647,23 +647,6 @@
       var settings = new SettingsProxy();
       var highlight_mode = await settings.getValue('ext.osds.super-links-highlight');
 
-      if ($(".super_links_popup").length == 0) {
-         $('body').append(
-           `<div class="super_links_popup" >
-             <div class="super_links_popup-title"> &nbsp;Super Links </div>
-             <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
-             <div class="super_links_popup-content"></div>
-             <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
-            </div> 
-            <div class="super_links_msg"> 
-              <div style="width:16px;">
-                <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
-              </div>
-              <div id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
-            </div>`
-         );
-      }
-
       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = '&nbsp;Applying&nbsp;Super&nbsp;Links';
       $(".super_links_msg").css("display","flex");
 
