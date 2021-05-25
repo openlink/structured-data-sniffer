@@ -239,7 +239,6 @@ $(document).on('click', 'a', function(e) {
       return uri.startsWith(gData.baseURL+'#');
   }
 
-
   var hashName = null;
   var href = e.currentTarget.href;
   var hashPos = href.lastIndexOf('#');
@@ -251,6 +250,9 @@ $(document).on('click', 'a', function(e) {
   url.hash = '';
   url = url.toString();
 
+  var baseHost = (new URL(gData.baseURL)).host;
+  var hrefHost = (new URL(href)).host;
+
   if (href.startsWith(url+"#sc")) {
     return true;
   }
@@ -261,6 +263,12 @@ $(document).on('click', 'a', function(e) {
     return false;
   }
   else if (href === doc_URL) {
+    return false;
+  }
+  else if (baseHost === hrefHost) {
+    var el = $('a[href = "'+href+'"][ent]');
+    if (el.length > 0)
+      el[0].scrollIntoView();
     return false;
   }
   else {

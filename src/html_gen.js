@@ -319,7 +319,7 @@
              anc = '<a name="'+uri.substr(hashPos+1)+'"/>';           
            }
          }
-         var sval = this.iri2html(uri);
+         var sval = this.iri2html(uri, null, 'ent');
          return `<tr class='major data_row'>
                    <td> ${anc} ${this.SubjName} </td>
                    <td> ${sval} </td>
@@ -327,7 +327,7 @@
        }
     },
 
-    iri2html : function (uri, is_key)
+    iri2html : function (uri, is_key, myid)
     {
       var v = this.check_subst(uri);
 
@@ -336,11 +336,12 @@
       }
       else { 
         var pref = this.ns.has_known_ns(uri);
-        return (pref!=null) ? this.pref_link(uri, pref) : this.check_link(uri, is_key);
+        var sid = myid ? ` ${myid} ` : '';
+        return (pref!=null) ? this.pref_link(uri, pref, sid) : this.check_link(uri, is_key, sid);
       }
     },
     
-    check_link : function (val, is_key) 
+    check_link : function (val, is_key, sid) 
     {
       var s_val = String(val);
       var t_val = val;
@@ -349,26 +350,26 @@
       {
         if ( s_val.match(/\.(jpg|png|gif|svg)$/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
-          return `<a href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
+          return `<a ${sid} href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
         } 
         if ( s_val.match(/\.(jpg|png|gif|svg)[?#].*/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
-          return `<a href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
+          return `<a ${sid} href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
         } 
-        return `<a href="${val}"> ${this.decodeURI(val)} </a>`;
+        return `<a ${sid} href="${val}"> ${this.decodeURI(val)} </a>`;
       } 
       else if ( s_val.match(/^mailto:/) ) 
       {
-        return `<a href="${val}"> ${this.decodeURI(val)} </a>`;
+        return `<a ${sid} href="${val}"> ${this.decodeURI(val)} </a>`;
       }
       return this.pre(val);
     },
 
 
-    pref_link : function (val, pref) 
+    pref_link : function (val, pref, sid) 
     {
       var data = val.substring(pref.link.length);
-      return `<a href="${val}" title="${val}"> ${pref.ns}:${this.decodeURI(data)}</a>`;
+      return `<a ${sid} href="${val}" title="${val}"> ${pref.ns}:${this.decodeURI(data)}</a>`;
     },
 
     pre : function (text) 
