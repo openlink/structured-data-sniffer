@@ -176,7 +176,7 @@
         else {
           var u = new URL(value);
           if (u.hash) {
-            return this.pre(u.hash+sid);
+            return this.pre(u.hash.substring(1)+sid);
           } else {
             var lst = u.pathname.split('/');
             var data = lst.length>0 ? lst[lst.length-1] : "";

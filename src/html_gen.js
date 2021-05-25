@@ -284,7 +284,7 @@
         else {
           var u = new URL(value);
           if (u.hash) {
-            return this.docURI +"#"+u.hash+sid;
+            return this.docURI +u.hash+sid;
           } else {
             var lst = u.pathname.split('/');
             var data = lst.length>0 ? lst[lst.length-1] : "";

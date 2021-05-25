@@ -375,6 +375,9 @@ class Save2Sparql {
     pref += "base <"+this.baseURI+"> \n";
     pref += "prefix : <#> \n";
 
+    prefixes = prefixes || {};
+    triples = triples || "";
+
     pref_sz = pref.length;
 
     for(var key in prefixes) {
