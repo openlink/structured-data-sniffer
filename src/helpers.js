@@ -132,7 +132,8 @@ class SuperLinks {
           this.check_login(true); // Browser.openTab(REDIR_URL);
           return null;
         } else {
-          alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
+//??          alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
+          this.messages.snackbar_show("Sponge error:"+rc.status, rc.statusText); 
           return await this.exec_super_links_query(iter);
         }
       }
@@ -145,7 +146,8 @@ class SuperLinks {
         this.messages.snackbar_show("Sponge error:"+e.statusCode,"Trying Relogin and execute sponge again"); 
         this.check_login(true); // Browser.openTab(REDIR_URL);
       } else {
-        alert("Sponge "+e);
+//??        alert("Sponge "+e);
+        this.messages.snackbar_show("Sponge error:"+e.toString, null); 
       }
       console.log(e);
     }
@@ -235,7 +237,8 @@ class SuperLinks {
           return null;
         } else {
           this.state = 'init';
-          alert("Could not load data from: "+SPARQL_URL+"\nError: "+rc.status);
+//??          alert("Could not load data from: "+SPARQL_URL+"\nError: "+rc.status);
+          this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, "Error:"+rc.status); 
           return null;
         }
       }
@@ -249,7 +252,8 @@ class SuperLinks {
         this.messages.snackbar_show("Fetch SuperLinks error:"+e.statusCode,"Trying Relogin and call SupeLinks again"); 
         this.check_login(true); // Browser.openTab(REDIR_URL);
       } else {
-        alert("Could not load data from: "+SPARQL_URL+"\n"+e);
+//??        alert("Could not load data from: "+SPARQL_URL+"\n"+e);
+        this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, e.toString);
       }
       return null;
     } finally {
