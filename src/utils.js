@@ -462,7 +462,7 @@ class Save2Sparql {
         return {rc:false, error: message, status: ret.status} ;
       }
     } catch (e) {
-      return {rc:false, error:e.toString() };
+      return {rc:false, error:e.toString(), status: e.statusCode };
     }
 
     return {rc: true};
