@@ -3,7 +3,7 @@
   "short_name": "OSD Sniffer",
   "author":"OpenLink Software",
   "homepage_url": "http://osds.openlinksw.com/",
-  "version": "2.19.2",
+  "version": "2.19.4",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
