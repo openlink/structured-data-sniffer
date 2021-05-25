@@ -118,6 +118,7 @@ var POSH = (function () {
       var baseOrigin = url.origin;
       var basePATH = baseURI;
 
+
       if (baseURI.lastIndexOf('.')!=-1) {
          var i = baseURI.lastIndexOf('/');
          if (i!=-1)
@@ -293,7 +294,9 @@ var POSH = (function () {
         }
         else if (n.startsWith("#"))
         {
-          return baseURI+n;
+          var u = new URL(baseURI);
+          u.hash = n;
+          return u.toString();
         }
         else if (n.startsWith("/"))
         {
@@ -305,6 +308,12 @@ var POSH = (function () {
         }
       }
 
+      function url_hash(href, hash)
+      {
+        var u = new URL(href);
+        u.hash = hash;
+        return u.toString();
+      }
 
 //      $("head link,meta[name],meta[property]").each(function(i, el){
       $("head link,meta[name]").each(function(i, el){
@@ -318,11 +327,11 @@ var POSH = (function () {
              var title = el.getAttribute("title");
              var type = el.getAttribute("type");
              addTriple("#this", encodeURI(rel), href);   
-             addTriple(href+"#this", "rdf:type", "schema:CreativeWork");
+             addTriple(url_hash(href,"#this"), "rdf:type", "schema:CreativeWork");
              if (title)
-               addTriple(href+"#this", "schema:name", title);   
+               addTriple(url_hash(href,"#this"), "schema:name", title);   
              if (type)
-               addTriple(href+"#this", "schema:fileFormat", type);   
+               addTriple(url_hash(href,"#this"), "schema:fileFormat", type);   
            }
            else if(rev && href) {
              href = encodeURI(fix_href(href));
@@ -350,11 +359,11 @@ var POSH = (function () {
            var src = el.getAttribute("src");
            var alt = el.getAttribute("alt");
 
-           addTriple(src+"#this", "rdf:type", "schema:ImageObject");
-           addTriple(src+"#this", "schema:mainEntityOfPage", src);
-           addTriple(src+"#this", "schema:name", " "+src, true);
-           addTriple(src+"#this", "schema:description", alt.substring(self.facebook_vision.length));
-           addTriple(src+"#this", "schema:url", src);
+           addTriple(url_hash(src,"#this"), "rdf:type", "schema:ImageObject");
+           addTriple(url_hash(src,"#this"), "schema:mainEntityOfPage", src);
+           addTriple(url_hash(src,"#this"), "schema:name", " "+src, true);
+           addTriple(url_hash(src,"#this"), "schema:description", alt.substring(self.facebook_vision.length));
+           addTriple(url_hash(src,"#this"), "schema:url", src);
       });
 
 

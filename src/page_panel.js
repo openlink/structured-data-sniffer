@@ -178,6 +178,7 @@ $(document).on('click', 'a', function(e) {
       return uri.startsWith(baseURL+'#');
   }
 
+  var tab_data = DOM.qSel(`${selectedTab}_items`);
 
   var hashName = null;
   var href = e.currentTarget.href;
@@ -194,7 +195,7 @@ $(document).on('click', 'a', function(e) {
     return true;
   }
   else if (check_URI(href) && hashName) {
-    var el = $('a[name = "'+hashName+'"]');
+    var el = tab_data.querySelectorAll('a[name = "'+hashName+'"]');
     if (el.length > 0)
       el[0].scrollIntoView();
     return false;
@@ -203,7 +204,11 @@ $(document).on('click', 'a', function(e) {
     return false;
   }
   else {
-    Browser.openTab(href);
+    var el = tab_data.querySelectorAll('a[href = "'+href+'"][ent]');
+    if (el.length > 0)
+      el[0].scrollIntoView();
+    else
+      Browser.openTab(href, gData.tab_index);
     return false;
   }
 });

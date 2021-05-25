@@ -644,8 +644,10 @@ class MicrodataJSON_Converter {
     for(var i=0; i < out.length; i++)
     {
       out[i]["n"] = i+1;
-      if (!out[i].s)
-        out[i]["s"] = baseURI;
+      if (!out[i].s) {
+        var bnode = self.new_bnode();
+        out[i]["s"] = bnode;
+      }
     }
 
     return out;

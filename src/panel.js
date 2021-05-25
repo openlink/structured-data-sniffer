@@ -239,6 +239,8 @@ $(document).on('click', 'a', function(e) {
       return uri.startsWith(gData.baseURL+'#');
   }
 
+  var tab_data = DOM.qSel(`${selectedTab}_items`);
+
   var hashName = null;
   var href = e.currentTarget.href;
   var hashPos = href.lastIndexOf('#');
@@ -257,7 +259,7 @@ $(document).on('click', 'a', function(e) {
     return true;
   }
   else if (check_URI(href) && hashName) {
-    var el = $('a[name = "'+hashName+'"]');
+    var el = tab_data.querySelectorAll('a[name = "'+hashName+'"]');
     if (el.length > 0)
       el[0].scrollIntoView();
     return false;
@@ -265,14 +267,12 @@ $(document).on('click', 'a', function(e) {
   else if (href === doc_URL) {
     return false;
   }
-  else if (baseHost === hrefHost) {
-    var el = $('a[href = "'+href+'"][ent]');
+  else {
+    var el = tab_data.querySelectorAll('a[href = "'+href+'"][ent]');
     if (el.length > 0)
       el[0].scrollIntoView();
-    return false;
-  }
-  else {
-    Browser.openTab(href, gData.tab_index);
+    else
+      Browser.openTab(href, gData.tab_index);
     return false;
   }
 });
