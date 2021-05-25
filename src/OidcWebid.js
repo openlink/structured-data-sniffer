@@ -57,16 +57,21 @@ OidcWeb.prototype = {
     }
   },
 
-  login: function() {
+  login: function(idp_url, autologin) {
      const width = 650;
      const height = 400;
+     const alogin = autologin ? '&autologin=1' : ''
+
+
+     const _url = idp_url ? this.login2_url+'?idp='+encodeURIComponent(idp_url)+alogin+'#relogin'
+                         : this.login_url;
 
      if (Browser.isFirefoxWebExt) {
        const left = window.screenX + (window.innerWidth - width) / 2;
        const top = window.screenY + (window.innerHeight - height) / 2;
 
        Browser.api.windows.create({
-         url: this.login_url,
+         url: _url,
          type: 'popup',
          height,
          width,
@@ -77,16 +82,17 @@ OidcWeb.prototype = {
        });
      }
      else {
-       this.popupCenter({url: this.login_url, title:"Login", w:width, h:height});
+       this.popupCenter({url: _url, title:"Login", w:width, h:height});
      }
 
   },
 
-  login2: function() {
+  login2: function(idp_url) {
      const width = 650;
      const height = 400;
 
-     const url = this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin';
+//     const url = this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin';
+     const url = this.login2_url+'?idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
 
      if (Browser.isFirefoxWebExt) {
        const left = window.screenX + (window.innerWidth - width) / 2;

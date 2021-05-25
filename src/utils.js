@@ -289,7 +289,55 @@ class Save2Sparql {
     this.sparql_graph = sparql_graph;
     this.baseURI = baseURI;
     this.oidc = oidc
+    var u = new URL(sparqlendpoint);
+    this.idp_url = u.origin;
   }
+
+  show_message(s1, s2)
+  {
+    if (s1) {
+      const tm = 15000;
+      var x = DOM.iSel("msg_snackbar");
+      if (x) {
+        DOM.qSel("#msg_snackbar #msg1").innerText = s1;
+        DOM.qSel("#msg_snackbar #msg2").innerText = s2 || '';
+        x.className = "show";
+        setTimeout(function(){ x.className = x.className.replace("show", ""); }, tm);
+      }
+    }
+  }
+
+  async check_login(relogin)
+  {
+    try {
+      if (relogin) 
+      {
+        await this.oidc.logout();
+        showInfo('Login to '+this.idp_url+'\n and call "Upload to SPARQL endpoint" again.');
+        sleep(8000);
+        this.oidc.login(this.idp_url, 1);
+        return false;
+      } 
+      else 
+      {
+        await this.oidc.checkSession();
+        if (this.oidc.webid) {
+          if (!this.oidc.isSessionForIdp(this.idp_url))
+            await this.oidc.logout();
+        }
+        if (!this.oidc.webid) {
+          showInfo('Login to '+this.idp_url+'\n and call "Upload to SPARQL endpoint" again.');
+          sleep(8000);
+          this.oidc.login(this.idp_url, 1);
+          return false;
+        }
+      }
+      return true;
+    } finally {
+    }
+  }
+
+  
 
   async upload_to_sparql(data)
   {
@@ -408,7 +456,7 @@ class Save2Sparql {
             message = ''+ret.status +' '+ret.statusText;
             break
         }
-        return {rc:false, error: message} ;
+        return {rc:false, error: message, status: ret.status} ;
       }
     } catch (e) {
       return {rc:false, error:e.toString() };

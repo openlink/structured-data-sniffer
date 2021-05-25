@@ -1037,10 +1037,18 @@ function Download_exec_update_state()
     $('#save-file').show();
   else
     $('#save-file').hide();
+
   if (cmd==='fileupload') {
     $('#oidc-login').show();
-  } else {
+    $('#oidc-upload').show();
+  } 
+  else if (cmd==='sparqlupload') {
+    $('#oidc-login').show();
+    $('#oidc-upload').hide();
+  }
+  else {
     $('#oidc-login').hide();
+    $('#oidc-upload').hide();
   }
 
   var filename;
@@ -1203,6 +1211,11 @@ async function save_data(action, fname, fmt, callback)
         save_lst.push(v);
     }
 
+    var saver = new Save2Sparql(sparqlendpoint, sparql_graph, gData.baseURL, gOidc);
+    var rc = await saver.check_login();
+    if (!rc)
+      return;
+
     for (var _tab of save_lst) 
     {
       var dt = await prepare_data(true, _tab, fmt);
@@ -1211,10 +1224,16 @@ async function save_data(action, fname, fmt, callback)
       }
       else if (dt && dt.txt.length > 0) 
       {
-        var saver = new Save2Sparql(sparqlendpoint, sparql_graph, gData.baseURL, gOidc);
         var ret = await saver.upload_to_sparql(dt);
         if (!ret.rc) {
-          showInfo('Unable to save:' +ret.error);
+          if (ret.status === 401 || ret.status === 403) {
+            var rc = await saver.check_login(true);
+            if (!rc)
+              return;
+          } 
+          else {
+            showInfo('Unable to save:' +ret.error);
+          }
         } 
         else {
           rc = true;

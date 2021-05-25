@@ -572,8 +572,15 @@ function Download_exec_update_state()
 
   if (cmd==='fileupload') {
     $('#oidc-login').show();
-  } else {
+    $('#oidc-upload').show();
+  } 
+  else if (cmd==='sparqlupload') {
+    $('#oidc-login').show();
+    $('#oidc-upload').hide();
+  }
+  else {
     $('#oidc-login').hide();
+    $('#oidc-upload').hide();
   }
 
   var filename;
@@ -921,10 +928,22 @@ async function upload_to_sparql(data, sparqlendpoint, sparql_graph)
   }
 
   var saver = new Save2Sparql(sparqlendpoint, sparql_graph, baseURL, gOidc);
+
+  var rc = await saver.check_login();
+  if (!rc)
+    return false;
+
   var ret = await saver.upload_to_sparql(data);
   if (!ret.rc) {
-    showInfo('Unable to save:' +ret.error);
-    return false;
+    if (ret.status === 401 || ret.status === 403) {
+      var rc = await saver.check_login(true);
+      if (!rc)
+        return false;
+    } 
+    else {
+      showInfo('Unable to save:' +ret.error);
+      return false;
+    }
   }
 
   showInfo('Saved');

@@ -75,6 +75,11 @@
     </head>
     <body class="sniffer">
 
+      <div id="msg_snackbar">
+        <div id="msg1"></div>
+        <div id="msg2"></div>
+      </div>
+
       <div class="throbber_msg" style="display:none; font-size: 14px; flex-direction: row; height:20px; padding: 10px 10px 10px 20px;"> 
         <div style="width:16px;">
           <img src="images/throbber.gif" class="throbber_img">
@@ -128,6 +133,13 @@
          </tr>
         </table>
 
+        <table id="oidc-login" style="font-size: 14px;">
+         <tr >
+          <td> <button id="oidc-login-btn">Login</button> </td>
+          <td> <a id="oidc-webid" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
+         </tr>
+        </table>
+
         <div id="save-sparql-item" style="font-size: 14px;">
          <table style="font-size: 14px;">
           <tr>
@@ -157,12 +169,7 @@
          </div>
         </div>
 
-
-        <table id="oidc-login" style="font-size: 14px;">
-         <tr >
-          <td> <button id="oidc-login-btn">Login</button> </td>
-          <td> <a id="oidc-webid" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
-         </tr>
+        <table id="oidc-upload" style="font-size: 14px;">
          <tr >
           <td> Save&nbsp;To&nbsp;URL: </td>
           <td> <input id="oidc-url" style="WIDTH: 380px"> </td>
