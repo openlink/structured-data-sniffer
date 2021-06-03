@@ -223,7 +223,12 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
         type = "csv";
         could_handle = true;
       }
-      else if (headerContent.value.match(/\/(sparql\-results\+json)/) || headerContent.value.match(/(application\/json)/) ) {
+      else if (headerContent.value.match(/\/(sparql\-results\+json)/) 
+               || headerContent.value.match(/(application\/json)/) 
+               || headerContent.value.match(/(application\/odata\+json)/) 
+               || headerContent.value.match(/(application\/microdata\+json)/) 
+               ) 
+      {
         handle = handle_json;
         type = "json";
         could_handle = true;
