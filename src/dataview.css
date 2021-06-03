@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -17,6 +17,31 @@
  *  51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
+
+#msg_snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -125px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 2px;
+  padding: 16px;
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  bottom: 30px;
+  font-size: 17px;
+}
+
+#msg_snackbar.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+
+
 
 .super_links_msg {
 	display: none;
@@ -38,6 +63,33 @@
 	width: 16px;
 	height: 16px;
 }
+
+
+.throbber_msg {
+        all: initial;
+	display: none;
+	line-height: normal;
+	flex-direction: row; 
+	position: fixed;
+	border: 2px solid #000;
+	border-radius: 2px;
+	width: 200px;
+	height: 20px;
+	top:4px;
+	left: 4px;
+	background: cyan;
+	color: black;
+ 	z-index: 2147483647;
+	padding: 10px 10px 10px 20px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+}
+
+.throbber_img {
+	width: 16px;
+	height: 16px;
+}
+
 
 input[type="image"] {
   outline: none !important;
@@ -174,3 +226,21 @@ ul#tabs li a.selected {
     padding: 0.7em 0.5em 0 0.5em;
 }
 
+.rest_path {
+    display:flex; 
+    flex-direction:row; 
+    align-items:baseline;
+    background-color: #dce9f9; 
+    font-weight: bold; 
+    border: 1px solid #000; 
+    border-radius: 6px; 
+    border-color: lightgray;
+}
+
+.rest_query_title {
+    display:flex; 
+    flex-direction:row; 
+    align-items:baseline;
+    background-color: #dce9f9; 
+    font-weight: bold;
+}

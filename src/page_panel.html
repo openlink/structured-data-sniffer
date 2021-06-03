@@ -2,7 +2,7 @@
 <!--
     This file is part of the OpenLink Structured Data Sniffer
 
-    Copyright (C) 2015-2020 OpenLink Software
+    Copyright (C) 2015-2021 OpenLink Software
 
     This project is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -71,10 +71,26 @@
           table.docdata {
             width: 100%;
           }
+
+ 	  div.ritem {display:flex; flex-direction:row; align-items: baseline; padding-top:5px;}
+
         </style>
 
     </head>
     <body class="sniffer">
+
+      <div id="msg_snackbar">
+        <div id="msg1"></div>
+        <div id="msg2"></div>
+      </div>
+
+      <div class="throbber_msg" style="display:none; font-size: 14px; flex-direction: row; height:20px; padding: 10px 10px 10px 20px;"> 
+        <div style="width:16px;">
+          <img src="images/throbber.gif" class="throbber_img">
+        </div>
+        <div id="throbber_msg_text">&nbsp;Uploading&nbsp;data&nbsp;...</div>
+      </div>
+
       <div class="popup" id="alert-dlg" title="Info">
         <p id="alert-msg" style="font-size: 14px;">
         </p>
@@ -89,7 +105,8 @@
             <SELECT id="save-action" style="WIDTH: 300px" >
               <OPTION id="view" selected>View Raw Data</OPTION>
               <OPTION id="filesave">Download Raw Data</OPTION>
-              <OPTION id="fileupload">Upload Raw Data</OPTION>
+              <OPTION id="fileupload">Upload to Data Space</OPTION>
+              <OPTION id="sparqlupload">Upload to SPARQL endpoint</OPTION>
             </SELECT>
           </td>
          </tr>
@@ -99,13 +116,14 @@
           <td> <input id="save-filename" style="WIDTH: 300px"> </td>
          </tr>
 
-         <tr>
+         <tr id="save-fmt-item">
           <td>Format:</td>
           <td>
             <SELECT id="save-fmt" style="WIDTH: 100px" >
               <OPTION id="ttl" selected>Turtle</OPTION>
               <OPTION id="jsonld">JSON-LD</OPTION>
               <OPTION id="rdf">RDF/XML</OPTION>
+              <OPTION id="json">JSON</OPTION>
             </SELECT>
           </td>
          </tr>
@@ -116,9 +134,41 @@
           <td> <button id="oidc-login-btn">Login</button> </td>
           <td> <a id="oidc-webid" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
          </tr>
+        </table>
+
+        <div id="save-sparql-item" style="font-size: 14px;">
+         <table style="font-size: 14px;">
+          <tr>
+           <td> Save&nbsp;To&nbsp;SPARQL: </td>
+           <td> <input id="save-sparql-endpoint" style="WIDTH: 360px" value="https://linkeddata.uriburner.com/sparql"> </td>
+          </tr>
+          <tr>
+           <td> Graph&nbsp;Name: </td>
+           <td> <input id="save-sparql-graph" style="WIDTH: 360px" value="urn:records:test"> </td>
+          </tr>
+         </table>
+         <p/>
+         <div class="ritems" style="font-size: 14px;" >
+           <input id="save-sparql-check-res" type="checkbox" checked >
+           Execute&nbsp;Sample&nbsp;SPARQL&nbsp;Query&nbsp;after&nbsp;upload
+         </div>
+        </div>
+
+        <table id="oidc-upload" style="font-size: 14px;">
          <tr >
           <td> Save&nbsp;To&nbsp;URL: </td>
           <td> <input id="oidc-url" style="WIDTH: 380px"> </td>
+         </tr>
+        </table>
+      </div>
+
+      <div class="popup" id="login-dlg" title="Login via Solid provider">
+        <p/>
+
+        <table id="oidc-login1" style="font-size: 14px;">
+         <tr >
+          <td> <button id="oidc-login-btn1">Login</button> </td>
+          <td> <a id="oidc-webid1" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
          </tr>
 
         </table>
@@ -129,6 +179,9 @@
 
       <table class="btn_block">
        <tr>
+        <td class="action_btn">
+         <input type="image" id="login_btn" src="images/slogin24.png" width="24" height="24" title="Solid Login">
+        </td>
         <td class="action_btn">
          <input type="image" id="sparql_btn" src="images/osds-icon-query-24.png" width="24" height="24" title="LOD Cloud Lookup Query using SPARQL Query Language">
         </td>
@@ -179,46 +232,54 @@
         </div>
 
         <div id="cons_items" style="font-size: 13px;">
-          <table>
-            <tr>
-              <td>
-                <button id="rest_exec" style="margin:5px; margin-left:10px;">Run</button>
-              </td>
-              <td>
-                <button id="rest_exit" >Exit</button>
-              </td>
-            </tr>
-          </table>
-
-          <table id="rest_query" class="footable">
-            <tr style="background-color: #dce9f9; font-weight: bold;">
-              <td width="40px"> Param </td>
-              <td>
-                <input id="query_id" style="WIDTH: 100%; background-color: #dce9f9;">
-              </td>
-            </tr>
-          </table>
-          <table>
+          <div style="display:flex; flex-direction:row; align-items:baseline;">
+            <button id="rest_exec" style="margin:10px; margin-left:15px;">Run</button>
+            <button id="rest_exit" >Exit</button>
+          </div>
+          <div class="rest_path">
+            <span style="margin:5px;margin-right:10px; width:3em">URL</span>
+            <input id="rest_url" style="WIDTH: 100%; background-color: #dce9f9; " readonly >
+          </div>
+          <p/>
+          <div class="rest_path">
+            <span style="margin:5px;margin-right:10px; width:5em">Scheme</span>
+            <input id="rest_scheme" style="WIDTH: 100%; " >
+          </div>
+          <div class="rest_path">
+            <span style="margin:5px;margin-right:10px; width:5em">Authority</span>
+            <input id="rest_auth" style="WIDTH: 100%; " >
+          </div>
+          <div class="rest_path">
+            <span style="margin:5px;margin-right:10px; width:5em">Path</span>
+            <input id="rest_path" style="WIDTH: 100%; " >
+          </div>
+          <p/>
+          <div id="rest_query">
+            <div class="rest_query_title" >
+              <span style="margin:5px;margin-right:10px; width:9em">Query&nbsp;Parameter</span>
+              <input id="query_id" style="WIDTH: 100%;" >
+            </div>
             <textarea id="query_place" style="width: 100%; height: 100px">
             </textarea>
-          </table>
-          <table id="rest_query" class="footable">
+          </div>
+
+          <table id="rest_params" class="footable">
             <thead>
               <tr>
                 <th width="12px"></th>
-                <th width="40%">Param</th>
+                <th width="40%">Parameter</th>
                 <th width="auto">Value</th>
               </tr>
             </thead>
             <tbody id="restData">
             </tbody>
           </table>
-          <table>
-            <tr >
-              <button style="margin:8px; margin-top:2px;" id="rest_add" class="rest_add">Add</button>
-            </tr>
-          </table>
-
+          <button style="margin:8px; margin-top:8px;" id="rest_add" class="rest_add">Add</button>
+          <p/>
+          <div class="rest_path">
+            <span style="margin:5px;margin-right:10px; width:5em">Fragment</span>
+            <input id="rest_hash" style="WIDTH: 100%; " >
+          </div>
         </div>
 
         <div id="micro_items">
@@ -298,11 +359,11 @@
       <div class="bottom_block">
         <div class="bottom_block_left">
           <a href="http://osds.openlinksw.com">OpenLink Structured Data Sniffer</a>
-<!--          <div id="ext_ver" style="width:50px">ver:0.0.0</div> -->
+          <div id="ext_ver" style="width:50px">ver:0.0.0</div>
         </div>
 
         <div>
-          Copyright&nbsp;&copy;&nbsp;2015-2019 
+          Copyright&nbsp;&copy;&nbsp;2015-<span id="c_year">2021</span> 
           <a href="http://www.openlinksw.com"> OpenLink&nbsp;Software </a>
         </div>
       </div>

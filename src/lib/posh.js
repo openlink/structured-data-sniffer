@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -22,7 +22,6 @@ var POSH = (function () {
 
   'use strict';
 
-
   function POSH(uriStr) {
     this.terms = {};
     this.terms["description"] = "schema:description";
@@ -36,8 +35,8 @@ var POSH = (function () {
         "wdrs": "http://www.w3.org/2007/05/powder-s#",
 
 	"opltw": "http://www.openlinksw.com/schemas/twitter#",
-	"schema":"http://schema.org/",
-	"schemavideo":"http://schema.org/VideoObject#",
+	"schema":"https://schema.org/",
+	"schemavideo":"https://schema.org/VideoObject#",
         "formats": "http://www.w3.org/ns/formats/",
 	"geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
 
@@ -118,12 +117,18 @@ var POSH = (function () {
       var url = new URL(baseURI);
       var baseOrigin = url.origin;
       var basePATH = baseURI;
+      var baseURL = new URL(baseURI);
+
+      baseURL.search = '';
+      baseURL.hash = ''
 
       if (baseURI.lastIndexOf('.')!=-1) {
-         var i = baseURI.lastIndexOf('/');
-         if (i!=-1)
-           basePATH = basePATH.substring(0, i);
+        var path = baseURL.pathname;
+        if (path[path.length-1] !== '/')
+          baseURL.pathname += '/';
       }
+
+      basePATH = baseURL.href;
 
 
       function node2str(n)
@@ -146,9 +151,9 @@ var POSH = (function () {
         else if (n.lastIndexOf(":")!=-1)
         {
           var arr = n.split(":");
-          var pref_link = self.namespace.ns_list[arr[0]];
+          var pref_link = self.namespace.has_known_prefix(arr[0]);
           if (!pref_link) //unknown prefix
-             return "xhv:"+encodeURIComponent(n);
+             return "xhv:"+fixedEncodeURIComponent(n);
           else {
              var p = self.prefixes[arr[0]];
              if (!p)
@@ -160,7 +165,7 @@ var POSH = (function () {
           var s = self.terms[n];
           if (s)
             return s;
-          return "xhv:"+encodeURIComponent(n);
+          return "xhv:"+fixedEncodeURIComponent(n);
         }
       }
 
@@ -193,14 +198,14 @@ var POSH = (function () {
           else if (o.lastIndexOf(":")!=-1) 
           {
             var arr = o.split(":");
-            var pref_link = self.namespace.ns_list[arr[0]];
+            var pref_link = self.namespace.has_known_prefix(arr[0]);
             if (!pref_link) {//unknown prefix
               triples += qv+o+qv;
             } else {
               var p = self.prefixes[arr[0]];
               if (!p)
                 self.prefixes[arr[0]] = pref_link;
-              triples += arr[0]+":"+encodeURIComponent(o.substring(arr[0].length+1));
+              triples += arr[0]+":"+fixedEncodeURIComponent(o.substring(arr[0].length+1));
             }
           }
           else
@@ -294,7 +299,9 @@ var POSH = (function () {
         }
         else if (n.startsWith("#"))
         {
-          return baseURI+n;
+          var u = new URL(baseURI);
+          u.hash = n;
+          return u.toString();
         }
         else if (n.startsWith("/"))
         {
@@ -302,10 +309,16 @@ var POSH = (function () {
         }
         else
         {
-          return basePATH+"/"+n;
+          return basePATH+n;
         }
       }
 
+      function url_hash(href, hash)
+      {
+        var u = new URL(href);
+        u.hash = hash;
+        return u.toString();
+      }
 
 //      $("head link,meta[name],meta[property]").each(function(i, el){
       $("head link,meta[name]").each(function(i, el){
@@ -319,11 +332,11 @@ var POSH = (function () {
              var title = el.getAttribute("title");
              var type = el.getAttribute("type");
              addTriple("#this", encodeURI(rel), href);   
-             addTriple(href+"#this", "rdf:type", "schema:CreativeWork");
+             addTriple(url_hash(href,"#this"), "rdf:type", "schema:CreativeWork");
              if (title)
-               addTriple(href+"#this", "schema:name", title);   
+               addTriple(url_hash(href,"#this"), "schema:name", title);   
              if (type)
-               addTriple(href+"#this", "schema:fileFormat", type);   
+               addTriple(url_hash(href,"#this"), "schema:fileFormat", type);   
            }
            else if(rev && href) {
              href = encodeURI(fix_href(href));
@@ -351,11 +364,11 @@ var POSH = (function () {
            var src = el.getAttribute("src");
            var alt = el.getAttribute("alt");
 
-           addTriple(src+"#this", "rdf:type", "schema:ImageObject");
-           addTriple(src+"#this", "schema:mainEntityOfPage", src);
-           addTriple(src+"#this", "schema:name", " "+src, true);
-           addTriple(src+"#this", "schema:description", alt.substring(self.facebook_vision.length));
-           addTriple(src+"#this", "schema:url", src);
+           addTriple(url_hash(src,"#this"), "rdf:type", "schema:ImageObject");
+           addTriple(url_hash(src,"#this"), "schema:mainEntityOfPage", src);
+           addTriple(url_hash(src,"#this"), "schema:name", " "+src, true);
+           addTriple(url_hash(src,"#this"), "schema:description", alt.substring(self.facebook_vision.length));
+           addTriple(url_hash(src,"#this"), "schema:url", src);
       });
 
 

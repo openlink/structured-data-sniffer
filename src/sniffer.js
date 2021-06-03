@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -187,12 +187,12 @@
                 var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
                 var s_split = txt.split(eoln);
                 var s_doc = "";
-                var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/;
+                var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/i;
                 var p2 = /^ *#/;
-                var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/;
-                var p4 = /## +(RDF(\/|-)XML) +(Start|End|Stop) *##/;
-                var p5 = /## +(JSON) +(Start|End|Stop) *##/;
-                var p6 = /## +(CSV) +(Start|End|Stop) *##/;
+                var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/i;
+                var p4 = /## +(RDF(\/|-)XML) +(Start|End|Stop) *##/i;
+                var p5 = /## +(JSON) +(Start|End|Stop) *##/i;
+                var p6 = /## +(CSV) +(Start|End|Stop) *##/i;
 
                 s_split.forEach(function (item, i, arr) {
                     if (item.length > 0 && (!p2.test(item) || p1.test(item) || p3.test(item) || p4.test(item) || p5.test(item) || p6.test(item)))
@@ -550,6 +550,7 @@
 
         var rdfa = null;
         var rdfa_ttl = null;
+        var namespace = new Namespace();
 
         ///Convert RDFa data to internal format
         if (rdfa_subjects != null && rdfa_subjects.length > 0) {
@@ -567,12 +568,21 @@
                 s.props = new Object();
 
                 for (var j = 0; j < plist.length; j++) {
-                    var p = s.props[plist[j]];
-                    if (p === undefined)
-                        s.props[plist[j]] = [];
+                    var prop = plist[j];
+                    if (prop.lastIndexOf(":")!=-1) {
+                      var arr = prop.split(":");
+                      var pref_link = namespace.has_known_prefix(arr[0]);
+                      if (pref_link) {
+                        prop = pref_link + arr[1];
+                      }
+                    }
 
-                    p = s.props[plist[j]];
-                    p_triple = " " + iri2str(fmt(plist[j]));
+                    var p = s.props[prop];
+                    if (p === undefined)
+                        s.props[prop] = [];
+
+                    p = s.props[prop];
+                    p_triple = " " + iri2str(fmt(prop));
 
                     var vlist = document.data.getObjects(rdfa_subjects[i], plist[j]);
                     for (var z = 0; z < vlist.length; z++) {
@@ -631,70 +641,57 @@
 
     async function add_super_links(sender, data)
     {
+      if (!data)
+        return;
+
       var settings = new SettingsProxy();
       var highlight_mode = await settings.getValue('ext.osds.super-links-highlight');
 
-      if ($(".super_links_popup").length == 0) {
-         $('body').append(
-           `<div class="super_links_popup" >
-             <div class="super_links_popup-title"> &nbsp;Super Links </div>
-             <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
-             <div class="super_links_popup-content"></div>
-             <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
-            </div> 
-            <div class="super_links_msg"> 
-              <div style="width:16px;">
-                <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
-              </div>
-              <div>&nbsp;Applying&nbsp;Super&nbsp;Links</div>
-            </div>`
-         );
-      }
-
+      DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = '&nbsp;Applying&nbsp;Super&nbsp;Links';
       $(".super_links_msg").css("display","flex");
 
-      try {
-        var val = JSON.parse(data);
-        g_super_links = val.results.bindings;
-        var list = {};
-        for(var i=0; i < g_super_links.length; i++) {
-          var s = g_super_links[i].extractLabel.value;
-          g_super_links[i]._id = s.toLowerCase();
-          list[s]=0;
-        }
+      setTimeout(() => {
+        try {
+          var val = JSON.parse(data);
+          g_super_links = val.results.bindings;
+          var list = {};
+          for(var i=0; i < g_super_links.length; i++) {
+            var s = g_super_links[i].extractLabel.value;
+            var sl = s.toLowerCase();
+            g_super_links[i]._id = sl;
+            list[sl]=0;
+          }
 
-        var keys = Object.keys(list); 
-        for(var i=0; i< keys.length; i++) {
-          var s = keys[i];
-          for(var j=0; j < keys.length; j++) {
-            if (j != i && keys[j].indexOf(s) != -1) {
-              list[s] = 1;
-              break;
+          var keys = Object.keys(list); 
+          for(var i=0; i< keys.length; i++) {
+            var s = keys[i];
+            for(var j=0; j < keys.length; j++) {
+              if (j != i && keys[j].indexOf(s) != -1) {
+                list[s] = 1;
+                break;
+              }
             }
           }
-        }
 
-        var labels = [];
-        for(var i=0; i< keys.length; i++) {
-          var s = keys[i];
-          if (list[s] === 0)
-            labels.push(s);
-        }
-        for(var i=0; i< keys.length; i++) {
-          var s = keys[i];
-          if (list[s] !== 0)
-            labels.push(s);
-        }
+          var labels = [];
+          for(var i=0; i< keys.length; i++) {
+            var s = keys[i];
+            if (list[s] === 0)
+              labels.push(s);
+          }
+          for(var i=0; i< keys.length; i++) {
+            var s = keys[i];
+            if (list[s] !== 0)
+              labels.push(s);
+          }
 
-        mark_strings(labels, highlight_mode);
-      } catch(e) {
-        console.log(e);
-      } finally {
-        function close_msg() {
-            $(".super_links_msg").css("display","none");
+          mark_strings(labels, highlight_mode);
+        } catch(e) {
+          console.log(e);
+        } finally {
+          setTimeout(()=> $(".super_links_msg").css("display","none"), 2000);
         }
-        setTimeout(close_msg, 2000);
-      }
+      }, 200);
     }
 
 
@@ -969,165 +966,74 @@
 
 
             // wait data req from extension
+            if ($(".super_links_popup").length == 0) {
+               $('body').append(
+                 `<div class="super_links_popup" >
+                   <div class="super_links_popup-title"> &nbsp;Super Links </div>
+                   <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
+                   <div class="super_links_popup-content"></div>
+                   <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
+                  </div> 
+                  <div class="super_links_msg"> 
+                    <div style="width:16px;">
+                      <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
+                    </div>
+                    <div id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
+                  </div>
+                  <div id="super_links_snackbar">
+                    <div id="msg1"></div>
+                    <div id="msg2"></div>
+                  </div>`
+               );
+            }
+        
             Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-                if (request.property == "doc_data")
+                if (request.property == "req_doc_data") {
                     request_doc_data();
+                    sendResponse({ping:1});
+                    return;
+                 }
                 else if (request.property == "open_tab")
                     request_open_tab(request.url, sender);
                 else if (request.property == "super_links_data")
                     add_super_links(sender, request.data);
+                else if (request.property == "super_links_msg_show") {
+                    if (request.message) {
+                      DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = request.message;
+                      $(".super_links_msg").css("display","flex");
+                    }
+                }
+                else if (request.property == "super_links_msg_hide") {
+                    $(".super_links_msg").css("display","none");
+                }
+                else if (request.property == "super_links_snackbar") {
+                    if (request.msg1) {
+                      showSnackbar(request.msg1, request.msg2);
+                    }
+                }
 
                 sendResponse({});  // stop
             });
+
 
         } catch (e) {
             console.log("OSDS:" + e);
         }
     });
 
-  var DOM = {};
-  DOM.qSel = (sel) => { return document.querySelector(sel); };
-  DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
-  DOM.iSel = (id) => { return document.getElementById(id); };
-
-  function makeResizableTable(tableId, columns_css, containerId) {
-     var table = DOM.qSel(tableId);
-     var popup = DOM.qSel(containerId);
-     var headerResized;
-     const columns = [];
-
-     table.style.gridTemplateColumns = columns_css.join(' ');
-
-     function onMouseMove(e)
-     {
-       window.requestAnimationFrame(() => {
-         // Calculate the desired width
-         if (headerResized===null)
-           return;
-
-         var horizontalScrollOffset = document.documentElement.scrollLeft;
-         const width = (horizontalScrollOffset + e.clientX) - popup.offsetLeft - headerResized.offsetLeft;
-       
-         // Update the column object with the new size value
-         const column = columns.find(({ header }) => header === headerResized);
-         column.size = Math.max(100, width) + 'px'; // Enforce our minimum
-  
-         // For the other headers which don't have a set width, fix it to their computed width
-         columns.forEach((column) => {
-           if(column.size.startsWith('minmax')){ // isn't fixed yet (it would be a pixel value otherwise)
-             column.size = parseInt(column.header.clientWidth, 10) + 'px';
-           }
-         })
-
-         // Update the column sizes
-         // Reminder: grid-template-columns sets the width for all columns in one value
-         table.style.gridTemplateColumns = columns
-           .map(({ header, size }) => size)
-           .join(' ');
-       });
-     }
-
-     function onMouseUp(e)
-     {
-        if (headerResized)
-           headerResized.classList.remove('super_links_table-header--being-resized');
-
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
-        headerResized.classList.remove('super_links_table-header--being-resized');
-        headerResized = null;
-     }
 
 
-     var lst = DOM.qSelAll(tableId+' th');
-     var i = 0;
+    const delay = ms => new Promise(res => setTimeout(res, ms));
 
-     for(const header of lst)
-     {
-       columns.push({ 
-         header, 
-         size: columns_css[i],
-       });
-
-       header.querySelector('.super_links_table-resize-handle').onmousedown = (e) => {
-          headerResized = e.target.parentNode;
-          window.addEventListener('mousemove', onMouseMove);
-          window.addEventListener('mouseup', onMouseUp);
-          headerResized.classList.add('super_links_table-header--being-resized');
-       } 
-     }
-  }
-
-
-  function dragElement(el, elHeader) {
-    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-    if (elHeader) {
-      // if present, the header is where you move the DIV from:
-      elHeader.onmousedown = onMouseDown;
-    } else {
-      // otherwise, move the DIV from anywhere inside the DIV:
-      el.onmousedown = onMouseDown;
+    async function showSnackbar(text1, text2) {
+        const tm = 15000;
+        var x = DOM.iSel("super_links_snackbar");
+        DOM.qSel("#super_links_snackbar #msg1").innerText = text1;
+        DOM.qSel("#super_links_snackbar #msg2").innerText = text2 || '';
+        x.className = "show";
+        setTimeout(function(){ x.className = x.className.replace("show", ""); }, tm);
+        await delay(tm);
     }
-
-    function onMouseDown(e) {
-      e = e || window.event;
-      e.preventDefault();
-      // get the mouse cursor position at startup:
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-    }
-
-    function onMouseMove(e) {
-      e = e || window.event;
-      e.preventDefault();
-      // calculate the new cursor position:
-      pos1 = pos3 - e.clientX;
-      pos2 = pos4 - e.clientY;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      // set the element's new position:
-      el.style.top = (el.offsetTop - pos2) + "px";
-      el.style.left = (el.offsetLeft - pos1) + "px";
-    }
-
-    function onMouseUp() {
-      // stop moving when mouse button is released:
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    }
-  }
-
-  function makeResizable(el, elResizer) 
-  {
-    var orig_height = 0;
-    var orig_width = 0;
-    var orig_mouse_x = 0;
-    var orig_mouse_y = 0;
-
-    elResizer.onmousedown = (e) => {
-        e.preventDefault();
-        orig_width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
-        orig_height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
-        orig_mouse_x = e.pageX;
-        orig_mouse_y = e.pageY;
-
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-    }
-    
-    function onMouseMove(e) {
-      el.style.width = Math.max(orig_width + (e.pageX - orig_mouse_x), 600) + 'px';
-      el.style.height = Math.max(orig_height + (e.pageY - orig_mouse_y), 150) + 'px';
-    }
-    
-    function onMouseUp() {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    }
-  }
 
 
 })();

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -17,6 +17,8 @@
  *  51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
+
+(function () {
 
 var pages = {};
 var setting = new Settings();
@@ -221,7 +223,12 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
         type = "csv";
         could_handle = true;
       }
-      else if (headerContent.value.match(/\/(sparql\-results\+json)/)) {
+      else if (headerContent.value.match(/\/(sparql\-results\+json)/) 
+               || headerContent.value.match(/(application\/json)/) 
+               || headerContent.value.match(/(application\/odata\+json)/) 
+               || headerContent.value.match(/(application\/microdata\+json)/) 
+               ) 
+      {
         handle = handle_json;
         type = "json";
         could_handle = true;
@@ -313,17 +320,29 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
     } 
     else  if (handle)  {
         var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
-        if (Browser.isEdgeWebExt) {
-          return { redirectUrl: _url };
-        }
-        else if (Browser.isFirefoxWebExt) {
-          Browser.api.tabs.update(d.tabId, { url: _url });
+        if (type === "json" || type === "xml" || type === "csv") {
+          if (Browser.isFirefoxWebExt) {
+            window.open(_url);
+            return { cancel: false };
+          }
+          else {
+            window.open(_url);
+            return { cancel: false };
+          }
+        } else {
+
+          if (Browser.isEdgeWebExt) {
+            return { redirectUrl: _url };
+          }
+          else if (Browser.isFirefoxWebExt) {
+            Browser.api.tabs.update(d.tabId, { url: _url });
 //don't show save dialog      
-          return { cancel: true };
-        }
-        else {
-          Browser.api.tabs.update(d.tabId, { url: _url });
-          return { cancel: true };
+            return { cancel: true };
+          }
+          else {
+            Browser.api.tabs.update(d.tabId, { url: _url });
+            return { cancel: true };
+          }
         }
     }
   }
@@ -331,35 +350,6 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
 
 /**** End WebRequest ****/
 
-
-
-if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
-  try {
-    Browser.api.browserAction.disable();
-  } catch(e) {}
-}
-
-
-//Chrome API
-//wait data from extension
-Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
-{
-  try {
-    if (request.cmd === "close_oidc_web")
-    {
-      var curWin = await getCurWin();
-      var curTab = await getCurTab();
-      if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
-          && curTab[0].url === request.url) {
-        Browser.api.tabs.remove(curTab[0].id);
-      }
-    }
-    
-  } catch(e) {
-    console.log("OSDS: onMsg="+e);
-  }
-
-});
 
 
 
@@ -466,3 +456,116 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
   }
 
 });
+
+
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
+{
+  try {
+    if (request.cmd === "actionSuperLinks")
+    {
+      var curTab = await getCurTab();
+      if (curTab.length > 0)
+        actionSuperLinks(null, curTab[0]);
+    }
+/**
+    else
+    {
+      sendResponse({}); // stop
+    }
+**/
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
+
+////////// Context Menu
+
+if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
+  try {
+//??    Browser.api.browserAction.disable();
+
+    Browser.api.contextMenus.create(
+        {"title": "Super Links", 
+         "contexts":["page"],
+         "onclick": actionSuperLinks});
+  
+  } catch(e) {}
+}
+
+var gSuperLinks = null;
+
+async function actionSuperLinks(info, tab) {
+  var msg = 
+       { 
+         throbber_show: function (txt) {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_show', message: txt });
+         },
+         throbber_hide: function () {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_hide' });
+         },
+         snackbar_show: function (msg1, msg2) {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_snackbar', msg1, msg2 });
+         },
+       }
+
+  var slinks = new SuperLinks(tab.url, tab.id, msg);
+  gSuperLinks = slinks;
+
+  var rc = await slinks.check_login();
+
+  if (rc) {
+    rc = await slinks.mexec();
+    if (rc)
+      gSuperLInks = null;
+  }
+}
+
+
+
+//Chrome API
+//wait data from extension
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
+{
+  try {
+    if (request.cmd === "close_oidc_web")
+    {
+      var curWin = await getCurWin();
+      var curTab = await getCurTab();
+      if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
+          && curTab[0].url === request.url) {
+        Browser.api.tabs.remove(curTab[0].id);
+      }
+
+    }
+    else if (request.cmd === "close_oidc_web_slogin")
+    {
+      var curWin = await getCurWin();
+      var curTab = await getCurTab();
+      if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
+          && curTab[0].url === request.url) {
+        Browser.api.tabs.remove(curTab[0].id);
+      }
+
+      if (gSuperLinks) {
+        var slinks = gSuperLinks;
+        if (slinks && slinks.state) {
+          var rc = await slinks.reexec();
+          if (rc)
+            gSuperLInks = null;
+        } else {
+          gSuperLInks = null;
+        }
+      }
+
+    }
+    
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
+
+
+
+})();

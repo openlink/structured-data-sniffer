@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -135,7 +135,7 @@ class Handle_Microdata {
       this._make_ttl = make_ttl;
   }
 
-  parse(jsonData, docURL) 
+  parse(jsonData, docURL, bnode_types) 
   {
     var self = this;
     var ret_data = null;
@@ -146,9 +146,9 @@ class Handle_Microdata {
       var out_data = conv.transform(jsonData, docURL);
 
       if (self._make_ttl)
-        ret_data = new TTL_Gen(docURL).load(out_data);
+        ret_data = new TTL_Gen(docURL, false, bnode_types).load(out_data);
       else
-        ret_data = new HTML_Gen(docURL).load(out_data);
+        ret_data = new HTML_Gen(docURL, bnode_types).load(out_data);
 
       return {data:ret_data, errors:[]};
     }
@@ -161,7 +161,7 @@ class Handle_Microdata {
 
 
 class Handle_Turtle {
-  constructor(start_id, make_ttl) 
+  constructor(start_id, make_ttl, for_query, bnode_types, skip_docpref) 
   {
     this.baseURI = null;
     this.start_id = 0;
@@ -176,12 +176,15 @@ class Handle_Turtle {
     this._make_ttl = false;
     if (make_ttl)
       this._make_ttl = make_ttl;
+    this.for_query = for_query;
+    this.bnode_types = bnode_types || {};
+    this.skip_docpref = skip_docpref;
   }
 
 
   async parse_nano(textData, docURL) {
     this.ns_pref = this.ns.get_ns_desc();
-    this.ns_pref_size = Object.keys(this.ns.ns_list).length;
+    this.ns_pref_size = this.ns.get_ns_size();
     return await this.parse(textData, docURL);
   }
 
@@ -251,12 +254,12 @@ class Handle_Turtle {
               var output;
 
               if (self._make_ttl) {
-                var ttl_data =  new TTL_Gen(docURL).load(triples, self.start_id);
+                var ttl_data = new TTL_Gen(docURL, self.for_query, self.bnode_types, self.skip_docpref).load(triples);
                 output = ttl_data==null?'':ttl_data;
               }
               else
               {
-                var html_str =  new HTML_Gen(docURL).load(triples, self.start_id);
+                var html_str =  new HTML_Gen(docURL).load(triples, self.start_id, self.bnode_types);
                 output = html_str==null?'':html_str;
               }
 
@@ -292,7 +295,7 @@ class Handle_JSONLD {
       this._make_ttl = make_ttl;
   }
 
-  async parse(textData, docURL)
+  async parse(textData, docURL, bnode_types)
   {
     var output = '';
     var self = this;
@@ -302,10 +305,16 @@ class Handle_JSONLD {
       try {
         var jsonld_data = JSON.parse(textData[i]);
         if (jsonld_data != null) {
+          try {
+            var txt = JSON.stringify(jsonld_data, null, 2);
+            if (txt)
+              textData[i] = txt;
+          } catch (e) {}
+
           var expanded = await jsonld.expand(jsonld_data, {base:docURL});
           var nquads = await jsonld.toRDF(expanded, {base:docURL, format: 'application/nquads', includeRelativeUrls: true});
 
-          var handler = new Handle_Turtle(self.start_id, self._make_ttl);
+          var handler = new Handle_Turtle(self.start_id, self._make_ttl, false, bnode_types);
           handler.skip_error = false;
           var ret = await handler.parse([nquads], docURL);
           if (ret.errors.length > 0) {
@@ -318,7 +327,7 @@ class Handle_JSONLD {
           }
         }
       } catch (ex) {
-        if (textData.replace(/\s/g, '').length > 1) {
+        if (textData[i].replace(/\s/g, '').length > 1) {
           if (self.skip_error)
             self.skipped_error.push(""+ex.toString());
           else 
@@ -336,7 +345,8 @@ class Handle_JSONLD {
 class Handle_JSON {
   constructor(make_ttl) 
   {
-    this.s_id = '_:s'+Date.now().toString(16)+'_';
+//    this.s_id = '_:s'+Date.now().toString(16)+'_';
+    this.s_id = ':this';
     this.id = 0;
     this.start_id = 0;
     this.skip_error = true;
@@ -346,7 +356,8 @@ class Handle_JSON {
       this._make_ttl = make_ttl;
     this.baseURL = '';
     this.rep1 = /\(/g;
-    this.rep2 = /\)/g 
+    this.rep2 = /\)/g;
+    this.jprops = {}; 
   }
 
   gen_subj() {
@@ -354,8 +365,15 @@ class Handle_JSON {
     return this.s_id+this.id;
   }
 
-  encodeURI(v) {
-    return encodeURIComponent(v).replace(this.rep1,'%28').replace(this.rep2,'%29');
+
+  check_pred(val) 
+  {
+    if ( val.match(/^http(s)?:\/\//) ) {
+      val = "<"+val+">";
+    } else {
+      val = ':'+fixedEncodeURIComponent(val);
+    }
+    return val;
   }
 
   str2obj_val(s) {
@@ -376,20 +394,29 @@ class Handle_JSON {
     if (o === null )
       return; // ignore
 
+    var pred = this.check_pred(p);
     var xsd = 'http://www.w3.org/2001/XMLSchema';
+    var obj_type = `${xsd}#string`;
 
     if (typeof o === 'number') {
-      if (o % 1 === 0)
-        b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#int> .`);
-      else
-        b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#double> .`);
+      if (o % 1 === 0) {
+        b.push(`${subj} ${pred} "${o}"^^<${xsd}#int> .`);
+        obj_type = `${xsd}#int`;
+      }
+      else {
+        b.push(`${subj} ${pred} "${o}"^^<${xsd}#double> .`);
+        obj_type = `${xsd}#double`;
+      }
     } else if (typeof o === 'string') {
-      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${this.str2obj_val(o)} .`);
+      b.push(`${subj} ${pred} ${this.str2obj_val(o)} .`);
     } else if (typeof o === 'boolean') {
-      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> "${o}"^^<${xsd}#boolean> .`);
+      b.push(`${subj} ${pred} "${o}"^^<${xsd}#boolean> .`);
+      obj_type = `${xsd}#boolean`;
     } else {
-      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${this.str2obj_val(o)} .`);
+      b.push(`${subj} ${pred} ${this.str2obj_val(o)} .`);
     }
+
+    this.jprops[pred] = obj_type;
   }
 
   handle_arr(b, subj, p, o) 
@@ -399,7 +426,7 @@ class Handle_JSON {
 
     if (typeof o === 'object') {
       var s = this.gen_subj();
-      b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${s} .`);
+      b.push(`${subj} ${this.check_pred(p)} ${s} .`);
       this.handle_obj(b, s, o);
     } else {
       this.handle_simple(b, subj, p, o);
@@ -415,6 +442,10 @@ class Handle_JSON {
     if (typeof obj === 'object') {
 
       var props = Object.keys(obj);
+
+      if (props.length > 0)
+        b.push(`${subj} a <http://www.w3.org/2002/07/owl#Thing> .`);
+
       for(var i=0; i < props.length; i++) {
         var p = props[i];
         var v = obj[p];
@@ -426,7 +457,7 @@ class Handle_JSON {
             }
           } else if (v!== null) {
             var s = this.gen_subj();
-            b.push(`${subj} <${this.baseURL}#${this.encodeURI(p)}> ${s} .`);
+            b.push(`${subj} ${this.check_pred(p)} ${s} .`);
             this.handle_obj(b, s, v);
           }
         } else {
@@ -439,7 +470,7 @@ class Handle_JSON {
   }
   
   
-  async parse(textData, docURL) 
+  async parse(textData, docURL, bnode_types) 
   {
     this.baseURL = docURL;
     var self = this;
@@ -466,8 +497,19 @@ class Handle_JSON {
             self.handle_obj(buf, self.gen_subj(), json_data);
           }
 
-          var ttl_data = buf.join('\n');
-          var handler = new Handle_Turtle(self.start_id, self._make_ttl);
+          var lst = Object.keys(this.jprops);
+          for(var i=0; i < lst.length; i++) {
+            var p = lst[i];
+            var p_type = this.jprops[p];
+            buf.push(`[ a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> ;
+                      <http://schema.org/name> ${p} ;
+                      <http://www.w3.org/2000/01/rdf-schema#range> <${p_type}> ;
+                      <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.w3.org/2002/07/owl#Thing> ] .`);
+          }
+
+          var ttl_data = '@prefix : <#> .\n' 
+                        + buf.join('\n');
+          var handler = new Handle_Turtle(self.start_id, self._make_ttl, false, bnode_types);
           handler.skip_error = false;
           var ret = await handler.parse([ttl_data], docURL);
           if (ret.errors.length > 0) {
@@ -480,6 +522,7 @@ class Handle_JSON {
           }
         }
       } catch (ex) {
+        json_text.push(textData[x]);
         if (self.skip_error)
           self.skipped_error.push(""+ex.toString());
         else 
@@ -498,9 +541,9 @@ class Handle_RDFa {
   {
   }
 
-  parse(data, docURL) 
+  parse(data, docURL, bnode_types) 
   {
-    var str = new HTML_Gen(docURL).load(data);
+    var str = new HTML_Gen(docURL, bnode_types).load(data);
     return {data:str, errors: []};
   }
 }
@@ -609,8 +652,10 @@ class MicrodataJSON_Converter {
     for(var i=0; i < out.length; i++)
     {
       out[i]["n"] = i+1;
-      if (!out[i].s)
-        out[i]["s"] = baseURI;
+      if (!out[i].s) {
+        var bnode = self.new_bnode();
+        out[i]["s"] = bnode;
+      }
     }
 
     return out;
@@ -631,6 +676,7 @@ class MicrodataJSON_Converter {
     var i_props = null;
     var props = {};
     var id_ns = null;
+    var id_type = this.baseURI.toString();
 
     retVal.data = out;
     retVal.data_add = out_add;
@@ -638,15 +684,19 @@ class MicrodataJSON_Converter {
 
     //try get current NS
     if (item.type!==undefined) {
-      var ns_list = new Namespace();
+      id_type = item.type;
+      var namespace = new Namespace();
       if ($.isArray(item.type)) {
         for(var i=0; i<item.type.length; i++) {
-          id_ns = ns_list.has_known_ns(String(item.type[i]));
+          id_ns = namespace.has_known_ns(String(item.type[i]));
           if (id_ns)
             break;
         }
+        if (!id_ns && item.type.length > 0)
+          id_type = String(item.type[0]);
       } else {
-        id_ns = ns_list.has_known_ns(String(item.type));
+        id_ns = namespace.has_known_ns(String(item.type));
+        id_type = String(item.type);
       }
     }
 
@@ -736,10 +786,29 @@ class MicrodataJSON_Converter {
       $.each(i_props, function(key, val)
       {
         if (key.indexOf(':') === -1) {
-          if (id_ns)
+          if (id_ns) {
             key = id_ns.link+key;
-          else
-            key = ":"+key;
+          }
+          else {
+            var last = id_type[id_type.length-1];
+            if (last==='#' || last==='/') {
+              key = id_type + key;
+            } else {
+              var u = new URL(id_type);
+              if (u.hash) {
+                u.hash = key;
+                key = u.toString();
+              } else if (u.pathname === '/') {
+                u.pathname = key;
+                key = u.toString();
+              } else {
+                var lst = u.pathname.split('/');
+                lst[lst.length-1] = key;
+                u.pathname = lst.join('/');
+                key = u.toString();
+              }
+            }
+          }
         }
 
        var v = [];
@@ -794,7 +863,7 @@ class Handle_RDF_XML {
     this.skipped_error = [];
   }
 
-  async parse(textData, baseURL) 
+  async parse(textData, baseURL, bnode_types) 
   {
     var self = this;
     var output = '';
@@ -809,7 +878,7 @@ class Handle_RDF_XML {
 
         var ttl = $rdf.serialize(undefined, store, baseURL, "text/turtle");
 
-        var handler = new Handle_Turtle();
+        var handler = new Handle_Turtle(0, false, false, bnode_types);
         handler.skip_error = false;
         var ret = await handler.parse([ttl], baseURL);
         if (ret.errors.length > 0) {
@@ -846,7 +915,7 @@ class Handle_CSV {
     this.skipped_error = [];
   }
 
-  async parse(textData, baseURL) 
+  async parse(textData, baseURL, bnode_types) 
   {
     var self = this;
     var output = '';
@@ -874,13 +943,28 @@ class Handle_CSV {
             var v = res.data[1][i];
             if (typeof v === 'number') {
               var is_int = 1;
+              var v_type = 'integer';
               for(var r=1; r < res.data.length; r++) {
-                if (res.data[r][i] % 1 !== 0) {
-                  is_int = 0;
+                v = res.data[r][i];
+                if (v) {
+                  if (typeof v === 'number') {
+                    if (is_int == 1 && (v % 1) !== 0) {
+                      is_int = 0;
+                      v_type = 'decimal;'
+                    }
+                  } 
+                  else {
+                    is_int = -1;
+                    v_type = 'string';
+                    break;
+                  }
+
+                } else {
+                  v_type = 'string';
                   break;
                 }
               }
-              col_type.push(is_int?'integer':'decimal');
+              col_type.push(v_type);
             } else if (typeof v === 'boolean') {
               col_type.push('boolean'); 
             } else if (typeof v === 'string') {
@@ -892,21 +976,19 @@ class Handle_CSV {
               col_type.push('string');
             }
           }
+
         }
+
         ttl += '\n';
 
         var rep1 = /\(/g;
         var rep2 = /\)/g 
 
         for (var i=0; i < col.length; i++) {
-          col[i] = encodeURIComponent(col[i]).replace(rep1,'%28').replace(rep2,'%29');
-          ttl += '<#'+col[i]+'> rdf:domain : .\n';
-        }
-
-        ttl += '\n';
-
-        for (var i=0; i < col.length; i++) {
-          ttl += '<#'+col[i]+'> rdf:range xsd:'+col_type[i]+' .\n';
+          col[i] = fixedEncodeURIComponent(col[i]);
+          ttl += ':'+col[i]+' rdf:domain :this .\n';
+          ttl += ':'+col[i]+' rdf:range xsd:'+col_type[i]+' .\n';
+          ttl += ':'+col[i]+' a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .\n';
         }
 
         ttl += '\n';
@@ -914,8 +996,9 @@ class Handle_CSV {
         for(var i=1; i < res.data.length; i++) {
           var d = res.data[i];
           var s = '[\n';
+
           for(var j=0; j < d.length; j++) {
-            var val = d[j];
+            var val = d[j] ? ''+d[j] : '';
             var qv = '"';
 
             if (val.indexOf("\n")!=-1 || val.indexOf("\r")!=-1) {
@@ -925,14 +1008,14 @@ class Handle_CSV {
               val = val.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
             }
 
-            s += '<#'+col[j]+'> '+qv+val+qv+'^^xsd:'+col_type[j]+' ;\n' ;
+            s += ':'+col[j]+' '+qv+val+qv+'^^xsd:'+col_type[j]+' ;\n' ;
           }
           ttl += s +'].\n\n';
         }
 
         self._output_ttl.push(ttl);
 
-        var handler = new Handle_Turtle();
+        var handler = new Handle_Turtle(0, false, false, bnode_types);
         handler.skip_error = false;
         var ret = await handler.parse([ttl], baseURL);
         if (ret.errors.length > 0) {

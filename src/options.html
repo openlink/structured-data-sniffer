@@ -3,7 +3,7 @@
 <!--
     This file is part of the OpenLink Structured Data Sniffer
 
-    Copyright (C) 2015-2020 OpenLink Software
+    Copyright (C) 2015-2021 OpenLink Software
 
     This project is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -35,6 +35,7 @@
 
     <script type="text/javascript" src="browser.js"></script>
     <script type="text/javascript" src="settings.js"></script>
+    <script type="text/javascript" src="utils.js"></script>
     <script type="text/javascript" src="options.js"></script>
 
     <style type="text/css">
@@ -258,6 +259,14 @@
                    </SELECT>
                  </td>
               </tr>
+               <tr>
+                 <td style="text-align:right;">Retries:</td>
+                 <td> <input id="super-links-retries" style="WIDTH: 40px" type="number" value="3"> </td>
+              </tr>
+               <tr>
+                 <td style="text-align:right;">Retries&nbsp;timeout:</td>
+                 <td> <input id="super-links-retries-timeout" style="WIDTH: 40px" type="number" value="2"> secs </td>
+              </tr>
              </table>
            </div>
 
@@ -302,7 +311,7 @@
               as the World Wide Web and Linked Open Data Cloud.
             </p>
             <p>Visit OpenLink Structured Data Sniffer <a href="http://osds.openlinksw.com" target="_blank">homepage</a> for additional product information.</p>
-            <p>Copyright 2015-2020 <a href="http://www.openlinksw.com" target="_blank">OpenLink Software</a></p>
+            <p>Copyright 2015-<span id="c_year">2021</span> <a href="http://www.openlinksw.com" target="_blank">OpenLink Software</a></p>
         </div>
     </div>
     <p/>

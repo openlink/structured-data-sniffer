@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -47,6 +47,7 @@ var gData = {
       };
 var src_view = null;
 var g_RestCons = new Rest_Cons();
+var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.update())
 var gOidc = new OidcWeb();
 
 
@@ -55,11 +56,39 @@ var gOidc = new OidcWeb();
 function showPopup(tabId)
 {
   //Request the data from the client (foreground) tab.
-  if (Browser.isFirefoxWebExt) {
-     Browser.api.tabs.sendMessage(tabId, { property: 'doc_data' });
-  } else {
-     Browser.api.tabs.sendMessage(tabId, { property: 'doc_data'},
-        function(response) { });
+  try {
+    if (Browser.isFirefoxWebExt) {
+      Browser.api.tabs.sendMessage(tabId, { property: 'req_doc_data' })
+        .then(response => {
+          if (!response || !response.ping) {
+            hideDataTabs();
+            selectedTab = null;
+            selectTab('#cons');
+            g_RestCons.show();
+          }
+        })
+        .catch(err => {
+          hideDataTabs();
+          selectedTab = null;
+          selectTab('#cons');
+          g_RestCons.show();
+        });
+    } else {
+      Browser.api.tabs.sendMessage(tabId, { property: 'req_doc_data'},
+        function(response) { 
+          if (!response || !response.ping) {
+            hideDataTabs();
+            selectedTab = null;
+            selectTab('#cons');
+            g_RestCons.show();
+          }
+        });
+    }
+  } catch(e) {
+    hideDataTabs();
+    selectedTab = null;
+    selectTab('#cons');
+    g_RestCons.show();
   }
 
   Download_exec_update_state();
@@ -92,7 +121,10 @@ function showPopup(tabId)
 
   $('#rest_btn').click(function() {
     selectTab('#cons');
+    g_RestCons.load(doc_URL);
     g_RestCons.show();
+    var node = DOM.iSel("rest_query");
+    gMutationObserver.observe(node, {attributes:true, childList:true, subtree:true});
   });
 
   $('#download_btn').click(Download_exec);
@@ -158,7 +190,7 @@ function showPopup(tabId)
 	      persistent: null,
 
     });
-    g_RestCons.yasqe.obj.setSize("100%", 150);
+    g_RestCons.yasqe.obj.setSize("100%", 260);
   } catch(e) {
   }
   
@@ -166,19 +198,13 @@ function showPopup(tabId)
     g_RestCons.load(doc_URL);
 
   $('#rest_exec').click(function() {
-    g_RestCons.exec(doc_URL, gData.tab_index);
+    g_RestCons.exec(gData.tab_index);
   });
   $('#rest_exit').click(function(){
+    gMutationObserver.disconnect();
     if (prevSelectedTab)
       selectTab(prevSelectedTab);
     return false;
-  });
-  $('#rest_add').button({
-    icons: { primary: 'ui-icon-plusthick' },
-    text: false
-  });
-  $('#rest_add').click(function() {
-    g_RestCons.add_empty_row();
   });
 
   $('#src_exit').click(function(){
@@ -226,6 +252,8 @@ async function loadPopup()
 
 $(document).ready(function ()
 { 
+  document.getElementById("c_year").innerText = new Date().getFullYear();
+
   loadPopup()
 });
 
@@ -233,12 +261,13 @@ $(document).ready(function ()
 // Trap any link clicks and open them in the current tab.
 $(document).on('click', 'a', function(e) {
   function check_URI(uri) {
-    if (doc_URL[doc_URL.length-1]==="#")
-      return uri.lastIndexOf(doc_URL,0) === 0;
+    if (gData.baseURL[gData.baseURL.length-1]==="#")
+      return uri.startsWith(gData.baseURL);
     else
-      return uri.lastIndexOf(doc_URL+'#',0) === 0;
+      return uri.startsWith(gData.baseURL+'#');
   }
 
+  var tab_data = DOM.qSel(`${selectedTab}_items`);
 
   var hashName = null;
   var href = e.currentTarget.href;
@@ -251,11 +280,14 @@ $(document).on('click', 'a', function(e) {
   url.hash = '';
   url = url.toString();
 
-  if (href.lastIndexOf(url+"#sc", 0) === 0) {
+  var baseHost = (new URL(gData.baseURL)).host;
+  var hrefHost = (new URL(href)).host;
+
+  if (href.startsWith(url+"#sc")) {
     return true;
   }
   else if (check_URI(href) && hashName) {
-    var el = $('a[name = "'+hashName+'"]');
+    var el = tab_data.querySelectorAll('a[name = "'+hashName+'"]');
     if (el.length > 0)
       el[0].scrollIntoView();
     return false;
@@ -264,7 +296,11 @@ $(document).on('click', 'a', function(e) {
     return false;
   }
   else {
-    Browser.openTab(href, gData.tab_index);
+    var el = tab_data.querySelectorAll('a[href = "'+href+'"][ent]');
+    if (el.length > 0)
+      el[0].scrollIntoView();
+    else
+      Browser.openTab(href, gData.tab_index);
     return false;
   }
 });
@@ -305,6 +341,18 @@ function selectTab(tab)
   $('#tabs a[href="#cons"]').hide();
 }
 
+
+function hideDataTabs()
+{
+  $('#tabs a[href="#micro"]').hide();
+  $('#tabs a[href="#jsonld"]').hide();
+  $('#tabs a[href="#turtle"]').hide();
+  $('#tabs a[href="#rdfa"]').hide();
+  $('#tabs a[href="#rdf"]').hide();
+  $('#tabs a[href="#posh"]').hide();
+  $('#tabs a[href="#json"]').hide();
+  $('#tabs a[href="#csv"]').hide();
+}
 
 
 function show_Data(dData)
@@ -386,22 +434,38 @@ function show_Data(dData)
     selectTab(err_tabs[0]);
 
 
-  if (!micro)
+  if (!micro) {
     $('#tabs a[href="#micro"]').hide();
-  if (!jsonld)
+    $('#micro-save').hide();
+  }
+  if (!jsonld) {
     $('#tabs a[href="#jsonld"]').hide();
-  if (!turtle)
+    $('#jsonld-save').hide();
+  }
+  if (!turtle) {
     $('#tabs a[href="#turtle"]').hide();
-  if (!rdfa)
+    $('#turtle-save').hide();
+  }
+  if (!rdfa) {
     $('#tabs a[href="#rdfa"]').hide();
-  if (!rdf)
+    $('#rdfa-save').hide();
+  }
+  if (!rdf) {
     $('#tabs a[href="#rdf"]').hide();
-  if (!posh)
+    $('#rdf-save').hide();
+  }
+  if (!posh) {
     $('#tabs a[href="#posh"]').hide();
-  if (!json)
+    $('#posh-save').hide();
+  }
+  if (!json) {
     $('#tabs a[href="#json"]').hide();
-  if (!csv)
+    $('#json-save').hide();
+  }
+  if (!csv) {
     $('#tabs a[href="#csv"]').hide();
+    $('#csv-save').hide();
+  }
 
   gData_showed = true;
 }
@@ -415,7 +479,7 @@ async function check_Microdata(val)
       try {
         var handler = new Handle_Microdata();
         gData.micro.json_text = [JSON.stringify(val.d.micro.data, undefined, 2)];
-        var ret = handler.parse(val.d.micro.data, gData.baseURL);
+        var ret = handler.parse(val.d.micro.data, gData.baseURL, val.bnode_types);
 
         if (ret.errors.length > 0)
           val.d.micro.error = val.d.micro.error.concat(ret.errors);
@@ -423,15 +487,15 @@ async function check_Microdata(val)
         if (ret.data)
           val.d.micro.expanded = ret.data;
 
-        return {d:val.d, start_id:0};
+        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
       } catch(ex) {
         val.d.micro.error.push(ex.toString());
-        return {d:val.d, start_id:0};
+        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
       }
     }
     else
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 }
 
 
@@ -443,7 +507,7 @@ async function check_JSON_LD(val)
   {
     try {
       var handler = new Handle_JSONLD();
-      var ret = await handler.parse(val.d.jsonld.text, gData.baseURL);
+      var ret = await handler.parse(val.d.jsonld.text, gData.baseURL, val.bnode_types);
 
       gData.jsonld.json_text = val.d.jsonld.text;
 
@@ -456,16 +520,16 @@ async function check_JSON_LD(val)
         else
           val.d.jsonld.expanded = ret.data;
       }
-      return {d:val.d, start_id:handler.start_id};
+      return {d:val.d, start_id:handler.start_id, bnode_types:val.bnode_types};
 
     } catch(ex) {
       val.d.jsonld.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -477,7 +541,7 @@ async function check_JsonLD_Nano(val)
     try {
       var handler = new Handle_JSONLD();
       handler.start_id = val.start_id;
-      var ret = await handler.parse(val.d.jsonld_nano.text, gData.baseURL);
+      var ret = await handler.parse(val.d.jsonld_nano.text, gData.baseURL, val.bnode_types);
 
       gData.jsonld_nano.json_text = val.d.jsonld_nano.text;
 
@@ -490,16 +554,16 @@ async function check_JsonLD_Nano(val)
         else
           val.d.jsonld.expanded = ret.data;
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
       
     } catch(ex) {
       val.d.jsonld.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -512,7 +576,7 @@ async function check_Json_Nano(val)
     try {
       var handler = new Handle_JSON();
       handler.start_id = val.start_id;
-      var ret = await handler.parse(val.d.json_nano.text, gData.baseURL);
+      var ret = await handler.parse(val.d.json_nano.text, gData.baseURL, val.bnode_types);
 
       gData.json_nano.json_text = ret.text;
 
@@ -522,16 +586,16 @@ async function check_Json_Nano(val)
       if (ret.data)
         val.d.json.expanded = ret.data;
 
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch(ex) {
       val.d.json.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -542,7 +606,7 @@ async function check_Turtle(val)
   if (val.d.turtle.text!==null && val.d.turtle.text.length > 0)
   {
     try {
-      var handler = new Handle_Turtle();
+      var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
       var ret = await handler.parse(val.d.turtle.text, gData.baseURL);
 
       gData.turtle.ttl_text = val.d.turtle.text;
@@ -556,16 +620,16 @@ async function check_Turtle(val)
         else
           val.d.turtle.expanded = ret.data;
       }
-      return {d:val.d, start_id:handler.start_id};
+      return {d:val.d, start_id:handler.start_id, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.turtle.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -581,7 +645,7 @@ async function check_Turtle_Nano(val)
 
     if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0) {
       try {
-        var handler = new Handle_Turtle(val.start_id);
+        var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
         var ret = await handler.parse_nano(val.d.ttl_nano.text, gData.baseURL);
       
         gData.ttl_nano.ttl_text = val.d.ttl_nano.text;
@@ -596,19 +660,19 @@ async function check_Turtle_Nano(val)
             val.d.turtle.expanded = ret.data;
         }
 
-        return {d:val.d, start_id:0};
+        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
       } catch (ex) {
         val.d.turtle.error.push(ex.toString());
-        return {d:val.d, start_id:0};
+        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
       }
     }
     else
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -619,7 +683,7 @@ async function check_POSH(val)
   if (val.d.posh.text!==null && val.d.posh.text.length > 0)
   {
     try {
-      var handler = new Handle_Turtle();
+      var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
       var ret = await handler.parse([val.d.posh.text], gData.baseURL);
 
       gData.posh.ttl_text = val.d.posh.text;
@@ -630,16 +694,16 @@ async function check_POSH(val)
       if (ret.data) {
         val.d.posh.expanded = ret.data;
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.posh.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -651,7 +715,7 @@ async function check_RDFa(val)
   {
     try {
       var handler = new Handle_RDFa();
-      var ret = handler.parse(val.d.rdfa.data, gData.baseURL);
+      var ret = handler.parse(val.d.rdfa.data, gData.baseURL, val.bnode_types);
 
       if (ret.errors.length>0)
         val.d.rdfa.error = val.d.rdfa.error.concat(ret.errors);
@@ -660,16 +724,16 @@ async function check_RDFa(val)
         val.d.rdfa.expanded = ret.data;
         gData.rdfa.ttl_text = [val.d.rdfa.ttl];
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.rdfa.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -681,7 +745,7 @@ async function check_RDF_XML(val)
   {
     try {
       var handler = new Handle_RDF_XML();
-      var ret = await handler.parse(val.d.rdf.text, gData.baseURL);
+      var ret = await handler.parse(val.d.rdf.text, gData.baseURL, val.bnode_types);
 
       gData.rdf.text = val.d.rdf.text;
 
@@ -694,16 +758,16 @@ async function check_RDF_XML(val)
         else
           val.d.rdf.expanded = ret.data;
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.rdf.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -714,7 +778,7 @@ async function check_RDF_XML_Nano(val)
   {
     try {
       var handler = new Handle_RDF_XML();
-      var ret = await handler.parse(val.d.rdf_nano.text, gData.baseURL);
+      var ret = await handler.parse(val.d.rdf_nano.text, gData.baseURL, val.bnode_types);
 
       gData.rdf_nano.rdf_text = val.d.rdf_nano.text;
 
@@ -727,16 +791,16 @@ async function check_RDF_XML_Nano(val)
         else
           val.d.rdf.expanded = ret.data;
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.rdf.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -758,16 +822,16 @@ async function check_CSV_Nano(val)
       if (ret.data) {
         val.d.csv_nano.expanded = ret.data;
       }
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
 
     } catch (ex) {
       val.d.csv_nano.error.push(ex.toString());
-      return {d:val.d, start_id:0};
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
     }
   }
   else
   {
-    return {d:val.d, start_id:0};
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
   }
 }
 
@@ -803,10 +867,10 @@ async function parse_Data(dData)
 
   var url = new URL(doc_URL);
   url.hash ='';
-  url.search = '';
+//??  url.search = '';
   gData.baseURL = url.toString();
 
-  var val = {d:dData, start_id:0};
+  var val = {d:dData, start_id:0, bnode_types:{}};
 
   try {
     val = await check_Microdata(val);
@@ -849,27 +913,13 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
           show_Data(dData);
         } catch(ex) {
           console.log("OSDS: Error="+ex);
-          $('#tabs a[href="#micro"]').hide();
-          $('#tabs a[href="#jsonld"]').hide();
-          $('#tabs a[href="#turtle"]').hide();
-          $('#tabs a[href="#rdfa"]').hide();
-          $('#tabs a[href="#rdf"]').hide();
-          $('#tabs a[href="#posh"]').hide();
-          $('#tabs a[href="#json"]').hide();
-          $('#tabs a[href="#csv"]').hide();
+          hideDataTabs();
           selectedTab = null;
         }
       }
       else
       {
-        $('#tabs a[href="#micro"]').hide();
-        $('#tabs a[href="#jsonld"]').hide();
-        $('#tabs a[href="#turtle"]').hide();
-        $('#tabs a[href="#rdfa"]').hide();
-        $('#tabs a[href="#rdf"]').hide();
-        $('#tabs a[href="#posh"]').hide();
-        $('#tabs a[href="#json"]').hide();
-        $('#tabs a[href="#csv"]').hide();
+        hideDataTabs();
         selectedTab = null;
 
         selectTab('#cons');
@@ -886,209 +936,14 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
 
 
-function fetchWithTimeout(url, options, timeout) 
-{
-  return Promise.race([
-    fetch(url, options),
-    new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), timeout)
-    )
-  ]);
-}
-
-
-
 ////////////////////////////////////////////////////
 async function SuperLinks_exec()
 {
   if (doc_URL!==null) {
-    var setting = new Settings();
-    var link_query = setting.getValue("ext.osds.super_links.query");
-    var link_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
-
-    if (Browser.isFirefoxWebExt) {
-      Browser.api.tabs.query({active:true, currentWindow:true})
-        .then(async (tabs) => {
-          if (tabs.length > 0) {
-
-            var data = await request_superlinks(tabs[0].url);
-
-            Browser.api.tabs.sendMessage(tabs[0].id, 
-              {
-                property: 'super_links_data',
-                data : data
-              });
-            window.close();
-          }
-        });
-    } else {
-
-      Browser.api.tabs.query({active:true, currentWindow:true}, async function(tabs) {
-        if (tabs.length > 0) {
-          var data = await request_superlinks(tabs[0].url);
-
-          Browser.api.tabs.sendMessage(tabs[0].id, 
-            {
-              property: 'super_links_data',
-              data : data
-            },
-            function(response) {
-            });
-          window.close();
-        }
-      });
-    }
+    Browser.api.runtime.sendMessage({cmd: 'actionSuperLinks'});
   }
-
   return false;
 }
-
-
-async function request_superlinks(doc_url)
-{
-  var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
-  var REDIR_URL = LOGIN_URL + "?returnto="+doc_url;
-  
-  var setting = new Settings();
-  var links_query = setting.getValue("ext.osds.super_links.query");
-  var links_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
-  var sponge_type = setting.getValue('ext.osds.super-links-sponge');
-  var sponge_mode = setting.getValue('ext.osds.super-links-sponge-mode');
-  var url_sponge;
-
-
-  if (sponge_type) {
-    url_sponge = setting.createSpongeCmdFor(sponge_type, sponge_mode, doc_url);
-  } else {
-    var rc = doc_url.match(/^((\w+):\/)?\/?(.*)$/);
-    url_sponge = "https://linkeddata.uriburner.com/about/html/http/"+rc[3]+"?sponger:get=add";
-  }
-
- $(".super_links_msg").css("display","flex");
-
-  var options = {
-       headers: {
-          'Accept': 'text/html',
-          'Cache-control': 'no-cache'
-       },
-       credentials: 'include',
-      };
-
-  try  {
-    var rc = await fetchWithTimeout(url_sponge, options, 30000);
-    if (rc.ok && rc.status == 200) {
-      if (rc.redirected && rc.url.lastIndexOf(LOGIN_URL, 0) === 0) {
-        alert("Could not sponge data for current page with: "+url_sponge+"\nTry Login and execute sponge again");
-        Browser.openTab(REDIR_URL);
-        alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
-        return;
-      }
-      return await exec_super_links_query(doc_url, links_query, links_timeout);
-
-    } else {
-      if (rc.status==401 || rc.status==403) {
-        Browser.openTab(REDIR_URL);
-        alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
-        return;
-      } else {
-        alert("Sponge error:"+rc.status+" ["+rc.statusText+"]");
-        return await exec_super_links_query(doc_url, links_query, links_timeout);
-      }
-    }
-
-  } catch(e) {
-    $(".super_links_msg").css("display","none");
-    alert("Sponge "+e);
-    console.log(e);
-  }
-
-  return null;
-}
-
-
-async function exec_super_links_query(doc_url, links_query, links_timeout)
-{
-  var SPARQL_URL = "https://linkeddata.uriburner.com/sparql";
-  var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
-  var REDIR_URL = LOGIN_URL + "?returnto="+doc_url;
-
-  var url = new URL(doc_url);
-  url.hash = '';
-  //url.search = '';
-  var iri = url.toString();
-
-  var br_lang = navigator.language || navigator.userLanguage;
-  if (br_lang && br_lang.length>0) {
-    var i = br_lang.indexOf('-');
-    if (i!=-1)
-       br_lang = br_lang.substr(0,i);
-  } else {
-    br_lang = 'en';
-  }
-
-  var links_sparql_query = (new Settings()).createSuperLinksQuery(links_query, iri, br_lang);
-
-  $(".super_links_msg").css("display","flex");
-
-  var get_url = new URL(SPARQL_URL);
-  var params = get_url.searchParams;
-  params.append('format', 'application/json');
-  params.append('query', links_sparql_query);
-  params.append('CXML_redir_for_subjs', 121);
-  params.append('timeout', links_timeout);
-  params.append('_', Date.now());
-
-  var options = {
-        headers: {
-          'Accept': 'application/json',
-          'Cache-control': 'no-cache'
-        },
-        credentials: 'include',
-      };
-
-  try  {
-    var rc = await fetchWithTimeout(get_url, options, links_timeout);
-    if (rc.ok && rc.status == 200) {
-      try {
-        var data = await rc.text();
-        return data;
-
-      } catch(e) {
-        console.log(e);
-      } finally {
-        $(".super_links_msg").css("display","none");
-      }
-
-    } else {
-      $(".super_links_msg").css("display","none");
-      if (rc.status==401 || rc.status==403) {
-        Browser.openTab(REDIR_URL);
-        alert("Login to https://linkeddata.uriburner.com and call SupeLinks again");
-        return null;
-      } else {
-        alert("Could not load data from: "+SPARQL_URL+"\nError: "+rc.status);
-        return null;
-      }
-/***
-          if (rc.status == 403) {
-            alert("Could not execute SPARQL query againts: "+SPARQL_URL+"\nTry Login and execute query again");
-            var redir = "https://linkeddata.uriburner.com/rdfdesc/login.vsp?returnto="+location.href;
-            document.location.href = redir;
-          } else {
-            alert("Could not load data from: "+SPARQL_URL+"\nError: "+rc.status);
-          }
-***/
-    }
-
-  } catch(e) {
-    $(".super_links_msg").css("display","none");
-    alert("Could not load data from: "+SPARQL_URL+"\n"+e);
-    return null;
-  } finally {
-    $(".super_links_msg").css("display","none");
-  }
-}
-
 
 
 
@@ -1130,9 +985,7 @@ function Rww_exec()
 function Sparql_exec()
 {
   if (doc_URL!==null) {
-      var u = new URL(doc_URL);
-      u.hash = '';
-      u.search = '';
+     var u = new URL(doc_URL);
      var _url = (new Settings()).createSparqlUrl(u.toString());
      Browser.openTab(_url, gData.tab_index);
   }
@@ -1210,10 +1063,18 @@ function Download_exec_update_state()
     $('#save-file').show();
   else
     $('#save-file').hide();
+
   if (cmd==='fileupload') {
     $('#oidc-login').show();
-  } else {
+    $('#oidc-upload').show();
+  } 
+  else if (cmd==='sparqlupload') {
+    $('#oidc-login').show();
+    $('#oidc-upload').hide();
+  }
+  else {
     $('#oidc-login').hide();
+    $('#oidc-upload').hide();
   }
 
   var filename;
@@ -1228,6 +1089,16 @@ function Download_exec_update_state()
   else
     filename = "rdf_data.rdf";
 
+  if (cmd ==="sparqlupload") {
+    $('#save-filename').hide();    
+    $('#save-fmt-item').hide();    
+    $('#save-sparql-item').show();    
+  } else {
+    $('#save-filename').show();    
+    $('#save-fmt-item').show();    
+    $('#save-sparql-item').hide();    
+  }
+
   var oidc_url = document.getElementById('oidc-url');
   oidc_url.value = (gOidc.storage || '') + (filename || '');
 
@@ -1238,6 +1109,10 @@ function Download_exec_update_state()
 
 async function Download_exec()
 {
+  var _url = new URL(doc_URL);
+  _url.hash = "osds";
+  $('#save-sparql-graph').val(_url.toString());
+
   $('#save-action').change(function() {
     Download_exec_update_state();
   });
@@ -1265,6 +1140,12 @@ async function Download_exec()
   var fmt = "jsonld";
 
   $('#save-fmt #json').prop('disabled', true);
+
+  for(var v of gData.tabs) {
+    DOM.qSel(`${v}-chk`).checked = false;
+  }
+  DOM.qSel(`${selectedTab}-chk`).checked = true;
+
 
   if (selectedTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.jsonld_nano.json_text!==null)) {
     filename = "jsonld_data.txt";
@@ -1301,6 +1182,7 @@ async function Download_exec()
   }
 
 
+
   if (filename!==null) {
     $('#save-filename').val(filename);
 
@@ -1310,8 +1192,8 @@ async function Download_exec()
 
     var dlg = $( "#save-confirm" ).dialog({
       resizable: true,
-      width:500,
-      height:300,
+      width:520,
+      height:420,
       modal: true,
       buttons: {
         "OK": function() {
@@ -1319,7 +1201,7 @@ async function Download_exec()
           var fmt = $('#save-fmt option:selected').attr('id');
           var fname = action ==='fileupload' ? $('#oidc-url').val().trim(): $('#save-filename').val().trim();
           save_data(action, fname, fmt)
-           .then(() => {$(this).dialog( "destroy" )});
+           .then(() => {$("#save-confirm").dialog( "destroy" )});
         },
         Cancel: function() {
           $(this).dialog( "destroy" );
@@ -1336,52 +1218,89 @@ async function Download_exec()
 
 async function save_data(action, fname, fmt, callback)
 {
-
-  function out_from(data, error, skipped_error)
+  if (action==="sparqlupload") 
   {
-    var retdata = {txt:"", error:""};
-    var outdata = [];
-    var errors = [];
+    var sparqlendpoint = $('#save-sparql-endpoint').val().trim();
+    var sparql_graph = $('#save-sparql-graph').val().trim();
+    var save_lst = [];
+    var rc = false;
+    
+    fmt = "ttl";
 
-    if (data) {
-      if ($.isArray(data))
-        outdata = outdata.concat(data);
-      else
-        outdata.push(data);
+    if (!sparqlendpoint || sparqlendpoint.length < 1) {
+      showInfo('SPARQL endpoint is empty');
+      return;
+    }
+    
+    for(var v of gData.tabs) {
+      if (DOM.qSel(`${v}-chk`).checked)
+        save_lst.push(v);
     }
 
-    if (error)
-      errors.push("\n"+error);
+    var saver = new Save2Sparql(sparqlendpoint, sparql_graph, gData.baseURL, gOidc);
+    var rc = await saver.check_login();
+    if (!rc)
+      return;
 
-    if (skipped_error && skipped_error.length>0) {
-      errors.push("\n");
-      errors = errors.concat(skipped_error);
-    }
-
-    for(var i=0; i < outdata.length; i++)
-      retdata.txt += outdata[i]+"\n\n";
-
-    for(var i=0; i < errors.length; i++)
-      retdata.error += errors[i]+"\n\n";
-
-    return retdata;
-  }
-
-  function exec_action(action, retdata)
-  {
-    if (action==="export-rww") {
-      if (retdata.error.length > 0) {
-        showInfo(retdata.error);
-      } else {
-        if (callback)
-          callback(retdata.txt);
+    for (var _tab of save_lst) 
+    {
+      var dt = await prepare_data(true, _tab, fmt);
+      if (dt && dt.error.length > 0) {
+        showInfo(dt.error);
+      }
+      else if (dt && dt.txt.length > 0) 
+      {
+        var ret = await saver.upload_to_sparql(dt);
+        if (!ret.rc) {
+          if (ret.status === 401 || ret.status === 403) {
+            var rc = await saver.check_login(true);
+            if (!rc)
+              return;
+          } 
+          else {
+            showInfo('Unable to save:' +ret.error);
+            return;
+          }
+        } 
+        else {
+          rc = true;
+        }
       }
     }
-    else if (action==="filesave") {
+
+    if (rc && document.querySelector('#save-sparql-check-res').checked) {
+      var _url = (new Settings()).createSparqlUrl(sparql_graph, sparqlendpoint);
+      var tabs = await getCurTab();
+    
+      if (tabs.length > 0) 
+        Browser.api.tabs.create({'url':_url, 'index': tabs[0].index+1});
+      else
+        Browser.api.tabs.create({'url':_url});
+    }
+
+  } 
+  else 
+  {
+    var retdata = await prepare_data(false, selectedTab, fmt);
+    if (!retdata)
+      return;
+
+    if (retdata && retdata.error.length > 0) {
+      showInfo(retdata.error);
+      return;
+    }
+    
+    if (action==="export-rww") {
+        if (callback)
+          callback(retdata.txt);
+    }
+    else if (action==="filesave") 
+    {
       blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
       saveAs(blob, fname);
     }
-    else if (action==="fileupload") {
+    else if (action==="fileupload") 
+    {
      var contentType = "text/plain;charset=utf-8";
 
      if (fmt==="jsonld")
@@ -1393,7 +1312,7 @@ async function save_data(action, fname, fmt, callback)
      else
        contentType = "text/turtle;charset=utf-8";
 
-      putResource(gOidc.fetch, fname, retdata.txt, contentType, null)
+      putResource(gOidc, fname, retdata.txt, contentType, null)
         .then(response => {
           showInfo('Saved');
         })
@@ -1425,7 +1344,46 @@ async function save_data(action, fname, fmt, callback)
       selectTab("#src");
       src_view.setValue(retdata.txt + retdata.error+"\n");
     }
+
   }
+    
+}
+
+
+async function prepare_data(for_query, curTab, fmt)
+{
+  function out_from(for_query, data, error)
+  {
+    var retdata = {txt:"", error:""};
+    var outdata = [];
+    var errors = [];
+
+    if (data) {
+      if ($.isArray(data))
+        outdata = outdata.concat(data);
+      else
+        outdata.push(data);
+    }
+
+    if (error) {
+      if ($.isArray(error))
+        errors = errors.concat(error);
+      else
+        errors.push("\n"+error);
+    }
+
+    if (for_query) {
+      retdata.txt = outdata;
+    } else {
+      for(var i=0; i < outdata.length; i++)
+        retdata.txt += outdata[i]+"\n\n";
+    }
+
+    retdata.error = errors.join("\n\n");
+
+    return retdata;
+  }
+
 
   try{
     var data = [];
@@ -1433,7 +1391,8 @@ async function save_data(action, fname, fmt, callback)
     var blob = null;
     var src_fmt = null;
 
-    if (selectedTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.jsonld_nano.json_text!==null)) {
+    
+    if (curTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.jsonld_nano.json_text!==null)) {
       src_fmt = "jsonld";
 
       if (gData.jsonld.json_text!==null)
@@ -1442,7 +1401,7 @@ async function save_data(action, fname, fmt, callback)
       if (gData.jsonld_nano.json_text!==null)
         data = data.concat(gData.jsonld_nano.json_text);
     }
-    else if (selectedTab==="#json" && (gData.json.json_text!==null || gData.json_nano.json_text!==null)) {
+    else if (curTab==="#json" && (gData.json.json_text!==null || gData.json_nano.json_text!==null)) {
       src_fmt = "json";
 
       if (gData.json.json_text!==null)
@@ -1451,7 +1410,7 @@ async function save_data(action, fname, fmt, callback)
       if (gData.json_nano.json_text!==null)
         data = data.concat(gData.json_nano.json_text);
     }
-    else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.ttl_nano.ttl_text!==null)) {
+    else if (curTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.ttl_nano.ttl_text!==null)) {
       src_fmt = "ttl";
       if (gData.turtle.ttl_text!==null)
         data = data.concat(gData.turtle.ttl_text);
@@ -1459,15 +1418,15 @@ async function save_data(action, fname, fmt, callback)
       if (gData.ttl_nano.ttl_text!==null)
         quad_data = quad_data.concat(gData.ttl_nano.ttl_text);
     }
-    else if (selectedTab==="#micro" && gData.micro.json_text!==null) {
+    else if (curTab==="#micro" && gData.micro.json_text!==null) {
       src_fmt = "jsonld";
       data = data.concat(gData.micro.json_text);
     }
-    else if (selectedTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
+    else if (curTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
       src_fmt = "ttl";
       data = data.concat(gData.rdfa.ttl_text);
     }
-    else if (selectedTab==="#rdf" && (gData.rdf.text!==null || gData.rdf_nano.rdf_text!==null)) {
+    else if (curTab==="#rdf" && (gData.rdf.text!==null || gData.rdf_nano.rdf_text!==null)) {
       src_fmt = "rdf";
       if (gData.rdf.text!==null)
         data = data.concat(gData.rdf.text);
@@ -1475,70 +1434,68 @@ async function save_data(action, fname, fmt, callback)
       if (gData.rdf_nano.rdf_text!==null)
         data = data.concat(gData.rdf_nano.rdf_text);
     }
-    else if (selectedTab==="#posh" && gData.posh.ttl_text!==null) {
+    else if (curTab==="#posh" && gData.posh.ttl_text!==null) {
       src_fmt = "ttl";
       data = data.concat(gData.posh.ttl_text);
     }
-    else if (selectedTab==="#csv" && gData.csv_nano.ttl_text!==null) {
+    else if (curTab==="#csv" && gData.csv_nano.ttl_text!==null) {
       src_fmt = "ttl";
       data = data.concat(gData.csv_nano.ttl_text);
     }
     else
-      return;
+      return null;
 
     if (data.length==0 && quad_data.length==0)
-      return;
+      return null;
 
 
-    if (selectedTab==="#micro" && data.length > 0)
+    if (curTab==="#micro" && data.length > 0)
     {
       var handler = new Handle_Microdata(true);
       var ret = handler.parse(JSON.parse(data[0]), gData.baseURL);
       if (ret.errors.length > 0) {
-        exec_action(action, out_from(error));
-        return;
+        return out_from(for_query, null, ret.errors);
       }
       if (ret.data==null)
-        return;
+        return null;
 
       var ttl_data = ret.data;
 
       if (fmt==="ttl") {
-        exec_action(action, out_from(ttl_data));
+        return out_from(for_query, ttl_data, null);
       }
       else if (fmt==="jsonld") { // json
         var conv = new Convert_Turtle();
         var text_data = await conv.to_jsonld([ttl_data], null, gData.baseURL);
-        exec_action(action, out_from(text_data, null, conv.skipped_error)); 
+        return out_from(for_query, text_data, conv.skipped_error); 
       }
       else {
         var conv = new Convert_Turtle();
         var text_data = await conv.to_rdf([ttl_data], null, gData.baseURL);
-        exec_action(action, out_from(text_data, null, conv.skipped_error)); 
+        return out_from(for_query, text_data, conv.skipped_error); 
       }
     }
-    else if (selectedTab==="#rdfa" && data.length > 0)
+    else if (curTab==="#rdfa" && data.length > 0)
     {
       var handler = new Convert_Turtle();
       var ttl_data = await handler.fix_ttl(data, gData.baseURL);
       if (handler.skipped_error.length > 0) {
-        exec_action(action, out_from(null, error, handler.skipped_error));
-        return;
-      }
-      if (ttl_data && ttl_data.length > 0) 
+        return out_from(for_query, null, handler.skipped_error);
+      } 
+      else if (ttl_data && ttl_data.length > 0) 
       {
           if (fmt==="ttl") {
-            exec_action(action, out_from(ttl_data));
+            return out_from(for_query, ttl_data, null);
           }
           else if (fmt==="jsonld") { // json
             var conv = new Convert_Turtle();
             var text_data = await conv.to_jsonld(ttl_data, null, gData.baseURL);
-            exec_action(action, out_from(text_data, null, conv.skipped_error));
+            return out_from(for_query, text_data, conv.skipped_error);
           }
           else {
             var conv = new Convert_Turtle();
             var text_data = await conv.to_rdf(ttl_data, null, gData.baseURL);
-            exec_action(action, out_from(text_data, null, conv.skipped_error));
+            return out_from(for_query, text_data, conv.skipped_error);
           }
       }
     }
@@ -1548,58 +1505,56 @@ async function save_data(action, fname, fmt, callback)
         var conv = new Convert_Turtle();
         if (fmt==="jsonld") {
           var text_data = await conv.to_jsonld(data, quad_data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          return out_from(for_query, text_data, conv.skipped_error);
         } else if (fmt==="rdf") {
           var text_data = await conv.to_rdf(data, quad_data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          return out_from(for_query, text_data, conv.skipped_error);
         }
       }
       else if (src_fmt==="jsonld"){
         var conv = new Convert_JSONLD();
         if (fmt==="ttl"){
           var text_data = await conv.to_ttl(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          return out_from(for_query, text_data, conv.skipped_error);
         } else if (fmt==="rdf"){
           var text_data = await conv.to_rdf(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          return out_from(for_query, text_data, conv.skipped_error);
         }
       }
       else if (src_fmt==="json"){
         var conv = new Convert_JSON();
         if (fmt==="ttl"){
           var text_data = await conv.to_ttl(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          return out_from(for_query, text_data, conv.skipped_error);
         } else if (fmt==="rdf"){
           var text_data = await conv.to_rdf(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          return out_from(for_query, text_data, conv.skipped_error);
         } else if (fmt==="jsonld"){
           var text_data = await conv.to_jsonld(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          return out_from(for_query, text_data, conv.skipped_error);
         }
       }
       else if (src_fmt==="rdf"){
         var conv = new Convert_RDF_XML();
         if (fmt==="ttl") {
           var text_data = await conv.to_ttl(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          return out_from(for_query, text_data, conv.skipped_error);
 
         } else if (fmt==="jsonld"){
           var text_data = await conv.to_jsonld(data, gData.baseURL);
-          exec_action(action, out_from(text_data, null, conv.skipped_error));
+          return out_from(for_query, text_data, conv.skipped_error);
         }
       }
     } else {
       data = data.concat(quad_data);
-      exec_action(action, out_from(data));
+      return out_from(for_query, data, null);
     }
 
   } catch(ex) {
-    showInfo(ex);
+    return out_from(for_query, null, ex.toString());
   }
 
-
 }
-
 
 
 function showInfo(msg)

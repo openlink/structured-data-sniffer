@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -20,147 +20,47 @@
 
 class Settings {
   constructor(data) {
-    this.def_import_url = "https://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
+//    this.def_import_url = "https://linkeddata.uriburner.com/describe/?url={url}&sponger:get=add";
+    this.def_import_url = "https://linkeddata.uriburner.com/describe/?url={url}";
     this.def_import_srv = "describe-ssl";
 //  this.def_rww_edit_url = "http://linkeddata.uriburner.com/rdf-editor/#/editor?newDocument=true&statement:entity={url}&view=statements";
     this.def_rww_edit_url = "https://linkeddata.uriburner.com/rdf-editor/#/editor?data={data}&view=statements";
 
-    this.def_sparql_url = "https://linkeddata.uriburner.com/sparql/?query={query}&text=text%2Fx-html%2Btr";
+    this.def_sparql_url = "https://linkeddata.uriburner.com/sparql/?query={query}&format=text%2Fx-html%2Btr";
     this.def_sparql_cmd = "select";
-
     this.def_sparql_qry_spo = "DEFINE get:soft \"soft\" \n"+
-                            "SELECT DISTINCT ?s AS ?subject  ?p AS ?predicate ?o AS ?object \n"+
-                            "FROM <{url}> \n"+
-                            "WHERE { ?s ?p ?o \n"+
-                            "       FILTER (CONTAINS(str(?p),'mainEntity') \n"+
-                            "               OR CONTAINS(str(?p),'primaryTopic')\n"+
-                            "               OR CONTAINS(str(?p),'topic')\n"+
-                            "               OR CONTAINS(str(?p),'mentions')) \n"+
-                            "      } LIMIT 100\n";
-
+                              "SELECT (SAMPLE(?s) AS ?SubjectID) \n"+
+                              "       (COUNT(*) AS ?count) \n"+
+                              "       (?o AS ?SubjectTypeID) \n"+
+                              "FROM <{url}> \n"+
+                              "WHERE { \n"+
+                              "        ?s a ?o . \n"+
+                              "        FILTER (CONTAINS(STR(?o),'schema')) \n"+
+                              "      } \n"+
+                              "GROUP BY ?o \n"+
+                              "ORDER BY DESC (?count) \n"+
+                              "LIMIT 50 ";
+    
     this.def_sparql_qry_eav = "DEFINE get:soft \"soft\" \n"+
-                            "SELECT DISTINCT ?s AS ?entity  ?p AS ?attribute ?o AS ?value \n"+
-                            "FROM <{url}> \n"+
-                            "WHERE { ?s ?p ?o \n"+
-                            "       FILTER (CONTAINS(str(?p),'mainEntity') \n"+
-                            "               OR CONTAINS(str(?p),'primaryTopic')\n"+
-                            "               OR CONTAINS(str(?p),'topic')\n"+
-                            "               OR CONTAINS(str(?p),'mentions')) \n"+
-                            "      } LIMIT 100\n";
+                              "SELECT (SAMPLE(?s) AS ?EntityID) \n"+
+                              "       (COUNT(*) AS ?count) \n"+
+                              "       (?o AS ?EntityTypeID) \n"+
+                              "FROM <{url}> \n"+
+                              "WHERE { \n"+
+                              "        ?s a ?o . \n"+
+                              "        FILTER (CONTAINS(STR(?o),'schema')) \n"+
+                              "      } \n"+
+                              "GROUP BY ?o \n"+
+                              "ORDER BY DESC (?count) \n"+
+                              "LIMIT 50 ";
+
 
     this.def_super_links_timeout = 30000000;
+    this.def_super_links_retries = 3;
+    this.def_super_links_retries_timeout = 2;
 
     this.def_super_links_query = ''
-/***
-  +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
-  +'PREFIX schema: <http://schema.org/> \n'
-  +' \n'
-  +'SELECT DISTINCT  sample(?extract) as ?sample ?extract ?extractLabel ?associationLabel ?entityTypeLabel ?entityType ?p as ?association ?providerLabel ?provider \n'
-  +'WHERE {  \n'
-  +'       GRAPH <{url}>  \n'
-  +'         {  \n'
-  +'           # ?source ( skos:related|schema:about|schema:mentions ) ?extract .  \n'
-  +'           ?source ?p ?extract.  \n'
-  +'           # filter (?source = <https://linkeddata.uriburner.com/about/id/entity/https/www.microstrategy.com/us/product/analytics/hypercards>)  \n'
-  +'           filter (?p in ( skos:related, schema:about, schema:mentions)) \n'
-  +'           # ?source ( skos:related|schema:about) ?extract .  \n'
-  +'           ?extract a ?entityType ;  \n'
-  +'           # ?extract a oplattr:NamedEntity ;  \n'
-  +'  \n'
-  +'           <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ;  \n'
-  +'           (rdfs:label | schema:name | foaf:name | schema:headline) ?extractLabel .  \n'
-  +'  \n'
-  +'           OPTIONAL {?provider foaf:name|schema:name ?providerLabel} .  \n'
-  +'  \n'
-  +'           # FILTER (?p in (skos:related, schema:about, schema:mentions))  \n'
-  +'           FILTER (! contains(str(?entityType),"Tag"))  \n'
-  +'         }  \n'
-  +'  \n'
-  +'         ## Subquery for obtaining relation (statement predicate) labels  \n'
-  +'  \n'
-  +'         { SELECT ?p ?associationLabel  \n'
-  +'           WHERE { \n'
-  +'                  GRAPH ?g1 \n'
-  +'                    { \n'
-  +'                       ?p rdfs:label|schema:name ?associationLabel . \n'
-  +'                       FILTER (?p in (skos:related, schema:about, schema:mentions))  \n'
-  +'                       FILTER (LANG(?associationLabel) = "{lang}")  \n'
-  +'                    }  \n'
-  +'                 }  \n'
-  +'         }  \n'
-  +'  \n'
-  +'         ## Subquery for obtaining type-oriented relation (statement predicate) labels  \n'
-  +'  \n'
-  +'         { SELECT ?entityType ?entityTypeLabel  \n'
-  +'           WHERE { \n' 
-  +'                  GRAPH ?g2 \n'
-  +'                    { \n'
-  +'                      ?entityType rdfs:label|schema:name ?entityTypeLabel .  \n'
-  +'                      FILTER (LANG(?entityTypeLabel) = "{lang}")  \n'
-  +'                    }  \n'
-  +'                 }  \n'
-  +'           }  \n'
-  +' }  \n'
-  +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider  \n'
-  +'ORDER BY DESC (2) \n';
-***/
-/***
-  +'PREFIX oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
-  +'PREFIX schema: <http://schema.org/> \n'
-  +' \n'
-  +'SELECT DISTINCT  sample(?extract) as ?sample ?extract ?extractLabel ?associationLabel ?entityTypeLabel ?entityType ?p as ?association ?providerLabel ?provider \n'
-  +'WHERE {  \n'
-  +'       GRAPH <{url}>  \n'
-  +'         {  \n'
-  +'           # ?source ( skos:related|schema:about|schema:mentions ) ?extract .  \n'
-  +'           ?source ?p ?extract.  \n'
-  +'           # filter (?source = <https://linkeddata.uriburner.com/about/id/entity/https/www.microstrategy.com/us/product/analytics/hypercards>)  \n'
-  +'           filter (?p in ( skos:related, schema:about, schema:mentions)) \n'
-  +'           # ?source ( skos:related|schema:about) ?extract .  \n'
-  +'           ?extract a ?entityType ;  \n'
-  +'           # ?extract a oplattr:NamedEntity ;  \n'
-  +'  \n'
-  +'           <http://www.openlinksw.com/schema/attribution#providedBy> ?provider ;  \n'
-  +'           (rdfs:label | schema:name | foaf:name | schema:headline) ?extractLabel .  \n'
-  +'  \n'
-  +'           OPTIONAL {?provider foaf:name|schema:name ?providerLabel} .  \n'
-  +'  \n'
-  +'           # FILTER (?p in (skos:related, schema:about, schema:mentions))  \n'
-  +'           FILTER (! contains(str(?entityType),"Tag"))  \n'
-  +'         }  \n'
-  +'  \n'
-  +'         ## Subquery for obtaining relation (statement predicate) labels  \n'
-  +'  \n'
-  +'         { SELECT ?p ?associationLabel  \n'
-  +'           WHERE { \n'
-  +'	              quad map virtrdf:DefaultQuadMap { \n'
-  +'                  GRAPH ?g1  \n'
-  +'                    {  \n'
-  +'                       ?p rdfs:label|schema:name ?associationLabel .  \n'
-  +'                       FILTER (?p in (skos:related, schema:about, schema:mentions))   \n'
-  +'                       FILTER (LANG(?associationLabel) = "{lang}")   \n'
-  +'                    }   \n'
-  +'                  }   \n'
-  +'                 }  \n'
-  +'         }  \n'
-  +'  \n'
-  +'         ## Subquery for obtaining type-oriented relation (statement predicate) labels  \n'
-  +'  \n'
-  +'         { SELECT ?entityType ?entityTypeLabel  \n'
-  +'           WHERE { \n' 
-  +'	              quad map virtrdf:DefaultQuadMap { \n'
-  +'                  GRAPH ?g2  \n'
-  +'                    {  \n'
-  +'                      ?entityType rdfs:label|schema:name ?entityTypeLabel .   \n'
-  +'                      FILTER (LANG(?entityTypeLabel) = "{lang}")   \n'
-  +'                    }   \n'
-  +'                  }  \n'
-  +'                 }  \n'
-  +'         }  \n'
-  +' }  \n'
-  +'GROUP BY  ?extractLabel ?extract ?entityType ?p ?association ?associationLabel ?entityTypeLabel ?providerLabel ?provider  \n'
-  +'ORDER BY DESC (2) \n';
-***/
+  +'DEFINE get:soft "soft" \n'
   +'prefix oplattr: <http://www.openlinksw.com/schema/attribution#> \n'
   +'prefix schema: <http://schema.org/>  \n'
   +'select distinct  \n'
@@ -285,6 +185,15 @@ class Settings {
       case "ext.osds.super_links.timeout":
           val = this.def_super_links_timeout;
           break;
+
+      case "ext.osds.super_links.retries":
+          val = this.def_super_links_retries;
+          break;
+
+      case "ext.osds.super_links.retries_timeout":
+          val = this.def_super_links_retries_timeout;
+          break;
+      
       case "ext.osds.super-links-highlight":
           val = "first";
           break;
@@ -337,14 +246,37 @@ class Settings {
   }
 
 
-  createSparqlUrl(curUrl)
+  createSparqlUrl(curUrl, endpoint)
   {
+    function ltrim(str) { return str.replace(/^\s+/,""); }
+
     var sparql_url = this.getValue('ext.osds.sparql.url');
     var query = this.getValue('ext.osds.sparql.query');
 
-    query = encodeURIComponent(query.replace(/{url}/g, curUrl));
-    return sparql_url.replace(/{query}/g, query);
+
+    if (endpoint) {
+      var lines = query.split('\n');
+
+      for (var i=0; i< lines.length; i++) {
+        var s = ltrim(lines[i]).toUpperCase();
+        if (s.startsWith('DEFINE '))
+          lines[i] = '# '+lines[i];
+
+        if (s.startsWith('SELECT ') || s.startsWith('CONSTRUCT ') || s.startsWith('ASK ') || s.startsWith('DESCRIBE '))
+          break;
+      }
+
+      query = lines.join('\n');
+      query = encodeURIComponent(query.replace(/{url}/g, curUrl));
+
+      return endpoint+'?query='+query+'&format=text%2Fx-html%2Btr';
+    } 
+    else {
+      query = encodeURIComponent(query.replace(/{url}/g, curUrl));
+      return sparql_url.replace(/{query}/g, query);
+    }
   }
+
 
   createSuperLinksQuery(query, curUrl, lang)
   {
@@ -550,7 +482,6 @@ class SettingsProxy {
           });
         });
     } else {
-
       var resp = await Browser.api.runtime.sendMessage({'cmd': 'getPref', 'key':key});
       var val = null;
       if (resp.val && resp.key === key)

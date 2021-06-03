@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -25,7 +25,21 @@ class Convert_Turtle{
   {
     this.baseURI = null;
     this.skipped_error = [];
+    this.bnode_types = {};
   }
+
+  async prepare_query(ttlData, baseURL)
+  {
+    var self = this;
+    var handler = new Handle_Turtle(0, true, true);
+    var ret = await handler.parse(ttlData, baseURL);
+
+    if (ret.errors.length>0)
+      self.skipped_error = self.skipped_error.concat(ret.errors);
+
+    return ret.data;
+  }
+
 
 
   async fix_ttl(ttlData, baseURL)
@@ -40,9 +54,22 @@ class Convert_Turtle{
     return ret.data;
   }
 
-  async _fix_nano_ttl(ttlData, nanoData, baseURL) 
+  async _fix_nano_ttl(ttlData, nanoData, baseURL, skip_docpref) 
   {
     var self = this;
+    var data = [];
+
+    if (ttlData && ttlData.length > 0) {
+      var handler = new Handle_Turtle(0, true, false, null, skip_docpref);
+      var ret = await handler.parse(ttlData, baseURL);
+
+      if (ret.errors.length>0)
+        self.skipped_error = self.skipped_error.concat(ret.errors);
+
+      if (ret.data && ret.data.length > 0)
+        data = data.concat(ret.data);
+    }
+
     if (nanoData!==null && nanoData.length > 0) {
       var handler = new Handle_Turtle(0, true);
       var ret = await handler.parse_nano(nanoData, baseURL);
@@ -51,18 +78,15 @@ class Convert_Turtle{
         self.skipped_error = self.skipped_error.concat(ret.errors);
 
       if (ret.data && ret.data.length > 0)
-        ttlData = ttlData.concat(ret.data);
-
-      return ttlData;
-      
-    } else {
-      return ttlData;
+        data = data.concat(ret.data);
     }
+
+    return data;
   }
 
   async to_jsonld(ttlData, nanoData, baseURL) 
   {
-    var fixed_ttl = await this._fix_nano_ttl(ttlData, nanoData, baseURL);
+    var fixed_ttl = await this._fix_nano_ttl(ttlData, nanoData, baseURL, true);
     var output = [];
 
     for(var i=0; i < fixed_ttl.length; i++)
@@ -96,7 +120,7 @@ class Convert_Turtle{
 
       $rdf.parse(ttl_data, store, baseURL, 'text/turtle');
 
-      return $rdf.serialize(undefined, store, baseURL, "application/rdf+xml");
+      return $rdf.serialize(undefined, store, baseURL, 'application/rdf+xml');
     } catch (ex) {
       this.skipped_error.push(""+ex.toString());
       return '';
@@ -146,7 +170,6 @@ class Convert_Turtle{
                     resolve(JSON.stringify(compacted, null, 2));
 
                   } catch (ex) {
-                    self.skipped_error.push(ex.toString());
                     var json = {'@context':context, '@graph':doc};
                     resolve(JSON.stringify(json, null, 2));
                   }

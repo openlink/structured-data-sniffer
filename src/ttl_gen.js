@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -19,15 +19,23 @@
  */
   
 
-  TTL_Gen = function(_docURI) {
+  TTL_Gen = function(_docURI, for_query, bnode_types, skip_docpref) {
     this.ns = new Namespace();
     this.docURI = _docURI;
+
+    this.skip_docpref = skip_docpref;
+
+    this.docURI_pref = _docURI+'#';
+    this.for_query = for_query;
     this.prefixes = {};
+    this.use_prefixes = true;
     
     this.escape    = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
     this.escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
     this.escapeReplacements = { '\\': '\\\\', '"': '\\"', '\t': '\\t',
                            '\n': '\\n', '\r': '\\r', '\b': '\\b', '\f': '\\f' };
+    this.test_esc = /[!'()*&?#$,:@=;+.\/]/g;
+    this.bnode_types = bnode_types || {};
   };
 
   TTL_Gen.prototype = {
@@ -39,8 +47,44 @@
           n_data.length > 0) 
       {
         var str = "";
-        //fill id_list
+        var triples = [];
 
+        //rename bnodes based on rdf:type relation
+        this.bnodes = {};
+        for(var i=0; i < n_data.length; i++) 
+          {
+            var subj = n_data[i].s;
+            var isBNode = false;
+
+            if (this.is_VBNode(subj)) {
+              this.bnodes[subj] = this.VBNode2BNode(subj);
+              isBNode = true;
+            }
+            else if (this.is_BNode(subj)) {
+              this.bnodes[subj] = this.pre(subj.substring(2));
+              isBNode = true;
+            }
+
+            if (isBNode) {
+              $.each(n_data[i].props, (key, val) => {
+                if (key === this.ns.RDF_TYPE && val.length > 0) {
+                  var type_name = this.create_iri_for_type(val[0]);
+                  var id = this.bnode_types[type_name];
+
+                  if (id!==undefined)
+                    id++;
+                  else
+                    id = 0;
+                
+                  this.bnodes[subj] = this.create_iri_for_type(val[0], id);
+                  this.bnode_types[type_name] = id;
+
+                }
+              });
+            }
+          }
+        
+        //fill id_list
         for(var i=0; i < n_data.length; i++) 
         {
           var item = n_data[i];
@@ -50,15 +94,39 @@
           props = props.concat(this.format_props(item.props, true));
           props = props.concat(this.format_props(item.props, false));
 
-          for(var j=0; j < props.length; j++)
+          for(var j=0; j < props.length; j++) {
             str += subj +" "+props[j]+" .\n";
+            triples.push(subj +" "+props[j]+" .");
+          }
         }
       }
-      var ret = "";
-      $.each(this.prefixes, function(key, val){
-        ret += "@prefix "+key+": <"+val+"> .\n";
-      });
-      return ret+str;
+
+      if (this.for_query) {
+        var pref = "";
+
+        pref += "base <"+this.docURI+"> \n";
+        pref += "prefix : <#> \n";
+
+        $.each(this.prefixes, function(key, val){
+          pref += "prefix "+key+": <"+val+"> \n";
+        });
+
+        return {pref, ttl: str, triples, prefixes: this.prefixes};
+
+      } 
+      else {
+        var pref = "";
+
+        pref += "@base <"+this.docURI+"> .\n";
+        if (!this.skip_docpref)
+          pref += "@prefix : <#> .\n";
+
+        $.each(this.prefixes, function(key, val){
+          pref += "@prefix "+key+": <"+val+"> .\n";
+        });
+
+        return pref+"\n"+str;
+      }
     },
 
 
@@ -69,7 +137,7 @@
         
       var ret = [];
       var self = this;
-      $.each(props, function(key, val){
+      $.each(props, (key, val) => {
         if ((only_rdf_type && key!==self.ns.RDF_TYPE)
             || (!only_rdf_type && key===self.ns.RDF_TYPE))
           return;
@@ -78,52 +146,110 @@
 
         for(var i=0; i<val.length; i++) 
         {
-          var obj_str = "";
-          var obj = val[i];
-          if (obj.iri) {
-            var iri = obj.iri;
-            obj_str = self.format_id(obj.iri);
-          } 
-          else {
-            var v = obj.value;
-            if (obj.type) {
-              var pref = self.ns.has_known_ns(obj.type);
-              if (pref!=null) {
-                self.prefixes[pref.ns]=pref.link;
-                obj_str = self.obj_value(v) +"^^"+self.pref_link(obj.type, pref);
-              }
-              else
-                obj_str = self.obj_value(v) +"^^<"+obj.type+">";
-            }
-            else if (obj.lang){
-              obj_str = self.obj_value(v)+'@'+obj.lang;
-            } 
-            else {
-              obj_str = self.obj_value(v);
-            }
-          }
-          ret.push(pred_str +" "+obj_str);
+          ret.push(pred_str +" "+self.format_obj(val[i]));
         } 
       });
       return ret;
     },
 
+
+    create_iri_for_type: function(obj, id)
+    {
+      var sid = (id && id > 0) ? '_'+id : '';
+      if (obj.iri && !this.is_VBNode(obj.iri) && !this.is_BNode(obj.iri)) {
+        var value = obj.iri;
+        var pref = this.use_prefixes ? this.ns.has_known_ns(value) : null;
+        if (pref!=null) {
+          var data = value.substring(pref.link.length);
+          var len = data.length;
+          if (data[len-1]==="/") 
+            data = data.substr(0, len-1);
+
+          if (data.indexOf("/")!==-1) {
+            var lst = data.split('/');
+            data = lst.length>0 ? lst[lst.length-1] : "";
+            if (!data)
+              data = "b";
+          }
+          return fixedEncodeURIComponent(this.pre(data+sid));
+        }
+        else {
+          var u = new URL(value);
+          if (u.hash) {
+            return this.pre(u.hash.substring(1)+sid);
+          } else {
+            var lst = u.pathname.split('/');
+            var data = lst.length>0 ? lst[lst.length-1] : "";
+            if (!data)
+              data = "b";
+
+            return this.pre(data+sid);
+          }
+        }
+      } else 
+        return null;
+    },
+
+
+    format_obj: function(obj)
+    {
+      var obj_str = "";
+      if (obj.iri) {
+        var iri = obj.iri;
+        obj_str = this.format_id(obj.iri);
+      } 
+      else {
+        var v = obj.value;
+        if (obj.type) {
+          var pref = this.use_prefixes ? this.ns.has_known_ns(obj.type) :  null;
+          if (pref!=null) {
+            this.prefixes[pref.ns]=pref.link;
+            obj_str = this.obj_value(v) +"^^"+this.pref_link(obj.type, pref);
+          }
+          else
+            obj_str = this.obj_value(v) +"^^<"+obj.type+">";
+        }
+        else if (obj.lang){
+          obj_str = this.obj_value(v)+'@'+obj.lang;
+        } 
+        else {
+          obj_str = this.obj_value(v);
+        }
+      }
+      return obj_str;
+    },
+
+
     format_id : function (value) 
     {
        if (this.is_VBNode(value)) {
-         return this.VBNode2BNode(value);
+         var s = this.bnodes[value];
+         if (!s)
+           s = this.VBNode2BNode(value);
+         return this.skip_docpref ? "<"+this.docURI_pref + s +">"
+                                  : ":"+s;
        }
        else if (this.is_BNode(value)) {
-         return this.pre(value);
+         var s = this.bnodes[value];
+         if (!s)
+           s = this.pre(value.substring(2));
+         return this.skip_docpref ? "<"+this.docURI_pref + s +">"
+                                  : ":"+s;
        }
        else {
-         var pref = this.ns.has_known_ns(value);
+         var pref = this.use_prefixes ? this.ns.has_known_ns(value) : null;
          if (pref!=null) {
            this.prefixes[pref.ns]=pref.link;
            return this.pref_link(value, pref);
          }
          else
-           return "<"+this.pre(value)+">";
+         {
+           if (!this.skip_docpref && value.startsWith(this.docURI_pref)) {
+             return ":"+this.pre(value.substring(this.docURI_pref.length));      
+           }
+           else
+             return "<"+this.pre(value)+">";      
+         }
        }
     },
 
@@ -152,12 +278,12 @@
       var len = data.length;
 
       if (data[len-1]==="/") 
-        data = data.substr(0, data.length-1);
+        data = data.substring(0, data.length-1);
 
-      if (data.indexOf("/")!==-1)
+      if (data.indexOf("/")!==-1 || this.test_esc.test(data))
         return "<"+val+">";
       else
-        return pref.ns+":"+this.pre(data);
+        return pref.ns+":"+fixedEncodeURIComponent(this.pre(data));
     },
 
     pre : function (value) 
@@ -189,14 +315,15 @@
     },
 
     is_BNode : function (str) {
-        return (str.lastIndexOf("_:", 0) === 0);
+        return str.startsWith("_:");
     },
     is_VBNode : function (str) {
-        return (str.lastIndexOf("nodeID://", 0) === 0 || str.lastIndexOf("nodeid://", 0) === 0);
+        return (str.startsWith("nodeID://") || str.startsWith("nodeid://"));
     },
 
     VBNode2BNode : function (str) {
-        return "_:nodeID"+this.pre(str.substr(9));
+        //return "_:nodeID"+this.pre(str.substr(9));
+        return "nodeID"+this.pre(str.substr(9));
     },
 
   }

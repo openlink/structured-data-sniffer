@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2020 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -27,11 +27,11 @@ OidcWeb = function(data) {
   this.webid = null;
   this.storage = null;
   this.session = null;
-  this.fetch = fetch;
 
   const options = { solid: true };
   this.authClient = new OIDCWebClient(options);
   this.login_url = 'https://openlinksoftware.github.io/oidc-web/login.html#relogin';
+  this.login2_url = 'https://openlinksoftware.github.io/oidc-web/login.html';
 }
 
 
@@ -54,17 +54,94 @@ OidcWeb.prototype = {
       this.webid = null;
       this.storage = null;
       this.session = null;
-      this.fetch = fetch;
     }
   },
 
-  login: function() {
+  login: function(idp_url, autologin) {
      const width = 650;
      const height = 400;
-     const left = window.screenX + (window.innerWidth - width) / 2;
-     const top = window.screenY + (window.innerHeight - height) / 2;
-     const settings = `width=${width},height=${height},left=${left},top=${top}`;
-     window.open(this.login_url, 'Login', settings);
+     const alogin = autologin ? '&autologin=1' : ''
+
+
+     const _url = idp_url ? this.login2_url+'?idp='+encodeURIComponent(idp_url)+alogin+'#relogin'
+                         : this.login_url;
+
+     if (Browser.isFirefoxWebExt) {
+       const left = window.screenX + (window.innerWidth - width) / 2;
+       const top = window.screenY + (window.innerHeight - height) / 2;
+
+       Browser.api.windows.create({
+         url: _url,
+         type: 'popup',
+         height,
+         width,
+         top,
+         left,
+         allowScriptsToClose : true,
+         focused: true
+       });
+     }
+     else {
+       this.popupCenter({url: _url, title:"Login", w:width, h:height});
+     }
+
+  },
+
+  login2: function(idp_url) {
+     const width = 650;
+     const height = 400;
+
+//     const url = this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin';
+     const url = this.login2_url+'?idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
+
+     if (Browser.isFirefoxWebExt) {
+       const left = window.screenX + (window.innerWidth - width) / 2;
+       const top = window.screenY + (window.innerHeight - height) / 2;
+
+       Browser.api.windows.create({
+         url,
+         type: 'popup',
+         height,
+         width,
+         top,
+         left,
+         allowScriptsToClose : true,
+         focused: true
+       });
+
+     } else {
+       this.popupCenter({url, title:"Login", w:width, h:height});
+     }
+  },
+
+  popupCenter: function({url, title, w, h})
+  {
+    // Fixes dual-screen position                         Most browsers      Firefox  
+    var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : screen.left;  
+    var dualScreenTop = window.screenTop != undefined ? window.screenTop : screen.top;  
+              
+    width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;  
+    height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;  
+              
+    var left = ((width / 2) - (w / 2)) + dualScreenLeft;  
+    var top = ((height / 2) - (h / 2)) + dualScreenTop;  
+    var newWindow = window.open(url, title, 'scrollbars=yes, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);  
+    
+    // Puts focus on the newWindow  
+    if (window.focus) {  
+        newWindow.focus();  
+    }  
+  },
+
+
+  isSessionForIdp: function(idp)
+  {
+    return (this.session && this.session.issuer.startsWith(idp));
+  },
+  
+  fetch: async function(url, options)
+  {
+    return this.authClient.authFetch(url, options);
   },
 
   checkSession: async function() 
@@ -82,7 +159,6 @@ OidcWeb.prototype = {
 
       this.session = await this.authClient.currentSession()
       this.webid = (this.session.hasCredentials()) ? this.session.idClaims.sub : null;
-      this.fetch = (this.webid) ? this.session.fetch : null;
 
       if (prev_webid !== this.webid && this.webid) {
         this.storage = (new URL(this.webid)).origin + '/';
@@ -145,10 +221,9 @@ OidcWeb.prototype = {
 }
 
 
-function putResource (_fetch, url, data, contentType, links, options = {}) 
+function putResource (oidc, url, data, contentType, links, options = {}) 
 {
   const DEFAULT_CONTENT_TYPE = 'text/html; charset=utf-8'
-  const _ffetch = _fetch || fetch;;
   const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
 
   if (!url) {
@@ -173,7 +248,7 @@ function putResource (_fetch, url, data, contentType, links, options = {})
 
   options.headers['Link'] = links
 
-  return _ffetch(url, options)
+  return oidc.fetch(url, options)
 
     .then(response => {
       if (!response.ok) {  // not a 2xx level response

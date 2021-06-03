@@ -37,6 +37,10 @@ for I_DIR in settings.js sniffer.css sniffer.js ttl_gen.js utils.js webrequest.j
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
+for I_DIR in helpers.js helpers_ui.js; do
+  cp -va $SRC_DIR/$I_DIR $DST_DIR/
+done
+
 #copy Firefox related files
 cp -va $SRC_DIR/manifest.json.ff $DST_DIR/manifest.json
 cp -va $SRC_DIR/browser_ff_WebExt.js $DST_DIR/browser.js

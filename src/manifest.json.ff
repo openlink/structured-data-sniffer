@@ -3,7 +3,7 @@
   "short_name": "osds",
   "author":"OpenLink Software",
   "homepage_url": "http://osds.openlinksw.com/",
-  "version": "2.18.3",
+  "version": "2.19.11",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
@@ -31,7 +31,7 @@
   "content_scripts": [
     {
       "matches": ["file:///*/*","*://*/*"],
-      "js": ["lib/jquery-3.1.0.min.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", "lib/jquery.mark.js", "lib/namespace.js", "lib/posh.js", "browser.js", "settings.js", "sniffer.js"],
+      "js": ["lib/jquery-3.1.0.min.js", "lib/microdatajs/jquery.microdata.js", "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", "lib/jquery.mark.js", "lib/namespace.js", "lib/posh.js", "utils.js", "helpers_ui.js", "browser.js", "settings.js", "sniffer.js"],
       "css": ["content.css"],
       "run_at": "document_idle"
     },
@@ -53,7 +53,8 @@
     "webRequestBlocking",
     "activeTab", 
     "*://*/*", 
-    "file:///*/*"
+    "file:///*/*",
+    "contextMenus"
   ],
   "content_security_policy": 
     "script-src 'self' 'unsafe-eval' moz-extension://lib; object-src 'self' moz-extension://lib; style-src 'self' 'unsafe-inline' moz-extension://lib https://solid.openlinksw.com; media-src 'self' 'unsafe-inline' moz-extension://lib ;"
