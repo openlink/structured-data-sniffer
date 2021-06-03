@@ -139,7 +139,7 @@ $(document).ready(function()
 	     createShareLink : null,
 	      persistent: null,
     });
-    g_RestCons.yasqe.obj.setSize("100%", 150);
+    g_RestCons.yasqe.obj.setSize("100%", 300);
   } catch(e) {
   }
   $("#query_place").hide();
@@ -684,7 +684,7 @@ async function Download_exec()
     $( "#save-confirm" ).dialog({
       resizable: true,
       width:520,
-      height:300,
+      height:420,
       modal: true,
       buttons: {
         "OK": function() {

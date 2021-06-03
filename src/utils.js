@@ -365,7 +365,7 @@ class Save2Sparql {
   async exec_sparql(prefixes, triples)
   {
     var pref = "";
-    var max_bytes = 64000;
+    var max_bytes = 32000;
     var pref_len = 10;
     var pref_sz;
     var insert_cmd = this.sparql_graph.length > 1
@@ -387,14 +387,14 @@ class Save2Sparql {
       pref_sz += item.length;
     }
   
-    var max_len = 10000 - pref_len;
+    var max_count = 1000 - pref_len;
     var count = 0;
     var data = [];
     var qry_sz = pref_sz;
     var z = 1;
     for(var i=0; i < triples.length; i++) 
     {
-      if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_len) {
+      if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_count) {
         show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
         var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');

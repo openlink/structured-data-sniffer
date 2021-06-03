@@ -162,7 +162,7 @@ function showPopup(tabId)
 	      persistent: null,
 
     });
-    g_RestCons.yasqe.obj.setSize("100%", 150);
+    g_RestCons.yasqe.obj.setSize("100%", 260);
   } catch(e) {
   }
   
@@ -1233,6 +1233,7 @@ async function save_data(action, fname, fmt, callback)
           } 
           else {
             showInfo('Unable to save:' +ret.error);
+            return;
           }
         } 
         else {
