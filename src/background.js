@@ -315,17 +315,29 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
     } 
     else  if (handle)  {
         var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
-        if (Browser.isEdgeWebExt) {
-          return { redirectUrl: _url };
-        }
-        else if (Browser.isFirefoxWebExt) {
-          Browser.api.tabs.update(d.tabId, { url: _url });
+        if (type === "json" || type === "xml" || type === "csv") {
+          if (Browser.isFirefoxWebExt) {
+            window.open(_url);
+            return { cancel: false };
+          }
+          else {
+            window.open(_url);
+            return { cancel: false };
+          }
+        } else {
+
+          if (Browser.isEdgeWebExt) {
+            return { redirectUrl: _url };
+          }
+          else if (Browser.isFirefoxWebExt) {
+            Browser.api.tabs.update(d.tabId, { url: _url });
 //don't show save dialog      
-          return { cancel: true };
-        }
-        else {
-          Browser.api.tabs.update(d.tabId, { url: _url });
-          return { cancel: true };
+            return { cancel: true };
+          }
+          else {
+            Browser.api.tabs.update(d.tabId, { url: _url });
+            return { cancel: true };
+          }
         }
     }
   }
