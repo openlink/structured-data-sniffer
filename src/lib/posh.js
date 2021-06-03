@@ -117,13 +117,18 @@ var POSH = (function () {
       var url = new URL(baseURI);
       var baseOrigin = url.origin;
       var basePATH = baseURI;
+      var baseURL = new URL(baseURI);
 
+      baseURL.search = '';
+      baseURL.hash = ''
 
       if (baseURI.lastIndexOf('.')!=-1) {
-         var i = baseURI.lastIndexOf('/');
-         if (i!=-1)
-           basePATH = basePATH.substring(0, i);
+        var path = baseURL.pathname;
+        if (path[path.length-1] !== '/')
+          baseURL.pathname += '/';
       }
+
+      basePATH = baseURL.href;
 
 
       function node2str(n)
@@ -304,7 +309,7 @@ var POSH = (function () {
         }
         else
         {
-          return basePATH+"/"+n;
+          return basePATH+n;
         }
       }
 

@@ -305,7 +305,7 @@ async function start_parse_data(data_text, data_type, data_url, ext)
 
   var url = new URL(doc_URL);
   url.hash ='';
-  url.search = '';
+//??  url.search = '';
   baseURL = url.toString();
 
   g_RestCons.load(doc_URL);

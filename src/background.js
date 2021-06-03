@@ -483,7 +483,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
 if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
   try {
-    Browser.api.browserAction.disable();
+//??    Browser.api.browserAction.disable();
 
     Browser.api.contextMenus.create(
         {"title": "Super Links", 

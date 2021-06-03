@@ -56,11 +56,39 @@ var gOidc = new OidcWeb();
 function showPopup(tabId)
 {
   //Request the data from the client (foreground) tab.
-  if (Browser.isFirefoxWebExt) {
-     Browser.api.tabs.sendMessage(tabId, { property: 'doc_data' });
-  } else {
-     Browser.api.tabs.sendMessage(tabId, { property: 'doc_data'},
-        function(response) { });
+  try {
+    if (Browser.isFirefoxWebExt) {
+      Browser.api.tabs.sendMessage(tabId, { property: 'req_doc_data' })
+        .then(response => {
+          if (!response || !response.ping) {
+            hideDataTabs();
+            selectedTab = null;
+            selectTab('#cons');
+            g_RestCons.show();
+          }
+        })
+        .catch(err => {
+          hideDataTabs();
+          selectedTab = null;
+          selectTab('#cons');
+          g_RestCons.show();
+        });
+    } else {
+      Browser.api.tabs.sendMessage(tabId, { property: 'req_doc_data'},
+        function(response) { 
+          if (!response || !response.ping) {
+            hideDataTabs();
+            selectedTab = null;
+            selectTab('#cons');
+            g_RestCons.show();
+          }
+        });
+    }
+  } catch(e) {
+    hideDataTabs();
+    selectedTab = null;
+    selectTab('#cons');
+    g_RestCons.show();
   }
 
   Download_exec_update_state();
@@ -313,6 +341,18 @@ function selectTab(tab)
   $('#tabs a[href="#cons"]').hide();
 }
 
+
+function hideDataTabs()
+{
+  $('#tabs a[href="#micro"]').hide();
+  $('#tabs a[href="#jsonld"]').hide();
+  $('#tabs a[href="#turtle"]').hide();
+  $('#tabs a[href="#rdfa"]').hide();
+  $('#tabs a[href="#rdf"]').hide();
+  $('#tabs a[href="#posh"]').hide();
+  $('#tabs a[href="#json"]').hide();
+  $('#tabs a[href="#csv"]').hide();
+}
 
 
 function show_Data(dData)
@@ -827,7 +867,7 @@ async function parse_Data(dData)
 
   var url = new URL(doc_URL);
   url.hash ='';
-  url.search = '';
+//??  url.search = '';
   gData.baseURL = url.toString();
 
   var val = {d:dData, start_id:0, bnode_types:{}};
@@ -873,27 +913,13 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
           show_Data(dData);
         } catch(ex) {
           console.log("OSDS: Error="+ex);
-          $('#tabs a[href="#micro"]').hide();
-          $('#tabs a[href="#jsonld"]').hide();
-          $('#tabs a[href="#turtle"]').hide();
-          $('#tabs a[href="#rdfa"]').hide();
-          $('#tabs a[href="#rdf"]').hide();
-          $('#tabs a[href="#posh"]').hide();
-          $('#tabs a[href="#json"]').hide();
-          $('#tabs a[href="#csv"]').hide();
+          hideDataTabs();
           selectedTab = null;
         }
       }
       else
       {
-        $('#tabs a[href="#micro"]').hide();
-        $('#tabs a[href="#jsonld"]').hide();
-        $('#tabs a[href="#turtle"]').hide();
-        $('#tabs a[href="#rdfa"]').hide();
-        $('#tabs a[href="#rdf"]').hide();
-        $('#tabs a[href="#posh"]').hide();
-        $('#tabs a[href="#json"]').hide();
-        $('#tabs a[href="#csv"]').hide();
+        hideDataTabs();
         selectedTab = null;
 
         selectTab('#cons');

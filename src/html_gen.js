@@ -358,6 +358,11 @@
         } 
         return `<a ${sid} href="${val}"> ${this.decodeURI(val)} </a>`;
       } 
+      else if ( s_val.match(/^data:image\/(png|gif|jpg)/) ) 
+      {
+          var width = (is_key!==undefined && is_key)?200:300;
+          return `<a ${sid} href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
+      }
       else if ( s_val.match(/^mailto:/) ) 
       {
         return `<a ${sid} href="${val}"> ${this.decodeURI(val)} </a>`;

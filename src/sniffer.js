@@ -988,8 +988,11 @@
             }
         
             Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-                if (request.property == "doc_data")
+                if (request.property == "req_doc_data") {
                     request_doc_data();
+                    sendResponse({ping:1});
+                    return;
+                 }
                 else if (request.property == "open_tab")
                     request_open_tab(request.url, sender);
                 else if (request.property == "super_links_data")
