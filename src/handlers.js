@@ -365,8 +365,15 @@ class Handle_JSON {
     return this.s_id+this.id;
   }
 
-  encodeURI(v) {
-    return encodeURIComponent(v).replace(this.rep1,'%28').replace(this.rep2,'%29');
+
+  check_pred(val) 
+  {
+    if ( val.match(/^http(s)?:\/\//) ) {
+      val = "<"+val+">";
+    } else {
+      val = ':'+fixedEncodeURIComponent(val);
+    }
+    return val;
   }
 
   str2obj_val(s) {
@@ -387,28 +394,29 @@ class Handle_JSON {
     if (o === null )
       return; // ignore
 
+    var pred = this.check_pred(p);
     var xsd = 'http://www.w3.org/2001/XMLSchema';
     var obj_type = `${xsd}#string`;
 
     if (typeof o === 'number') {
       if (o % 1 === 0) {
-        b.push(`${subj} :${this.encodeURI(p)} "${o}"^^<${xsd}#int> .`);
+        b.push(`${subj} ${pred} "${o}"^^<${xsd}#int> .`);
         obj_type = `${xsd}#int`;
       }
       else {
-        b.push(`${subj} :${this.encodeURI(p)} "${o}"^^<${xsd}#double> .`);
+        b.push(`${subj} ${pred} "${o}"^^<${xsd}#double> .`);
         obj_type = `${xsd}#double`;
       }
     } else if (typeof o === 'string') {
-      b.push(`${subj} :${this.encodeURI(p)} ${this.str2obj_val(o)} .`);
+      b.push(`${subj} ${pred} ${this.str2obj_val(o)} .`);
     } else if (typeof o === 'boolean') {
-      b.push(`${subj} :${this.encodeURI(p)} "${o}"^^<${xsd}#boolean> .`);
+      b.push(`${subj} ${pred} "${o}"^^<${xsd}#boolean> .`);
       obj_type = `${xsd}#boolean`;
     } else {
-      b.push(`${subj} :${this.encodeURI(p)} ${this.str2obj_val(o)} .`);
+      b.push(`${subj} ${pred} ${this.str2obj_val(o)} .`);
     }
 
-    this.jprops[this.encodeURI(p)] = obj_type;
+    this.jprops[pred] = obj_type;
   }
 
   handle_arr(b, subj, p, o) 
@@ -418,7 +426,7 @@ class Handle_JSON {
 
     if (typeof o === 'object') {
       var s = this.gen_subj();
-      b.push(`${subj} :${this.encodeURI(p)} ${s} .`);
+      b.push(`${subj} ${this.check_pred(p)} ${s} .`);
       this.handle_obj(b, s, o);
     } else {
       this.handle_simple(b, subj, p, o);
@@ -449,7 +457,7 @@ class Handle_JSON {
             }
           } else if (v!== null) {
             var s = this.gen_subj();
-            b.push(`${subj} :${this.encodeURI(p)} ${s} .`);
+            b.push(`${subj} ${this.check_pred(p)} ${s} .`);
             this.handle_obj(b, s, v);
           }
         } else {
@@ -494,7 +502,7 @@ class Handle_JSON {
             var p = lst[i];
             var p_type = this.jprops[p];
             buf.push(`[ a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> ;
-                      <http://schema.org/name> :${p} ;
+                      <http://schema.org/name> ${p} ;
                       <http://www.w3.org/2000/01/rdf-schema#range> <${p_type}> ;
                       <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.w3.org/2002/07/owl#Thing> ] .`);
           }
@@ -977,7 +985,7 @@ class Handle_CSV {
         var rep2 = /\)/g 
 
         for (var i=0; i < col.length; i++) {
-          col[i] = encodeURIComponent(col[i]).replace(rep1,'%28').replace(rep2,'%29');
+          col[i] = fixedEncodeURIComponent(col[i]);
           ttl += ':'+col[i]+' rdf:domain :this .\n';
           ttl += ':'+col[i]+' rdf:range xsd:'+col_type[i]+' .\n';
           ttl += ':'+col[i]+' a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .\n';
