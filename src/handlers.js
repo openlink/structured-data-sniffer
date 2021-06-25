@@ -371,7 +371,6 @@ class Handle_JSONLD {
 class Handle_JSON {
   constructor(make_ttl) 
   {
-//    this.s_id = '_:s'+Date.now().toString(16)+'_';
     this.s_id = ':this';
     this.id = 0;
     this.start_id = 0;
@@ -964,44 +963,100 @@ class Handle_CSV {
 
         var col = res.data[0];
         var col_type = [];
+        var found = 0;
+
+        for (var i=0; i < col.length; i++){
+          var lst = col[i].split(':');
+          if (lst.length > 1) {
+            col[i] = lst.length > 2 ? lst[2] : lst[0];
+            found++;
+            switch(lst[1]) {
+              case 'int':
+                col_type[i] = 'integer';
+                break;
+              case 'long':
+                col_type[i] = 'long';
+                break;
+              case 'float':
+                col_type[i] = 'float';
+                break;
+              case 'double':
+                col_type[i] = 'double';
+                break;
+              case 'boolean':
+                col_type[i] = 'boolean';
+                break;
+              case 'byte':
+                col_type[i] = 'byte';
+                break;
+              case 'short':
+                col_type[i] = 'short';
+                break;
+              case 'datetime':
+                col_type[i] = 'dateTime';
+                break;
+              case 'date':
+                col_type[i] = 'date';
+                break;
+              case 'time':
+                col_type[i] = 'time';
+                break;
+              case 'decimal':
+                col_type[i] = 'decimal';
+                break;
+              case 'uuid':
+              case 'string': 
+              default:
+                col_type[i] = 'string';
+                break;
+            }
+          } else {
+            col_type[i] = 'string';
+          }
+        }  
+        if (!found) {
+          col_type = [];
+        }
+
         if (res.data.length > 1) {
-          for (var i=0; i < res.data[1].length; i++) {
-            var v = res.data[1][i];
-            if (typeof v === 'number') {
-              var is_int = 1;
-              var v_type = 'integer';
-              for(var r=1; r < res.data.length; r++) {
-                v = res.data[r][i];
-                if (v) {
-                  if (typeof v === 'number') {
-                    if (is_int == 1 && (v % 1) !== 0) {
-                      is_int = 0;
-                      v_type = 'decimal;'
+          if (col_type.length === 0)
+            for (var i=0; i < res.data[1].length; i++) {
+              var v = res.data[1][i];
+              if (typeof v === 'number') {
+                var is_int = 1;
+                var v_type = 'integer';
+                for(var r=1; r < res.data.length; r++) {
+                  v = res.data[r][i];
+                  if (v) {
+                    if (typeof v === 'number') {
+                      if (is_int == 1 && (v % 1) !== 0) {
+                        is_int = 0;
+                        v_type = 'decimal;'
+                      }
+                    } 
+                    else {
+                      is_int = -1;
+                      v_type = 'string';
+                      break;
                     }
-                  } 
-                  else {
-                    is_int = -1;
+
+                  } else {
                     v_type = 'string';
                     break;
                   }
-
-                } else {
-                  v_type = 'string';
-                  break;
                 }
-              }
-              col_type.push(v_type);
-            } else if (typeof v === 'boolean') {
-              col_type.push('boolean'); 
-            } else if (typeof v === 'string') {
-              if (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('mailto:') || v.startsWith('urn:') || v.startsWith('../'))
-                col_type.push('anyURI');
-              else
+                col_type.push(v_type);
+              } else if (typeof v === 'boolean') {
+                col_type.push('boolean'); 
+              } else if (typeof v === 'string') {
+                if (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('mailto:') || v.startsWith('urn:') || v.startsWith('../'))
+                  col_type.push('anyURI');
+                else
+                  col_type.push('string');
+              } else {
                 col_type.push('string');
-            } else {
-              col_type.push('string');
+              }
             }
-          }
 
         }
 
