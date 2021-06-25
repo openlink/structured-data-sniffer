@@ -150,11 +150,11 @@ class SPARQL_Upload {
 
 
 class SuperLinks {
-  constructor(url, tab, messages)
+  constructor(url, tabId, messages)
   {
     this.oidc = new OidcWeb();
     this.doc_url = url;
-    this.tab = tab;
+    this.tabId = tabId;
     this.messages = messages;
     this.state = 'init';
     this.ss_idp = 'https://linkeddata.uriburner.com';
@@ -272,7 +272,7 @@ class SuperLinks {
         this.messages.snackbar_show("Sponge error:"+e.statusCode,"Trying Relogin and execute sponge again"); 
         this.check_login(true); // Browser.openTab(REDIR_URL);
       } else {
-        this.messages.snackbar_show("Sponge error:"+e.toString, null); 
+        this.messages.snackbar_show("Sponge error:"+e.toString(), null); 
       }
       console.log(e);
     }
@@ -375,7 +375,7 @@ class SuperLinks {
         this.messages.snackbar_show("Fetch SuperLinks error:"+e.statusCode,"Trying Relogin and call SupeLinks again"); 
         this.check_login(true); // Browser.openTab(REDIR_URL);
       } else {
-        this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, e.toString);
+        this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, e.toString());
       }
       return null;
     } finally {

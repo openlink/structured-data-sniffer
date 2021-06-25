@@ -79,8 +79,12 @@
 }
 
 
-
-a.super_link_mark {
+a.super_link_mark,
+a:link.super_link_mark,
+a:active.superlink,
+a:visited.superlink,
+.super_link_mark
+{
   color: green;
   background: yellow;
 }
