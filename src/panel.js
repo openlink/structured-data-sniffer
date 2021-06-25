@@ -647,7 +647,8 @@ async function check_Turtle_Nano(val)
       try {
         var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
         var ret = await handler.parse_nano(val.d.ttl_nano.text, gData.baseURL);
-      
+
+        val.d.ttl_nano.text = ret.srcData;
         gData.ttl_nano.ttl_text = val.d.ttl_nano.text;
 
         if (ret.errors.length>0)
