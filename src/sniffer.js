@@ -34,7 +34,7 @@
     var nano = {ttl:null, jsonld:null, rdf:null, json:null, csv:null};
     var data_found = false;
 
-    var ttl_nano_pattern = /(## (Nanotation|Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle) +(End|Stop) ##)(.*)/gmi;
+    var ttl_nano_pattern = /(## (Nanotation|Turtle|RDF-Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
     var jsonld_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
     var json_nano_pattern = /(## JSON +Start ##)((.|\n|\r)*?)((## JSON +(End|Stop) ##))(.*)/gmi;
     var csv_nano_pattern = /(## CSV +Start ##)((.|\n|\r)*?)((## CSV +(End|Stop) ##))(.*)/gmi;
@@ -187,7 +187,7 @@
                 var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
                 var s_split = txt.split(eoln);
                 var s_doc = "";
-                var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/i;
+                var p1 = /## +(Nanotation|Turtle|RDF-Turtle) +(Start|End|Stop) *##/i;
                 var p2 = /^ *#/;
                 var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/i;
                 var p4 = /## +(RDF(\/|-)XML) +(Start|End|Stop) *##/i;

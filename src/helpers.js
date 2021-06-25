@@ -18,13 +18,143 @@
  *
  */
 
+class SPARQL_Upload {
+  constructor(tab, messages, req)
+  {
+    this.data = req.data;
+    this.sparql_ep = req.sparql_ep;
+    this.baseURI = req.baseURI;
+    this.sparql_graph = req.sparql_graph;
+    this.sparql_check = req.sparql_check;
+
+    this.tab = tab;
+    this.messages = messages;
+    this.state = 'init';
+    this.oidc = new OidcWeb();
+    var u = new URL(this.sparql_ep);
+    this.idp_url = u.origin;
+
+    this.save2sparql = new Save2Sparql(this.sparql_ep, this.sparql_graph, this.baseURI, this.oidc, true, this.messages);
+  }
+
+
+  async check_login(relogin)
+  {
+    try {
+      this.messages.throbber_show("&nbsp;Initializing...");
+
+      if (relogin) 
+      {
+        await this.oidc.logout();
+        this.state = 'login';
+        this.oidc.login2(this.idp_url);
+        return false;
+      } 
+      else 
+      {
+        await this.oidc.checkSession();
+        if (this.oidc.webid) {
+          if (!this.oidc.isSessionForIdp(this.idp_url))
+            await this.oidc.logout();
+        }
+        if (!this.oidc.webid) {
+          this.state = 'login';
+          this.oidc.login2(this.idp_url);
+          return false;
+        }
+      }
+      return true;
+    } finally {
+      this.messages.throbber_hide();
+    }
+  }
+
+  
+  async logout()
+  {
+    await this.oidc.logout();
+  }
+
+  
+  async reexec()
+  {
+    if (this.state === 'init') {
+      var rc = await slinks.check_login();
+      if (rc) {
+        return await this.mexec();
+      }
+    } 
+    else if (this.state === 'login' || this.state === 'query') 
+    {
+      return await this.mexec();
+    } 
+    return false;
+  }
+
+
+  async mexec()
+  {
+    this.state = `query`;
+
+    var handler = new Convert_Turtle();
+    try {
+      for(var v of this.data) {
+        this.messages.throbber_show('&nbsp;Preparing&nbsp;data...');
+
+        if (v.error.length > 0) {
+          
+          this.messages.snackbar_show('Unable prepare data:' +v.error);
+
+        } else if (v.txt.length > 0) {
+          
+          var ttl_data = await handler.prepare_query(v.txt, this.baseURI);
+          for(var i=0; i < ttl_data.length; i++) {
+
+            var ret = await this.save2sparql.exec_sparql(ttl_data[i].prefixes, ttl_data[i].triples);
+
+            this.messages.throbber_hide();
+
+            if (!ret.rc) {
+              if (ret.status === 401 || ret.status === 403) {
+                 this.logout();
+                 this.check_login(true); // Browser.openTab(REDIR_URL);
+                 return false;
+
+              } else {
+                 this.messages.snackbar_show('Unable to save:' +ret.error);
+                 this.state = 'init';
+                 return false;
+              }
+            }
+          }
+
+        }
+
+      }
+      if (this.sparql_check) {
+        if (this.tab)
+          Browser.api.tabs.create({'url':this.sparql_check, 'index': this.tab.index+1});
+        else
+          Browser.api.tabs.create({'url':this.sparql_check});
+      }
+      
+    } finally {
+      this.messages.throbber_hide();
+    }
+  
+    return true;
+  }
+
+}
+
+
 
 class SuperLinks {
-  constructor(url, tabId, messages)
+  constructor(url, tab, messages)
   {
     this.oidc = new OidcWeb();
     this.doc_url = url;
-    this.tabId = tabId;
+    this.tab = tab;
     this.messages = messages;
     this.state = 'init';
     this.ss_idp = 'https://linkeddata.uriburner.com';
@@ -300,7 +430,7 @@ class SuperLinks {
       else
          data = await this.exec_super_links_query(i+1);
 
-      if (this.state === 'login')
+      if (this.state === 'login' || this.state === 'init')
         break;
 
       if (data) {

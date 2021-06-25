@@ -1223,8 +1223,13 @@ async function save_data(action, fname, fmt, callback)
   {
     var sparqlendpoint = $('#save-sparql-endpoint').val().trim();
     var sparql_graph = $('#save-sparql-graph').val().trim();
-    var save_lst = [];
-    var rc = false;
+    var exec_cmd = { cmd:'actionSPARQL_Upload', 
+                     baseURI: gData.baseURL,
+                     data:[], 
+                     sparql_ep:sparqlendpoint,
+                     sparql_graph, 
+                     sparql_check:null
+                   };
     
     fmt = "ttl";
 
@@ -1234,50 +1239,18 @@ async function save_data(action, fname, fmt, callback)
     }
     
     for(var v of gData.tabs) {
-      if (DOM.qSel(`${v}-chk`).checked)
-        save_lst.push(v);
-    }
-
-    var saver = new Save2Sparql(sparqlendpoint, sparql_graph, gData.baseURL, gOidc);
-    var rc = await saver.check_login();
-    if (!rc)
-      return;
-
-    for (var _tab of save_lst) 
-    {
-      var dt = await prepare_data(true, _tab, fmt);
-      if (dt && dt.error.length > 0) {
-        showInfo(dt.error);
-      }
-      else if (dt && dt.txt.length > 0) 
-      {
-        var ret = await saver.upload_to_sparql(dt);
-        if (!ret.rc) {
-          if (ret.status === 401 || ret.status === 403) {
-            var rc = await saver.check_login(true);
-            if (!rc)
-              return;
-          } 
-          else {
-            showInfo('Unable to save:' +ret.error);
-            return;
-          }
-        } 
-        else {
-          rc = true;
-        }
+      if (DOM.qSel(`${v}-chk`).checked) {
+        var dt = await prepare_data(true, v, fmt);
+        if (dt)
+          exec_cmd.data.push(dt);
       }
     }
 
-    if (rc && document.querySelector('#save-sparql-check-res').checked) {
-      var _url = (new Settings()).createSparqlUrl(sparql_graph, sparqlendpoint);
-      var tabs = await getCurTab();
-    
-      if (tabs.length > 0) 
-        Browser.api.tabs.create({'url':_url, 'index': tabs[0].index+1});
-      else
-        Browser.api.tabs.create({'url':_url});
+    if (document.querySelector('#save-sparql-check-res').checked) {
+      exec_cmd.sparql_check = (new Settings()).createSparqlUrl(sparql_graph, sparqlendpoint);
     }
+
+    Browser.api.runtime.sendMessage(exec_cmd);
 
   } 
   else 

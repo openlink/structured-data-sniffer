@@ -283,7 +283,7 @@ class Rest_Cons {
 
 //====== Upload data to SPARQL server
 class Save2Sparql {
-  constructor(sparqlendpoint, sparql_graph, baseURI, oidc)
+  constructor(sparqlendpoint, sparql_graph, baseURI, oidc, background, msg)
   {
     this.sparqlendpoint = sparqlendpoint;
     this.sparql_graph = sparql_graph;
@@ -291,6 +291,23 @@ class Save2Sparql {
     this.oidc = oidc
     var u = new URL(sparqlendpoint);
     this.idp_url = u.origin;
+    this.background = background;
+    this.msg = msg;
+    if (background && msg)
+      this.msg = msg
+    else 
+      this.msg =
+        {
+         throbber_show: function (txt) {
+            show_throbber(txt);
+         },
+         throbber_hide: function () {
+            hide_throbber();
+         },
+         snackbar_show: function (msg1, msg2) {
+            this.show_message(msg1, msg2)
+         },
+        };
   }
 
   show_message(s1, s2)
@@ -344,7 +361,7 @@ class Save2Sparql {
 
     var handler = new Convert_Turtle();
     try {
-      show_throbber('&nbsp;Preparing&nbsp;data...');
+      this.msg.throbber_show('&nbsp;Preparing&nbsp;data...');
       
       var ttl_data = await handler.prepare_query(data.txt, this.baseURI);
 
@@ -356,7 +373,7 @@ class Save2Sparql {
           return ret;
       }
     } finally {
-      hide_throbber();
+      this.msg.throbber_hide();
     }
   
     return {rc:true};
@@ -395,7 +412,7 @@ class Save2Sparql {
     for(var i=0; i < triples.length; i++) 
     {
       if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_count) {
-        show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+        this.msg.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
         var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
         if (!ret.rc)
@@ -414,7 +431,7 @@ class Save2Sparql {
 
     if (count > 0) 
     {
-      show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+      this.msg.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
       var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
       if (!ret.rc)

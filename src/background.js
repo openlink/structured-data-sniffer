@@ -467,6 +467,12 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
       if (curTab.length > 0)
         actionSuperLinks(null, curTab[0]);
     }
+    else if (request.cmd === "actionSPARQL_Upload")
+    {
+      var curTab = await getCurTab();
+      if (curTab.length > 0)
+        actionSPARQL_Upload(null, curTab[0], request);
+    }
 /**
     else
     {
@@ -494,6 +500,7 @@ if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
 }
 
 var gSuperLinks = null;
+var gSPARQL_Upload = null;
 
 async function actionSuperLinks(info, tab) {
   var msg = 
@@ -520,6 +527,34 @@ async function actionSuperLinks(info, tab) {
       gSuperLInks = null;
   }
 }
+
+//actionSPARQL_Upload(null, curTab[0], request.data, request.sparql_ep);
+async function actionSPARQL_Upload(info, tab, request) {
+  var msg = 
+       { 
+         throbber_show: function (txt) {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_show', message: txt });
+         },
+         throbber_hide: function () {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_hide' });
+         },
+         snackbar_show: function (msg1, msg2) {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_snackbar', msg1, msg2 });
+         },
+       }
+
+  var sparql = new SPARQL_Upload(tab, msg, request);
+  gSPARQL_Upload = sparql;
+
+  var rc = await sparql.check_login();
+
+  if (rc) {
+    rc = await sparql.mexec();
+    if (rc)
+      gSPARQL_Upload = null;
+  }
+}
+
 
 
 
@@ -555,6 +590,16 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
             gSuperLInks = null;
         } else {
           gSuperLInks = null;
+        }
+      }
+      else if (gSPARQL_Upload) {
+        var sparql = gSPARQL_Upload;
+        if (sparql && sparql.state) {
+          var rc = await sparql.reexec();
+          if (rc)
+            gSPARQL_Upload = null;
+        } else {
+          gSPARQL_Upload = null;
         }
       }
 
