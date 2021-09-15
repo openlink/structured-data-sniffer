@@ -663,6 +663,7 @@ class MicrodataJSON_Converter {
   transform(json, baseURI)
   {
     this.baseURI = baseURI;
+    this.baseURL = new URL(baseURI);
     var self = this;
     var out = [];
 
@@ -709,19 +710,21 @@ class MicrodataJSON_Converter {
 
     //try get current NS
     if (item.type!==undefined) {
-      id_type = item.type;
+      id_type = fix_url(String(item.type));
       var namespace = new Namespace();
       if ($.isArray(item.type)) {
         for(var i=0; i<item.type.length; i++) {
-          id_ns = namespace.has_known_ns(String(item.type[i]));
+          var v_type = fix_url(String(item.type[i]));
+          id_ns = namespace.has_known_ns(v_type);
           if (id_ns)
             break;
         }
         if (!id_ns && item.type.length > 0)
-          id_type = String(item.type[0]);
+          id_type = fix_url(String(item.type[0]));
       } else {
-        id_ns = namespace.has_known_ns(String(item.type));
-        id_type = String(item.type);
+        var v_type = fix_url(String(item.type));
+        id_ns = namespace.has_known_ns(fix_url(v_type));
+        id_type = v_type;
       }
     }
 
@@ -732,41 +735,52 @@ class MicrodataJSON_Converter {
        }
        else if (key==="id")
        {
-         if (val.indexOf(':') === -1)
-           val = ":"+val;
-         out["s"]=val;
-         retVal.id = val;
+         var v_val = fix_url(val);
+         if (v_val.indexOf(':') === -1)
+           v_val = ":"+v_val;
+         out["s"]=v_val;
+         retVal.id = v_val;
        }
        else if (key==="type")
        {
          if ($.isArray(val)) {
            for(var i=0; i<val.length; i++) {
-             if (val[i].indexOf(':') === -1)
-               val[i] = { "iri" : ":"+val[i], typeid:1};
+             var v_val = fix_url(val[i]);
+             if (v_val.indexOf(':') === -1)
+               val[i] = { "iri" : ":"+v_val, typeid:1};
              else
-               val[i] = { "iri" : val[i], typeid:1};
+               val[i] = { "iri" : v_val, typeid:1};
            }
          }
          else {
-           if (val.indexOf(':') === -1)
-               val = [{ "iri" : ":"+val, typeid:1}];
+           var v_val = fix_url(val);
+           if (v_val.indexOf(':') === -1)
+               val = [{ "iri" : ":"+v_val, typeid:1}];
            else
-               val = [{ "iri" : val, typeid:1}];
+               val = [{ "iri" : v_val, typeid:1}];
          }
          props[self.RDF_TYPE] = val;
        }
        else
        {
-         if (key.indexOf(':') === -1)
-            key = ":"+key;
+         var v_key = fix_url(key);
+         if (v_key.indexOf(':') === -1)
+            v_key = ":"+v_key;
 
          if ($.isArray(val))
-           props[key]=val;
+           props[v_key]=val;
          else
-           props[key]=[val];
+           props[v_key]=[val];
        }
      });
 
+      function fix_url(v) 
+      {
+        if (v && v.length > 1 && v.startsWith('//') && v.indexOf(':') === -1)
+          return self.baseURL.protocol + v;
+        else
+          return v;
+      }
 
       function expand_sub_item(parent, val)
       {
@@ -819,7 +833,7 @@ class MicrodataJSON_Converter {
             if (last==='#' || last==='/') {
               key = id_type + key;
             } else {
-              var u = new URL(id_type);
+              var u = new URL(fix_url(id_type));
               if (u.hash) {
                 u.hash = key;
                 key = u.toString();

@@ -252,7 +252,7 @@ function load_data_from_url(loc)
     else if (type==="csv")
       hdr_accept = 'text/csv,application/csv;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
 
-/***      
+/****      
     var options = {
           headers: {
             'Accept': hdr_accept,
@@ -276,7 +276,8 @@ function load_data_from_url(loc)
         alert(msg);
         show_Data(msg, '');
     })
-***/
+****/
+
     jQuery.ajaxSetup({
        dataType: "text",
        headers:{'Accept': hdr_accept,
