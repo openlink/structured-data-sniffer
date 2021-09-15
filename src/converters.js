@@ -154,6 +154,12 @@ class Convert_Turtle{
             }
             else {
               var context = prefixes;
+              var base = context[""];
+
+              if (base) {
+                context[""] = undefined;
+                //context["@base"] = base;
+              }
 
               store.end(async function (error, ttl_text) {
 
@@ -175,7 +181,6 @@ class Convert_Turtle{
                   }
 
                 } catch (ex) {
-//??                  self.skipped_error.push(error+(error.details?JSON.stringify(error.details,undefined, 2):""));
                   self.skipped_error.push(ex.toString());
                   resolve('');
                 }
