@@ -503,6 +503,9 @@ var gSuperLinks = null;
 var gSPARQL_Upload = null;
 
 async function actionSuperLinks(info, tab) {
+  gSuperLinks = null;
+  gSPARQL_Upload = null;
+
   var msg = 
        { 
          throbber_show: function (txt) {
@@ -530,6 +533,9 @@ async function actionSuperLinks(info, tab) {
 
 //actionSPARQL_Upload(null, curTab[0], request.data, request.sparql_ep);
 async function actionSPARQL_Upload(info, tab, request) {
+  gSuperLinks = null;
+  gSPARQL_Upload = null;
+
   var msg = 
        { 
          throbber_show: function (txt) {
