@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -29,33 +29,40 @@ function sanitize_str(str) {
 }
 
 
-Rest_Cons = function () {
-  this.callback = null;
-  this.yasqe = {
+class Rest_Cons {
+  constructor()
+  {
+    this.callback = null;
+    this.yasqe = {
         obj : null,
         val : null,
         init: false,
       };
-  this.fix_restURI = null;
-};
+    this.fix_restURI = null;
+    this.doc_url;
+  }
 
 
-Rest_Cons.prototype = {
-
-  show : function() {
-    if (this.yasqe.obj && this.yasqe.val && !this.yasqe.init) {
-      this.yasqe.obj.setValue(this.yasqe.val+"\n");
-      this.yasqe.init = true;
-    }
-  },
-
-  exec : function(doc_URL, tab_index) {  // rest_exec
-    if (!doc_URL) {
+  update() 
+  {
+    if (!this.doc_url) {
       return;
     }
 
-    var _url = (this.fix_restURI)? this.fix_restURI : new URL(doc_URL);
+    var _url = new URL(this.doc_url);
     _url.search = "";
+    _url.protocol = DOM.iSel("rest_scheme").value;
+    var v = DOM.iSel("rest_auth").value;
+    var vlist = v.split('@');
+    if (vlist.length == 1) {
+      _url.host = vlist[0];
+    } else {
+      _url.username = vlist[0];
+      _url.host = vlist[1];
+    }
+
+    _url.pathname = DOM.iSel("rest_path").value;
+    _url.hash = DOM.iSel("rest_hash").value;
 
     if (this.yasqe.obj) {
       var val = this.yasqe.obj.getValue();
@@ -80,16 +87,39 @@ Rest_Cons.prototype = {
       _url = _url.replace(/%23\/editor\?/g, "#/editor\?");
     }
 
+    DOM.iSel("rest_url").value = _url;
+  }
+
+
+  show() 
+  {
+    if (this.yasqe.obj && this.yasqe.val && !this.yasqe.init) {
+      this.yasqe.obj.setValue(this.yasqe.val+"\n");
+      this.yasqe.init = true;
+    }
+  }
+
+  exec(tab_index)
+  {
+    if (!this.doc_url) {
+      return;
+    }
+
+    this.update();
+    var _url = DOM.iSel("rest_url").value;
+
     if (tab_index) {
       Browser.openTab(_url, tab_index);
     } else {
       Browser.api.tabs.create({url:_url});
     }
-  },
+  }
 
-  del_row : function(e) {  // rest_del
+  del_row(e)
+  {
     //get the row we clicked on
-    var row = $(this).parents('tr:first');
+    var row = $(e.currentTarget).parents('tr:first');
+    var self = this;
 
     $('#alert-msg').prop('textContent','Delete row ?');
     $('#alert-dlg').dialog({
@@ -98,7 +128,8 @@ Rest_Cons.prototype = {
       modal: true,
       buttons: {
         'Yes': function() {
-            $(row).remove();
+            row.remove();
+            self.update()
             $(this).dialog( 'destroy' );
         },
         'No': function() {
@@ -107,79 +138,91 @@ Rest_Cons.prototype = {
       }
     });
     return true;
-  },
+  }
 
   
-  create_row : function() {  // createRestRow
-    return `<tr>
-              <td width="12px"><button id="rest_del" class="rest_del">Del</button></td>
-              <td><input id="h" style="WIDTH: 100%" value=""></td>
-              <td><input id="v" style="WIDTH: 100%" value=""></td>
-            </tr>`;
-  },
+  create_row(h,v)
+  {
+    return `<td width="12px"><button id="rest_del" class="rest_del">Del</button></td>
+            <td><input id="h" style="WIDTH: 100%" value="${h}"></td>
+            <td><textarea id="v" style="WIDTH: 100%; height:3em">${v}</textarea></td>`;
+  }
 
 
-  add_empty_row : function() { //addRestEmpty
+  add_empty_row() 
+  {
     this.add_row('','');
-  },
+  }
 
-
-  add_row : function(h,v) {     //addRestParam
-    $('#restData').append(this.create_row());
-    $('#restData tr:last-child #h').val(h);
-    $('#restData tr:last-child #v').val(v);
-
+  add_row(h,v) 
+  {
+    var tbody = DOM.qSel("#rest_params tbody");
+    var r = tbody.insertRow(-1);
+    r.innerHTML = this.create_row(h, v);
 
     $('.rest_del').button({
       icons: { primary: 'ui-icon-minusthick' },
       text: false
     });
-    $('.rest_del').click(this.del_row);
-  },
+    r.querySelector(".rest_del").onclick = (e) => { this.del_row(e) }
+    r.querySelector("#h").oninput = (e) => { this.update() }
+    r.querySelector("#v").oninput = (e) => { this.update() }
+  }
 
 
-  clear : function() { //delRest
+  clear() 
+  {
     var data = $('#users_data>tr');
     var data = $('#restData>tr');
     for(var i=0; i < data.length; i++) {
       $(data[i]).remove();
     }
-  },
+  }
 
-  load : function(doc_url) {
+  load(doc_url) 
+  {
     this.yasqe.val = null;
     this.fix_restURI = null;
+    this.doc_url = doc_url;
+    $("#rest_query").hide();
 
     this.clear();
 
-    if (!doc_url) {
+    if (!this.doc_url) {
       this.add_empty_row();
       return;
     }
 
-    var url = new URL(doc_url);
+//??--    this.doc_url = "https://john.doe@www.example.com:123/forum/questions/?tag=networking&order=newest#top";
+    DOM.iSel("rest_url").value = this.doc_url;
+
+    var url = new URL(this.doc_url);
     var hash = url.hash;
     // check for RDF Editor URL
     if (hash.lastIndexOf("#/editor?", 0) === 0) {
-      var tmp_url = doc_url.replace(/#\/editor\?/g, "%23/editor?");
+      var tmp_url = this.doc_url.replace(/#\/editor\?/g, "%23/editor?");
       this.fix_restURI = url = new URL(tmp_url);
     }
 
+
     var params = url.searchParams;
     var count = 0;
-
     for(var pair of params.entries()) {
       var key = pair[0];
       var val = pair[1];
       if (key === "query" || key === "qtxt") {
+        $("#rest_query").show();
         this.yasqe.val = val;
-        $("#query_id").val(key);
+        var n = DOM.iSel("query_id");
+        n.value = key;
+        n.oninput = (e) => { this.update() };
       }
       else {
         this.add_row(key, val);
       }
       count++;
     }
+
 
     if (count == 0) {
       this.add_empty_row();
@@ -189,206 +232,327 @@ Rest_Cons.prototype = {
       this.yasqe.obj.setValue(this.yasqe.val+"\n");
     }
     else {
-      this.yasqe.obj.setValue("\n");
+      if (this.yasqe.obj)
+        this.yasqe.obj.setValue("\n");
       $(".yasqe").hide();
     }
-  },
-
-}
 
 
-function putResource (_fetch, url, data, contentType, links, options = {}) 
-{
-  const DEFAULT_CONTENT_TYPE = 'text/html; charset=utf-8'
-  const _ffetch = _fetch || fetch;;
-  const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
+    url.search = "";
 
-  if (!url) {
-    return Promise.reject(new Error('Cannot PUT resource - missing url'))
+    var n = DOM.iSel("rest_scheme");
+    n.value = url.protocol;
+    n.oninput = (e) => { this.update() };
+
+    n = DOM.iSel("rest_auth");
+    n.value = url.username ? url.username+'@'+ url.host : url.host;
+    n.oninput = (e) => { this.update() };
+
+    n = DOM.iSel("rest_path");
+    n.value = url.pathname;
+    n.oninput = (e) => { this.update() };
+
+    n = DOM.iSel("rest_hash");
+    n.value = decodeURIComponent(url.hash);
+    n.oninput = (e) => { this.update() };
+
+    $('#rest_add').button({
+      icons: { primary: 'ui-icon-plusthick' },
+      text: false
+    });
+    
+    DOM.iSel("rest_add").onclick = (e) => { this.add_empty_row(); }
   }
 
-  options.method = 'PUT'
 
-  options.body = data
-
-  if (!options.noCredentials) {
-    options.credentials = 'include'
-  }
-
-  options.headers = options.headers || {}
-
-  options.headers['Content-Type'] = contentType || DEFAULT_CONTENT_TYPE
-
-  links = links
-    ? LDP_RESOURCE + ', ' + links
-    : LDP_RESOURCE
-
-  options.headers['Link'] = links
-
-  return _ffetch(url, options)
-
-    .then(response => {
-      if (!response.ok) {  // not a 2xx level response
-        let error = new Error('Error writing resource: ' +
-          response.status + ' ' + response.statusText)
-        error.status = response.status
-        error.response = response
-
-        throw error
-      }
-
-      return response
-    })
-}
-
-
-
-function getWebIdProfile(url) 
-{
-  var PIM = $rdf.Namespace("http://www.w3.org/ns/pim/space#");
-  var FOAF = $rdf.Namespace("http://xmlns.com/foaf/0.1/");
-  var LDP = $rdf.Namespace("http://www.w3.org/ns/ldp#");
-  var AS = $rdf.Namespace("http://www.w3.org/ns/activitystreams#");
-
-  var promise = new Promise(function(resolve, reject) {
-      // Load main profile
-      getGraph(url).then(
-          function(graph) {
-              // set WebID
-              var docURI = (url.indexOf('#') >= 0)?url.slice(0, url.indexOf('#')):url;
-              var webid = graph.any($rdf.sym(docURI), FOAF('primaryTopic'));
-
-              // find additional resources to load
-              var inbox = graph.statementsMatching(webid, LDP('inbox'), undefined);
-              var storage = graph.statementsMatching(webid, PIM('storage'), undefined);
-              var outbox = graph.statementsMatching(webid, AS('outbox'), undefined);
-
-              var profile = {webid};
-              if (inbox && inbox.length > 0)
-                profile.storage = inbox[0].object.value;
-              else if (storage && storage.length > 0) 
-                profile.storage = storage[0].object.value;
-              else if (outbox && outbox.length > 0)
-                profile.storage = outbox[0].object.value;
-
-              return resolve(profile);
-          }
-      )
-      .catch(
-          function(err) {
-              reject(err);
-          }
-      );
-  });
-
-  return promise;
-}
-
-function getGraph(url)
-{
-  const timeout = 5000;
-
-  var promise = new Promise(function(resolve, reject) {
-      var g = new $rdf.graph();
-      var f = new $rdf.fetcher(g, timeout);
-
-      var docURI = (url.indexOf('#') >= 0)?url.slice(0, url.indexOf('#')):url;
-      f.nowOrWhenFetched(docURI,undefined,function(ok, body, xhr) {
-          if (!ok) {
-              reject({status: xhr.status, xhr: xhr});
-          } else {
-              resolve(g);
-          }
-      });
-  });
-
-  return promise;
-}
-
-
-const { OIDCWebClient } = OIDC;
-const oidc_session = 'oidc.session';
-const oidc_clients = 'oidc.clients.';
-
-OidcWeb = function(data) {
-  this.webid = null;
-  this.storage = null;
-  this.session = null;
-  this.fetch = fetch;
-
-  const options = { solid: true };
-  this.authClient = new OIDCWebClient(options);
-  this.login_url = 'https://openlinksoftware.github.io/oidc-web/login.html#relogin';
-}
-
-
-OidcWeb.prototype = {
-  logout : async function()
+  parse_params(search)
   {
-    if (this.webid) {
-      var idp = '';
-      if (this.session) {
-        idp = this.session.issuer;
-        var key = oidc_clients+idp;
-        var rec = await this.localStore_get(key);
-        if (rec && rec[key])
-          localStorage.setItem(oidc_clients+idp, rec[key]);
-
-        await this.authClient.logout();
-      }
-      await localStore_remove(oidc_session);
-      await localStore_remove(oidc_clients+idp);
-      this.webid = null;
-      this.storage = null;
-      this.session = null;
-      this.fetch = fetch;
+    var params = [];
+    var s = search && search.length > 1 ? search.substring(1) : "";
+    var lst = s.split('&');
+    for(var v of lst) 
+    {
+       var lv = v.split('=');
+       params.push( [lv[0], decodeURIComponent(lv[1])] );
     }
-  },
+    return params;
+  }
+}
 
-  login: function() {
-     const width = 650;
-     const height = 400;
-     const left = window.screenX + (window.innerWidth - width) / 2;
-     const top = window.screenY + (window.innerHeight - height) / 2;
-     const settings = `width=${width},height=${height},left=${left},top=${top}`;
-     window.open(gOidc.login_url, 'Login', settings);
-  },
 
-  checkSession: async function() 
+
+//====== Upload data to SPARQL server
+class Save2Sparql {
+  constructor(sparqlendpoint, sparql_graph, baseURI, oidc, background, msg)
+  {
+    this.sparqlendpoint = sparqlendpoint;
+    this.sparql_graph = sparql_graph;
+    this.baseURI = baseURI;
+    this.oidc = oidc
+    var u = new URL(sparqlendpoint);
+    this.idp_url = u.origin;
+    this.background = background;
+    this.msg = msg;
+    if (background && msg)
+      this.msg = msg
+    else 
+      this.msg =
+        {
+         throbber_show: function (txt) {
+            show_throbber(txt);
+         },
+         throbber_hide: function () {
+            hide_throbber();
+         },
+         snackbar_show: function (msg1, msg2) {
+            this.show_message(msg1, msg2)
+         },
+        };
+  }
+
+  show_message(s1, s2)
+  {
+    if (s1) {
+      const tm = 15000;
+      var x = DOM.iSel("msg_snackbar");
+      if (x) {
+        DOM.qSel("#msg_snackbar #msg1").innerText = s1;
+        DOM.qSel("#msg_snackbar #msg2").innerText = s2 || '';
+        x.className = "show";
+        setTimeout(function(){ x.className = x.className.replace("show", ""); }, tm);
+      }
+    }
+  }
+
+  async check_login(relogin)
   {
     try {
-      var rec = await localStore_get(oidc_session);
-
-      if (rec && rec[oidc_session]) {
-        var session = rec[oidc_session];
-        localStorage.setItem(oidc_session, session);
-      } else
-        localStorage.removeItem(oidc_session);
-
-      var prev_webid = this.webid;
-
-      this.session = await this.authClient.currentSession()
-      this.webid = (this.session.hasCredentials()) ? this.session.idClaims.sub : null;
-      this.fetch = (this.webid) ? this.session.fetch : null;
-
-      if (prev_webid !== this.webid && this.webid) {
-        this.storage = (new URL(this.webid)).origin + '/';
-        var prof = await getWebIdProfile(this.webid);
-
-        if (prof.storage)
-          this.storage = prof.storage;
-        if (!this.storage.endsWith('/'))
-          this.storage += '/';
+      if (relogin) 
+      {
+        await this.oidc.logout();
+        showInfo('Login to '+this.idp_url+'\n and call "Upload to SPARQL endpoint" again.');
+        sleep(8000);
+        this.oidc.login(this.idp_url, 1);
+        return false;
+      } 
+      else 
+      {
+        await this.oidc.checkSession();
+        if (this.oidc.webid) {
+          if (!this.oidc.isSessionForIdp(this.idp_url))
+            await this.oidc.logout();
+        }
+        if (!this.oidc.webid) {
+          showInfo('Login to '+this.idp_url+'\n and call "Upload to SPARQL endpoint" again.');
+          sleep(8000);
+          this.oidc.login(this.idp_url, 1);
+          return false;
+        }
       }
-
-      if (!this.webid)
-        this.storage = '';
-
-    } catch(e) {
-      console.log(e);
+      return true;
+    } finally {
     }
   }
 
+  
+
+  async upload_to_sparql(data)
+  {
+
+    var handler = new Convert_Turtle();
+    try {
+      this.msg.throbber_show('&nbsp;Preparing&nbsp;data...');
+      
+      var ttl_data = await handler.prepare_query(data.txt, this.baseURI);
+
+      for(var i=0; i < ttl_data.length; i++) {
+
+        var ret = await this.exec_sparql(ttl_data[i].prefixes, ttl_data[i].triples);
+
+        if (!ret.rc)
+          return ret;
+      }
+    } finally {
+      this.msg.throbber_hide();
+    }
+  
+    return {rc:true};
+  }
+
+  async exec_sparql(prefixes, triples)
+  {
+    var pref = "";
+    var max_bytes = 32000;
+    var pref_len = 10;
+    var pref_sz;
+    var insert_cmd = this.sparql_graph.length > 1
+                 ? 'INSERT INTO GRAPH <' + this.sparql_graph + '> {\n'
+                 : 'INSERT DATA { \n';
+
+    pref += "base <"+this.baseURI+"> \n";
+    pref += "prefix : <#> \n";
+
+    prefixes = prefixes || {};
+    triples = triples || "";
+
+    pref_sz = pref.length;
+
+    for(var key in prefixes) {
+      var item = "prefix "+key+": <"+prefixes[key]+"> \n";
+      pref += item;
+      pref_len++;
+      pref_sz += item.length;
+    }
+  
+    var max_count = 1000 - pref_len;
+    var count = 0;
+    var data = [];
+    var qry_sz = pref_sz;
+    var z = 1;
+    for(var i=0; i < triples.length; i++) 
+    {
+      if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_count) {
+        this.msg.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+
+        var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
+        if (!ret.rc)
+          return ret;
+
+        count = 0;
+        data = [];
+        qry_sz = pref_sz;
+      }
+
+      data.push(triples[i]);
+      count++;
+      qry_sz += triples[i].length + 1;
+
+    }
+
+    if (count > 0) 
+    {
+      this.msg.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+
+      var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
+      if (!ret.rc)
+        return ret;
+    }
+
+    return {rc: true};
+  }
+
+
+  async send_sparql(query)
+  {
+    var contentType = "application/sparql-update;utf-8";
+    var ret;
+    var options = {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/sparql-update;utf-8'
+      },
+      credentials: 'include',
+      body: query
+    }
+
+    try {
+      ret = await this.oidc.fetch(this.sparqlendpoint, options);
+
+      if (!ret.ok) {
+        var message;
+        switch(ret.status) {
+          case 0:
+          case 405:
+            message = ''+ret.status +' this location is not writable'
+            break
+          case 401:
+          case 403:
+            message = ''+ret.status +' you do not have permission to write here'
+            break
+          case 406:
+            message = ''+ret.status +' enter a name for your resource'
+            break
+          default:
+            message = ''+ret.status +' '+ret.statusText;
+            break
+        }
+        return {rc:false, error: message, status: ret.status} ;
+      }
+    } catch (e) {
+      return {rc:false, error:e.toString(), status: e.statusCode };
+    }
+
+    return {rc: true};
+  }
+
+
 }
+
+
+
+function show_throbber(msg)
+{
+  DOM.qSel('.throbber_msg #throbber_msg_text').innerHTML = msg;
+  $(".throbber_msg").css("display","flex");
+  sleep(100);
+}
+
+function hide_throbber()
+{
+  $(".throbber_msg").css("display","none");
+}
+
+async function getCurWin()
+{
+  if (Browser.isChromeWebExt) {
+    return new Promise(function (resolve, reject) {
+      Browser.api.windows.getCurrent({}, (w) => {
+        resolve(w)
+      });
+    })
+  } else {
+    return Browser.api.windows.getCurrent({});
+  }
+}
+
+async function getCurTab()
+{
+  if (Browser.isChromeWebExt) {
+    return new Promise(function (resolve, reject) {
+      Browser.api.tabs.query({active:true, currentWindow:true}, (t) => {
+        resolve(t)
+      });
+    })
+  } else {
+    return Browser.api.tabs.query({active:true, currentWindow:true});
+  }
+}
+
+
+function fixedEncodeURIComponent (str) {
+  return encodeURIComponent(str).replace(/[!'()*&?#$,:@=;+\/]/g, function(c) {
+    return '%' + c.charCodeAt(0).toString(16);
+  });
+}
+
+
+function fetchWithTimeout(url, options, timeout) 
+{
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), timeout)
+    )
+  ]);
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+var DOM = {};
+DOM.qSel = (sel) => { return document.querySelector(sel); };
+DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
+DOM.iSel = (id) => { return document.getElementById(id); };
 
 

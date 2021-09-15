@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -23,89 +23,102 @@ var yasqe_slinks = null;
 var yasqe_srv = null;
 
 $(function(){
-	// Tabs
+  // Tabs
+  document.getElementById("c_year").innerText = new Date().getFullYear();
 
-	gPref = new Settings();
+  gPref = new Settings();
 
-	$("#revert-confirm").hide();
-	$("#users-edit").hide();
-	$('#users_add').click(addUsersEmpty);
-	$('#users_add').button({
-		icons: { primary: 'ui-icon-plusthick' },
-		text: false
-	});
+  $("#revert-confirm").hide();
+  $("#users-edit").hide();
+  $('#users_add').click(addUsersEmpty);
+  $('#users_add').button({
+	icons: { primary: 'ui-icon-plusthick' },
+	text: false
+  });
 
 
   $('#tabs').tabs({
-		activate: function( event, ui ) {
-			if (ui.newPanel[0].id == "tabs-2") {
-				var s = yasqe_srv.getValue();
-				yasqe_srv.setValue(s);
-			}
-			else if (ui.newPanel[0].id == "tabs-3") {
-        var s = yasqe_slinks.getValue();
-        yasqe_slinks.setValue(s);
-			}
-		}
+    activate: function( event, ui ) {
+	if (ui.newPanel[0].id == "tabs-2") {
+	   var s = yasqe_srv.getValue();
+	   yasqe_srv.setValue(s);
+	}
+	else if (ui.newPanel[0].id == "tabs-3") {
+           var s = yasqe_slinks.getValue();
+           yasqe_slinks.setValue(s);
+	}
+    }
   });
 
-	try{
-		yasqe_slinks = YASQE.fromTextArea(document.getElementById('super-links-query'), {
+  try{
+    yasqe_slinks = YASQE.fromTextArea(document.getElementById('super-links-query'), {
        lineNumbers: true,
-	     lineWrapping: false,
-	     sparql: { showQueryButton: false },
+      lineWrapping: false,
+            sparql: { showQueryButton: false },
        createShortLink : null,
        createShareLink : null,
 	     persistent: null,
-		});
-	  yasqe_slinks.setSize("100%", 480);
+    });
+    yasqe_slinks.setSize("100%", 480);
 
-	  yasqe_srv = YASQE.fromTextArea(document.getElementById('sparql-query'), {
+    yasqe_srv = YASQE.fromTextArea(document.getElementById('sparql-query'), {
 			lineNumbers: true,
 			lineWrapping: false,
 			sparql: { showQueryButton: false },
 			createShortLink : null,
 			createShareLink : null,
 			persistent: null,
-	  });
+    });
 
-	  yasqe_srv.setSize("100%", 420);
+    yasqe_srv.setSize("100%", 420);
   } catch(e) {
-		console.log(e);
+    console.log(e);
   }
 
-	loadPref();
+  try {
+    loadPref();
+  } catch(e) {
+    console.log(e);
+  }
 
-	$('#uiterm-mode').change(function() {
-		var cmd = $('#sparql-cmd option:selected').attr('id');
-		  yasqe_srv.setValue(createSparqlQuery(cmd));
-	});
+  $('#uiterm-mode').change(function() {
+      var cmd = $('#sparql-cmd option:selected').attr('id');
+      yasqe_srv.setValue(createSparqlQuery(cmd));
+  });
 
-	$('#import-srv').change(function() {
-			setTimeout(enableCtrls,200);
-	});
+  $('#import-srv').change(function() {
+	setTimeout(enableCtrls,200);
+  });
 
-	$('#sparql-cmd').change(function() {
-		var cmd = $('#sparql-cmd option:selected').attr('id');
-		 yasqe_srv.setValue(createSparqlQuery(cmd));
-	});
+  $('#sparql-cmd').change(function() {
+	var cmd = $('#sparql-cmd option:selected').attr('id');
+	 yasqe_srv.setValue(createSparqlQuery(cmd));
+  });
 
-	$('#OK_btn').click(savePref);
-	$('#Cancel_btn').click(closeOptions);
+  $('#chk_try_handle_all').change(changeHandleAll);
+  $('#OK_btn').click(savePref);
+  $('#Cancel_btn').click(closeOptions);
 
-	$('#import-set-def').click(setImportDefaults);
-	$('#rww-set-def').click(setRWWDefaults);
-	$('#sparql-set-def').click(setSparqlDefaults);
-	$('#super-links-set-def').click(setSuperLinksDefaults);
+  $('#import-set-def').click(setImportDefaults);
+  $('#rww-set-def').click(setRWWDefaults);
+  $('#sparql-set-def').click(setSparqlDefaults);
+  $('#super-links-set-def').click(setSuperLinksDefaults);
 
-	$('#call_edit_users').click(call_edit_users);
+  $('#call_edit_users').click(call_edit_users);
 
-	enableCtrls();
+  enableCtrls();
 
-	$('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
+  $('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
 
 });
 
+function changeHandleAll()
+{
+   var v = DOM.iSel('chk_try_handle_all').checked ? false : true;
+     $('#chk_try_handle_xml').prop('disabled', v);
+     $('#chk_try_handle_csv').prop('disabled', v);
+     $('#chk_try_handle_json').prop('disabled', v);
+}
 
 function closeOptions()
 {
@@ -128,9 +141,9 @@ function setImportDefaults()
       buttons: {
         "OK": function() {
 
-          $('#'+gPref.def_import_srv,'#import-srv').attr('selected','selected');
-          var h_url = createCmdImportURL(gPref.def_import_srv, gPref.def_import_url.trim());
-          $('#import-url').val(h_url);
+          DOM.qSel('#import-srv #'+gPref.def_import_srv).selected=true;
+          var h_url = gPref.createDefaultImportCmdFor(gPref.def_import_srv, gPref.def_import_url.trim());
+          DOM.iSel('import-url').value = h_url;
           enableCtrls();
 
           $(this).dialog( "close" );
@@ -151,8 +164,8 @@ function setRWWDefaults()
       buttons: {
         "OK": function() {
 
-          $('#rww-store-url').val("");
-          $('#rww-edit-url').val(gPref.def_rww_edit_url);
+          DOM.iSel('rww-store-url').value = "";
+          DOM.iSel('rww-edit-url').value = gPref.def_rww_edit_url;
 
           $(this).dialog( "close" );
         },
@@ -172,10 +185,9 @@ function setSparqlDefaults()
       buttons: {
         "OK": function() {
 
-          $('#'+gPref.def_sparql_cmd,'#sparql-cmd').attr('selected','selected');
-          $('#sparql-url').val(gPref.def_sparql_url);
-					yasqe_srv.setValue(createSparqlQuery(gPref.def_sparql_cmd));
-
+          DOM.qSel('#sparql-cmd #'+gPref.def_sparql_cmd).selected=true;
+          DOM.iSel('sparql-url').value = gPref.def_sparql_url;
+	  yasqe_srv.setValue(createSparqlQuery(gPref.def_sparql_cmd));
 
           $(this).dialog( "close" );
         },
@@ -195,8 +207,16 @@ function setSuperLinksDefaults()
       modal: true,
       buttons: {
         "OK": function() {
-          $('#super-links-timeout').val(gPref.def_super_links_timeout);
+          DOM.iSel('super-links-timeout').value = gPref.def_super_links_timeout;
           yasqe_slinks.setValue(gPref.def_super_links_query);
+          DOM.qSel('#super-links-sponge #describe-ssl').selected = true;
+          DOM.qSel('#super-links-sponge-mode #xxx').selected = true;
+          DOM.qSel('#super-links-viewer #html-fb').selected = true;
+          DOM.qSel('#super-links-highlight #all').selected = true;
+
+          DOM.iSel('super-links-retries').value = gPref.def_super_links_retries;
+          DOM.iSel('super-links-retries-timeout').value = gPref.def_super_links_retries_timeout;
+
           $(this).dialog( "close" );
         },
         Cancel: function() {
@@ -242,83 +262,136 @@ function load_pref_user()
 function loadPref()
 {
     var uiterm_mode = gPref.getValue("ext.osds.uiterm.mode");
-    $('#'+uiterm_mode,'#uiterm-mode').attr('selected','selected');
+    DOM.qSel('#uiterm-mode #'+uiterm_mode).selected=true;
 
     var chk_user = gPref.getValue("ext.osds.pref.user.chk");
-    if (chk_user && chk_user==="1")
-      $("#chk_pref_user").attr('checked','checked');
+    DOM.iSel("chk_pref_user").checked = (chk_user==="1");
 
     load_pref_user();
 
     var chk_action = gPref.getValue("ext.osds.pref.show_action");
-    if (chk_action && chk_action==="1")
-      $("#chk_show_action_for_url_with_params").attr('checked','checked');
+    DOM.iSel("chk_show_action_for_url_with_params").checked = (chk_action==="1");
+
+    var chk_xml = gPref.getValue("ext.osds.handle_xml");
+    DOM.iSel("chk_try_handle_xml").checked = (chk_xml==="1");
+
+    var chk_csv = gPref.getValue("ext.osds.handle_csv");
+    DOM.iSel("chk_try_handle_csv").checked = (chk_csv==="1");
+
+    var chk_json = gPref.getValue("ext.osds.handle_json");
+    DOM.iSel("chk_try_handle_json").checked = (chk_json==="1");
+
+    var chk_all = gPref.getValue("ext.osds.handle_all");
+    DOM.iSel("chk_try_handle_all").checked = (chk_all==="1");
+
+    changeHandleAll();
 
     var import_url = gPref.getValue("ext.osds.import.url");
     var import_srv = gPref.getValue("ext.osds.import.srv");
 
-    $('#'+import_srv,'#import-srv').attr('selected','selected');
-    $('#import-url').val(import_url);
+    DOM.qSel('#import-srv #'+import_srv).selected=true;
+    DOM.iSel('import-url').value = import_url;
 
 
     var rww_edit_url = gPref.getValue("ext.osds.rww.edit.url");
     if (rww_edit_url)
-        $('#rww-edit-url').val(rww_edit_url);
+        DOM.iSel('rww-edit-url').value = rww_edit_url;
 
     var rww_store_url = gPref.getValue("ext.osds.rww.store.url");
     if (rww_store_url)
-        $('#rww-store-url').val(rww_store_url);
+        DOM.iSel('rww-store-url').value = rww_store_url;
 
 
     var sparql_url = gPref.getValue("ext.osds.sparql.url");
-    $('#sparql-url').val(sparql_url);
+    DOM.iSel('sparql-url').value = sparql_url;
 
     var sparql_cmd = gPref.getValue("ext.osds.sparql.cmd");
-    $('#'+sparql_cmd,'#sparql-cmd').attr('selected','selected');
+    DOM.qSel('#sparql-cmd #'+sparql_cmd).selected=true;
+
 
     yasqe_srv.setValue(gPref.getValue("ext.osds.sparql.query")+"\n");
     yasqe_slinks.setValue(gPref.getValue("ext.osds.super_links.query")+"\n");
 
-    var super_timeout = gPref.getValue("ext.osds.super_links.timeout");
-    $('#super-links-timeout').val(super_timeout);
+    DOM.iSel('super-links-timeout').value = gPref.getValue("ext.osds.super_links.timeout");
+
+    var sponge = gPref.getValue("ext.osds.super-links-sponge");
+    if (sponge)
+      DOM.qSel('#super-links-sponge #'+sponge).selected = true;
+
+    var sponge_mode = gPref.getValue("ext.osds.super-links-sponge-mode");
+    if (sponge_mode)
+      DOM.qSel('#super-links-sponge-mode #'+sponge_mode).selected = true;
+
+    var viewer = gPref.getValue("ext.osds.super-links-viewer");
+    if (viewer)
+      DOM.qSel('#super-links-viewer #'+viewer).selected = true;
+
+    var mode = gPref.getValue("ext.osds.super-links-highlight");
+    if (mode)
+      DOM.qSel('#super-links-highlight #'+mode).selected = true;
+
+    DOM.iSel('super-links-retries').value = gPref.getValue("ext.osds.super_links.retries");
+    DOM.iSel('super-links-retries-timeout').value = gPref.getValue("ext.osds.super_links.retries_timeout");
 }
 
 
 
 function savePref()
 {
-   var uiterm_mode = $('#uiterm-mode option:selected').attr('id');
+   var uiterm_mode = DOM.qSel('#uiterm-mode option:checked').id;
    gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
 
-   gPref.setValue("ext.osds.pref.user.chk", $('#chk_pref_user').is(':checked')?"1":"0");
+   gPref.setValue("ext.osds.pref.user.chk", DOM.iSel('chk_pref_user').checked?"1":"0");
 
-   gPref.setValue("ext.osds.pref.show_action", $('#chk_show_action_for_url_with_params').is(':checked')?"1":"0");
+   gPref.setValue("ext.osds.pref.show_action", DOM.iSel('chk_show_action_for_url_with_params').checked?"1":"0");
 
-//   gPref.setValue("ext.osds.pref.user", $('#pref_user').val().trim());
+   gPref.setValue("ext.osds.handle_xml", DOM.iSel('chk_try_handle_xml').checked?"1":"0");
+   gPref.setValue("ext.osds.handle_csv", DOM.iSel('chk_try_handle_csv').checked?"1":"0");
+   gPref.setValue("ext.osds.handle_json",DOM.iSel('chk_try_handle_json').checked?"1":"0");
+   gPref.setValue("ext.osds.handle_all", DOM.iSel('chk_try_handle_all').checked?"1":"0");
 
    var pref_user = $('#pref_user option:selected').text();
    gPref.setValue("ext.osds.pref.user", pref_user);
 
 
-   var import_srv = $('#import-srv option:selected').attr('id');
+   var import_srv = DOM.qSel('#import-srv option:checked').id;
    gPref.setValue("ext.osds.import.srv", import_srv);
-   gPref.setValue("ext.osds.import.url", $('#import-url').val().trim());
+   gPref.setValue("ext.osds.import.url", DOM.iSel('import-url').value.trim());
 
 
-   gPref.setValue("ext.osds.rww.edit.url", $('#rww-edit-url').val().trim());
-   gPref.setValue("ext.osds.rww.store.url", $('#rww-store-url').val().trim());
+   gPref.setValue("ext.osds.rww.edit.url", DOM.iSel('rww-edit-url').value.trim());
+   gPref.setValue("ext.osds.rww.store.url", DOM.iSel('rww-store-url').value.trim());
 
 
-   var sparql_cmd = $('#sparql-cmd option:selected').attr('id');
+   var sparql_cmd = DOM.qSel('#sparql-cmd option:checked').id;
    gPref.setValue("ext.osds.sparql.cmd", sparql_cmd);
-   gPref.setValue("ext.osds.sparql.url", $('#sparql-url').val().trim());
+   gPref.setValue("ext.osds.sparql.url", DOM.iSel('sparql-url').value.trim());
 
    gPref.setValue("ext.osds.sparql.query", yasqe_srv.getValue());
 
    gPref.setValue("ext.osds.super_links.query", yasqe_slinks.getValue());
 
-   var timeout = $('#super-links-timeout').val().trim();
+   var timeout = DOM.iSel('super-links-timeout').value.trim();
    gPref.setValue("ext.osds.super_links.timeout", parseInt(timeout, 10));
+
+   var v; 
+   v = DOM.qSel('#super-links-sponge option:checked').id;
+   gPref.setValue("ext.osds.super-links-sponge", v);
+
+   v = DOM.qSel('#super-links-sponge-mode option:checked').id;
+   gPref.setValue("ext.osds.super-links-sponge-mode", v);
+
+   v = DOM.qSel('#super-links-viewer option:checked').id;
+   gPref.setValue("ext.osds.super-links-viewer", v);
+
+   v = DOM.qSel('#super-links-highlight option:checked').id;
+   gPref.setValue("ext.osds.super-links-highlight", v);
+
+   v = DOM.iSel('super-links-retries').value.trim();
+   gPref.setValue("ext.osds.super_links.retries", parseInt(v, 10));
+
+   v = DOM.iSel('super-links-retries-timeout').value.trim();
+   gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
 
    closeOptions();
 }
@@ -327,76 +400,19 @@ function savePref()
 
 function enableCtrls()
 {
-    var srv = $('#import-srv option:selected').attr('id');
-    var h_url = createCmdImportURL(srv, $('#import-url').val().trim());
+    var srv = DOM.qSel('#import-srv option:checked').id;
+    var h_url = (new Settings).createDefaultImportCmdFor(srv, DOM.iSel('import-url').value.trim());
 
     $('#import-url-bcast').show();
-    $('#import-url').val(h_url);
+    DOM.iSel('import-url').value = h_url;
 };
 
-
-function createCmdImportURL(srv, _url)
-{
-    var url = new URL(_url);
-    var h_url = "";
-
-    switch (srv) {
-      case 'describe':
-        url.protocol = 'http:';
-        url.pathname = '/describe/';
-        url.search = '';
-        url.hash = '';
-        h_url = url.toString();
-        h_url += '?url={url}&sponger:get=add';
-        break;
-      case 'describe-ssl':
-        url.protocol = 'https:';
-        url.pathname = '/describe/';
-        url.search = '';
-        url.hash = '';
-        h_url = url.toString();
-        h_url += '?url={url}&sponger:get=add';
-        break;
-      case 'about':
-        url.protocol = 'http:';
-        url.pathname = '/about/html/';
-        url.search = '';
-        url.hash = '';
-        h_url = url.toString();
-        break;
-      case 'about-ssl':
-        url.protocol = 'https:';
-        url.pathname = '/about/html/';
-        url.search = '';
-        url.hash = '';
-        h_url = url.toString();
-        break;
-      case 'ode':
-        url.protocol = 'http:';
-        url.pathname = '/ode/';
-        url.search = '?uri=';
-        url.hash = '';
-        h_url = url.toString();
-        break;
-      case 'ode-ssl':
-        url.protocol = 'https:';
-        url.pathname = '/ode/';
-        url.search = '?uri=';
-        url.hash = '';
-        h_url = url.toString();
-        break;
-      case 'custom':
-        h_url = _url;
-        break;
-    }
-    return h_url;
-};
 
 
 function createSparqlQuery(cmd)
 {
     var query = "";
-    var uiterm_mode = $('#uiterm-mode option:selected').attr('id');
+    var uiterm_mode = DOM.qSel('#uiterm-mode option:checked').id;
 
     switch (cmd) {
       case 'select':
@@ -513,3 +529,4 @@ function save_users_data()
 
   gPref.setValue('ext.osds.pref.user.list', JSON.stringify(list, undefined, 2));
 }
+

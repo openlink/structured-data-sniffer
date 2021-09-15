@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -20,106 +20,124 @@
 
 
 
-Convert_Turtle = function () {
-  this.callback = null;
-  this.baseURI = null;
-  this.ns = new Namespace();
-  this._pos = 0;
-  this._output = [];
-  this.ns_pref = null;
-  this.skipped_error = [];
-};
+class Convert_Turtle{
+  constructor() 
+  {
+    this.baseURI = null;
+    this.skipped_error = [];
+    this.bnode_types = {};
+  }
 
-
-Convert_Turtle.prototype = {
-
-  _fix_nano_ttl : function(ttlData, nanoData, baseURL, callback) {
+  async prepare_query(ttlData, baseURL)
+  {
     var self = this;
+    var handler = new Handle_Turtle(0, true, true);
+    var ret = await handler.parse(ttlData, baseURL);
+
+    if (ret.errors.length>0)
+      self.skipped_error = self.skipped_error.concat(ret.errors);
+
+    return ret.data;
+  }
+
+
+
+  async fix_ttl(ttlData, baseURL)
+  {
+    var self = this;
+    var handler = new Handle_Turtle(0, true);
+    var ret = await handler.parse(ttlData, baseURL);
+
+    if (ret.errors.length>0)
+      self.skipped_error = self.skipped_error.concat(ret.errors);
+
+    return ret.data;
+  }
+
+  async _fix_nano_ttl(ttlData, nanoData, baseURL, skip_docpref) 
+  {
+    var self = this;
+    var data = [];
+
+    if (ttlData && ttlData.length > 0) {
+      var handler = new Handle_Turtle(0, true, false, null, skip_docpref);
+      var ret = await handler.parse(ttlData, baseURL);
+
+      if (ret.errors.length>0)
+        self.skipped_error = self.skipped_error.concat(ret.errors);
+
+      if (ret.data && ret.data.length > 0)
+        data = data.concat(ret.data);
+    }
+
     if (nanoData!==null && nanoData.length > 0) {
       var handler = new Handle_Turtle(0, true);
-      handler.parse_nano(nanoData, baseURL,
-          function(error, data) {
-            if (error)
-              self.skipped_error.push(error);
+      var ret = await handler.parse_nano(nanoData, baseURL, true);
 
-            self.skipped_error = self.skipped_error.concat(handler.skipped_error);
+      if (ret.errors.length>0)
+        self.skipped_error = self.skipped_error.concat(ret.errors);
 
-            if (data)
-              ttlData = ttlData.concat(data);
-
-            callback(ttlData);
-          });
-    } else {
-      callback(ttlData);
+      if (ret.data && ret.data.length > 0)
+        data = data.concat(ret.data);
     }
-  },
 
-  to_json : function(ttlData, nanoData, baseURL, callback) {
-    var self = this;
-    this._fix_nano_ttl(ttlData, nanoData, baseURL,
-       function(fixed_ttl) {
-           self._to_json_exec(fixed_ttl, baseURL, callback);
-       });
-  },
+    return data;
+  }
 
+  async to_jsonld(ttlData, nanoData, baseURL) 
+  {
+    var fixed_ttl = await this._fix_nano_ttl(ttlData, nanoData, baseURL, true);
+    var output = [];
 
-  to_rdf : function(ttlData, nanoData, baseURL, callback) {
-    var self = this;
-    this._fix_nano_ttl(ttlData, nanoData, baseURL,
-       function(fixed_ttl) {
-           self._to_rdf_exec(fixed_ttl, baseURL, callback);
-       });
-  },
+    for(var i=0; i < fixed_ttl.length; i++)
+    {
+      var str = await this._to_jsonld_exec(fixed_ttl[i], baseURL);
+      output.push(str);
+    }
+    return output;
+  }
 
 
-  _to_rdf_exec : function(textData, baseURL, callback) {
+  async to_rdf(ttlData, nanoData, baseURL, callback) 
+  {
+    var fixed_ttl = await this._fix_nano_ttl(ttlData, nanoData, baseURL);
+    var output = [];
 
-    this.callback = callback;
+    for(var i=0; i < fixed_ttl.length; i++)
+    {
+      output.push(this._to_rdf_exec(fixed_ttl[i], baseURL));
+    }
+
+    return output;
+  }
+
+
+  _to_rdf_exec(textData, baseURL) 
+  {
+    try {
+      var store=$rdf.graph();
+      var ttl_data = textData;
+
+      $rdf.parse(ttl_data, store, baseURL, 'text/turtle');
+
+      return $rdf.serialize(undefined, store, baseURL, 'application/rdf+xml');
+    } catch (ex) {
+      this.skipped_error.push(""+ex.toString());
+      return '';
+    }
+  }
+
+
+
+  async _to_jsonld_exec(ttl_data, baseURL) 
+  {
     this.baseURI = baseURL;
     var self = this;
 
-    if (this._pos < textData.length) {
-      try {
-        var store=$rdf.graph();
-        var ttl_data = textData[self._pos];
-
-        $rdf.parse(ttl_data, store, baseURL, 'text/turtle');
-
-        var rdf_data = $rdf.serialize(undefined, store, baseURL, "application/rdf+xml");
-        self._pos++;
-        self._output.push(rdf_data);
-
-        if (self._pos < textData.length)
-          self._to_rdf_exec(textData, self.baseURI, self.callback);
-        else
-          self.callback(null, self._output);
-
-      } catch (ex) {
-        self.skipped_error.push(""+ex.toString());
-        self._pos++;
-
-        if (self._pos < textData.length)
-          self._to_rdf_exec(textData, self.baseURL, self.callback);
-        else
-          self.callback(null, self._output);
-      }
-    } else {
-        self.callback(null, this._output);
-    }
-  },
-
-
-  _to_json_exec : function(textData, baseURL, callback) {
-
-    this.callback = callback;
-    this.baseURI = baseURL;
-    var self = this;
-
-    if (this._pos < textData.length) {
+    return new Promise(function (resolve, reject) {
       try {
         var store = N3.Writer({ format: 'N-Triples' });
         var parser = N3.Parser({baseIRI:self.baseURI});
-        var ttl_data = textData[self._pos];
 
         parser.parse(ttl_data,
           function (error, tr, prefixes) {
@@ -127,12 +145,7 @@ Convert_Turtle.prototype = {
               error = ""+error;
 
               self.skipped_error.push(error);
-              self._pos++;
-
-              if (self._pos < textData.length)
-                self._to_json_exec(textData, self.baseURI, self.callback);
-              else
-                self.callback(null, self._output);
+              resolve('');
             }
             else if (tr) {
               store.addQuad(tr.subject,
@@ -141,271 +154,255 @@ Convert_Turtle.prototype = {
             }
             else {
               var context = prefixes;
+              var base = context[""];
 
-              store.end(function (error, ttl_text) {
-                self._pos++;
+              if (base) {
+                context[""] = undefined;
+                //context["@base"] = base;
+              }
+
+              store.end(async function (error, ttl_text) {
 
                 if (error) {
                   self.skipped_error.push(error);
-
-                  if (self._pos < textData.length)
-                    self._to_json_exec(textData, self.baseURI, self.callback);
-                  else
-                    self.callback(null, self._output);
+                  resolve('');
                 }
 
-                jsonld.fromRDF(ttl_text, {format: 'application/nquads'},
-                   function(error, doc)
-                   {
-                     if (error) {
-                       self.skipped_error.push(error+(error.details?JSON.stringify(error.details,undefined, 2):""));
+                try {
+                  var doc = await jsonld.fromRDF(ttl_text, {format: 'application/nquads'});
+               
+                  try {
+                    var compacted = await jsonld.compact(doc, context);
+                    resolve(JSON.stringify(compacted, null, 2));
 
-                       if (self._pos < textData.length)
-                         self._to_json_exec(textData, self.baseURI, self.callback);
-                       else
-                         self.callback(null, self._output);
-                     }
-                     else {
-                       jsonld.compact(doc, context, function(error, compacted) {
-                         if (error)
-                           self.skipped_error.push(error);
-                         else
-                           self._output.push(JSON.stringify(compacted, null, 2));
+                  } catch (ex) {
+                    var json = {'@context':context, '@graph':doc};
+                    resolve(JSON.stringify(json, null, 2));
+                  }
 
-                         if (self._pos < textData.length)
-                           self._to_json_exec(textData, self.baseURI, self.callback);
-                         else
-                           self.callback(null, self._output);
-                       });
-                     }
-                   });
+                } catch (ex) {
+                  self.skipped_error.push(ex.toString());
+                  resolve('');
+                }
               });
             }
           });
       } catch (ex) {
         self.skipped_error.push(""+ex.toString());
-        self._pos++;
-
-        if (self._pos < textData.length)
-          self._to_json_exec(textData, self.baseURL, self.callback);
-        else
-          self.callback(null, self._output);
+        resolve('');
       }
-    } else {
-        self.callback(null, this._output);
-    }
-
-  },
+    });
+  }
 
 }
 
 
 
-Convert_RDF_XML = function (make_ttl) {
-  this.callback = null;
-  this.skipped_error = [];
-  this._output = [];
-  this._pos = 0;
-};
+class Convert_RDF_XML { 
+  constructor() {
+    this.skipped_error = [];
+  }
 
-Convert_RDF_XML.prototype = {
+  to_ttl(textData, baseURL) {
+    var output = [];
 
-  to_ttl : function(textData, baseURL, callback) {
-    var self = this;
-    this.callback = callback;
-    this.baseURI = baseURL;
-
-    if (this._pos < textData.length) {
+    for(var i=0; i < textData.length; i++)
+    {
       try {
-        var rdf_data = textData[self._pos];
+        var rdf_data = textData[i];
         var store=$rdf.graph();
 
         $rdf.parse(rdf_data, store, baseURL, "application/rdf+xml");
         var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
-        self._pos++;
-        self._output.push(ttl_data);
-
-        if (self._pos < textData.length)
-          self.to_ttl(textData, self.baseURI, self.callback);
-        else
-          self.callback(null, self._output);
+        output.push(ttl_data);
 
       } catch (ex) {
-        self.skipped_error.push(""+ex.toString());
-        self._pos++;
-
-        if (self._pos < textData.length)
-          self.to_rdf(textData, self.baseURL, self.callback);
-        else
-          self.callback(null, self._output);
+        this.skipped_error.push(""+ex.toString());
       }
-    } else {
-      self.callback(null, this._output);
     }
-  },
+    return output;
+  }
 
 
-  to_json: function(textData, baseURL, callback) {
-    var self = this;
-    this.callback = callback;
-    this.baseURI = baseURL;
+  async to_jsonld(textData, baseURL) {
+    var output = [];
 
-    if (this._pos < textData.length) {
+    for(var i=0; i < textData.length; i++)
+    {
       try {
-        var rdf_data = textData[self._pos];
+        var rdf_data = textData[i];
         var store=$rdf.graph();
 
         $rdf.parse(rdf_data, store, baseURL, "application/rdf+xml");
         var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
 
         var conv = new Convert_Turtle();
-        conv.to_json([ttl_data], null, self.baseURI,
-          function(error, json_data) {
-            if (error)
-              self.skipped_error.push(error);
-
-            if (conv.skipped_error && conv.skipped_error.length > 0)
-              self.skipped_error = self.skipped_error.concat(conv.skipped_error);
-
-            self._pos++;
-            self._output.push(json_data);
-
-            if (self._pos < textData.length)
-              self.to_json(textData, self.baseURI, self.callback);
-            else
-              self.callback(null, self._output);
-          });
+        var str = await conv.to_jsonld([ttl_data], null, baseURL);
+        output.push(str);
 
       } catch (ex) {
-        self.skipped_error.push(""+ex.toString());
-        self._pos++;
-
-        if (self._pos < textData.length)
-          self.to_rdf(textData, self.baseURL, self.callback);
-        else
-          self.callback(null, self._output);
+        this.skipped_error.push(""+ex.toString());
       }
-    } else {
-      self.callback(null, this._output);
     }
-  },
+
+    return output;
+  }
 
 }
 
 
-Convert_JSONLD = function () {
-  this.callback = null;
-  this._pos = 0;
-  this._output = [];
-  this.start_id = 0;
-  this.skipped_error = [];
-};
 
-Convert_JSONLD.prototype = {
+class Convert_JSONLD {
+  constructor() {
+    this.start_id = 0;
+    this.skipped_error = [];
+  }
 
-  to_ttl : function(textData, baseURL, callback) {
-    this.callback = callback;
-    var self = this;
+  async to_ttl(textData, baseURL) 
+  {
+    var output = [];
 
-    function handle_error(error)
-    {
-      self.skipped_error.push(""+error);
-      self._pos++;
-
-      if (self._pos < textData.length)
-        self.parse(textData, baseURL, self.callback);
-      else
-        self.callback(null, self._output);
-    }
-
-
-    if (this._pos < textData.length)
+    for(var i=0; i < textData.length; i++)
     {
       try {
-        jsonld_data = JSON.parse(textData[this._pos]);
-        if (jsonld_data != null) {
-          jsonld.expand(jsonld_data,
-            function(error, expanded) {
-              if (error) {
-                handle_error(error);
-              }
-              else {
-                jsonld.toRDF(expanded, {format: 'application/nquads', includeRelativeUrls: true},
-                  function(error, nquads) {
-                    if (error) {
-                      handle_error(error);
-                    }
-                    else {
-                      var handler = new Handle_Turtle(self.start_id, true);
-                      handler.skip_error = false;
-                      handler.parse([nquads], baseURL, function(error, html_data) {
-                        if (error) {
-                          handle_error(error);
-                        }
-                        else {
-                          self._output.push(html_data);
-                          self._pos++;
-                          self.start_id += handler.start_id;
+        var handler = new Handle_JSONLD(true);
+        var ret = await handler.parse([textData[i]], baseURL);
 
-                          if (self._pos < textData.length)
-                            self.parse(textData, baseURL, self.callback);
-                          else
-                            self.callback(null, self._output);
-                        }
-                      });
-                    }
-                });
-              }
-            })
-        }
-        else
-          self.callback(null, null);
+        if (ret.errors.length > 0) 
+          self.skipped_error.push(""+error);
+
+        if (ret.data.length > 0)
+          output.push(ret.data);
+
       } catch (ex) {
-        handle_error(ex.toString());
+        self.skipped_error.push(ex.toString());
       }
-
-    } else {
-       self.callback(null, this._output);
     }
-  },
+    return output;
+  }
 
-
-  to_rdf : function(textData, baseURL, callback)
+  
+  async to_rdf(textData, baseURL)
   {
-    var self = this;
-    this.callback = callback;
+    var output = [];
     this.baseURI = baseURL;
 
-    if (this._pos < textData.length) {
-      try {
-        var store=$rdf.graph();
-        var ttl_data = textData[self._pos];
+    var ttl_data = await this.to_ttl(textData, baseURL);
 
-        $rdf.parse(ttl_data, store, baseURL, "application/ld+json");
-
-        var rdf_data = $rdf.serialize(undefined, store, baseURL, "application/rdf+xml");
-        self._pos++;
-        self._output.push(rdf_data);
-
-        if (self._pos < textData.length)
-          self.to_rdf(textData, self.baseURI, self.callback);
-        else
-          self.callback(null, self._output);
-
-      } catch (ex) {
-        self.skipped_error.push(""+ex.toString());
-        self._pos++;
-
-        if (self._pos < textData.length)
-          self.to_rdf(textData, self.baseURL, self.callback);
-        else
-          self.callback(null, self._output);
-      }
-    } else {
-        self.callback(null, this._output);
+    for(var i=0; i < ttl_data.length; i++)
+    {
+      output.push(this._to_rdf_exec(ttl_data[i], baseURL));
     }
-  },
+
+    return output;
+  }
 
 
+  _to_rdf_exec(textData, baseURL) 
+  {
+    try {
+      var store=$rdf.graph();
+      var ttl_data = textData;
 
+      $rdf.parse(ttl_data, store, baseURL, 'text/turtle');
+
+      return $rdf.serialize(undefined, store, baseURL, "application/rdf+xml");
+    } catch (ex) {
+      this.skipped_error.push(""+ex.toString());
+      return '';
+    }
+  }
+
+}
+
+
+class Convert_JSON {
+  constructor() {
+    this.start_id = 0;
+    this.skipped_error = [];
+  }
+
+  async to_ttl(textData, baseURL) 
+  {
+    var output = [];
+
+    for(var i=0; i < textData.length; i++)
+    {
+      var str = await this._to_ttl(textData[i], baseURL);
+      output.push(str);
+    }
+    return output;
+  }
+
+  async _to_ttl(textData, baseURL) 
+  {
+    var output = '';
+    try {
+      var handler = new Handle_JSON(true);
+      var ret = await handler.parse([textData], baseURL);
+
+      if (ret.errors.length > 0) 
+        self.skipped_error.push(""+error);
+      else
+        output = ret.data;
+
+    } catch (ex) {
+      self.skipped_error.push(ex.toString());
+    }
+    return output;
+  }
+
+
+  async to_rdf(textData, baseURL)
+  {
+    var output = [];
+    this.baseURI = baseURL;
+
+    var ttl_data = await this.to_ttl(textData, baseURL);
+
+    for(var i=0; i < ttl_data.length; i++)
+    {
+      output.push(this._to_rdf_exec(ttl_data[i], baseURL));
+    }
+
+    return output;
+  }
+
+
+  _to_rdf_exec(textData, baseURL) 
+  {
+    try {
+      var store=$rdf.graph();
+      var ttl_data = textData;
+
+      $rdf.parse(ttl_data, store, baseURL, 'text/turtle');
+
+      return $rdf.serialize(undefined, store, baseURL, "application/rdf+xml");
+    } catch (ex) {
+      this.skipped_error.push(""+ex.toString());
+      return '';
+    }
+  }
+
+
+  async to_jsonld(textData, baseURL) 
+  {
+    var output = [];
+
+    for(var i=0; i < textData.length; i++)
+    {
+      try {
+        var ttl_data = await this._to_ttl(textData[i], baseURL);
+
+        var conv = new Convert_Turtle();
+        var str = await conv.to_jsonld([ttl_data], null, baseURL);
+        if (str.length > 0)
+          output.push(str[0]);
+      } catch (ex) {
+        this.skipped_error.push(""+ex.toString());
+      }
+    }
+
+    return output;
+  }
 }

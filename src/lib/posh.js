@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -22,7 +22,6 @@ var POSH = (function () {
 
   'use strict';
 
-
   function POSH(uriStr) {
     this.terms = {};
     this.terms["description"] = "schema:description";
@@ -36,8 +35,8 @@ var POSH = (function () {
         "wdrs": "http://www.w3.org/2007/05/powder-s#",
 
 	"opltw": "http://www.openlinksw.com/schemas/twitter#",
-	"schema":"http://schema.org/",
-	"schemavideo":"http://schema.org/VideoObject#",
+	"schema":"https://schema.org/",
+	"schemavideo":"https://schema.org/VideoObject#",
         "formats": "http://www.w3.org/ns/formats/",
 	"geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
 
@@ -118,20 +117,19 @@ var POSH = (function () {
       var url = new URL(baseURI);
       var baseOrigin = url.origin;
       var basePATH = baseURI;
+      var baseURL = new URL(baseURI);
+
+      baseURL.search = '';
+      baseURL.hash = ''
 
       if (baseURI.lastIndexOf('.')!=-1) {
-         var i = baseURI.lastIndexOf('/');
-         if (i!=-1)
-           basePATH = basePATH.substring(0, i);
+        var path = baseURL.pathname;
+        if (path[path.length-1] !== '/')
+          baseURL.pathname += '/';
       }
 
+      basePATH = baseURL.href;
 
-      function s_startWith(str, val) {
-        if (str)
-          return str.lastIndexOf(val, 0) === 0;
-        else
-          return false;
-      }
 
       function node2str(n)
       {
@@ -139,23 +137,23 @@ var POSH = (function () {
         {
           return "<#this>";
         }
-        else if (s_startWith(n, "http://") 
-                 || s_startWith(n, "https://")
-                 || s_startWith(n, "mailto:")
+        else if (n.startsWith("http://") 
+                 || n.startsWith("https://")
+                 || n.startsWith("mailto:")
                 )
         {
           return "<"+n+">";
         }
-        else if (s_startWith(n, "#"))
+        else if (n.startsWith("#"))
         {
           return "<"+encodeURI(n)+">";
         }
         else if (n.lastIndexOf(":")!=-1)
         {
           var arr = n.split(":");
-          var pref_link = self.namespace.ns_list[arr[0]];
+          var pref_link = self.namespace.has_known_prefix(arr[0]);
           if (!pref_link) //unknown prefix
-             return "xhv:"+encodeURIComponent(n);
+             return "xhv:"+fixedEncodeURIComponent(n);
           else {
              var p = self.prefixes[arr[0]];
              if (!p)
@@ -167,42 +165,51 @@ var POSH = (function () {
           var s = self.terms[n];
           if (s)
             return s;
-          return "xhv:"+encodeURIComponent(n);
+          return "xhv:"+fixedEncodeURIComponent(n);
         }
       }
 
       function addTriple(s, p, o, obj_is_Literal)
       {
+        var qv = '"';
+
+        if (o.indexOf("\n")!=-1 || o.indexOf("\r")!=-1) {
+          qv = "'''";
+          o = o.replace(/\\/g,'\\\\').replace(/\"/g,"\\\"");
+        } else {
+          o = o.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
+        }
+
         triples += node2str(s)+" "+node2str(p)+" ";
+
         if (obj_is_Literal) {
-          triples += '"'+o+'"';
+          triples += qv+o+qv;
         }
         else {
-          o = o.replace(/\\/g,'\\\\').replace(/\"/g,'\\\"');
           if (o==="<>" || o==="<#this>")
             triples += o;
-          else if (s_startWith(o, "http://") 
-                 || s_startWith(o, "https://")
-                 || s_startWith(o, "mailto:")
+          else if (o.startsWith("http://") 
+                 || o.startsWith("https://")
+                 || o.startsWith("mailto:")
                 )
             triples += "<"+o+">";
-          else if (s_startWith(o, "#"))
+          else if (o.startsWith("#"))
             triples += "<"+encodeURI(o)+">";
           else if (o.lastIndexOf(":")!=-1) 
           {
             var arr = o.split(":");
-            var pref_link = self.namespace.ns_list[arr[0]];
+            var pref_link = self.namespace.has_known_prefix(arr[0]);
             if (!pref_link) {//unknown prefix
-              triples += '"'+o+'"';
+              triples += qv+o+qv;
             } else {
               var p = self.prefixes[arr[0]];
               if (!p)
                 self.prefixes[arr[0]] = pref_link;
-              triples += arr[0]+":"+encodeURIComponent(o.substring(arr[0].length+1));
+              triples += arr[0]+":"+fixedEncodeURIComponent(o.substring(arr[0].length+1));
             }
           }
           else
-            triples += '"'+o+'"';
+            triples += qv+o+qv;
         }
 
         triples += " .\n";
@@ -235,7 +242,7 @@ var POSH = (function () {
            var property = el.getAttribute("property");
 
            var val = null;
-           var add_dog = s_startWith(content,"@")?"@":"";
+           var add_dog = content.startsWith("@")?"@":"";
 
            if (name) {
              if (add_dog.length>0)
@@ -283,27 +290,35 @@ var POSH = (function () {
         {
           return n;
         }
-        else if (s_startWith(n, "http://") 
-                 || s_startWith(n, "https://")
-                 || s_startWith(n, "mailto:")
+        else if (n.startsWith("http://") 
+                 || n.startsWith("https://")
+                 || n.startsWith("mailto:")
                 )
         {
           return n;
         }
-        else if (s_startWith(n, "#"))
+        else if (n.startsWith("#"))
         {
-          return baseURI+n;
+          var u = new URL(baseURI);
+          u.hash = n;
+          return u.toString();
         }
-        else if (s_startWith(n, "/"))
+        else if (n.startsWith("/"))
         {
           return baseOrigin+n;
         }
         else
         {
-          return basePATH+"/"+n;
+          return basePATH+n;
         }
       }
 
+      function url_hash(href, hash)
+      {
+        var u = new URL(href);
+        u.hash = hash;
+        return u.toString();
+      }
 
 //      $("head link,meta[name],meta[property]").each(function(i, el){
       $("head link,meta[name]").each(function(i, el){
@@ -317,11 +332,11 @@ var POSH = (function () {
              var title = el.getAttribute("title");
              var type = el.getAttribute("type");
              addTriple("#this", encodeURI(rel), href);   
-             addTriple(href+"#this", "rdf:type", "schema:CreativeWork");
+             addTriple(url_hash(href,"#this"), "rdf:type", "schema:CreativeWork");
              if (title)
-               addTriple(href+"#this", "schema:name", title);   
+               addTriple(url_hash(href,"#this"), "schema:name", title);   
              if (type)
-               addTriple(href+"#this", "schema:fileFormat", type);   
+               addTriple(url_hash(href,"#this"), "schema:fileFormat", type);   
            }
            else if(rev && href) {
              href = encodeURI(fix_href(href));
@@ -332,7 +347,7 @@ var POSH = (function () {
            var name = el.getAttribute("name");
            var content = el.getAttribute("content");
 
-           if (name && s_startWith(name, "twitter:")) {
+           if (name && name.startsWith("twitter:")) {
              if (!twittercard) {
                twittercard = true;
                handleTwitterCard();
@@ -349,11 +364,11 @@ var POSH = (function () {
            var src = el.getAttribute("src");
            var alt = el.getAttribute("alt");
 
-           addTriple(src+"#this", "rdf:type", "schema:ImageObject");
-           addTriple(src+"#this", "schema:mainEntityOfPage", src);
-           addTriple(src+"#this", "schema:name", " "+src, true);
-           addTriple(src+"#this", "schema:description", alt.substring(self.facebook_vision.length));
-           addTriple(src+"#this", "schema:url", src);
+           addTriple(url_hash(src,"#this"), "rdf:type", "schema:ImageObject");
+           addTriple(url_hash(src,"#this"), "schema:mainEntityOfPage", src);
+           addTriple(url_hash(src,"#this"), "schema:name", " "+src, true);
+           addTriple(url_hash(src,"#this"), "schema:description", alt.substring(self.facebook_vision.length));
+           addTriple(url_hash(src,"#this"), "schema:url", src);
       });
 
 

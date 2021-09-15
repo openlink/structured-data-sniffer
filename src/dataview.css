@@ -1,7 +1,7 @@
 /*
  *  This file is part of the OpenLink Structured Data Sniffer
  *
- *  Copyright (C) 2015-2019 OpenLink Software
+ *  Copyright (C) 2015-2021 OpenLink Software
  *
  *  This project is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -18,6 +18,79 @@
  *
  */
 
+#msg_snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -125px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 2px;
+  padding: 16px;
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  bottom: 30px;
+  font-size: 17px;
+}
+
+#msg_snackbar.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+
+
+
+.super_links_msg {
+	display: none;
+	position: fixed;
+	border: 2px solid #000;
+	border-radius: 2px;
+	width: 200px;
+	height: 20px;
+	top:50px;
+	left: 200px;
+	background: khaki;
+	color: black;
+ 	z-index: 2147483647;
+	padding: 5px 10px 10px 20px;
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+.super_links_img {
+	width: 16px;
+	height: 16px;
+}
+
+
+.throbber_msg {
+        all: initial;
+	display: none;
+	line-height: normal;
+	flex-direction: row; 
+	position: fixed;
+	border: 2px solid #000;
+	border-radius: 2px;
+	width: 200px;
+	height: 20px;
+	top:4px;
+	left: 4px;
+	background: cyan;
+	color: black;
+ 	z-index: 2147483647;
+	padding: 10px 10px 10px 20px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+}
+
+.throbber_img {
+	width: 16px;
+	height: 16px;
+}
+
+
 input[type="image"] {
   outline: none !important;
 }
@@ -31,19 +104,12 @@ table.wait {
 
 table.docdata {
   border: 1px solid #000;
-  width:665px;
+  width:735px;
   table-layout: fixed;
   font-size: 12px;
   word-wrap:break-word;
 }
 
-table.pdocdata {
-  border: 1px solid #000;
-  width:99%;
-  table-layout: fixed;
-  font-size: 12px;
-  word-wrap:break-word;
-}
 
 table.docdata > tbody {
   border: none;
@@ -73,32 +139,20 @@ table.docdata > tbody > tr > td.typeid {
 }
 
 
-
+/***
 body.sniffer {
-    width: 690px;
-    height: 580px;
-}
-
-body.psniffer {
-    width: 99%;
+    width: 760px;
     height: 580px;
 }
 
 
 div.content {
     overflow: auto;
-    width: 685px;
+    width: 755px;
     height: 530px;
     border: 1px solid lightgray;
 }
-
-div.pcontent {
-    overflow: auto;
-    width: 99%;
-    height: 530px;
-    border: 1px solid lightgray;
-}
-
+***/
 
 div#header {
     height: 15px;
@@ -172,7 +226,21 @@ ul#tabs li a.selected {
     padding: 0.7em 0.5em 0 0.5em;
 }
 
-/**
-div.tabContent { border: 1px solid #c9c3ba; padding: 0.5em; background-color: #f1f0ee; }
-div.tabContent.hide { display: none; }
-**/
+.rest_path {
+    display:flex; 
+    flex-direction:row; 
+    align-items:baseline;
+    background-color: #dce9f9; 
+    font-weight: bold; 
+    border: 1px solid #000; 
+    border-radius: 6px; 
+    border-color: lightgray;
+}
+
+.rest_query_title {
+    display:flex; 
+    flex-direction:row; 
+    align-items:baseline;
+    background-color: #dce9f9; 
+    font-weight: bold;
+}
