@@ -27,7 +27,7 @@
 
 .super_links_popup {
         all: initial;
-	position: absolute !important;
+	position: absolute;
 	display: none;
 	border: 2px solid #000 !important;
 	border-radius: 4px !important; 
