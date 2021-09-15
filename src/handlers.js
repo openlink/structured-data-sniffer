@@ -181,17 +181,10 @@ class Handle_Turtle {
     this.skip_docpref = skip_docpref;
   }
 
-/**
-  async parse_nano_0(textData, docURL) {
+  async parse_nano(textData, docURL, _skip_error) {
     this.ns_pref = this.ns.get_ns_desc();
     this.ns_pref_size = this.ns.get_ns_size();
-    return await this.parse(textData, docURL);
-  }
-**/
-  async parse_nano(textData, docURL) {
-    this.ns_pref = this.ns.get_ns_desc();
-    this.ns_pref_size = this.ns.get_ns_size();
-    this.skip_error = false;
+    this.skip_error = _skip_error;
 
     this.baseURI = docURL;
     var output = this._make_ttl ? [] : '';
@@ -210,7 +203,7 @@ class Handle_Turtle {
         console.log(e);
       }
     }
-    return {data:output, errors: this.skipped_error, srcData};
+    return {data:output, errors: this.skipped_error, text:srcData};
 
   }
 

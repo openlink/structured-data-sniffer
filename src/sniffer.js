@@ -31,7 +31,7 @@
     var posh_Text = null;
     var rdfa_subjects = null;
     var rdf_Text = null;
-    var nano = {ttl:null, jsonld:null, rdf:null, json:null, csv:null};
+    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, csv:null};
     var data_found = false;
 
     var ttl_nano_pattern = /(## (Nanotation|Turtle|RDF-Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
@@ -155,7 +155,7 @@
 
     function sniff_nanotation() {
         var doc_Texts = [];
-        var ret = {ttl:[], jsonld:[], json:[], rdf:[], csv:[]};
+        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[]};
 
         function isWhitespace(c) {
             var cc = c.charCodeAt(0);
@@ -230,7 +230,7 @@
                     }
                     else if (ch == '}') {
                         inCurly--;
-                        ret.ttl.push(str);
+                        ret.ttl_curly.push(str);
                         str = "";
                     }
                     else if (inCurly > 0) {
@@ -311,7 +311,7 @@
         }
 
 
-        if (ret.ttl.length > 0 || ret.jsonld.length > 0 || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0  )
+        if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0  )
             return ret; 
         else
             return null;
@@ -915,6 +915,7 @@
                     rdf: {text: null},
                     turtle: {text: null},
                     ttl_nano: {text: null},
+                    ttl_curly_nano: {text: null},
                     jsonld_nano: {text: null},
                     json_nano: {text: null},
                     rdf_nano: {text: null},
@@ -936,6 +937,7 @@
                 docData.posh.text = posh_Text;
 
                 docData.ttl_nano.text = nano.ttl;
+                docData.ttl_curly_nano.text = nano.ttl_curly;
                 docData.jsonld_nano.text = nano.jsonld;
                 docData.json_nano.text = nano.json;
                 docData.rdf_nano.text = nano.rdf;
@@ -947,6 +949,7 @@
                     || (rdf_Text     && rdf_Text.length > 0)
                     || (rdfa.data    && rdfa.data.length > 0)
                     || (nano.ttl     && nano.ttl.length > 0)
+                    || (nano.ttl_curly && nano.ttl_curly.length > 0)
                     || (nano.jsonld  && nano.jsonld.length > 0)
                     || (nano.json    && nano.json.length > 0)
                     || (nano.rdf     && nano.rdf.length > 0)

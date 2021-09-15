@@ -36,6 +36,7 @@ var gData = {
         json:{ json_text:null },
 
         ttl_nano :{ ttl_text:null},
+        ttl_curly_nano :{ ttl_text:null},
         jsonld_nano :{ json_text:null },
         rdf_nano :{ rdf_text:null },
         json_nano :{ json_text:null },
@@ -643,13 +644,13 @@ async function check_Turtle_Nano(val)
     
     val.d.ttl_nano.text = output;
 
-    if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0) {
+    if (output!==null && output.length > 0) {
       try {
         var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
-        var ret = await handler.parse_nano(val.d.ttl_nano.text, gData.baseURL);
+        var ret = await handler.parse_nano(output, gData.baseURL, true);
 
-        val.d.ttl_nano.text = ret.srcData;
-        gData.ttl_nano.ttl_text = val.d.ttl_nano.text;
+        val.d.ttl_nano.text = ret.text;
+        gData.ttl_nano.ttl_text = ret.text;
 
         if (ret.errors.length>0)
           val.d.turtle.error = val.d.turtle.error.concat(ret.errors);
@@ -677,6 +678,52 @@ async function check_Turtle_Nano(val)
   }
 }
 
+
+async function check_Turtle_Curly_Nano(val)
+{
+  if (val.d.ttl_curly_nano.text!==null && val.d.ttl_curly_nano.text.length > 0)
+  {
+    var fix = new Fix_Nano();
+    var output = await fix.parse(val.d.ttl_curly_nano.text);
+    
+    val.d.ttl_curly_nano.text = output;
+
+    if (val.d.ttl_curly_nano.text!==null && val.d.ttl_curly_nano.text.length > 0) {
+      try {
+        var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
+        var ret = await handler.parse_nano(val.d.ttl_curly_nano.text, gData.baseURL, false);
+
+        if (gData.ttl_nano.ttl_text) {
+          gData.ttl_nano.ttl_text = gData.ttl_nano.ttl_text.concat(ret.text);
+        } else {
+          gData.ttl_nano.ttl_text = ret.text
+        }
+
+        if (ret.errors.length>0)
+          val.d.turtle.error = val.d.turtle.error.concat(ret.errors);
+                
+        if (ret.data) {
+          if (val.d.turtle.expanded)
+            val.d.turtle.expanded += ret.data;
+          else
+            val.d.turtle.expanded = ret.data;
+        }
+
+        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
+
+      } catch (ex) {
+        val.d.turtle.error.push(ex.toString());
+        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
+      }
+    }
+    else
+      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
+  }
+  else
+  {
+    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
+  }
+}
 
 
 async function check_POSH(val)
@@ -880,6 +927,7 @@ async function parse_Data(dData)
     val = await check_Json_Nano(val);
     val = await check_Turtle(val);
     val = await check_Turtle_Nano(val);
+    val = await check_Turtle_Curly_Nano(val);
     val = await check_POSH(val);
     val = await check_RDFa(val);
     val = await check_RDF_XML(val);
@@ -1366,7 +1414,7 @@ async function prepare_data(for_query, curTab, fmt)
     var src_fmt = null;
 
     
-    if (curTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.jsonld_nano.json_text!==null)) {
+    if (curTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.sonld_nano.json_text!==null)) {
       src_fmt = "jsonld";
 
       if (gData.jsonld.json_text!==null)

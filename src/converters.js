@@ -72,7 +72,7 @@ class Convert_Turtle{
 
     if (nanoData!==null && nanoData.length > 0) {
       var handler = new Handle_Turtle(0, true);
-      var ret = await handler.parse_nano(nanoData, baseURL);
+      var ret = await handler.parse_nano(nanoData, baseURL, true);
 
       if (ret.errors.length>0)
         self.skipped_error = self.skipped_error.concat(ret.errors);
