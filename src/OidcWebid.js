@@ -249,7 +249,6 @@ function putResource (oidc, url, data, contentType, links, options = {})
   options.headers['Link'] = links
 
   return oidc.fetch(url, options)
-
     .then(response => {
       if (!response.ok) {  // not a 2xx level response
         let error = new Error('Error writing resource: ' +

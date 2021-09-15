@@ -240,7 +240,7 @@ function load_data_from_url(loc)
     var hdr_accept = "";
 
     if (type==="turtle")
-      hdr_accept = 'text/n3,text/turtle;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
+      hdr_accept = 'text/turtle,text/n3;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
     else if (type==="jsonld")
       hdr_accept = 'application/ld+json;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
     else if (type==="rdf")
@@ -252,16 +252,30 @@ function load_data_from_url(loc)
     else if (type==="csv")
       hdr_accept = 'text/csv,application/csv;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
       
-/***
     var options = {
-        method: 'GET',
-        headers: {
-          'Accept': hdr_accept,
-          'Cache-control': 'no-cache'
-        }
-      }
-***/
+          headers: {
+            'Accept': hdr_accept,
+            'Cache-control': 'no-cache'
+          },
+        };
 
+    fetchWithTimeout(url, options, 30000)
+    .then(rc => {
+      if (!rc.ok) {  // not a 2xx level response
+        var msg = "Could not load data from: "+url+"\nError: "+rc.statusText;
+        alert(msg);
+        show_Data(msg, '');
+      }
+      rc.text().then(txt => {
+        start_parse_data(txt, type, url, ext);
+      })
+    })
+    .catch( e => {
+        var msg = "Could not load data from: "+url+"\nError: "+e;
+        alert(msg);
+        show_Data(msg, '');
+    })
+/***
     jQuery.ajaxSetup({
        dataType: "text",
        headers:{'Accept': hdr_accept,
@@ -276,6 +290,7 @@ function load_data_from_url(loc)
         alert(msg);
         show_Data(msg, '');
     });
+***/
 }
 
 
