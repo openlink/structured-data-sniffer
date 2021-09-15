@@ -1,81 +1,82 @@
 .super_links_msg {
         all: initial;
 	display: none;
-	line-height: normal;
-	flex-direction: row; 
-	position: fixed;
-	border: 2px solid #000;
-	border-radius: 2px;
-	width: 200px;
-	height: 20px;
-	top:4px;
-	left: 4px;
-	background: khaki;
-	color: black;
- 	z-index: 2147483647;
-	padding: 10px 10px 10px 20px;
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: 14px;
+	line-height: normal !important;
+	flex-direction: row !important; 
+	position: fixed !important;
+	border: 2px solid #000 !important;
+	border-radius: 2px !important;
+	width: 200px !important;
+	height: 20px !important;
+	top:4px !important;
+	left: 4px !important;
+	background: khaki !important;
+	color: black !important;
+ 	z-index: 2147483647 !important;
+	padding: 10px 10px 10px 20px !important;
+	font-family: Arial, Helvetica, sans-serif !important;
+	font-size: 14px !important;
+	box-sizing: content-box !important;
 }
 
 .super_links_img {
-	width: 16px;
-	height: 16px;
+	width: 16px !important;
+	height: 16px !important;
 }
 
 
 .super_links_popup {
         all: initial;
-	position: absolute;
+	position: absolute !important;
 	display: none;
-	border: 2px solid #000;
-	border-radius: 4px; 
+	border: 2px solid #000 !important;
+	border-radius: 4px !important; 
 	width: 910px;
 	height: 305px;
-	background: #fff;
-	color: black;
- 	z-index: 2147483647;
-        marging: 2px;
-        marging-bottom: 10px;
-	font-family: Arial, Helvetica, sans-serif;
-	line-height: normal;
+	background: #fff !important;
+	color: black !important;
+ 	z-index: 2147483647 !important;
+        marging: 2px !important;
+        marging-bottom: 10px !important;
+	font-family: Arial, Helvetica, sans-serif !important;
+	line-height: normal !important;
 }
 .super_links_popup-title {
-	width: 100%;
-	height: 18px;
-	background-color: #0000a0;
-	color: white;
-	border-bottom: 1px solid #000;
-	position: relative;
-	cursor: move;
-        font-size: 14px;
+	width: 100% !important;
+	height: 18px !important;
+	background-color: #0000a0 !important;
+	color: white !important;
+	border-bottom: 1px solid #000 !important;
+	position: relative !important;
+	cursor: move !important;
+        font-size: 14px !important;
 }
 .super_links_popup-content {
-	width: 100%;
-	height: calc(100% - 10px - 16px - 6px);
-	overflow: auto;
+	width: 100% !important;
+	height: calc(100% - 10px - 16px - 6px) !important;
+	overflow: auto !important;
 }
 
 #super_links_snackbar {
   visibility: hidden;
-  min-width: 250px;
-  margin-left: -125px;
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  border-radius: 2px;
-  padding: 16px;
-  position: fixed;
-  z-index: 1;
-  left: 50%;
-  bottom: 30px;
-  font-size: 17px;
+  min-width: 250px !important;
+  margin-left: -125px !important;
+  background-color: #333 !important;
+  color: #fff !important;
+  text-align: center !important;
+  border-radius: 2px !important;
+  padding: 16px !important;
+  position: fixed !important;
+  z-index: 1 !important;
+  left: 50% !important;
+  bottom: 30px !important;
+  font-size: 17px !important;
 }
 
 #super_links_snackbar.show {
   visibility: visible;
-  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s !important;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s !important;
 }
 
 
@@ -85,46 +86,46 @@ a:active.superlink,
 a:visited.superlink,
 .super_link_mark
 {
-  color: green;
-  background: yellow;
+  color: green !important;
+  background: yellow !important;
 }
 
 
 .super_links_popup_close {
-	background: #606061;
-	color: #FFFFFF;
-	line-height: 20px;
-	position: absolute;
-	top:-3px;
-	right: -3px;
-	width: 20px;
-	text-align: center;
-	text-decoration: none;
-	font-weight: bold;
-	-webkit-border-radius: 4px;
-	-moz-border-radius: 4px;
-	border-radius: 4px;
-	-moz-box-shadow: 1px 1px 3px #000;
-	-webkit-box-shadow: 1px 1px 3px #000;
-	box-shadow: 1px 1px 3px #000;
+	background: #606061 !important;
+	color: #FFFFFF !important;
+	line-height: 20px !important;
+	position: absolute !important;
+	top:-3px !important;
+	right: -3px !important;
+	width: 20px !important;
+	text-align: center !important;
+	text-decoration: none !important;
+	font-weight: bold !important;
+	-webkit-border-radius: 4px !important;
+	-moz-border-radius: 4px !important;
+	border-radius: 4px !important;
+	-moz-box-shadow: 1px 1px 3px #000 !important;
+	-webkit-box-shadow: 1px 1px 3px #000 !important;
+	box-shadow: 1px 1px 3px #000 !important;
 }
-.super_links_popup_close:hover { background: #00d9ff; }
+.super_links_popup_close:hover { background: #00d9ff !important; }
 
-table.super_links_table a { color: blue; text-decoration:underline; }
-table.super_links_table a:link { color: blue; }
-table.super_links_table a:visited { color: purple; }
-table.super_links_table a:hover  { color: blue; }
-table.super_links_table a:active { color: blue; }
+table.super_links_table a { color: blue !important; text-decoration:underline !important; }
+table.super_links_table a:link { color: blue !important; }
+table.super_links_table a:visited { color: purple !important; }
+table.super_links_table a:hover  { color: blue !important; }
+table.super_links_table a:active { color: blue !important; }
 
 
 table.super_links_table {
-  font-family: 'trebuchet MS' , 'Lucida sans' , Arial;
-  font-size: 13px;
-  min-width: 100%;
-  width: auto;
-  flex: 1;
+  font-family: 'trebuchet MS' , 'Lucida sans' , Arial !important;
+  font-size: 13px !important;
+  min-width: 100% !important;
+  width: auto !important;
+  flex: 1 !important;
   display: grid;
-  border-collapse: collapse;
+  border-collapse: collapse !important;
   /* These are just initial values which are overriden using JavaScript when a column is resized */
   grid-template-columns: 
     minmax(100px, 1.5fr)
@@ -136,66 +137,66 @@ table.super_links_table {
 table.super_links_table thead,
 table.super_links_table tbody,
 table.super_links_table tr {
-  display: contents;
+  display: contents !important;
 }
 
 table.super_links_table th,
 table.super_links_table td {
-  padding: 5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  border-top: 1px solid #dddddd;
-  border-left: 1px solid #dddddd;
+  padding: 5px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  border-top: 1px solid #dddddd !important;
+  border-left: 1px solid #dddddd !important;
 }
 
 table.super_links_table th {
-  position: sticky;
-  top: 0;
-  background: #6c7ae0;
-  text-align: left;
-  font-weight: bold;
-  color: white;
+  position: sticky !important;
+  top: 0 !important;
+  background: #6c7ae0 !important;
+  text-align: left !important;
+  font-weight: bold !important;
+  color: white !important;
 }
 
 
 .super_links_table-resize-handle {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background: black;
-  opacity: 0;
-  width: 3px;
-  cursor: col-resize;
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: black !important;
+  opacity: 0 !important;
+  width: 3px !important;
+  cursor: col-resize !important;
 }
 
 .super_links_table-resize-handle:hover,
 /* The following selector is needed so the handle is visible during resize even if the mouse isn't over the handle anymore */
 .super_links_table-header--being-resized .super_links_table-resize-handle {
-  opacity: 0.5;
+  opacity: 0.5 !important;
 }
 
 .super_links_popup-resizer {
-  width: 10px;
-  height: 10px;
-  position: absolute;
-  right: 1px;
-  bottom: 1px;
-  cursor: se-resize;
+  width: 10px !important;
+  height: 10px !important;
+  position: absolute !important;
+  right: 1px !important;
+  bottom: 1px !important;
+  cursor: se-resize !important;
 }
 
 table.super_links_table th:hover .super_links_table-resize-handle {
-  opacity: 0.3;
+  opacity: 0.3 !important;
 }
 
 table.super_links_table td {
-  padding-top: 10px;
-  padding-bottom: 10px;
-  color: #808080;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  color: #808080 !important;
 }
 
 table.super_links_table tr:nth-child(even) td {
-  background: #f8f6ff;
+  background: #f8f6ff !important;
 }
 
